@@ -9,37 +9,41 @@ Date: 2026-02-17
 Cadre méthodique reproductible pour tester l'hypothèse d'un basculement vers un régime symbolique cumulatif.
 
 Noyau:
-1) Cycle interne: Organisation O(t), Résilience R(t), Intégration I(t)  
-2) Viabilité: V(t) sur [t-Δ, t], agrégation fixée ex ante  
-3) Mismatch: Σ(t) = max(0, D(E(t)) - C(O(t), R(t), I(t)))  
-4) Stock symbolique: S(t)  
-5) Efficacité symbolique: s(t) = ΔV(t) / ΔS(t) sous intervention  
-6) Variable d'ordre: C(t), gain intergénérationnel attribuable à la transmission sociale sur horizon T  
-7) Contrainte exogène: U(t), hausse de demande, baisse de capacité, ou coupure du canal symbolique
+- Cycle interne: Organisation O(t), Résilience R(t), Intégration I(t)
+- Viabilité: V(t) sur [t-Δ, t], agrégation fixée ex ante
+- Capacité: Cap(O,R,I), forme fixée ex ante
+- Mismatch: Σ(t) = max(0, D(E(t)) - Cap(t))
+- Stock symbolique: S(t) (proxies de transmission), poids fixés ex ante
+- Variable d'ordre: C(t), gain intergénérationnel attribuable à la transmission sociale sur horizon T
+- Contrainte exogène: U(t), hausse de demande, baisse de capacité, ou coupure du canal symbolique
 
-Structure:
-- 01_Theory
-- 02_Protocol
-- 03_Data
-- 04_Code
-- 05_Results
-- 06_Manuscript
+Démos incluses:
+1) Démo CSV, pré seuil ou transition, basée sur un dataset observé.
+2) Démo ORI-C exécutable (Option B), modèle minimal avec scénarios et tests causaux.
 
-Démo rapide, cas pré seuil:
+Installation:
 ```bash
 pip install -r 04_Code/requirements.txt
+```
+
+Démo CSV (pré seuil):
+```bash
 python 04_Code/pipeline/run_synthetic_demo.py --input 03_Data/synthetic/synthetic_minimal.csv --outdir 05_Results
 ```
 
-Démo rapide, cas avec transition:
+Démo CSV (transition):
 ```bash
-pip install -r 04_Code/requirements.txt
 python 04_Code/pipeline/run_synthetic_demo.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results
+```
+
+Démo ORI-C (Option B):
+```bash
+python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/ori_c_demo
+python 04_Code/pipeline/tests_causaux.py --outdir 05_Results/ori_c_demo
 ```
 
 Tests initiaux:
 ```bash
-pip install -r 04_Code/requirements.txt
 pip install -r 04_Code/requirements-dev.txt
 PYTHONPATH=04_Code pytest -q
 ```

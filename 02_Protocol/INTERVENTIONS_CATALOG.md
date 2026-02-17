@@ -12,4 +12,4 @@ Contraintes exogènes U(t):
 - baisse de capacité
 - coupure du canal symbolique
 
-Inclure contrôles négatifs et positifs, et un journal d'intervention.
+Inclure contrôles négatifs, contrôles positifs, journal d'intervention.

@@ -1,23 +1,8 @@
 """
-Démo end to end sur données synthétiques
+Démo end to end sur données synthétiques CSV.
 
-Ce script:
-- Lit un CSV minimal
-- Calcule V(t), Cap(t), Sigma(t), S(t)
-- Calcule C(t) en version simplifiée
-- Détecte un seuil basique sur ΔC(t)
-- Sauvegarde 2 figures et un CSV processed
-
-Cas pré seuil:
-synthetic_minimal.csv
-
-Cas avec transition:
-synthetic_with_transition.csv
-
-Hypothèses de démo:
-- V(t) et S(t) sont des agrégations pondérées
-- C(t) augmente quand ΔS > 0 et ΔV > 0
-- La perturbation symbolique est indiquée par perturb_symbolic (0 ou 1)
+Calcule V(t), S(t), Cap(t), Sigma(t), C(t) simplifié et détecte un seuil sur ΔC(t).
+Produit 2 figures et un CSV processed.
 """
 
 from __future__ import annotations
@@ -164,7 +149,6 @@ def main() -> int:
     df["Cap"] = compute_capacity(df)
     df["Sigma"] = compute_sigma(df)
 
-    # C(t) simplifié par id
     out_parts = []
     for _id, g in df.groupby("id", sort=False):
         g = g.copy()
@@ -174,7 +158,7 @@ def main() -> int:
 
     df["delta_C"] = df.groupby("id")["C"].diff().fillna(0.0)
 
-    threshold_idx, _thr_value = detect_threshold(df["delta_C"], k=args.k, m=args.m)
+    threshold_idx, _thr = detect_threshold(df["delta_C"], k=args.k, m=args.m)
     df["threshold_hit"] = 0
     if threshold_idx is not None:
         df.loc[threshold_idx, "threshold_hit"] = 1
@@ -185,7 +169,6 @@ def main() -> int:
     figs_dir.mkdir(parents=True, exist_ok=True)
 
     df.to_csv(tables_dir / "processed_synthetic.csv", index=False)
-
     plot_C_with_threshold(df, figs_dir / "C_threshold.png", threshold_idx=threshold_idx)
     plot_V_before_after_symbolic(df, figs_dir / "V_symbolic_perturbation.png")
     return 0

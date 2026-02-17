@@ -1,3 +1,1 @@
 # Annexes méthodes
-
-À compléter.
