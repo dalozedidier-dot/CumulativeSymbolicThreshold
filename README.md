@@ -1,5 +1,8 @@
 # Cumulative Symbolic Threshold
 
+[![DOI](https://img.shields.io/badge/DOI-10.17605%2FOSF.IO%2FG62PZ-blue)](https://doi.org/10.17605/OSF.IO/G62PZ)
+[![OSF](https://img.shields.io/badge/OSF-G62PZ-lightgrey)](https://osf.io/g62pz/)
+
 Version: v1  
 Date: 2026-02-17
 
@@ -21,6 +24,15 @@ Structure:
 - 04_Code: environnement minimal et pipeline de calcul
 - 05_Results: sorties et figures
 - 06_Manuscript: manuscrit et annexes méthodes
+
+Démo rapide:
+- Données synthétiques minimales: 03_Data/synthetic/synthetic_minimal.csv
+- Script: 04_Code/pipeline/run_synthetic_demo.py
+- Sorties attendues: 05_Results/figures/ (2 PNG) et 05_Results/tables/processed_synthetic.csv
+
+OSF:
+- DOI du projet: 10.17605/OSF.IO/G62PZ
+- URL OSF: https://osf.io/g62pz/
 
 Licence: MIT (voir LICENSE).  
 Citation: voir CITATION.cff.

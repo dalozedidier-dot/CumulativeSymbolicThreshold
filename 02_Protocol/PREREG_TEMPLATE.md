@@ -28,11 +28,11 @@ Ne pas modifier après démarrage du test principal.
 - C(t): définition opérationnelle:
 - Critère seuil sur ΔC(t): k, m, période de référence pour μ_ΔC et σ_ΔC:
 
-## 4. Intervention exogène U(t)
+## 4. Contraintes exogènes U(t)
 - U(t) est elle plausible, oui ou non:
 - Définition opérationnelle de U(t):
 - Mesure ou proxy:
-- Mécanisme attendu: hausse de demande, baisse de capacité, coupure du canal symbolique:
+- Voie attendue: hausse de demande, baisse de capacité, coupure du canal symbolique:
 - Stratégie d'identification: condition avec versus sans, instrument, ou contrefactuel:
 - Règles de décision liées à U(t):
 

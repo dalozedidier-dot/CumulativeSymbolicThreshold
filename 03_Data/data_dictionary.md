@@ -13,33 +13,27 @@ Ce fichier décrit les champs attendus pour les données brutes et les données 
 - id: identifiant d'unité
 - t: pas de temps
 
-### 2.2 Mesures internes (exemples)
-- O_raw_*: variables brutes contribuant à O(t)
-- R_raw_*: variables brutes contribuant à R(t)
-- I_raw_*: variables brutes contribuant à I(t)
+### 2.2 Mesures internes
+- O: organisation
+- R: résilience
+- I: intégration
 
-### 2.3 Viabilité (exemples)
+### 2.3 Viabilité
 - survie
 - energie_nette
 - integrite
 - persistance
 
-### 2.4 Symbolique (exemples)
+### 2.4 Symbolique
 - repertoire
 - codification
 - densite_transmission
 - fidelite
+- perturb_symbolic: 0 ou 1, indicateur simple pour démo
 
 ### 2.5 Environnement et intervention
-- demande_env
-- choc_env (optionnel)
-- U_raw (optionnel, proxy d'intervention exogène)
+- demande_env: proxy de D(E(t))
+- U_raw: proxy optionnel d'intervention exogène
 
 ## 3. Données traitées
-- O, R, I, V, Cap, Sigma, S, C, s
-- U(t) si applicable
-- Metadonnées: version protocole, paramètres, seeds, conditions
-
-## 4. Formats
-- CSV recommandé pour tables
-- JSONL recommandé pour journaux d'événements
+- V, Cap, Sigma, S, C, delta_C, threshold_hit

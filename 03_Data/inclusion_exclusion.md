@@ -3,7 +3,7 @@
 Définir ces règles avant d'analyser le test principal. Cette version est un gabarit.
 
 ## Inclusion
-- Unités avec séries complètes sur au moins N pas
+- Séries complètes sur au moins N pas
 - Mesures minimales disponibles pour construire V(t), S(t), et C(t)
 - Qualité de mesure conforme aux seuils pré définis
 
@@ -13,5 +13,5 @@ Définir ces règles avant d'analyser le test principal. Cette version est un ga
 - Artefacts de mesure identifiés et non corrigeables
 
 ## Données manquantes
-- Méthode: à déclarer (imputation, suppression, interpolation)
+- Méthode: à déclarer
 - Justification: à documenter

@@ -52,8 +52,13 @@ k et m sont fixés ex ante.
 - Hystérésis: inversion nécessitant un changement plus fort des paramètres que celui du franchissement.
 - Sensibilité accrue: amplitude de réponse aux perturbations maximisée près du seuil.
 
-## 7. Intervention exogène U(t), contrôle des confusions
+## 7. Contraintes exogènes U(t), contrôle des confusions
 Si une intervention extérieure est plausible, définir U(t) et la mesurer. U(t) doit être intégrée au design, soit comme condition expérimentale, soit comme covariable, soit via un instrument contrefactuel déclaré.
+
+Trois voies à distinguer:
+- Hausse de demande: U(t) augmente D(E(t)), ce qui élève Σ(t) et peut maintenir un régime de survie sans accumulation.
+- Baisse de capacité: U(t) réduit C(O,R,I), ce qui élève Σ(t) et empêche la stabilisation d'attracteurs cumulatifs.
+- Coupure du canal symbolique: U(t) dégrade la transmission, ce qui peut faire plafonner C(t) même si un stock S(t) existe.
 
 Critère causal recommandé:
 Comparer des conditions avec versus sans U(t), ou avant versus après variation de U(t), et tester l'impact sur V(t), C(t), et les signatures de transition. La coupure du canal symbolique par U(t) est traitée comme une perturbation causale du canal de transmission.
