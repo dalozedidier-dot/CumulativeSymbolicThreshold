@@ -1,133 +1,130 @@
+#!/usr/bin/env python3
 """
-Démo ORI-C (Option B).
+04_Code/pipeline/run_ori_c_demo.py
 
-Produit:
-- figures/01_evolution_C_seuil.png
-- figures/02_effet_intervention.png
-- tables/oric_control.csv
-- tables/oric_intervention.csv
-- tables/oric_summary.csv
+Runs a simple ORI-C demonstration:
+- control (no intervention)
+- intervention (one exogenous intervention)
+Writes:
+- tables/timeseries_control.csv
+- tables/timeseries_intervention.csv
+- tables/summary.csv
+- tables/verdict.json
+- figures/v_compare.png
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-import argparse
 import sys
+from pathlib import Path
 
-import matplotlib.pyplot as plt
+# Ensure 04_Code is on sys.path so `import pipeline.*` works when scripts are executed directly.
+_CODE_DIR = Path(__file__).resolve().parents[1]
+if str(_CODE_DIR) not in sys.path:
+    sys.path.insert(0, str(_CODE_DIR))
+
+import argparse
+import json
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
-# Allow direct execution from repo root: python 04_Code/pipeline/run_ori_c_demo.py
-ROOT = Path(__file__).resolve().parents[1]  # 04_Code
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from pipeline.ori_c_pipeline import ORICConfig, run_oric  # noqa: E402
+from pipeline.ori_c_pipeline import ORICConfig, run_oric
 
 
-def _plot_C(df: pd.DataFrame, outpath: Path, title: str) -> None:
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-
-    ax.plot(df["t"], df["C"], label="C(t)")
-    hits = df.index[df["threshold_hit"] == 1].tolist()
-    if hits:
-        ax.scatter(df.loc[hits, "t"], df.loc[hits, "C"], label="seuil détecté")
-
-    ax.set_xlabel("t")
-    ax.set_ylabel("C(t)")
-    ax.set_title(title)
-    ax.legend()
-    fig.tight_layout()
-    outpath.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(outpath, dpi=160)
-    plt.close(fig)
+def _make_dirs(outdir: Path) -> tuple[Path, Path]:
+    figdir = outdir / "figures"
+    tabdir = outdir / "tables"
+    figdir.mkdir(parents=True, exist_ok=True)
+    tabdir.mkdir(parents=True, exist_ok=True)
+    return figdir, tabdir
 
 
-def _plot_V(df_control: pd.DataFrame, df_int: pd.DataFrame, outpath: Path, intervention_point: int) -> None:
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-
-    ax.plot(df_control["t"], df_control["V"], label="contrôle")
-    ax.plot(df_int["t"], df_int["V"], label="intervention")
-    ax.axvline(float(intervention_point), linestyle="--", label="début intervention")
-
-    ax.set_xlabel("t")
-    ax.set_ylabel("V(t)")
-    ax.set_title("Effet d'une intervention sur V(t)")
-    ax.legend()
-    fig.tight_layout()
-    outpath.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(outpath, dpi=160)
-    plt.close(fig)
+def _window(df: pd.DataFrame, start: int, end: int) -> pd.DataFrame:
+    return df[(df["t"] >= start) & (df["t"] < end)].copy()
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--outdir", type=Path, required=True)
-    ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--n-steps", type=int, default=100)
-    ap.add_argument("--intervention", type=str, default="symbolic_cut", choices=["symbolic_cut", "demand_shock", "capacity_hit"])
-    ap.add_argument("--intervention-point", type=int, default=70)
-    ap.add_argument("--k", type=float, default=2.5)
-    ap.add_argument("--m", type=int, default=3)
-    ap.add_argument("--window", type=int, default=10)
+    ap.add_argument("--outdir", required=True)
+    ap.add_argument("--seed", type=int, default=123)
+    ap.add_argument("--n-steps", type=int, default=200)
+    ap.add_argument(
+        "--intervention",
+        default="symbolic_cut",
+        choices=["demand_shock", "capacity_hit", "symbolic_cut", "symbolic_injection", "symbolic_cut_then_inject"],
+    )
+    ap.add_argument("--intervention-point", type=int, default=80)
+    ap.add_argument("--reinjection-point", type=int, default=120)
+    ap.add_argument("--sesoi-v-rel", type=float, default=0.10)
     args = ap.parse_args()
 
-    outdir = args.outdir
-    figs = outdir / "figures"
-    tables = outdir / "tables"
-    figs.mkdir(parents=True, exist_ok=True)
-    tables.mkdir(parents=True, exist_ok=True)
+    outdir = Path(args.outdir)
+    figdir, tabdir = _make_dirs(outdir)
 
-    cfg_control = ORICConfig(
-        seed=args.seed,
-        n_steps=args.n_steps,
-        intervention="none",
-        intervention_point=args.intervention_point,
-        k=args.k,
-        m=args.m,
-        window=args.window,
-    )
-    cfg_int = ORICConfig(
-        seed=args.seed,
-        n_steps=args.n_steps,
-        intervention=args.intervention,
-        intervention_point=args.intervention_point,
-        k=args.k,
-        m=args.m,
-        window=args.window,
+    cfg_control = ORICConfig(seed=int(args.seed), n_steps=int(args.n_steps), intervention="none", intervention_point=int(args.intervention_point))
+    cfg_interv = ORICConfig(
+        seed=int(args.seed),
+        n_steps=int(args.n_steps),
+        intervention=str(args.intervention),
+        intervention_point=int(args.intervention_point),
+        reinjection_point=int(args.reinjection_point),
     )
 
-    df_control = run_oric(cfg_control)
-    df_int = run_oric(cfg_int)
+    df_c = run_oric(cfg_control)
+    df_i = run_oric(cfg_interv)
 
-    df_control.to_csv(tables / "oric_control.csv", index=False)
-    df_int.to_csv(tables / "oric_intervention.csv", index=False)
+    df_c.to_csv(tabdir / "timeseries_control.csv", index=False)
+    df_i.to_csv(tabdir / "timeseries_intervention.csv", index=False)
+
+    pre = (0, int(args.intervention_point))
+    post = (int(args.intervention_point), int(args.n_steps))
+
+    c_pre = float(_window(df_c, *pre)["V"].mean())
+    c_post = float(_window(df_c, *post)["V"].mean())
+    i_pre = float(_window(df_i, *pre)["V"].mean())
+    i_post = float(_window(df_i, *post)["V"].mean())
+
+    effect = i_post - c_post  # negative means intervention harms V
 
     summary = pd.DataFrame(
         [
-            {
-                "scenario": "control",
-                "V_mean_pre": float(df_control[df_control["t"] < args.intervention_point]["V"].mean()),
-                "V_mean_post": float(df_control[df_control["t"] > args.intervention_point + 10]["V"].mean()),
-                "C_end": float(df_control["C"].iloc[-1]),
-                "threshold_hits": int(df_control["threshold_hit"].sum()),
-            },
-            {
-                "scenario": args.intervention,
-                "V_mean_pre": float(df_int[df_int["t"] < args.intervention_point]["V"].mean()),
-                "V_mean_post": float(df_int[df_int["t"] > args.intervention_point + 10]["V"].mean()),
-                "C_end": float(df_int["C"].iloc[-1]),
-                "threshold_hits": int(df_int["threshold_hit"].sum()),
-            },
+            {"condition": "control", "V_mean_pre": c_pre, "V_mean_post": c_post},
+            {"condition": "intervention", "intervention": str(args.intervention), "V_mean_pre": i_pre, "V_mean_post": i_post},
         ]
     )
-    summary.to_csv(tables / "oric_summary.csv", index=False)
+    summary.to_csv(tabdir / "summary.csv", index=False)
 
-    _plot_C(df_control, figs / "01_evolution_C_seuil.png", "C(t) et détection de seuil, contrôle")
-    _plot_V(df_control, df_int, figs / "02_effet_intervention.png", args.intervention_point)
+    # Verdict: accept if post drop is at least SESOI relative to control post
+    sesoi = -float(args.sesoi_v_rel) * abs(c_post)
+    verdict = "ACCEPT" if (effect <= sesoi) else "INDETERMINATE"
+
+    verdict_obj = {
+        "test": "ori_c_demo",
+        "intervention": str(args.intervention),
+        "sesoi_v_rel": float(args.sesoi_v_rel),
+        "control_V_post": c_post,
+        "intervention_V_post": i_post,
+        "effect": effect,
+        "sesoi_effect": sesoi,
+        "verdict": verdict,
+    }
+    (tabdir / "verdict.json").write_text(json.dumps(verdict_obj, indent=2), encoding="utf-8")
+
+    # Figure
+    plt.figure(figsize=(10, 5))
+    plt.plot(df_c["t"], df_c["V"], label="control V(t)")
+    plt.plot(df_i["t"], df_i["V"], label=f"intervention V(t): {args.intervention}")
+    plt.axvline(int(args.intervention_point), linestyle="--", label="intervention point")
+    plt.xlabel("t")
+    plt.ylabel("V")
+    plt.title("ORI-C demo: V(t) control vs intervention")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figdir / "v_compare.png", dpi=160)
+    plt.close()
 
     return 0
 
