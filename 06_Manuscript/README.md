@@ -1,3 +1,3 @@
 # 06_Manuscript
 
-Manuscrit, annexes méthodes, et éléments de soumission.
+Manuscript draft and methods appendix placeholders.

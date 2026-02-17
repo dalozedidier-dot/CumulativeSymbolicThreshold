@@ -1,3 +1,3 @@
 # 04_Code
 
-Code, environnement reproductible, pipeline et scripts.
+Reproducible environment, pipeline skeleton, config examples.

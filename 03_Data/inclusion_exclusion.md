@@ -1,17 +1,11 @@
-# Règles d'inclusion et d'exclusion
+# Inclusion and exclusion rules
 
-Définir ces règles avant d'analyser le test principal. Cette version est un gabarit.
+Define before the primary analysis.
 
-## Inclusion
-- Unités avec séries complètes sur au moins N pas
-- Mesures minimales disponibles pour construire V(t), S(t), et C(t)
-- Qualité de mesure conforme aux seuils pré définis
+Inclusion:
+- complete series
+- minimal measures to build V(t), S(t), and C(t)
 
-## Exclusion
-- Rupture de protocole ou changement de définition de variables en cours de série
-- Manque de données dépassant un seuil p_missing fixé ex ante
-- Artefacts de mesure identifiés et non corrigeables
-
-## Données manquantes
-- Méthode: à déclarer (imputation, suppression, interpolation)
-- Justification: à documenter
+Exclusion:
+- protocol breaks
+- missingness above preregistered threshold

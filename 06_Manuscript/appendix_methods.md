@@ -1,7 +1,6 @@
-# Annexe méthodes
+# Methods appendix
 
-Contenu:
-- Définitions opérationnelles complètes des variables par domaine
-- Justification des choix de fenêtres Δ et horizon T
-- Détails du plan d'analyse
-- Analyses de robustesse
+- Operational definitions by domain
+- Rationale for window Δ and horizon T
+- Detailed analysis plan
+- Robustness analyses

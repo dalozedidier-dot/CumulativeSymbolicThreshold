@@ -1,3 +1,3 @@
 # 01_Theory
 
-Théorie, définitions, notations, et hypothèses.
+Theory, definitions, notation, hypotheses.

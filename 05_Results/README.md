@@ -1,3 +1,3 @@
 # 05_Results
 
-Dossier de résultats, sorties prévues, figures, tables.
+Results structure for registered outputs, figures, tables.

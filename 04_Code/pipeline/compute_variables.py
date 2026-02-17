@@ -1,18 +1,18 @@
-"""Pipeline minimal
+"""
+Minimal pipeline
 
-Objectif:
-- Charger des données brutes (ou synthétiques)
-- Calculer O(t), R(t), I(t), V(t), Sigma(t), S(t), C(t), s(t)
-- Exporter une table traitée
-
-Ce script est un squelette. Les formules exactes et les poids doivent être définis ex ante et placés dans une configuration.
+Computes O, R, I, V, S, Cap, Sigma from a CSV.
+C(t) and s(t) are placeholders and must be defined per preregistered design.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import argparse
 import json
+from typing import Any
+
 import pandas as pd
 
 
@@ -20,57 +20,88 @@ import pandas as pd
 class Config:
     delta_window: int
     horizon_T: int
-    omega: dict
-    alpha: dict
+    omega: dict[str, float]
+    alpha: dict[str, float]
     k: float
     m: int
     sigma_star: float
     tau: int
-    capacity_form: str
+    capacity_form: str  # "product" or "geom_mean"
+
+
+REQUIRED_BASE_COLUMNS = [
+    "id",
+    "t",
+    "survie",
+    "energie_nette",
+    "integrite",
+    "persistance",
+    "repertoire",
+    "codification",
+    "densite_transmission",
+    "fidelite",
+    "demande_env",
+]
 
 
 def load_config(path: Path) -> Config:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
     return Config(**data)
 
 
-def compute_placeholder_scores(df: pd.DataFrame, cfg: Config) -> pd.DataFrame:
-    # Placeholders. Remplacer par les définitions opérationnelles verrouillées.
-    out = df.copy()
-    out["O"] = out.filter(regex=r"^O_raw_").mean(axis=1)
-    out["R"] = out.filter(regex=r"^R_raw_").mean(axis=1)
-    out["I"] = out.filter(regex=r"^I_raw_").mean(axis=1)
+def require_columns(df: pd.DataFrame, cols: list[str]) -> None:
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing required columns: {missing}")
 
+
+def mean_of_prefix(df: pd.DataFrame, prefix: str) -> pd.Series:
+    cols = [c for c in df.columns if c.startswith(prefix)]
+    if not cols:
+        raise ValueError(f"No columns found with prefix '{prefix}'.")
+    return df[cols].mean(axis=1)
+
+
+def compute_scores(df: pd.DataFrame, cfg: Config) -> pd.DataFrame:
+    require_columns(df, REQUIRED_BASE_COLUMNS)
+    out = df.copy()
+
+    out["O"] = mean_of_prefix(out, "O_raw_")
+    out["R"] = mean_of_prefix(out, "R_raw_")
+    out["I"] = mean_of_prefix(out, "I_raw_")
+
+    omega = cfg.omega
     out["V"] = (
-        cfg.omega["survie"] * out["survie"]
-        + cfg.omega["energie_nette"] * out["energie_nette"]
-        + cfg.omega["integrite"] * out["integrite"]
-        + cfg.omega["persistance"] * out["persistance"]
+        omega["survie"] * out["survie"]
+        + omega["energie_nette"] * out["energie_nette"]
+        + omega["integrite"] * out["integrite"]
+        + omega["persistance"] * out["persistance"]
     )
 
+    alpha = cfg.alpha
     out["S"] = (
-        cfg.alpha["repertoire"] * out["repertoire"]
-        + cfg.alpha["codification"] * out["codification"]
-        + cfg.alpha["densite_transmission"] * out["densite_transmission"]
-        + cfg.alpha["fidelite"] * out["fidelite"]
+        alpha["repertoire"] * out["repertoire"]
+        + alpha["codification"] * out["codification"]
+        + alpha["densite_transmission"] * out["densite_transmission"]
+        + alpha["fidelite"] * out["fidelite"]
     )
 
     if cfg.capacity_form == "product":
         out["Cap"] = out["O"] * out["R"] * out["I"]
+    elif cfg.capacity_form == "geom_mean":
+        base = (out["O"].clip(lower=0) * out["R"].clip(lower=0) * out["I"].clip(lower=0))
+        out["Cap"] = base ** (1.0 / 3.0)
     else:
-        out["Cap"] = (out["O"] * out["R"] * out["I"]) ** (1.0 / 3.0)
+        raise ValueError("capacity_form must be 'product' or 'geom_mean'")
 
-    out["Sigma"] = (out["demande_env"] - out["Cap"]).clip(lower=0)
+    out["Sigma"] = (out["demande_env"] - out["Cap"]).clip(lower=0.0)
 
-    # C(t) et s(t) sont laissés à définir selon le design.
     out["C"] = pd.NA
     out["s"] = pd.NA
     return out
 
 
 def main() -> int:
-    import argparse
-
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, type=Path)
     ap.add_argument("--input", required=True, type=Path)
@@ -79,7 +110,7 @@ def main() -> int:
 
     cfg = load_config(args.config)
     df = pd.read_csv(args.input)
-    out = compute_placeholder_scores(df, cfg)
+    out = compute_scores(df, cfg)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(args.output, index=False)
     return 0

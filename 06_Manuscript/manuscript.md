@@ -1,16 +1,12 @@
-# Manuscrit, brouillon
+# Manuscript draft
 
-Titre provisoire:
-Du vivant autonome au régime symbolique cumulatif
+Provisional title:
+Cumulative Symbolic Threshold
 
-Résumé:
-À compléter.
-
-Sections:
 1. Introduction
-2. Cadre théorique
-3. Protocole et pré-enregistrement
-4. Résultats
+2. Theory
+3. Protocol and preregistration
+4. Results
 5. Discussion
-6. Limites
+6. Limitations
 7. Conclusion
