@@ -6,6 +6,24 @@
 Version: v1  
 Date: 2026-02-17
 
+## Installation
+
+### Conda (recommandé)
+
+```bash
+conda env create -f environment.yml
+conda activate cumulative_symbolic
+```
+
+### Vérification rapide
+
+```bash
+python 04_Code/pipeline/run_synthetic_demo.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results/demo_transition
+python 04_Code/pipeline/run_robustness.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results/robust
+python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/ori_c_demo
+python 04_Code/pipeline/tests_causaux.py --outdir 05_Results/ori_c_demo
+```
+
 Cadre méthodique reproductible pour tester l'hypothèse d'un basculement vers un régime symbolique cumulatif.
 
 Noyau:
