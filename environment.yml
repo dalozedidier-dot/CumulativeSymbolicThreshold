@@ -4,8 +4,12 @@ channels:
   - defaults
 dependencies:
   - python=3.12
-  - pandas>=2.0
   - numpy>=1.26
+  - pandas>=2.0
   - matplotlib>=3.8
   - scipy>=1.11
   - pytest>=8.0
+  - pip
+  - pip:
+      - -r requirements.txt
+      - tqdm>=4.66

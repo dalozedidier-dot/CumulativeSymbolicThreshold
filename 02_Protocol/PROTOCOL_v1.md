@@ -150,3 +150,18 @@ Tous résultats non robustes sont rapportés en annexe avec discussion des limit
 
 ## 9. Annexe opérationnelle
 Voir `02_Protocol/ORI_C_Testable_au_Scalpel_v1_0.md` pour les définitions opératoires, les designs expérimentaux renforcés, les contrôles anti-circularité et les critères de falsification sans zone grise.
+
+## 2.8 Règles de décision et SESOI (normatif)
+
+Les règles de décision statistiques et l'agrégation des verdicts sont fixées ex ante dans le document `02_Protocol/DECISION_RULES_v1.md`.
+
+Conventions non négociables :
+- alpha = 0.01.
+- Triplet obligatoire : p-value, IC 99 %, comparaison au SESOI.
+- Verdict local par test : ACCEPT, REJECT, INDETERMINATE.
+- Gate de qualité et gate de puissance avant agrégation globale.
+
+Les résultats nuls ou négatifs sont explicitement acceptés et doivent être rapportés au même niveau que les résultats positifs.
+
+Version : v1.0  
+Date : 2026-02-17
