@@ -147,3 +147,6 @@ Un résultat est considéré comme robuste si:
 5) le taux de faux positifs placebo reste inférieur à 10 pourcent
 
 Tous résultats non robustes sont rapportés en annexe avec discussion des limites.
+
+## 9. Annexe opérationnelle
+Voir `02_Protocol/ORI_C_Testable_au_Scalpel_v1_0.md` pour les définitions opératoires, les designs expérimentaux renforcés, les contrôles anti-circularité et les critères de falsification sans zone grise.
