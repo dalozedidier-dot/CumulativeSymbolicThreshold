@@ -1,3 +1,3 @@
 # 02_Protocol
 
-Method protocol, preregistration template, interventions, analysis plan.
+Protocole, pré-enregistrement, catalogue d'interventions, plan d'analyse.

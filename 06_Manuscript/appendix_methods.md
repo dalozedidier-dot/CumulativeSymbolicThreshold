@@ -1,6 +1,8 @@
-# Methods appendix
+# Annexes méthodes
 
-- Operational definitions by domain
-- Rationale for window Δ and horizon T
-- Detailed analysis plan
-- Robustness analyses
+Contenu prévu:
+- Définitions opérationnelles par domaine
+- Justification de Δ et T
+- Plan d'analyse détaillé
+- Analyses de robustesse
+- Traitement de U(t) et identification causale

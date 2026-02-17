@@ -1,112 +1,128 @@
-# Du vivant autonome au régime symbolique cumulatif : architecture, seuil et protocole de test
+# Du vivant autonome au régime symbolique cumulatif
+## Architecture, seuil et protocole de test
 
-## 1) Architecture explicative minimale
+## 1. Architecture explicative minimale
 
-### Noyau du vivant autonome O, R, I
-Un vivant autonome est défini par un cycle interne O, R, I, porté par l’auto entretien.
+### 1.1 Noyau du vivant autonome O, R, I
+Un vivant autonome est défini par un cycle interne O, R, I, porté par l'auto entretien.
 
-Organisation (O) : routines, structure, spécialisation, allocation de ressources.  
-Résilience (R) : buffers, redondances, réparation, tolérance aux chocs.  
-Régulation ou intégration (I) : arbitrages, contrôle, synchronisation, couplages internes.
+- Organisation O: routines, structure, spécialisation, allocation de ressources.
+- Résilience R: buffers, redondances, réparation, tolérance aux chocs.
+- Intégration I: arbitrages, contrôle, synchronisation, couplages internes.
 
-### Viabilité V(t), métrique opérationnelle
-V(t) est la capacité à maintenir l’auto entretien sous contrainte, mesurée par un score fixé a priori sur une fenêtre [t-Δ, t].
+### 1.2 Viabilité V(t)
+V(t) est la capacité à maintenir l'auto entretien sous contrainte, mesurée sur une fenêtre [t-Δ, t].
 
-Forme générale normalisée :  
-V(t) = ω₁·Survie(t) + ω₂·Énergie nette(t) + ω₃·Intégrité(t) + ω₄·Reproduction ou persistance(t)
+Forme générale normalisée:
+V(t) = ω1·Survie(t) + ω2·Énergie_nette(t) + ω3·Intégrité(t) + ω4·Persistance(t)
 
-Les différences ΔV sont évaluées sur la même fenêtre [t-Δ, t], avec protocole d’intervention déclaré.
+Les différences ΔV sont évaluées sur la même fenêtre [t-Δ, t], avec protocole d'intervention déclaré.
 
-Choix opérationnels selon le domaine :  
-Cellulaire : taux de croissance, intégrité membrane, charge ATP, taux d’erreurs, survie.  
-Organisme : survie, coûts énergétiques, performance de tâche, blessure, reproduction.  
-Groupe humain : stabilité démographique, production nette, mortalité, robustesse aux chocs, coopération.
+Choix opérationnels selon le domaine:
+- Cellulaire: taux de croissance, intégrité membrane, charge ATP, taux d'erreurs, survie.
+- Organisme: survie, coûts énergétiques, performance de tâche, blessure, reproduction.
+- Groupe humain: stabilité démographique, production nette, mortalité, robustesse aux chocs, coopération.
 
-Verrou minimal  
-Pas besoin d’un V(t) universel. Besoin d’un vecteur de viabilité et d’une agrégation déclarée avant test. La métrique est fixée ex ante.
+Verrou minimal:
+- Pas besoin d'un V(t) universel.
+- Besoin d'un vecteur de viabilité et d'une agrégation déclarée avant test.
 
-### Second cycle, variation, sélection, transmission
-Un second cycle externe variation, sélection, transmission rétroagit sur O, R, I et reconfigure sa dynamique interne.
+### 1.3 Second cycle: variation, sélection, transmission
+Un second cycle externe variation, sélection, transmission rétroagit sur O, R, I et reconfigure la dynamique interne.
 
-Condition d’activation du second cycle  
-Le cycle externe est actif si le mismatch Σ(t) dépasse un seuil Σ* pendant une durée τ.
+Condition d'activation:
+- Le cycle externe est actif si le mismatch Σ(t) dépasse un seuil Σ* pendant une durée τ.
 
-Σ(t) = max(0, D(E(t)) - C(O(t), R(t), I(t)))  
-D(E) est la demande de l’environnement, C(O,R,I) est la capacité courante du système.
+Définition:
+Σ(t) = max(0, D(E(t)) - C(O(t), R(t), I(t)))
 
-Par défaut, C(O,R,I) est une capacité synergique, par exemple C(O,R,I) = O·R·I ou une moyenne géométrique pondérée. La forme exacte est fixée avant test.
+- D(E): demande de l'environnement.
+- C(O,R,I): capacité courante du système.
+- La forme exacte de C(O,R,I) est fixée ex ante.
 
-Σ* : seuil de stress.  
-τ : durée minimale pour éviter les activations transitoires.
+Exemples pour C(O,R,I), à choisir ex ante:
+- Produit: C = O·R·I
+- Moyenne géométrique pondérée
 
-Critère falsifiable  
-Si le second cycle s’active alors que Σ(t) ≤ Σ* quasi partout, l’hypothèse activation sous mismatch tombe.
+Critère falsifiable:
+Si le second cycle s'active alors que Σ(t) ≤ Σ* presque partout, l'hypothèse d'activation sous mismatch tombe.
 
-Formulation verrou  
-Le second cycle variation, sélection, transmission rétroagit sur O, R, I en restructurant les routines, les buffers et les arbitrages, jusqu’à ce que l’information symbolique devienne un déterminant majeur de l’auto entretien.
-
-Formulation testable  
-Cette rétroaction modifie les attracteurs du cycle O, R, I. Elle change ce qui se stabilise (O), ce qui amortit (R), et ce qui arbitre (I). Ce déplacement des régimes internes rend le basculement observable et falsifiable.
-
-Conclusion  
+Conclusion:
 Le symbolique devient une composante de la causalité vitale, pas un vernis culturel.
 
-Option, connexion explicite à l’adaptabilité  
-La variation exploratoire modulable (plasticité, apprentissage) joue le rôle de moteur de reconfiguration. La variation génétique fournit un fond de nouveauté à long terme, sans agir comme levier instantané.
+### 1.4 Intervention extérieure et conditions de possibilité
+On distingue un système intrinsèquement insuffisant d'un système capable en principe mais empêché par une intervention extérieure. Cette intervention est une contrainte exogène qui modifie l'environnement effectif et les paramètres opératoires du cycle O, R, I.
 
-## 2) Variable d’ordre et basculement
+Définir une variable d'intervention exogène U(t). U(t) agit par trois voies principales.
 
-### Variable d’ordre C(t)
-C(t) n’est pas la culture au sens vague. C’est une métrique opérationnelle.
+Voie A. Augmentation de la demande.
+U(t) augmente la demande environnementale D(E(t)) à coûts constants. Cela élève Σ(t) et peut maintenir le système dans un régime de survie sans accumulation.
 
-Formulation verrou  
-C(t) = gain de performance intergénérationnel par transmission sociale, à génétique constante sur l’horizon T considéré.
+Voie B. Réduction de la capacité.
+U(t) réduit la capacité C(O(t), R(t), I(t)) à demande constante. Cela élève Σ(t) et peut empêcher la stabilisation d'attracteurs cumulatifs.
 
-Précision sur l’horizon temporel  
-T est fixé a priori de sorte que la contribution génétique soit constante ou négligeable relativement à la transmission sociale, selon un protocole déclaré.
+Voie C. Coupure du canal symbolique.
+U(t) dégrade directement la transmission en réduisant la fidélité, la densité de transmission, la codification, ou en augmentant le coût de transmission. Dans ce cas, S(t) peut exister mais C(t) plafonne.
 
-### Support symbolique, deux couches
+Conséquence testable.
+Si U(t) est mesurée et varie, la comparaison avec versus sans U(t) devient un test causal. Un retrait ou un affaiblissement de U(t) doit relancer C(t) et augmenter V(t) dans le régime proche ou post seuil, si l'hypothèse de cumulativité est correcte.
 
-A. Stock symbolique S(t)  
-S(t) = α₁·Répertoire(t) + α₂·Codification(t) + α₃·Densité de transmission(t) + α₄·Fidélité(t)
+## 2. Variable d'ordre et basculement
 
-B. Efficacité symbolique s(t)  
-s(t) = ΔV(t) / ΔS(t), mesuré sous intervention, sur la fenêtre [t-Δ, t] et avec protocole déclaré.
+### 2.1 Variable d'ordre C(t)
+C(t) est une métrique opérationnelle, pas une notion vague de culture.
 
-S(t) décrit l’état symbolique disponible.  
-C(t) mesure l’effet cumulatif intergénérationnel de la transmission sur la performance.  
-C(t) peut augmenter avec S(t), mais ce n’est pas une identité.
+Définition verrou:
+C(t) = gain de performance intergénérationnel dû à la transmission sociale, à génétique constante sur l'horizon T.
 
-C(t) comme variable d’ordre au sens des transitions de phase  
-C(t) capture le passage d’un régime où l’information transmise est marginale à un régime où elle devient structurante et stabilisatrice.
+T est fixé ex ante.
 
-Nom du basculement  
-Régime symbolique cumulatif.
+### 2.2 Support symbolique, deux couches
 
-Définition courte  
-Un régime où symboles, normes et techniques transmissibles deviennent une part déterminante des conditions de viabilité du groupe, donc de l’auto entretien des individus.
+Stock symbolique S(t):
+S(t) = α1·Répertoire(t) + α2·Codification(t) + α3·Densité_transmission(t) + α4·Fidélité(t)
 
-## 3) Démonstration mécaniste attendue
+Efficacité symbolique s(t):
+s(t) = ΔV(t) / ΔS(t), mesuré sous intervention sur [t-Δ, t], protocole déclaré.
 
-Critère central  
-Montrer un seuil dynamique au delà duquel le système passe au régime symbolique cumulatif, de manière robuste, non linéaire, avec signatures de transition.
+S(t) décrit l'état symbolique disponible.
+C(t) mesure l'effet cumulatif intergénérationnel sur la performance.
+C(t) peut augmenter avec S(t), sans être identique à S(t).
 
-Définition opérationnelle du seuil  
-Critère principal, rupture de pente :  
-ΔC(t) = C(t) - C(t-1)  
-Seuil franchi si ΔC(t) > μ_ΔC + k·σ_ΔC pendant m pas consécutifs.
+Définition courte du basculement:
+Régime où symboles, normes et techniques transmissibles deviennent déterminants pour la viabilité du groupe.
 
-μ_ΔC et σ_ΔC sont estimées sur une période de référence pré seuil ou sur une condition contrôle, définie ex ante.
+## 3. Démonstration mécaniste attendue
 
-Critère de validation, signatures de transition de phase  
-Ralentissement critique : autocorrélation et variance augmentent avant le seuil.  
-Hystérésis : le retour en arrière exige plus qu’une simple diminution des paramètres.  
-Sensibilité accrue aux perturbations près du seuil.
+Critère central:
+Montrer un seuil dynamique au delà duquel le système passe au régime symbolique cumulatif, avec signatures de transition.
 
-## 4) Protocole de test
+Seuil principal:
+ΔC(t) = C(t) - C(t-1)
 
-Principe général  
-Le symbolique doit rétroagir sur O, R, I, et ces effets doivent être stabilisés, pas seulement détectables.
+Seuil franchi si:
+ΔC(t) > μ_ΔC + k·σ_ΔC
+pendant m pas consécutifs.
 
-Critère causal  
-La présence d’artefacts culturels ne suffit pas. Le test exige que leur perturbation dégrade la viabilité. L’intervention peut être expérimentale, simulationnelle, ou quasi expérimentale par contrefactuel instrumenté. Le protocole et l’indicateur de perturbation sont définis ex ante.
+μ_ΔC et σ_ΔC sont estimés sur une période de référence pré seuil ou une condition contrôle, fixée ex ante.
+
+Signatures attendues:
+- Ralentissement critique: autocorrélation et variance augmentent avant le seuil.
+- Hystérésis: retour en arrière nécessitant plus qu'une simple baisse des paramètres.
+- Sensibilité accrue près du seuil.
+
+## 4. Protocole de test
+
+Principe:
+Le symbolique doit rétroagir sur O, R, I, et les effets doivent être stabilisés, pas seulement détectables.
+
+Critère causal:
+La présence d'artefacts culturels ne suffit pas.
+Le test exige que la perturbation du canal symbolique dégrade la viabilité.
+
+L'intervention peut être:
+- Expérimentale
+- Simulationnelle
+- Quasi expérimentale via contrefactuel instrumenté
+
+Le protocole et l'indicateur de perturbation sont définis ex ante.

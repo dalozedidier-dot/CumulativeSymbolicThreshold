@@ -1,12 +1,13 @@
-# Manuscript draft
+# Manuscrit, brouillon
 
-Provisional title:
+Titre provisoire:
 Cumulative Symbolic Threshold
 
+Sections:
 1. Introduction
-2. Theory
-3. Protocol and preregistration
-4. Results
+2. Théorie
+3. Protocole et pré enregistrement
+4. Résultats
 5. Discussion
-6. Limitations
+6. Limites
 7. Conclusion

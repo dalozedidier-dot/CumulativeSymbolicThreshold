@@ -1,3 +1,3 @@
 # 04_Code
 
-Reproducible environment, pipeline skeleton, config examples.
+Environnement et pipeline minimal reproductible.

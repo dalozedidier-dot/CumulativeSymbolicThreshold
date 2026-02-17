@@ -1,3 +1,3 @@
 # 05_Results
 
-Results structure for registered outputs, figures, tables.
+Structure des sorties enregistrées, figures et tables.

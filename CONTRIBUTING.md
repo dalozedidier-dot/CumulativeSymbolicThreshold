@@ -1,11 +1,13 @@
 # Contributing
 
-This repository is primarily a methodological framework.
+This repository is a methodological framework.
 
-If you propose changes:
-1) Keep the framework falsifiable and preregistrable.
-2) Separate core definitions from robustness variants.
-3) Avoid circular definitions between V(t) and C(t).
-4) Provide rationale and, when relevant, minimal examples.
+Rules:
+- Keep the framework falsifiable and preregistrable.
+- Separate core definitions from robustness variants.
+- Avoid circular definitions between V(t) and C(t).
+- Provide rationale and minimal examples when proposing changes.
 
-Open an issue first for substantial changes.
+Suggested workflow:
+1) Open an issue describing the change.
+2) Submit a PR with clear scope and updated docs.

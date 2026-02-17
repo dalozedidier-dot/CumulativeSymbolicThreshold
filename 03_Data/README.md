@@ -1,3 +1,3 @@
 # 03_Data
 
-Data dictionary, inclusion and exclusion rules, raw/processed/synthetic structure.
+Dictionnaire de données, règles d'inclusion et d'exclusion, structure des datasets.
