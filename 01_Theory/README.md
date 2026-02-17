@@ -1,3 +1,4 @@
-# 01_Theory
+# ORI-C
+Documents canoniques.
 
-Théorie, définitions, notations, hypothèses.
+- Pancarte ORI-C, version normative 1.0: `01_Theory/ORI_C_Pancarte_Normative_v1_0.md`

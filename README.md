@@ -77,3 +77,7 @@ Démo robustesse (secondaire):
 ```bash
 python 04_Code/pipeline/run_robustness.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results
 ```
+
+## Documents canoniques
+
+- Pancarte ORI-C, version normative 1.0: `01_Theory/ORI_C_Pancarte_Normative_v1_0.md`
