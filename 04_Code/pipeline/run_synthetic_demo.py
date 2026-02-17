@@ -6,9 +6,13 @@ Ce script:
 - Calcule V(t), Cap(t), Sigma(t), S(t)
 - Calcule C(t) en version simplifiée
 - Détecte un seuil basique sur ΔC(t)
-- Sauvegarde 2 figures
-  1) C(t) avec seuil
-  2) V avant et après une perturbation symbolique
+- Sauvegarde 2 figures et un CSV processed
+
+Cas pré seuil:
+synthetic_minimal.csv
+
+Cas avec transition:
+synthetic_with_transition.csv
 
 Hypothèses de démo:
 - V(t) et S(t) sont des agrégations pondérées
@@ -66,7 +70,6 @@ def compute_sigma(df: pd.DataFrame) -> pd.Series:
 
 
 def compute_C_simplified(df: pd.DataFrame) -> pd.Series:
-    # Simplification: cumul des gains lorsque S et V montent ensemble.
     dS = df["S"].diff().fillna(0.0)
     dV = df["V"].diff().fillna(0.0)
     contrib = np.where((dS > 0) & (dV > 0), dV, 0.0)
@@ -90,7 +93,7 @@ def detect_threshold(delta_C: pd.Series, k: float, m: int, ref_frac: float = 0.4
     return None, thr
 
 
-def plot_C_with_threshold(df: pd.DataFrame, outpath: Path, threshold_idx: int | None, thr_value: float) -> None:
+def plot_C_with_threshold(df: pd.DataFrame, outpath: Path, threshold_idx: int | None) -> None:
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(df["t"], df["C"], label="C(t)")
@@ -109,7 +112,6 @@ def plot_C_with_threshold(df: pd.DataFrame, outpath: Path, threshold_idx: int | 
 
 
 def plot_V_before_after_symbolic(df: pd.DataFrame, outpath: Path, drop_frac: float = 0.35, gamma: float = 0.6) -> None:
-    # Démo: si perturb_symbolic==1, on réduit S et on pénalise V proportionnellement à la perte de S.
     pert = df["perturb_symbolic"].fillna(0).astype(int)
     S_pert = df["S"] * np.where(pert == 1, 1.0 - drop_frac, 1.0)
     V_pert = df["V"] - gamma * (df["S"] - S_pert)
@@ -119,7 +121,6 @@ def plot_V_before_after_symbolic(df: pd.DataFrame, outpath: Path, drop_frac: flo
     ax.plot(df["t"], df["V"], label="V(t) observé")
     ax.plot(df["t"], V_pert, label="V(t) sous perturbation symbolique")
 
-    # Ligne verticale au premier t perturbé
     idxs = df.index[pert == 1].tolist()
     if idxs:
         t0 = float(df.loc[idxs[0], "t"])
@@ -145,10 +146,11 @@ def main() -> int:
 
     df = pd.read_csv(args.input)
     required = [
-        "id","t","O","R","I",
-        "survie","energie_nette","integrite","persistance",
-        "repertoire","codification","densite_transmission","fidelite",
-        "demande_env"
+        "id", "t", "O", "R", "I",
+        "survie", "energie_nette", "integrite", "persistance",
+        "repertoire", "codification", "densite_transmission", "fidelite",
+        "demande_env",
+        "perturb_symbolic",
     ]
     missing = [c for c in required if c not in df.columns]
     if missing:
@@ -162,24 +164,21 @@ def main() -> int:
     df["Cap"] = compute_capacity(df)
     df["Sigma"] = compute_sigma(df)
 
-    # C(t) simplifié, par id
-    C_all = []
+    # C(t) simplifié par id
+    out_parts = []
     for _id, g in df.groupby("id", sort=False):
         g = g.copy()
         g["C"] = compute_C_simplified(g)
-        C_all.append(g)
-    df = pd.concat(C_all, axis=0).reset_index(drop=True)
+        out_parts.append(g)
+    df = pd.concat(out_parts, axis=0).reset_index(drop=True)
 
     df["delta_C"] = df.groupby("id")["C"].diff().fillna(0.0)
 
-    # Détection seuil sur l'unique id principal, sinon sur la concat
-    threshold_idx, thr_value = detect_threshold(df["delta_C"], k=args.k, m=args.m)
-
+    threshold_idx, _thr_value = detect_threshold(df["delta_C"], k=args.k, m=args.m)
     df["threshold_hit"] = 0
     if threshold_idx is not None:
         df.loc[threshold_idx, "threshold_hit"] = 1
 
-    # Exports
     tables_dir = args.outdir / "tables"
     figs_dir = args.outdir / "figures"
     tables_dir.mkdir(parents=True, exist_ok=True)
@@ -187,16 +186,8 @@ def main() -> int:
 
     df.to_csv(tables_dir / "processed_synthetic.csv", index=False)
 
-    plot_C_with_threshold(
-        df,
-        figs_dir / "C_threshold.png",
-        threshold_idx=threshold_idx,
-        thr_value=thr_value,
-    )
-    plot_V_before_after_symbolic(
-        df,
-        figs_dir / "V_symbolic_perturbation.png",
-    )
+    plot_C_with_threshold(df, figs_dir / "C_threshold.png", threshold_idx=threshold_idx)
+    plot_V_before_after_symbolic(df, figs_dir / "V_symbolic_perturbation.png")
     return 0
 
 

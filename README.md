@@ -9,30 +9,44 @@ Date: 2026-02-17
 Cadre méthodique reproductible pour tester l'hypothèse d'un basculement vers un régime symbolique cumulatif.
 
 Noyau:
-- Cycle interne: Organisation O(t), Résilience R(t), Intégration I(t)
-- Viabilité: V(t) mesurée sur une fenêtre [t-Δ, t], agrégation fixée ex ante
-- Mismatch: Σ(t) = max(0, D(E(t)) - C(O(t), R(t), I(t)))
-- Stock symbolique: S(t)
-- Efficacité symbolique sous intervention: s(t) = ΔV(t) / ΔS(t)
-- Variable d'ordre: C(t), gain intergénérationnel attribuable à la transmission sociale sur un horizon T fixé ex ante
-- Intervention exogène: U(t), contrainte extérieure pouvant augmenter D(E(t)), réduire C(O,R,I), ou couper le canal symbolique
+1) Cycle interne: Organisation O(t), Résilience R(t), Intégration I(t)  
+2) Viabilité: V(t) sur [t-Δ, t], agrégation fixée ex ante  
+3) Mismatch: Σ(t) = max(0, D(E(t)) - C(O(t), R(t), I(t)))  
+4) Stock symbolique: S(t)  
+5) Efficacité symbolique: s(t) = ΔV(t) / ΔS(t) sous intervention  
+6) Variable d'ordre: C(t), gain intergénérationnel attribuable à la transmission sociale sur horizon T  
+7) Contrainte exogène: U(t), hausse de demande, baisse de capacité, ou coupure du canal symbolique
 
 Structure:
-- 01_Theory: noyau théorique et glossaire
-- 02_Protocol: protocole, pré-enregistrement, interventions
-- 03_Data: dictionnaire de données, règles d'inclusion et exclusion, exemples
-- 04_Code: environnement minimal et pipeline de calcul
-- 05_Results: sorties et figures
-- 06_Manuscript: manuscrit et annexes méthodes
+- 01_Theory
+- 02_Protocol
+- 03_Data
+- 04_Code
+- 05_Results
+- 06_Manuscript
 
-Démo rapide:
-- Données synthétiques minimales: 03_Data/synthetic/synthetic_minimal.csv
-- Script: 04_Code/pipeline/run_synthetic_demo.py
-- Sorties attendues: 05_Results/figures/ (2 PNG) et 05_Results/tables/processed_synthetic.csv
+Démo rapide, cas pré seuil:
+```bash
+pip install -r 04_Code/requirements.txt
+python 04_Code/pipeline/run_synthetic_demo.py --input 03_Data/synthetic/synthetic_minimal.csv --outdir 05_Results
+```
+
+Démo rapide, cas avec transition:
+```bash
+pip install -r 04_Code/requirements.txt
+python 04_Code/pipeline/run_synthetic_demo.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results
+```
+
+Tests initiaux:
+```bash
+pip install -r 04_Code/requirements.txt
+pip install -r 04_Code/requirements-dev.txt
+PYTHONPATH=04_Code pytest -q
+```
 
 OSF:
-- DOI du projet: 10.17605/OSF.IO/G62PZ
-- URL OSF: https://osf.io/g62pz/
+- DOI: 10.17605/OSF.IO/G62PZ
+- URL: https://osf.io/g62pz/
 
 Licence: MIT (voir LICENSE).  
 Citation: voir CITATION.cff.

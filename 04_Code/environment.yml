@@ -1,0 +1,9 @@
+name: cumulative_symbolic_threshold
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - -r 04_Code/requirements.txt
+      - -r 04_Code/requirements-dev.txt
