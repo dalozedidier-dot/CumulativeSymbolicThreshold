@@ -1,9 +1,14 @@
-name: cumulative_symbolic_threshold
+name: cumulative_symbolic
 channels:
   - conda-forge
+  - defaults
 dependencies:
-  - python=3.11
+  - python=3.12
+  - pandas>=2.0
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - scipy>=1.11
+  - pytest>=8.0
   - pip
   - pip:
-      - -r 04_Code/requirements.txt
-      - -r 04_Code/requirements-dev.txt
+      - tqdm
