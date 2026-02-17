@@ -1,0 +1,21 @@
+{
+  "delta_window": 10,
+  "horizon_T": 50,
+  "omega": {
+    "survie": 0.25,
+    "energie_nette": 0.25,
+    "integrite": 0.25,
+    "persistance": 0.25
+  },
+  "alpha": {
+    "repertoire": 0.25,
+    "codification": 0.25,
+    "densite_transmission": 0.25,
+    "fidelite": 0.25
+  },
+  "k": 2.0,
+  "m": 3,
+  "sigma_star": 0.5,
+  "tau": 5,
+  "capacity_form": "product"
+}
