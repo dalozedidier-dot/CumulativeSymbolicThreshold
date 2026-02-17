@@ -54,3 +54,8 @@ OSF:
 
 Licence: MIT (voir LICENSE).  
 Citation: voir CITATION.cff.
+
+Démo robustesse (secondaire):
+```bash
+python 04_Code/pipeline/run_robustness.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results
+```

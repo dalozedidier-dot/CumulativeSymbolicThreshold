@@ -49,3 +49,24 @@ Simulation, expérimental, quasi expérimental, séries instrumentées.
 
 ## 7. Reproductibilité
 Seeds, versions, journal de run, données minimales.
+
+## 8. Robustesse (secondaire, non décisionnelle)
+
+Objectif: tester la sensibilité des résultats principaux à des variations raisonnables de paramètres de mesure. Ces analyses ne modifient pas les critères décisionnels H1 à H4.
+
+Variantes fixées ex ante:
+1) Poids ω pour V(t). Variation de plus ou moins 20% autour des valeurs principales, avec renormalisation pour conserver une somme égale à 1.
+2) Poids α pour S(t). Variation de plus ou moins 20% autour des valeurs principales, avec renormalisation pour conserver une somme égale à 1.
+3) Fenêtre Δ de lissage descriptif. Valeurs candidates: Δ ∈ {1, 3, 5, 7}. Ici Δ=1 correspond à aucun lissage. Le lissage sert uniquement à évaluer la stabilité, il ne redéfinit pas les variables décisionnelles.
+
+Application:
+- Recalculer V(t), S(t), Cap(t), Σ(t), C(t) et la détection de seuil sous chaque variante.
+- Reporter les changements éventuels sur: détection de seuil, position du seuil, et effet de perturbation symbolique sur V(t).
+
+Critère de stabilité:
+- Si au moins 80% des variantes aboutissent à la même conclusion binaire que l'analyse principale, la stabilité est considérée comme satisfaisante.
+- Sinon, la sensibilité est signalée comme limitation.
+
+Implémentation:
+- Script dédié: 04_Code/pipeline/run_robustness.py
+- Sortie attendue: 05_Results/tables/robustness_results.csv
