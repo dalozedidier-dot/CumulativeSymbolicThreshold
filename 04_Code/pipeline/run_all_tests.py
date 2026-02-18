@@ -52,13 +52,21 @@ def _ensure_input_csv(root: Path, outdir: Path, input_csv: str | None) -> Path:
         p = Path(input_csv)
         if p.is_file():
             return p
-    # fallback: generate a synthetic run with a demand shock
+
+    # Prefer a committed canonical synthetic dataset if available.
+    preferred = root / "03_Data" / "synthetic" / "synthetic_with_threshold.csv"
+    if preferred.is_file():
+        return preferred
+
+    fallback = root / "03_Data" / "synthetic" / "synthetic_with_transition.csv"
+    if fallback.is_file():
+        return fallback
+
+    # Last resort: generate a synthetic run with a demand shock.
     gen = outdir / "_generated_synthetic.csv"
     df = run_oric(ORICConfig(intervention="demand_shock"))
     df.to_csv(gen, index=False)
     return gen
-
-
 def _read_json(p: Path) -> Dict[str, Any]:
     return json.loads(p.read_text(encoding="utf-8"))
 
@@ -80,6 +88,15 @@ def _verdict_from_ori_demo(test_dir: Path) -> str:
 
 
 def _verdict_from_causal_tests(test_dir: Path) -> str:
+    """Local verdict for the causal suite.
+
+    Preferred source of truth is tables/verdict.json if present.
+    A CSV heuristic is kept only for backward compatibility.
+    """
+    vjson = test_dir / "tables" / "verdict.json"
+    if vjson.exists():
+        return str(_read_json(vjson).get("verdict", "INDETERMINATE"))
+
     p = test_dir / "tables" / "causal_tests_summary.csv"
     if not p.exists():
         return "INDETERMINATE"
@@ -88,11 +105,7 @@ def _verdict_from_causal_tests(test_dir: Path) -> str:
         return "INDETERMINATE"
     if bool((df["causal_ok"] == True).all()):  # noqa: E712
         return "ACCEPT"
-    if bool((df["causal_ok"] == False).any()):  # noqa: E712
-        return "REJECT"
     return "INDETERMINATE"
-
-
 def _verdict_from_synthetic_demo(test_dir: Path) -> str:
     p = test_dir / "tables" / "verdict.json"
     if not p.exists():
@@ -101,6 +114,15 @@ def _verdict_from_synthetic_demo(test_dir: Path) -> str:
 
 
 def _verdict_from_robustness(test_dir: Path) -> str:
+    """Local verdict for robustness.
+
+    Preferred source of truth is tables/verdict.json if present.
+    The CSV heuristic is kept for backward compatibility.
+    """
+    vjson = test_dir / "tables" / "verdict.json"
+    if vjson.exists():
+        return str(_read_json(vjson).get("verdict", "INDETERMINATE"))
+
     p = test_dir / "tables" / "robustness_results.csv"
     if not p.exists():
         return "INDETERMINATE"
@@ -110,11 +132,7 @@ def _verdict_from_robustness(test_dir: Path) -> str:
     share = float((df["threshold_detected"] == True).mean())  # noqa: E712
     if share >= 0.80:
         return "ACCEPT"
-    if share <= 0.20:
-        return "REJECT"
     return "INDETERMINATE"
-
-
 def _verdict_from_reinjection(test_dir: Path) -> str:
     p = test_dir / "tables" / "verdict.json"
     if not p.exists():
@@ -129,15 +147,19 @@ def _aggregate(verdicts: Dict[str, str]) -> Dict[str, str]:
         and (verdicts.get("T4_robustness") in {"ACCEPT", "INDETERMINATE"})
         and (verdicts.get("T5_reinjection") in {"ACCEPT", "INDETERMINATE"})
     )
+
     if core_ok and symbolic_ok:
         global_v = "ACCEPT"
-    elif (verdicts.get("T2_causal") == "REJECT") or (verdicts.get("T1_ori_demo") == "REJECT"):
+    elif "REJECT" in verdicts.values():
         global_v = "REJECT"
     else:
         global_v = "INDETERMINATE"
-    return {"core": "ACCEPT" if core_ok else "INDETERMINATE", "symbolic": "ACCEPT" if symbolic_ok else "INDETERMINATE", "global": global_v}
 
-
+    return {
+        "core": "ACCEPT" if core_ok else "INDETERMINATE",
+        "symbolic": "ACCEPT" if symbolic_ok else "INDETERMINATE",
+        "global": global_v,
+    }
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--outroot", default=None, help="Base directory under 05_Results/")

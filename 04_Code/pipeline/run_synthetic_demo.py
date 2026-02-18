@@ -158,26 +158,37 @@ def compute_C_simplified(df: pd.DataFrame, alpha: float = 0.1, beta: float = 0.5
     return pd.Series(C, index=df.index, name="C")
 
 
-def detect_threshold(delta_C: pd.Series, k: float = 2.5, m: int = 3) -> Tuple[Optional[int], float]:
-    """
-    Detect threshold in delta_C using global mean/std:
-    threshold = mean + k * std
-    hit if delta_C > threshold for m consecutive steps.
+def detect_threshold(
+    delta_C: pd.Series,
+    k: float = 2.5,
+    m: int = 3,
+    baseline_n: int = 30,
+) -> Tuple[Optional[int], float]:
+    """Detect a sustained threshold crossing using a baseline window.
 
-    Returns (index_label, threshold_value).
+    We estimate (mu, sigma) on the first `baseline_n` points of delta_C, then
+    declare a hit if delta_C > mu + k*sigma for `m` consecutive steps.
+
+    This avoids inflating the threshold by including the transition itself.
     """
-    x = pd.to_numeric(delta_C, errors="coerce").fillna(0.0)
-    mu = float(x.mean())
-    sd = float(x.std(ddof=1)) if len(x) > 1 else 0.0
-    thr = mu + float(k) * sd
-    above = x > thr
-    if m <= 1:
-        hit = above
-    else:
-        hit = above.rolling(window=m, min_periods=m).sum() >= m
-    if bool(hit.any()):
-        idx = hit[hit].index[0]
-        return idx, thr
+
+    if baseline_n < 5:
+        baseline_n = 5
+
+    baseline = delta_C.iloc[:baseline_n]
+    mu = float(baseline.mean())
+    sigma = float(baseline.std(ddof=0))
+    thr = mu + k * sigma
+
+    consec = 0
+    for i, v in enumerate(delta_C):
+        if v > thr:
+            consec += 1
+            if consec >= m:
+                return i, thr
+        else:
+            consec = 0
+
     return None, thr
 
 
@@ -229,6 +240,7 @@ def main() -> int:
     ap.add_argument("--outdir", required=True, help="Output directory")
     ap.add_argument("--k", type=float, default=2.5)
     ap.add_argument("--m", type=int, default=3)
+    ap.add_argument("--baseline-n", type=int, default=30, help="Initial points used to estimate baseline mu/sigma for threshold.")
     ap.add_argument("--cap-scale", type=float, default=1000.0)
     args = ap.parse_args()
 
@@ -249,7 +261,7 @@ def main() -> int:
     df["C"] = compute_C_simplified(df)
 
     df["delta_C"] = df["C"].diff().fillna(0.0)
-    thr_idx, thr_val = detect_threshold(df["delta_C"], k=args.k, m=args.m)
+    thr_idx, thr_val = detect_threshold(df["delta_C"], k=args.k, m=args.m, baseline_n=args.baseline_n)
     df["threshold_value"] = thr_val
     df["threshold_hit"] = 0
     if thr_idx is not None:
