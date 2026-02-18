@@ -60,7 +60,7 @@
     "demand_noise": 0.05,
     "ori_drift": 0.002,
     "ori_trend": 0.0,
-    "sigma_star": 120.0,
+    "sigma_star": 0.0,
     "sigma_to_S_alpha": 0.0,
     "S_decay": 0.0014285714285714286,
     "C_beta": 0.4,

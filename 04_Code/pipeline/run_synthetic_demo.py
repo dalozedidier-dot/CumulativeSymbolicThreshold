@@ -155,27 +155,75 @@ def detect_threshold(
     k: float = 2.5,
     m: int = 3,
     baseline_n: int = 30,
+    event_idx: Optional[int] = None,
 ) -> Tuple[Optional[int], float]:
-    """Detect a sustained threshold crossing using a baseline window."""
+    """Detect a sustained threshold crossing using a baseline window.
 
-    if baseline_n < 5:
-        baseline_n = 5
+    Improvements (needed for short datasets)
+    - Ignores the artificial delta_C[0]=0 artifact for baseline estimation.
+    - Adapts baseline_n when the series is short.
+    - If event_idx is provided, computes the baseline strictly before the event and
+      searches for the crossing starting at the event.
 
-    baseline = delta_C.iloc[:baseline_n]
+    Parameters
+    - delta_C: series of delta_C(t)
+    - k: threshold multiplier (mu + k*sigma)
+    - m: number of consecutive points above threshold
+    - baseline_n: maximum baseline window length
+    - event_idx: optional index of a known transition (first index where a flag becomes 1)
+    """
+
+    x = pd.to_numeric(delta_C, errors="coerce").fillna(0.0).reset_index(drop=True)
+    n = int(len(x))
+    if n == 0:
+        return None, 0.0
+
+    bn = int(baseline_n)
+    if bn < 5:
+        bn = 5
+
+    # If an explicit event index exists, keep baseline strictly before it.
+    ev: Optional[int]
+    if event_idx is not None:
+        try:
+            ev = int(event_idx)
+            if ev >= 5:
+                bn = min(bn, ev)
+        except Exception:
+            ev = None
+    else:
+        ev = None
+
+    # Avoid baseline_n covering the whole series on short datasets.
+    if bn >= n:
+        bn = max(5, n // 3)
+
+    # On short series, cap the baseline to a conservative fraction of the series.
+    if n <= 120:
+        bn = min(bn, max(5, n // 3))
+
+    # Ignore the diff artifact if present (delta_C[0] often equals 0).
+    b0 = 1 if (n > 1 and abs(float(x.iloc[0])) < 1e-12) else 0
+    if bn - b0 < 5:
+        bn = min(n, b0 + 5)
+
+    baseline = x.iloc[b0:bn]
     mu = float(baseline.mean())
     sigma = float(baseline.std(ddof=0))
-    thr = mu + k * sigma
+    thr = mu + float(k) * sigma
 
+    start = int(ev) if ev is not None else 0
     consec = 0
-    for i, v in enumerate(delta_C):
-        if v > thr:
+    for i in range(start, n):
+        if float(x.iloc[i]) > thr:
             consec += 1
-            if consec >= m:
-                return i, thr
+            if consec >= int(m):
+                return int(i), float(thr)
         else:
             consec = 0
 
-    return None, thr
+    return None, float(thr)
+
 
 
 # -----------------------------
@@ -249,7 +297,20 @@ def main() -> int:
     df["C"] = compute_C_simplified(df)
 
     df["delta_C"] = df["C"].diff().fillna(0.0)
-    thr_idx, thr_val = detect_threshold(df["delta_C"], k=args.k, m=args.m, baseline_n=args.baseline_n)
+    event_idx: Optional[int] = None
+    if "perturb_symbolic" in df.columns:
+        flag = pd.to_numeric(df["perturb_symbolic"], errors="coerce").fillna(0.0)
+        nz = flag.index[flag != 0]
+        if len(nz) > 0:
+            event_idx = int(nz.min())
+
+    thr_idx, thr_val = detect_threshold(
+        df["delta_C"],
+        k=float(args.k),
+        m=int(args.m),
+        baseline_n=int(args.baseline_n),
+        event_idx=event_idx,
+    )
     df["threshold_value"] = thr_val
     df["threshold_hit"] = 0
     if thr_idx is not None:
@@ -267,6 +328,7 @@ def main() -> int:
         "k": float(args.k),
         "m": int(args.m),
         "baseline_n": int(args.baseline_n),
+        "event_idx": None if event_idx is None else int(event_idx),
         "threshold_value": float(thr_val),
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

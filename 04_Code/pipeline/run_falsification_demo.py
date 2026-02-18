@@ -66,11 +66,27 @@ def _run_causal(run_dir: Path, alpha: float, c_min: float, lags: str, pdf: bool)
 
 
 def _scenario_configs(base: ORICConfig, scenario: str) -> tuple[ORICConfig, ORICConfig]:
-    # Control always baseline positive
+    """Return (control, test) configs for a given scenario.
+
+    Important correction
+    - The default sigma_star used in falsification runs can be high (stress regime).
+      Under demand_shock, Sigma may stay below sigma_star, which would incorrectly make
+      baseline_positive and no_S indistinguishable.
+    - For falsification clarity, we force sigma_star = 0.0 in scenarios whose point is to
+      isolate the presence or absence of sigma->S accumulation.
+    """
+
+    # Control: no exogenous intervention
     cfg_control = ORICConfig(**{**asdict(base), "intervention": "none"})
 
     if scenario == "baseline_positive":
-        cfg_test = ORICConfig(**{**asdict(base), "intervention": "demand_shock"})
+        cfg_test = ORICConfig(
+            **{
+                **asdict(base),
+                "intervention": "demand_shock",
+                "sigma_star": 0.0,
+            }
+        )
         return cfg_control, cfg_test
 
     if scenario == "no_S":
@@ -78,6 +94,7 @@ def _scenario_configs(base: ORICConfig, scenario: str) -> tuple[ORICConfig, ORIC
             **{
                 **asdict(base),
                 "intervention": "demand_shock",
+                "sigma_star": 0.0,
                 "sigma_to_S_alpha": 0.0,
             }
         )
@@ -88,6 +105,7 @@ def _scenario_configs(base: ORICConfig, scenario: str) -> tuple[ORICConfig, ORIC
             **{
                 **asdict(base),
                 "intervention": "symbolic_cut",
+                "sigma_star": 0.0,
                 "symbolic_cut_factor": 0.0,
                 "sigma_to_S_alpha": 0.0,
                 "S_decay": max(float(base.S_decay), 0.01),
@@ -100,12 +118,14 @@ def _scenario_configs(base: ORICConfig, scenario: str) -> tuple[ORICConfig, ORIC
             **{
                 **asdict(base),
                 "intervention": "capacity_hit",
+                "sigma_star": 0.0,
                 "sigma_to_S_alpha": 0.0,
             }
         )
         return cfg_control, cfg_test
 
     raise ValueError(f"Unknown scenario: {scenario}")
+
 
 
 def main() -> int:

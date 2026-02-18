@@ -112,6 +112,13 @@ def main() -> int:
     if "t" not in df_raw.columns:
         df_raw["t"] = np.arange(len(df_raw), dtype=int)
 
+    event_idx = None
+    if "perturb_symbolic" in df_raw.columns:
+        flag = pd.to_numeric(df_raw["perturb_symbolic"], errors="coerce").fillna(0.0)
+        nz = flag.index[flag != 0]
+        if len(nz) > 0:
+            event_idx = int(nz.min())
+
     omegas = [float(x.strip()) for x in str(args.omegas).split(",") if x.strip()]
     alphas = [float(x.strip()) for x in str(args.alphas).split(",") if x.strip()]
 
@@ -119,7 +126,7 @@ def main() -> int:
     for omega in omegas:
         for alpha_scale in alphas:
             df = _apply_variant(df_raw, omega=omega, alpha_scale=alpha_scale, cap_scale=float(args.cap_scale))
-            thr_idx, thr_val = detect_threshold(df["delta_C"], k=float(args.k), m=int(args.m), baseline_n=int(args.baseline_n))
+            thr_idx, thr_val = detect_threshold(df["delta_C"], k=float(args.k), m=int(args.m), baseline_n=int(args.baseline_n), event_idx=event_idx)
             detected = thr_idx is not None
 
             rows.append(
@@ -129,6 +136,7 @@ def main() -> int:
                     "k": float(args.k),
                     "m": int(args.m),
                     "baseline_n": int(args.baseline_n),
+        "event_idx": None if event_idx is None else int(event_idx),
                     "threshold_detected": bool(detected),
                     "threshold_value": float(thr_val),
                     "threshold_index": None if thr_idx is None else int(thr_idx),
@@ -150,6 +158,7 @@ def main() -> int:
         "k": float(args.k),
         "m": int(args.m),
         "baseline_n": int(args.baseline_n),
+        "event_idx": None if event_idx is None else int(event_idx),
         "share_threshold_detected": share,
         "verdict": verdict,
     }
@@ -164,6 +173,7 @@ def main() -> int:
                 "k": float(args.k),
                 "m": int(args.m),
                 "baseline_n": int(args.baseline_n),
+        "event_idx": None if event_idx is None else int(event_idx),
             },
             indent=2,
         ),
