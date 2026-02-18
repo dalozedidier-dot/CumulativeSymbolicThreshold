@@ -18,6 +18,9 @@ jobs:
   symbolic_suite:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      REPS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.reps || '50' }}
+      SEED: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.seed || '42' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,7 +50,7 @@ jobs:
           pip list | tee _ci_out/pip_list.txt
 
           if [ -f 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py ]; then
-            python 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py               --outdir _ci_out/symbolic_suite               --reps "${{ inputs.reps || '50' }}"               --seed "${{ inputs.seed || '42' }}"               2>&1 | tee _ci_out/symbolic_suite.log
+            python 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py               --outdir _ci_out/symbolic_suite               --reps "$REPS"               --seed "$SEED"               2>&1 | tee _ci_out/symbolic_suite.log
           else
             echo "Missing 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py. Apply the symbolic suite patch first." | tee _ci_out/symbolic_suite.log
             exit 1
