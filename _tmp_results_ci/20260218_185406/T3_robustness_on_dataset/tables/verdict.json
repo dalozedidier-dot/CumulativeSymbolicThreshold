@@ -1,0 +1,8 @@
+{
+  "test": "robustness_threshold",
+  "verdict": "REJECT",
+  "share_threshold_detected": 0.0,
+  "k": 2.5,
+  "m": 3,
+  "baseline_n": 30
+}

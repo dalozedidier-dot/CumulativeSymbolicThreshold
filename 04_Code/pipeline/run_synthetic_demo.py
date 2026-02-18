@@ -12,6 +12,11 @@ Design notes:
 - All transformations are deterministic given the input CSV and flags.
 - Columns are added, never removed.
 - The script is defensive: it tolerates missing optional columns.
+
+Note on --seed
+- The pipeline here is deterministic from the CSV. The seed is accepted for suite
+  compatibility and for any future stochastic extensions, but it does not change
+  results today.
 """
 
 from __future__ import annotations
@@ -57,9 +62,7 @@ def _col(df: pd.DataFrame, name: str, default: float = 0.0) -> pd.Series:
 
 
 def compute_capacity(df: pd.DataFrame, scale: float = 1000.0) -> pd.Series:
-    """
-    Cap(t) principal: projection explicite O(t) * R(t) * I(t), scaled.
-    """
+    """Cap(t) principal: projection explicite O(t) * R(t) * I(t), scaled."""
     O = _col(df, "O", 0.0)
     R = _col(df, "R", 0.0)
     I = _col(df, "I", 0.0)
@@ -68,8 +71,8 @@ def compute_capacity(df: pd.DataFrame, scale: float = 1000.0) -> pd.Series:
 
 
 def compute_sigma(df: pd.DataFrame, demand_col: str = "demande_env") -> pd.Series:
-    """
-    Sigma(t) = max(0, D(E(t)) - Cap(t)).
+    """Sigma(t) = max(0, D(E(t)) - Cap(t)).
+
     demand_col defaults to 'demande_env' but falls back to 'D' if needed.
     """
     if demand_col not in df.columns and "D" in df.columns:
@@ -81,8 +84,8 @@ def compute_sigma(df: pd.DataFrame, demand_col: str = "demande_env") -> pd.Serie
 
 
 def compute_V(df: pd.DataFrame, w: Weights) -> pd.Series:
-    """
-    V(t) proxy: weighted non-compensatory-ish blend.
+    """V(t) proxy.
+
     Preference: use survivie, energie_nette, integrite, persistance if present.
     Otherwise: fallback to (O,R,I) min as a weak viability proxy.
 
@@ -93,26 +96,21 @@ def compute_V(df: pd.DataFrame, w: Weights) -> pd.Series:
         energie = _col(df, "energie_nette", 0.0)
         integrite = _col(df, "integrite", 0.0)
         pers = _col(df, "persistance", 1.0)
-        v = (
-            w.w_survie * survie
-            + w.w_energie * energie
-            + w.w_integrite * integrite
-        )
+        v = w.w_survie * survie + w.w_energie * energie + w.w_integrite * integrite
         v = v * pers
         v = np.clip(v.to_numpy(), 0.0, 1.0)
         return pd.Series(v, index=df.index, name="V")
-    else:
-        O = _col(df, "O", 0.0)
-        R = _col(df, "R", 0.0)
-        I = _col(df, "I", 0.0)
-        v = np.minimum(np.minimum(O, R), I)
-        v = np.clip(v.to_numpy(), 0.0, 1.0)
-        return pd.Series(v, index=df.index, name="V")
+
+    O = _col(df, "O", 0.0)
+    R = _col(df, "R", 0.0)
+    I = _col(df, "I", 0.0)
+    v = np.minimum(np.minimum(O, R), I)
+    v = np.clip(v.to_numpy(), 0.0, 1.0)
+    return pd.Series(v, index=df.index, name="V")
 
 
 def compute_S(df: pd.DataFrame, w: Weights) -> pd.Series:
-    """
-    S(t) proxy: transmissible symbolic stock.
+    """S(t) proxy: transmissible symbolic stock.
 
     Uses repertoire, codification, densite_transmission, fidelite if available.
     Otherwise uses a fallback based on (1 - Sigma_norm) to avoid NaNs.
@@ -123,16 +121,10 @@ def compute_S(df: pd.DataFrame, w: Weights) -> pd.Series:
         cod = _col(df, "codification", 0.0)
         den = _col(df, "densite_transmission", 0.0)
         fid = _col(df, "fidelite", 0.0)
-        s = (
-            w.w_repertoire * rep
-            + w.w_codification * cod
-            + w.w_densite * den
-            + w.w_fidelite * fid
-        )
+        s = w.w_repertoire * rep + w.w_codification * cod + w.w_densite * den + w.w_fidelite * fid
         s = np.clip(s.to_numpy(), 0.0, 1.0)
         return pd.Series(s, index=df.index, name="S")
 
-    # Fallback: higher mismatch -> lower symbolic stock (crude but deterministic)
     sigma = _col(df, "Sigma", 0.0).to_numpy()
     if sigma.max() > 0:
         sigma_norm = sigma / (sigma.max() + 1e-12)
@@ -144,9 +136,9 @@ def compute_S(df: pd.DataFrame, w: Weights) -> pd.Series:
 
 
 def compute_C_simplified(df: pd.DataFrame, alpha: float = 0.1, beta: float = 0.5, gamma: float = 0.1) -> pd.Series:
-    """
+    """Simplified C recursion.
+
     C(t+1) = C(t) + beta * S(t) - gamma * V(t)
-    with an optional alpha applied to Sigma if S is missing.
 
     Assumes df already contains S and V.
     """
@@ -164,13 +156,7 @@ def detect_threshold(
     m: int = 3,
     baseline_n: int = 30,
 ) -> Tuple[Optional[int], float]:
-    """Detect a sustained threshold crossing using a baseline window.
-
-    We estimate (mu, sigma) on the first `baseline_n` points of delta_C, then
-    declare a hit if delta_C > mu + k*sigma for `m` consecutive steps.
-
-    This avoids inflating the threshold by including the transition itself.
-    """
+    """Detect a sustained threshold crossing using a baseline window."""
 
     if baseline_n < 5:
         baseline_n = 5
@@ -195,6 +181,7 @@ def detect_threshold(
 # -----------------------------
 # CLI
 # -----------------------------
+
 
 def _make_dirs(outdir: Path) -> tuple[Path, Path]:
     figdir = outdir / "figures"
@@ -238,6 +225,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True, help="Path to synthetic CSV")
     ap.add_argument("--outdir", required=True, help="Output directory")
+    ap.add_argument("--seed", type=int, default=123, help="Accepted for suite compatibility (no effect today)")
     ap.add_argument("--k", type=float, default=2.5)
     ap.add_argument("--m", type=int, default=3)
     ap.add_argument("--baseline-n", type=int, default=30, help="Initial points used to estimate baseline mu/sigma for threshold.")
@@ -267,17 +255,18 @@ def main() -> int:
     if thr_idx is not None:
         df.loc[thr_idx, "threshold_hit"] = 1
 
-    # Save tables
     processed = tabdir / "processed_synthetic.csv"
     df.to_csv(processed, index=False)
 
     summary = {
         "input": str(inp),
         "n": int(len(df)),
+        "seed": int(args.seed),
         "threshold_detected": bool(thr_idx is not None),
         "threshold_index": None if thr_idx is None else int(thr_idx),
         "k": float(args.k),
         "m": int(args.m),
+        "baseline_n": int(args.baseline_n),
         "threshold_value": float(thr_val),
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -290,7 +279,6 @@ def main() -> int:
     }
     (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
 
-    # Figures
     _plot_C_with_threshold(df, thr_idx, figdir / "c_t_with_threshold.png")
     _plot_V_perturbation(df, figdir / "v_t_perturbation.png")
 

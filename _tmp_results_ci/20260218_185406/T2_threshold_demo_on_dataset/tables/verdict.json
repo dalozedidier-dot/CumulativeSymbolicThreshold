@@ -1,0 +1,6 @@
+{
+  "test": "synthetic_demo_threshold",
+  "verdict": "INDETERMINATE",
+  "threshold_detected": false,
+  "threshold_value": 0.22641674486886082
+}

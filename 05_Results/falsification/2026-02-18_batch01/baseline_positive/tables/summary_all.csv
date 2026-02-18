@@ -1,0 +1,2 @@
+scenario,seed,threshold_hit_t,C_mean_post,C_positive_frac_post,effect_C_post_mean,p_value_C_post_mean,run_dir
+baseline_positive,4100,,-79.48306771274389,0.0,4.8169062302741565,0.002095866863295891,run_0001

@@ -1,0 +1,11 @@
+{
+  "input": "03_Data/synthetic/synthetic_with_transition.csv",
+  "n": 30,
+  "seed": 123,
+  "threshold_detected": false,
+  "threshold_index": null,
+  "k": 2.5,
+  "m": 3,
+  "baseline_n": 30,
+  "threshold_value": 0.22641674486886082
+}

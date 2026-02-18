@@ -1,0 +1,2 @@
+seed,intervention,effect_C_post_mean,p_value_C_post_mean,t0,delta,T,C_mean_pre,C_mean_post,C_mean_post_minus_pre,C_positive_frac_post,C_min_post,C_cross_t,threshold_hit_t,threshold_value
+4100,capacity_hit,17.845888621333913,5.4974600517507476e-31,900,250,600,-43.4370935378625,-68.4329088757463,-24.995815337883805,0.0,-94.24760696683401,,,-0.00927092970503937

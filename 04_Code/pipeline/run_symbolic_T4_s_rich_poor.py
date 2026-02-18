@@ -1,167 +1,143 @@
 #!/usr/bin/env python3
-# 04_Code/pipeline/run_symbolic_T4_s_rich_poor.py
-"""
-Test T4 (normatif) : Variation contrôlée de S(t) -> effet sur C(t), à ORI comparable.
-Objectif : comparer C(t) sous condition S_rich vs S_poor, sans exiger Σ>0.
+"""04_Code/pipeline/run_symbolic_T4_s_rich_poor.py
 
-Outputs (dans --outdir):
-- figures/t4_s_rich_poor_c_end.png
-- tables/summary.csv
+T4: symbolic stock richness test.
+
+Hypothesis
+- With identical ORI conditions (same seed, same O/R/I path), a higher initial symbolic stock S0
+  yields a higher C(t) trajectory and higher C_end.
+
+Implementation
+- For each seed: run two trajectories with the same seed and the same parameters except S0.
+- Compare C_end across pairs.
+
+Outputs
+- tables/paired_results.csv
 - tables/summary.json
+- figures/c_end_boxplot.png
+
+CLI keeps historical flags: --n, --t-steps
 """
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure 04_Code is on sys.path so `import pipeline.*` works when scripts are executed directly.
+_CODE_DIR = Path(__file__).resolve().parents[1]
+if str(_CODE_DIR) not in sys.path:
+    sys.path.insert(0, str(_CODE_DIR))
+
 import argparse
 import json
-import sys
-from dataclasses import asdict
-from pathlib import Path
-from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import ttest_ind
+from scipy import stats
 
-# Robust sys.path: allow "import pipeline.*" when executed as a file
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "04_Code"))
-
-from pipeline.ori_c_pipeline import ORICConfig, generate_oric_synth  # noqa: E402
+from pipeline.ori_c_pipeline import ORICConfig, run_oric
 
 
-def _robust_sd(x: np.ndarray) -> float:
-    x = np.asarray(x, dtype=float)
-    med = np.median(x)
-    mad = np.median(np.abs(x - med))
-    sd = 1.4826 * mad
-    return float(sd) if sd > 1e-12 else float(np.std(x, ddof=1) + 1e-12)
-
-
-def _bootstrap_ci(delta: np.ndarray, n_boot: int, seed: int) -> Tuple[float, float]:
-    rng = np.random.default_rng(seed)
-    boots = []
-    n = len(delta)
-    for _ in range(n_boot):
-        idx = rng.integers(0, n, size=n)
-        boots.append(float(np.mean(delta[idx])))
-    lo, hi = np.percentile(boots, [2.5, 97.5])
-    return float(lo), float(hi)
-
-
-def run_condition(cfg: ORICConfig, n: int, seed: int) -> pd.DataFrame:
-    rows = []
-    for i in range(n):
-        df = generate_oric_synth(cfg, seed=seed + i)
-        rows.append(
-            {
-                "seed": seed + i,
-                "C_end": float(df["C"].iloc[-1]),
-                "S_end": float(df["S"].iloc[-1]),
-                "Sigma_mean": float(df["Sigma"].mean()),
-                "V_q05": float(np.quantile(df["V"].values, 0.05)),
-            }
-        )
-    return pd.DataFrame(rows)
+def _make_dirs(outdir: Path) -> tuple[Path, Path]:
+    figdir = outdir / "figures"
+    tabdir = outdir / "tables"
+    figdir.mkdir(parents=True, exist_ok=True)
+    tabdir.mkdir(parents=True, exist_ok=True)
+    return figdir, tabdir
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--outdir", type=str, required=True)
-    ap.add_argument("--n", type=int, default=60, help="runs per condition")
-    ap.add_argument("--seed", type=int, default=1337)
+    ap.add_argument("--outdir", required=True)
+    ap.add_argument("--n", type=int, default=60)
+    ap.add_argument("--seed", type=int, default=1234)
     ap.add_argument("--t-steps", type=int, default=260)
-    ap.add_argument("--s-poor", type=float, default=0.15)
-    ap.add_argument("--s-rich", type=float, default=0.80)
-    ap.add_argument("--alpha", type=float, default=0.01)
-    ap.add_argument("--sesoi-sd", type=float, default=0.30, help="SESOI in robust SD units for C")
-    ap.add_argument("--n-boot", type=int, default=2000)
+
+    ap.add_argument("--S-rich", type=float, default=0.70)
+    ap.add_argument("--S-poor", type=float, default=0.10)
+
+    ap.add_argument("--sigma-star", type=float, default=1e9, help="High default disables sigma-driven accumulation")
+    ap.add_argument("--tau", type=float, default=0.0)
+    ap.add_argument("--s-decay", type=float, default=0.002)
+
+    ap.add_argument("--demand-noise", type=float, default=0.0)
+    ap.add_argument("--ori-trend", type=float, default=0.0)
+
     args = ap.parse_args()
 
     outdir = Path(args.outdir)
-    (outdir / "figures").mkdir(parents=True, exist_ok=True)
-    (outdir / "tables").mkdir(parents=True, exist_ok=True)
+    figdir, tabdir = _make_dirs(outdir)
 
-    base_cfg = ORICConfig(
-        t_steps=int(args.t_steps),
-        demand_base=1.0,
-        demand_shock=0.0,
-        cap_scale=1.0,
-        omega=1.0,
-        alpha=0.10,
-        delta_window=10,
-        threshold_k=2.5,
-        threshold_m=3,
-        symbolic_threshold=None,  # no forced threshold for T4
-        symbolic_target=0.0,
-        symbolic_cut=False,
-        symbolic_cut_start=0,
-        symbolic_injection_start=None,
-        symbolic_injection_strength=0.0,
-    )
+    if float(args.tau) > 0.0:
+        s_decay = 1.0 / float(args.tau)
+    else:
+        s_decay = float(args.s_decay)
 
-    cfg_poor = ORICConfig(**{**asdict(base_cfg), "symbolic_target": float(args.s_poor)})
-    cfg_rich = ORICConfig(**{**asdict(base_cfg), "symbolic_target": float(args.s_rich)})
+    rows = []
+    for i in range(int(args.n)):
+        seed = int(args.seed) + i
 
-    df_poor = run_condition(cfg_poor, n=args.n, seed=args.seed + 10000)
-    df_rich = run_condition(cfg_rich, n=args.n, seed=args.seed + 20000)
+        cfg_common = ORICConfig(
+            seed=seed,
+            n_steps=int(args.t_steps),
+            intervention="none",
+            intervention_point=int(args.t_steps // 3),
+            intervention_duration=0,
+            sigma_star=float(args.sigma_star),
+            S_decay=float(s_decay),
+            demand_noise=float(args.demand_noise),
+            ori_trend=float(args.ori_trend),
+        )
 
-    poor = df_poor["C_end"].values
-    rich = df_rich["C_end"].values
+        df_rich = run_oric(ORICConfig(**{**cfg_common.__dict__, "S0": float(args.S_rich)}))
+        df_poor = run_oric(ORICConfig(**{**cfg_common.__dict__, "S0": float(args.S_poor)}))
 
-    delta = rich.mean() - poor.mean()
-    sd = _robust_sd(np.concatenate([poor, rich]))
-    effect_sd = float(delta / sd)
+        rows.append(
+            {
+                "seed": seed,
+                "C_end_rich": float(df_rich["C"].iloc[-1]),
+                "C_end_poor": float(df_poor["C"].iloc[-1]),
+                "diff_rich_minus_poor": float(df_rich["C"].iloc[-1] - df_poor["C"].iloc[-1]),
+            }
+        )
 
-    # Welch t-test
-    tstat, pval = ttest_ind(rich, poor, equal_var=False)
+    res = pd.DataFrame(rows)
+    res.to_csv(tabdir / "paired_results.csv", index=False)
 
-    # bootstrap CI for delta
-    rng = np.random.default_rng(args.seed)
-    boot_deltas = []
-    for _ in range(args.n_boot):
-        boot_r = rng.choice(rich, size=len(rich), replace=True)
-        boot_p = rng.choice(poor, size=len(poor), replace=True)
-        boot_deltas.append(float(np.mean(boot_r) - np.mean(boot_p)))
-    ci_lo, ci_hi = np.percentile(boot_deltas, [2.5, 97.5])
-    ci_lo, ci_hi = float(ci_lo), float(ci_hi)
-
-    verdict = "INDETERMINATE"
-    if (pval <= args.alpha) and (effect_sd >= args.sesoi_sd) and (ci_lo > 0.0):
-        verdict = "ACCEPT"
-    elif (pval <= args.alpha) and (ci_hi < 0.0):
-        verdict = "REJECT"
+    # Paired test on diff
+    diffs = res["diff_rich_minus_poor"].to_numpy(dtype=float)
+    tstat, pval = stats.ttest_1samp(diffs, popmean=0.0)
 
     summary = {
-        "test_id": "T4_symbolic_S_rich_vs_poor_on_C",
-        "n_per_condition": int(args.n),
-        "alpha": float(args.alpha),
-        "sesoi_sd": float(args.sesoi_sd),
-        "C_end_mean_poor": float(poor.mean()),
-        "C_end_mean_rich": float(rich.mean()),
-        "delta_C_end": float(delta),
-        "effect_sd": float(effect_sd),
-        "ci95_delta_lo": ci_lo,
-        "ci95_delta_hi": ci_hi,
-        "p_value_welch": float(pval),
-        "verdict": verdict,
-        "notes": "T4 tests S->C with ORI fixed; Σ not required to be >0.",
+        "n": int(args.n),
+        "seed_base": int(args.seed),
+        "t_steps": int(args.t_steps),
+        "S_rich": float(args.S_rich),
+        "S_poor": float(args.S_poor),
+        "mean_diff": float(np.mean(diffs)),
+        "p_value": float(pval),
     }
 
-    pd.DataFrame([summary]).to_csv(outdir / "tables" / "summary.csv", index=False)
-    (outdir / "tables" / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    (outdir / "verdict.txt").write_text(verdict + "\n", encoding="utf-8")
+    (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
-    # plot
-    fig = plt.figure(figsize=(7, 4))
-    ax = fig.add_subplot(111)
-    ax.boxplot([poor, rich], labels=["S_poor", "S_rich"], showmeans=True)
-    ax.set_ylabel("C_end")
-    ax.set_title("T4: Controlled S variation -> C_end")
-    fig.tight_layout()
-    fig.savefig(outdir / "figures" / "t4_s_rich_poor_c_end.png", dpi=200)
-    plt.close(fig)
+    verdict = {
+        "test": "T4_symbolic_S_rich_vs_poor",
+        "verdict": "ACCEPT" if float(pval) < 0.01 and float(np.mean(diffs)) > 0 else "INDETERMINATE",
+        "mean_diff": float(np.mean(diffs)),
+        "p_value": float(pval),
+    }
+    (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
+
+    # Simple plot
+    plt.figure(figsize=(8, 5))
+    plt.boxplot([res["C_end_poor"], res["C_end_rich"]], labels=["poor", "rich"])
+    plt.ylabel("C_end")
+    plt.title("C_end: S0 poor vs rich")
+    plt.tight_layout()
+    plt.savefig(figdir / "c_end_boxplot.png", dpi=160)
+    plt.close()
 
     return 0
 

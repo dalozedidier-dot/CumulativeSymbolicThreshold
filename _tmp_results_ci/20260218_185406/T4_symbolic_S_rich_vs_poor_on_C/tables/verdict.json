@@ -1,0 +1,6 @@
+{
+  "test": "T4_symbolic_S_rich_vs_poor",
+  "verdict": "ACCEPT",
+  "mean_diff": 42.664173156318256,
+  "p_value": 0.0
+}

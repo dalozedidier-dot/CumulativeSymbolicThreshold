@@ -1,0 +1,2 @@
+scenario,seed,threshold_hit_t,C_mean_post,C_positive_frac_post,effect_C_post_mean,p_value_C_post_mean,run_dir
+capacity_only,4100,,-68.4329088757463,0.0,17.845888621333913,5.4974600517507476e-31,run_0001

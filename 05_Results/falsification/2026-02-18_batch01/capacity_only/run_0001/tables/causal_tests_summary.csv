@@ -1,0 +1,2 @@
+verdict,binary_detected,threshold_hit_t,threshold_value,no_false_positives_pre,C_mean_pre,C_mean_post,C_positive_frac_post,p_value_mean_shift_C,boot_ci_low_C,boot_ci_high_C,min_granger_S_to_deltaC_p,var_S_to_deltaC_p,cointegration_p,reverse_warning
+non_detecte,False,,-0.009270929705039333,True,-47.59701318589323,-79.2994325741894,0.0,1.2312538908726407e-209,-38.90255387939766,-24.298804145669084,8.700581094573583e-05,0.9918516364839475,0.9862234258578669,False

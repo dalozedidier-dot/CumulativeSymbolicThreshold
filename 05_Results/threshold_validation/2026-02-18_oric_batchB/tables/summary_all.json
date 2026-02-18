@@ -1,0 +1,10 @@
+{
+  "n_runs": 4,
+  "seed_base": 2100,
+  "intervention": "demand_shock",
+  "sigma_star": 120.0,
+  "tau": 800.0,
+  "S_decay": 0.00125,
+  "delta": 250,
+  "T": 600
+}

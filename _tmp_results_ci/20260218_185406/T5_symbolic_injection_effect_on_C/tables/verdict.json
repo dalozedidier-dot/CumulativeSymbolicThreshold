@@ -1,0 +1,6 @@
+{
+  "test": "T5_symbolic_injection",
+  "verdict": "ACCEPT",
+  "mean_diff": 10.7351884307105,
+  "p_value": 2.5854834444710167e-301
+}

@@ -1,0 +1,5 @@
+CMD: /opt/pyvenv/bin/python /mnt/data/CumulativeSymbolicThreshold-main/04_Code/pipeline/run_ori_c_demo.py --outdir /mnt/data/CumulativeSymbolicThreshold-main/_tmp_results_ci2/20260218_185537/T1_noyau_demand_shock --seed-base 11 --n-runs 1 --n-steps 220 --t0 77 --intervention demand_shock --intervention-duration 88 --sigma-star 0 --tau 0
+{
+  "outdir": "/mnt/data/CumulativeSymbolicThreshold-main/_tmp_results_ci2/20260218_185537/T1_noyau_demand_shock",
+  "n_runs": 1
+}

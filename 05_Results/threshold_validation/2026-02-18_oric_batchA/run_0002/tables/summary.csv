@@ -1,0 +1,2 @@
+seed,intervention,effect_C_post_mean,p_value_C_post_mean,t0,delta,T,C_mean_pre,C_mean_post,C_mean_post_minus_pre,C_positive_frac_post,C_min_post,C_cross_t,threshold_hit_t,threshold_value
+1101,demand_shock,168.20145487026608,0.0,900,250,600,-48.1957410794037,11.104020675371714,59.29976175477542,0.6266666666666667,-61.23826466921263,0,910,0.013426767672983541
