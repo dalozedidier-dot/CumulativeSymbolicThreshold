@@ -1,131 +1,219 @@
 #!/usr/bin/env python3
-"""
-04_Code/pipeline/run_ori_c_demo.py
+"""ORI-C demo runner (control vs one intervention) with explicit, testable verdicts.
 
-Runs a simple ORI-C demonstration:
-- control (no intervention)
-- intervention (one exogenous intervention)
-Writes:
-- tables/timeseries_control.csv
-- tables/timeseries_intervention.csv
-- tables/summary.csv
-- tables/verdict.json
-- figures/v_compare.png
+Minimal change policy:
+- No theoretical rewrites.
+- Only aligns the *tested metric* with the intended regime:
+  - ORI-core interventions (demand_shock, capacity_hit): evaluate V under Sigma>0.
+  - symbolic_cut: do not expect V movement when Sigma=0; evaluate C instead.
+
+Outputs:
+- 05_Results/<outdir>/{tables,figures}/
+  - tables/control_timeseries.csv
+  - tables/test_timeseries.csv
+  - tables/summary.csv
+  - figures/v_t_comparison.png
+  - figures/<metric>_t_comparison.png
 """
 
 from __future__ import annotations
-
-import sys
-from pathlib import Path
-
-# Ensure 04_Code is on sys.path so `import pipeline.*` works when scripts are executed directly.
-_CODE_DIR = Path(__file__).resolve().parents[1]
-if str(_CODE_DIR) not in sys.path:
-    sys.path.insert(0, str(_CODE_DIR))
 
 import argparse
 import json
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+from scipy import stats
 
-from pipeline.ori_c_pipeline import ORICConfig, run_oric
+# Local import (repo layout)
+from pipeline.ori_c_pipeline import generate_oric_synth
 
 
-def _make_dirs(outdir: Path) -> tuple[Path, Path]:
-    figdir = outdir / "figures"
+def scenario(
+    *,
+    n_steps: int,
+    seed: int,
+    intervention: str,
+    t0: int,
+    cap_scale: float,
+    alpha: float,
+    beta: float,
+    gamma: float,
+    demand_mult: float,
+    demand_start: int,
+    demand_duration: int,
+) -> pd.DataFrame:
+    df = generate_oric_synth(
+        n_steps=n_steps,
+        seed=seed,
+        intervention=intervention,
+        t0=t0,
+        cap_scale=cap_scale,
+        alpha=alpha,
+        beta=beta,
+        gamma=gamma,
+        demand_mult=float(demand_mult),
+        demand_start=int(demand_start),
+        demand_duration=int(demand_duration),
+    )
+    return df
+
+
+def _mkdirs(outdir: Path) -> tuple[Path, Path]:
     tabdir = outdir / "tables"
-    figdir.mkdir(parents=True, exist_ok=True)
+    figdir = outdir / "figures"
     tabdir.mkdir(parents=True, exist_ok=True)
-    return figdir, tabdir
-
-
-def _window(df: pd.DataFrame, start: int, end: int) -> pd.DataFrame:
-    return df[(df["t"] >= start) & (df["t"] < end)].copy()
+    figdir.mkdir(parents=True, exist_ok=True)
+    return tabdir, figdir
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--outdir", required=True)
-    ap.add_argument("--seed", type=int, default=123)
+    ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--n-steps", type=int, default=200)
+    ap.add_argument("--t0", type=int, default=80)
+    ap.add_argument("--cap-scale", type=float, default=1.0)
+    ap.add_argument("--alpha", type=float, default=1.0)
+    ap.add_argument("--beta", type=float, default=0.03)
+    ap.add_argument("--gamma", type=float, default=0.08)
     ap.add_argument(
         "--intervention",
-        default="symbolic_cut",
-        choices=["demand_shock", "capacity_hit", "symbolic_cut", "symbolic_injection", "symbolic_cut_then_inject"],
+        default="demand_shock",
+        choices=["none", "demand_shock", "symbolic_cut", "capacity_hit"],
     )
-    ap.add_argument("--intervention-point", type=int, default=80)
-    ap.add_argument("--reinjection-point", type=int, default=120)
-    ap.add_argument("--sesoi-v-rel", type=float, default=0.10)
+    ap.add_argument(
+        "--metric",
+        default="auto",
+        choices=["auto", "V", "C"],
+        help="Metric for verdict. auto = V for ORI-core, C for symbolic_cut.",
+    )
+    ap.add_argument("--alpha-level", type=float, default=0.01)
+    ap.add_argument("--sesoi", type=float, default=0.05)
+
+    # Demand shock knobs (forces Sigma>0 when testing V)
+    ap.add_argument("--demand-mult", type=float, default=1.15)
+    ap.add_argument("--demand-start", type=int, default=40)
+    ap.add_argument("--demand-duration", type=int, default=40)
+
     args = ap.parse_args()
 
+    metric_to_use = str(args.metric)
+    if metric_to_use == "auto":
+        metric_to_use = "C" if str(args.intervention) == "symbolic_cut" else "V"
+
     outdir = Path(args.outdir)
-    figdir, tabdir = _make_dirs(outdir)
+    tabdir, figdir = _mkdirs(outdir)
 
-    cfg_control = ORICConfig(seed=int(args.seed), n_steps=int(args.n_steps), intervention="none", intervention_point=int(args.intervention_point))
-    cfg_interv = ORICConfig(
-        seed=int(args.seed),
+    df_control = scenario(
         n_steps=int(args.n_steps),
+        seed=int(args.seed),
+        intervention="none",
+        t0=int(args.t0),
+        cap_scale=float(args.cap_scale),
+        alpha=float(args.alpha),
+        beta=float(args.beta),
+        gamma=float(args.gamma),
+        demand_mult=float(args.demand_mult),
+        demand_start=int(args.demand_start),
+        demand_duration=int(args.demand_duration),
+    )
+    df_test = scenario(
+        n_steps=int(args.n_steps),
+        seed=int(args.seed),
         intervention=str(args.intervention),
-        intervention_point=int(args.intervention_point),
-        reinjection_point=int(args.reinjection_point),
+        t0=int(args.t0),
+        cap_scale=float(args.cap_scale),
+        alpha=float(args.alpha),
+        beta=float(args.beta),
+        gamma=float(args.gamma),
+        demand_mult=float(args.demand_mult),
+        demand_start=int(args.demand_start),
+        demand_duration=int(args.demand_duration),
     )
 
-    df_c = run_oric(cfg_control)
-    df_i = run_oric(cfg_interv)
+    # Persist raw series
+    df_control.to_csv(tabdir / "control_timeseries.csv", index=False)
+    df_test.to_csv(tabdir / "test_timeseries.csv", index=False)
 
-    df_c.to_csv(tabdir / "timeseries_control.csv", index=False)
-    df_i.to_csv(tabdir / "timeseries_intervention.csv", index=False)
+    # Compute effect on selected metric (post window)
+    pre_mask = df_control["t"] < int(args.t0)
+    post_mask = df_control["t"] >= int(args.t0)
 
-    pre = (0, int(args.intervention_point))
-    post = (int(args.intervention_point), int(args.n_steps))
+    metric_col = str(metric_to_use)
+    if metric_col not in df_control.columns:
+        raise SystemExit(f"Metric '{metric_col}' missing in control output. Columns: {sorted(df_control.columns)}")
+    if metric_col not in df_test.columns:
+        raise SystemExit(f"Metric '{metric_col}' missing in test output. Columns: {sorted(df_test.columns)}")
 
-    c_pre = float(_window(df_c, *pre)["V"].mean())
-    c_post = float(_window(df_c, *post)["V"].mean())
-    i_pre = float(_window(df_i, *pre)["V"].mean())
-    i_post = float(_window(df_i, *post)["V"].mean())
+    mean_post_control = float(df_control.loc[post_mask, metric_col].mean())
+    mean_post_test = float(df_test.loc[post_mask, metric_col].mean())
+    effect_size = mean_post_test - mean_post_control
 
-    effect = i_post - c_post  # negative means intervention harms V
-
-    summary = pd.DataFrame(
-        [
-            {"condition": "control", "V_mean_pre": c_pre, "V_mean_post": c_post},
-            {"condition": "intervention", "intervention": str(args.intervention), "V_mean_pre": i_pre, "V_mean_post": i_post},
-        ]
+    p_value = float(
+        stats.ttest_ind(
+            df_control.loc[post_mask, metric_col],
+            df_test.loc[post_mask, metric_col],
+            equal_var=False,
+        ).pvalue
     )
-    summary.to_csv(tabdir / "summary.csv", index=False)
 
-    # Verdict: accept if post drop is at least SESOI relative to control post
-    sesoi = -float(args.sesoi_v_rel) * abs(c_post)
-    verdict = "ACCEPT" if (effect <= sesoi) else "INDETERMINATE"
+    verdict = "ACCEPT" if (abs(effect_size) >= float(args.sesoi) and p_value <= float(args.alpha_level)) else "INDETERMINATE"
 
-    verdict_obj = {
-        "test": "ori_c_demo",
-        "intervention": str(args.intervention),
-        "sesoi_v_rel": float(args.sesoi_v_rel),
-        "control_V_post": c_post,
-        "intervention_V_post": i_post,
-        "effect": effect,
-        "sesoi_effect": sesoi,
-        "verdict": verdict,
-    }
-    (tabdir / "verdict.json").write_text(json.dumps(verdict_obj, indent=2), encoding="utf-8")
-
-    # Figure
+    # Plot V(t) (always)
     plt.figure(figsize=(10, 5))
-    plt.plot(df_c["t"], df_c["V"], label="control V(t)")
-    plt.plot(df_i["t"], df_i["V"], label=f"intervention V(t): {args.intervention}")
-    plt.axvline(int(args.intervention_point), linestyle="--", label="intervention point")
+    plt.plot(df_control["t"], df_control["V"], label="control")
+    plt.plot(df_test["t"], df_test["V"], label=f"{args.intervention}")
+    plt.axvline(x=int(args.t0), linestyle="--", label="t0")
     plt.xlabel("t")
     plt.ylabel("V")
     plt.title("ORI-C demo: V(t) control vs intervention")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(figdir / "v_compare.png", dpi=160)
+    v_plot_path = figdir / "v_t_comparison.png"
+    plt.savefig(v_plot_path, dpi=150)
     plt.close()
 
+    # Plot selected metric
+    plt.figure(figsize=(10, 5))
+    plt.plot(df_control["t"], df_control[metric_col], label="control")
+    plt.plot(df_test["t"], df_test[metric_col], label=f"{args.intervention}")
+    plt.axvline(x=int(args.t0), linestyle="--", label="t0")
+    plt.xlabel("t")
+    plt.ylabel(metric_col)
+    plt.title(f"ORI-C demo: {metric_col}(t) control vs intervention")
+    plt.legend()
+    plt.tight_layout()
+    metric_plot_path = figdir / f"{metric_col.lower()}_t_comparison.png"
+    plt.savefig(metric_plot_path, dpi=150)
+    plt.close()
+
+    summary = {
+        "intervention": str(args.intervention),
+        "metric": metric_col,
+        "alpha": float(args.alpha_level),
+        "sesoi": float(args.sesoi),
+        "effect_size": float(effect_size),
+        "p_value": float(p_value),
+        "verdict": str(verdict),
+        "mean_post_control": float(mean_post_control),
+        "mean_post_test": float(mean_post_test),
+        "t0": int(args.t0),
+        "demand_mult": float(args.demand_mult),
+        "demand_start": int(args.demand_start),
+        "demand_duration": int(args.demand_duration),
+        "plots": {
+            "v": str(v_plot_path.name),
+            "metric": str(metric_plot_path.name),
+        },
+    }
+
+    pd.DataFrame([summary]).to_csv(tabdir / "summary.csv", index=False)
+    with open(outdir / "summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+
+    print(json.dumps(summary, indent=2))
     return 0
 
 

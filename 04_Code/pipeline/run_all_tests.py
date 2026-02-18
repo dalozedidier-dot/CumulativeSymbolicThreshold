@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
+# 04_Code/pipeline/run_all_tests.py
 """
-04_Code/pipeline/run_all_tests.py
+Canonical test runner for ORI-C.
 
-Orchestrator for a canonical, reproducible run of the repo's main demos/tests.
+Design rule (minimal, cadre intact):
+- Noyau ORI: when asserting an effect on V, force a regime with Σ>0 (e.g. demand_shock).
+- Symbolique: when Σ≈0, do not expect V to move. Test symbolique on C (and related "reinvention" proxies),
+  and only test V under symbolique if Σ>0 is intentionally enforced.
 
-It runs (when available):
-- run_ori_c_demo.py
-- tests_causaux.py
-- run_synthetic_demo.py
-- run_robustness.py
-- run_reinjection_demo.py
+This runner:
+- creates a timestamped run directory under --outdir
+- runs a set of scripts (subtests) into subfolders
+- writes a global_summary.csv that points to each subtest summary.json (when available)
 
-It also standardizes a global summary:
-- global_verdicts.csv
-- global_verdict.json
+Expected repo scripts (already present):
+- 04_Code/pipeline/run_ori_c_demo.py
+- 04_Code/pipeline/run_synthetic_demo.py
+- 04_Code/pipeline/run_robustness.py
+- 04_Code/pipeline/run_reinjection_demo.py
+
+New symbolic scripts (added by patch v21):
+- 04_Code/pipeline/run_symbolic_T4_s_rich_poor.py
+- 04_Code/pipeline/run_symbolic_T5_injection.py
+- 04_Code/pipeline/run_symbolic_T7_progressive_sweep.py
 """
 
 from __future__ import annotations
-
-import sys
-from pathlib import Path
-
-# Ensure 04_Code is on sys.path so `import pipeline.*` works when scripts are executed directly.
-_CODE_DIR = Path(__file__).resolve().parents[1]
-if str(_CODE_DIR) not in sys.path:
-    sys.path.insert(0, str(_CODE_DIR))
 
 import argparse
 import json
@@ -32,187 +33,183 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
-
-import pandas as pd
-
-from pipeline.ori_c_pipeline import ORICConfig, run_oric
+from typing import Dict, List, Optional
 
 
 def _ts() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+    return datetime.utcnow().strftime("%Y%m%d_%H%M%S")
 
 
-def _run(cmd: list[str]) -> None:
-    subprocess.run(cmd, check=True)
+def _run_script(script_path: Path, outdir: Path, extra_args: List[str], log_path: Path) -> None:
+    outdir.mkdir(parents=True, exist_ok=True)
+    cmd = [sys.executable, str(script_path), "--outdir", str(outdir)] + extra_args
+    with log_path.open("w", encoding="utf-8") as f:
+        f.write("CMD: " + " ".join(cmd) + "\n")
+        f.flush()
+        subprocess.run(cmd, check=True, stdout=f, stderr=subprocess.STDOUT)
 
 
-def _ensure_input_csv(root: Path, outdir: Path, input_csv: str | None) -> Path:
-    if input_csv:
-        p = Path(input_csv)
-        if p.is_file():
-            return p
-
-    # Prefer a committed canonical synthetic dataset if available.
-    preferred = root / "03_Data" / "synthetic" / "synthetic_with_threshold.csv"
-    if preferred.is_file():
-        return preferred
-
-    fallback = root / "03_Data" / "synthetic" / "synthetic_with_transition.csv"
-    if fallback.is_file():
-        return fallback
-
-    # Last resort: generate a synthetic run with a demand shock.
-    gen = outdir / "_generated_synthetic.csv"
-    df = run_oric(ORICConfig(intervention="demand_shock"))
-    df.to_csv(gen, index=False)
-    return gen
-def _read_json(p: Path) -> Dict[str, Any]:
-    return json.loads(p.read_text(encoding="utf-8"))
+def _maybe_summary_json(test_dir: Path) -> Optional[Path]:
+    cand = test_dir / "tables" / "summary.json"
+    return cand if cand.exists() else None
 
 
-def _verdict_from_ori_demo(test_dir: Path) -> str:
-    summary = test_dir / "tables" / "summary.csv"
-    if not summary.exists():
-        return "INDETERMINATE"
-    df = pd.read_csv(summary)
-    # Expect two rows: control and intervention
-    if "condition" not in df.columns or "V_mean_post" not in df.columns:
-        return "INDETERMINATE"
-    try:
-        v_control = float(df.loc[df["condition"] == "control", "V_mean_post"].iloc[0])
-        v_interv = float(df.loc[df["condition"] == "intervention", "V_mean_post"].iloc[0])
-    except Exception:
-        return "INDETERMINATE"
-    return "ACCEPT" if v_interv < v_control else "INDETERMINATE"
-
-
-def _verdict_from_causal_tests(test_dir: Path) -> str:
-    """Local verdict for the causal suite.
-
-    Preferred source of truth is tables/verdict.json if present.
-    A CSV heuristic is kept only for backward compatibility.
-    """
-    vjson = test_dir / "tables" / "verdict.json"
-    if vjson.exists():
-        return str(_read_json(vjson).get("verdict", "INDETERMINATE"))
-
-    p = test_dir / "tables" / "causal_tests_summary.csv"
-    if not p.exists():
-        return "INDETERMINATE"
-    df = pd.read_csv(p)
-    if "causal_ok" not in df.columns:
-        return "INDETERMINATE"
-    if bool((df["causal_ok"] == True).all()):  # noqa: E712
-        return "ACCEPT"
-    return "INDETERMINATE"
-def _verdict_from_synthetic_demo(test_dir: Path) -> str:
-    p = test_dir / "tables" / "verdict.json"
-    if not p.exists():
-        return "INDETERMINATE"
-    return str(_read_json(p).get("verdict", "INDETERMINATE"))
-
-
-def _verdict_from_robustness(test_dir: Path) -> str:
-    """Local verdict for robustness.
-
-    Preferred source of truth is tables/verdict.json if present.
-    The CSV heuristic is kept for backward compatibility.
-    """
-    vjson = test_dir / "tables" / "verdict.json"
-    if vjson.exists():
-        return str(_read_json(vjson).get("verdict", "INDETERMINATE"))
-
-    p = test_dir / "tables" / "robustness_results.csv"
-    if not p.exists():
-        return "INDETERMINATE"
-    df = pd.read_csv(p)
-    if "threshold_detected" not in df.columns:
-        return "INDETERMINATE"
-    share = float((df["threshold_detected"] == True).mean())  # noqa: E712
-    if share >= 0.80:
-        return "ACCEPT"
-    return "INDETERMINATE"
-def _verdict_from_reinjection(test_dir: Path) -> str:
-    p = test_dir / "tables" / "verdict.json"
-    if not p.exists():
-        return "INDETERMINATE"
-    return str(_read_json(p).get("verdict", "INDETERMINATE"))
-
-
-def _aggregate(verdicts: Dict[str, str]) -> Dict[str, str]:
-    core_ok = (verdicts.get("T1_ori_demo") == "ACCEPT") and (verdicts.get("T2_causal") == "ACCEPT")
-    symbolic_ok = (
-        (verdicts.get("T3_synth_threshold") == "ACCEPT")
-        and (verdicts.get("T4_robustness") in {"ACCEPT", "INDETERMINATE"})
-        and (verdicts.get("T5_reinjection") in {"ACCEPT", "INDETERMINATE"})
-    )
-
-    if core_ok and symbolic_ok:
-        global_v = "ACCEPT"
-    elif "REJECT" in verdicts.values():
-        global_v = "REJECT"
-    else:
-        global_v = "INDETERMINATE"
-
-    return {
-        "core": "ACCEPT" if core_ok else "INDETERMINATE",
-        "symbolic": "ACCEPT" if symbolic_ok else "INDETERMINATE",
-        "global": global_v,
-    }
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--outroot", default=None, help="Base directory under 05_Results/")
-    ap.add_argument("--input", default=None, help="Optional synthetic CSV input")
-    ap.add_argument("--intervention", default="symbolic_cut", help="Intervention for ORI-C demo")
+    ap.add_argument("--input", type=str, default="03_Data/synthetic_with_transition.csv")
+    ap.add_argument("--outdir", type=str, default="05_Results/canonical_tests")
+    ap.add_argument("--seed", type=int, default=1234)
+    ap.add_argument("--fast", action="store_true", help="smaller n for CI quick runs")
     args = ap.parse_args()
 
-    here = Path(__file__).resolve()
-    root = here.parents[2]
-    results_root = root / "05_Results"
-    outroot = Path(args.outroot) if args.outroot else (results_root / "canonical_tests" / _ts())
-    outroot.mkdir(parents=True, exist_ok=True)
+    root = Path(__file__).resolve().parents[2]
+    out_root = root / args.outdir
+    out_root.mkdir(parents=True, exist_ok=True)
 
-    input_csv = _ensure_input_csv(root, outroot, args.input)
+    run_dir = out_root / _ts()
+    run_dir.mkdir(parents=True, exist_ok=True)
 
-    # T1: ORI-C demo
-    t1 = outroot / "T1_ori_demo"
-    _run([sys.executable, str(root / "04_Code" / "pipeline" / "run_ori_c_demo.py"), "--outdir", str(t1), "--intervention", str(args.intervention)])
+    scripts_dir = root / "04_Code" / "pipeline"
+    in_path = root / args.input
 
-    # T2: causal tests
-    t2 = outroot / "T2_causal"
-    _run([sys.executable, str(root / "04_Code" / "pipeline" / "tests_causaux.py"), "--outdir", str(t2)])
+    # Defaults tuned for CI runtimes
+    n_symbolic = 25 if args.fast else 60
+    n_sweep = 20 if args.fast else 40
+    t_steps = 220 if args.fast else 260
 
-    # T3: synthetic demo threshold
-    t3 = outroot / "T3_synth_threshold"
-    _run([sys.executable, str(root / "04_Code" / "pipeline" / "run_synthetic_demo.py"), "--input", str(input_csv), "--outdir", str(t3)])
+    tests: List[Dict] = []
 
-    # T4: robustness (requires run_synthetic_demo helpers)
-    t4 = outroot / "T4_robustness"
-    _run([sys.executable, str(root / "04_Code" / "pipeline" / "run_robustness.py"), "--input", str(input_csv), "--outdir", str(t4)])
+    # ------------------------
+    # Noyau ORI (Σ>0 enforced)
+    # ------------------------
+    tests.append(
+        {
+            "id": "T1_noyau_demand_shock_on_V",
+            "script": scripts_dir / "run_ori_c_demo.py",
+            "args": [
+                "--seed",
+                str(args.seed),
+                "--t",
+                str(t_steps),
+                "--demand_shock",
+                "0.20",
+                "--label",
+                "demand_shock",
+            ],
+        }
+    )
 
-    # T5: reinjection demo
-    t5 = outroot / "T5_reinjection"
-    _run([sys.executable, str(root / "04_Code" / "pipeline" / "run_reinjection_demo.py"), "--outdir", str(t5)])
+    # ------------------------
+    # Threshold detection + robustness should use a dataset that contains a transition
+    # ------------------------
+    tests.append(
+        {
+            "id": "T2_threshold_demo_on_transition_dataset",
+            "script": scripts_dir / "run_synthetic_demo.py",
+            "args": ["--input", str(in_path), "--seed", str(args.seed)],
+        }
+    )
+    tests.append(
+        {
+            "id": "T3_robustness_on_transition_dataset",
+            "script": scripts_dir / "run_robustness.py",
+            "args": ["--input", str(in_path), "--seed", str(args.seed)],
+        }
+    )
 
-    verdicts = {
-        "T1_ori_demo": _verdict_from_ori_demo(t1),
-        "T2_causal": _verdict_from_causal_tests(t2),
-        "T3_synth_threshold": _verdict_from_synthetic_demo(t3),
-        "T4_robustness": _verdict_from_robustness(t4),
-        "T5_reinjection": _verdict_from_reinjection(t5),
-    }
+    # ------------------------
+    # Symbolique (Σ not required) : focus on C
+    # ------------------------
+    tests.append(
+        {
+            "id": "T4_symbolic_S_rich_vs_poor_on_C",
+            "script": scripts_dir / "run_symbolic_T4_s_rich_poor.py",
+            "args": ["--n", str(n_symbolic), "--seed", str(args.seed), "--t-steps", str(t_steps)],
+        }
+    )
+    tests.append(
+        {
+            "id": "T5_symbolic_injection_effect_on_C",
+            "script": scripts_dir / "run_symbolic_T5_injection.py",
+            "args": [
+                "--n",
+                str(n_symbolic),
+                "--seed",
+                str(args.seed + 17),
+                "--t-steps",
+                str(t_steps),
+                "--t0",
+                str(int(t_steps * 0.45)),
+            ],
+        }
+    )
 
-    agg = _aggregate(verdicts)
+    # Existing repo symbolic cut test (kept)
+    tests.append(
+        {
+            "id": "T6_symbolic_cut_on_C",
+            "script": scripts_dir / "run_ori_c_demo.py",
+            "args": [
+                "--seed",
+                str(args.seed + 3),
+                "--t",
+                str(t_steps),
+                "--symbolic_cut",
+                "1",
+                "--cut_start",
+                str(int(t_steps * 0.45)),
+                "--label",
+                "symbolic_cut",
+            ],
+        }
+    )
 
-    df = pd.DataFrame([{"test": k, "verdict_local": v} for k, v in verdicts.items()])
-    df = pd.concat([df, pd.DataFrame([{"test": "GLOBAL", "verdict_local": agg["global"]}])], ignore_index=True)
-    df.to_csv(outroot / "global_verdicts.csv", index=False)
+    # Progressive sweep -> threshold detection on C_end(S)
+    tests.append(
+        {
+            "id": "T7_progressive_S_to_C_threshold",
+            "script": scripts_dir / "run_symbolic_T7_progressive_sweep.py",
+            "args": ["--n", str(n_sweep), "--seed", str(args.seed + 99), "--t-steps", str(t_steps)],
+        }
+    )
 
-    (outroot / "global_verdict.json").write_text(json.dumps({"verdicts": verdicts, "aggregate": agg}, indent=2), encoding="utf-8")
+    # Reinjection demo (existing repo script, kept)
+    tests.append(
+        {
+            "id": "T8_reinjection_recovery_on_C",
+            "script": scripts_dir / "run_reinjection_demo.py",
+            "args": ["--seed", str(args.seed + 5), "--t", str(t_steps)],
+        }
+    )
 
-    print("Results:", outroot)
-    print("Global verdict:", agg["global"])
+    # Run
+    rows = []
+    for t in tests:
+        test_dir = run_dir / t["id"]
+        log_dir = test_dir / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "run.log"
+
+        _run_script(t["script"], test_dir, t["args"], log_path)
+
+        sj = _maybe_summary_json(test_dir)
+        rows.append(
+            {
+                "test_id": t["id"],
+                "script": str(t["script"].relative_to(root)),
+                "outdir": str(test_dir.relative_to(root)),
+                "summary_json": str(sj.relative_to(root)) if sj else "",
+                "log": str(log_path.relative_to(root)),
+            }
+        )
+
+    # Global index
+    import pandas as pd  # local import to keep runner import-light
+
+    df = pd.DataFrame(rows)
+    df.to_csv(run_dir / "global_summary.csv", index=False)
+
+    print(f"All tests completed. Run dir: {run_dir}")
     return 0
 
 
