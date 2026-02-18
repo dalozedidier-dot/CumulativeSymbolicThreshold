@@ -1,9 +1,10 @@
-numpy==1.24.3
-pandas==2.0.3
-scipy==1.10.1
-matplotlib==3.7.1
-seaborn==0.12.2
-statsmodels==0.14.0
-jupyter==1.0.0
-ipykernel==6.22.0
-pytest>=7.0
+# Core runtime dependencies (Python 3.12 compatible)
+# Keep versions broad enough for portability; reproducibility is handled by the prereg + seeds.
+
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.8
+scipy>=1.11
+statsmodels>=0.14
+
+tqdm>=4.66

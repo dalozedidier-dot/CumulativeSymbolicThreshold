@@ -10,6 +10,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,14 +24,25 @@ jobs:
       - name: Install dependencies
         run: |
           set -e
-          python -m pip install --upgrade pip
-          # Prefer repo-pinned requirements when present.
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f 04_Code/requirements.txt ]; then pip install -r 04_Code/requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e .; fi
-          # Ensure core scientific stack is present for the canonical suite.
-          pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+          python -m pip install --upgrade pip setuptools wheel
+
+          # Install a known-good scientific base first (avoids sdists/builds).
+          python -m pip install \
+            "numpy>=1.26" \
+            "pandas>=2.0" \
+            "matplotlib>=3.8" \
+            "scipy>=1.11" \
+            "pytest>=8.0" \
+            "statsmodels>=0.14"
+
+          # Then install repo-declared deps (should be Python 3.12 compatible).
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+
+          # If the repo is a package, install it editable.
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
       - name: Run canonical suite
         run: |
