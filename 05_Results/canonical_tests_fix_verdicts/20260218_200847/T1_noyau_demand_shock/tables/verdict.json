@@ -1,0 +1,11 @@
+{
+  "verdict": "ACCEPT",
+  "rationale": "Seuil cumulatif d\u00e9tect\u00e9 si C devient positivement persistant post, avec un effet positif significatif sur C versus contr\u00f4le.",
+  "key_metrics": {
+    "C_mean_post": 15.041089578754045,
+    "C_positive_frac_post": 0.8601398601398601,
+    "effect_C_post_mean": 22.606978844639656,
+    "p_value_C_post_mean": 8.930535674188356e-51,
+    "threshold_hit_t": 80
+  }
+}

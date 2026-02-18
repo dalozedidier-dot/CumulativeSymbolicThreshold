@@ -1,0 +1,9 @@
+{
+  "test": "robustness_threshold",
+  "verdict": "ACCEPT",
+  "share_threshold_detected": 1.0,
+  "k": 2.5,
+  "m": 3,
+  "baseline_n": 30,
+  "event_idx": 22
+}

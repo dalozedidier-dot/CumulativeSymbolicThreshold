@@ -1,0 +1,11 @@
+{
+  "verdict": "ACCEPT",
+  "rationale": "Symbolic cut should suppress C. ACCEPT requires post C mostly non-positive, and a negative significant effect on C versus control.",
+  "key_metrics": {
+    "C_mean_post": -13.495571071940285,
+    "C_positive_frac_post": 0.0,
+    "effect_C_post_mean": -2.9156768381578626,
+    "p_value_C_post_mean": 6.730154722684309e-10,
+    "threshold_hit_t": null
+  }
+}

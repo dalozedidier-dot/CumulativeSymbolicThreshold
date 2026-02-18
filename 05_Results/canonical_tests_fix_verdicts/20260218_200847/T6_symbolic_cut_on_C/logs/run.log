@@ -1,0 +1,1 @@
+CMD: /opt/pyvenv/bin/python /mnt/data/CumulativeSymbolicThreshold-updated/04_Code/pipeline/run_ori_c_demo.py --outdir /mnt/data/CumulativeSymbolicThreshold-updated/05_Results/canonical_tests_fix_verdicts/20260218_200847/T6_symbolic_cut_on_C --seed-base 1237 --n-runs 1 --n-steps 220 --t0 99 --intervention symbolic_cut --intervention-duration 55 --sigma-star 0 --tau 0

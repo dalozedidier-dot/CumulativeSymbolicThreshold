@@ -1,0 +1,12 @@
+{
+  "input": "/mnt/data/CumulativeSymbolicThreshold-updated/03_Data/synthetic/synthetic_with_transition.csv",
+  "n": 30,
+  "seed": 1234,
+  "threshold_detected": true,
+  "threshold_index": 24,
+  "k": 2.5,
+  "m": 3,
+  "baseline_n": 30,
+  "event_idx": 22,
+  "threshold_value": 0.13617419472999256
+}

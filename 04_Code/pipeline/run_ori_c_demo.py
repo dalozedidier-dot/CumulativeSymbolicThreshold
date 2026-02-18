@@ -182,6 +182,80 @@ def summarize_threshold(
     }
 
 
+
+
+def compute_verdict_from_summary(summary: dict) -> dict:
+    """Compute a binary verdict for ORI-C demo runs.
+
+    The meaning of ACCEPT depends on the intervention.
+    - For symbolic_cut, ACCEPT means C collapses (mostly non-positive post) and the effect is negative and significant.
+    - For other interventions, ACCEPT means a persistent positive C post and a significant positive effect on C.
+    """
+
+    intervention = str(summary.get("intervention", ""))
+
+    C_mean_post = float(summary.get("C_mean_post", float("nan")))
+    C_positive_frac_post = float(summary.get("C_positive_frac_post", float("nan")))
+    effect_C_post_mean = float(summary.get("effect_C_post_mean", float("nan")))
+    p_value_C_post_mean = float(summary.get("p_value_C_post_mean", float("nan")))
+    threshold_hit_t = summary.get("threshold_hit_t", None)
+
+    if intervention in {"none", "control"}:
+        return {
+            "verdict": "INDETERMINATE",
+            "rationale": "No intervention. No binary claim is asserted.",
+            "key_metrics": {
+                "C_mean_post": C_mean_post,
+                "C_positive_frac_post": C_positive_frac_post,
+                "effect_C_post_mean": effect_C_post_mean,
+                "p_value_C_post_mean": p_value_C_post_mean,
+                "threshold_hit_t": threshold_hit_t,
+            },
+        }
+
+    if intervention == "symbolic_cut":
+        ok = (
+            (C_positive_frac_post <= 0.10)
+            and (C_mean_post < 0.0)
+            and (effect_C_post_mean < -0.10)
+            and (p_value_C_post_mean < 0.01)
+        )
+        return {
+            "verdict": "ACCEPT" if ok else "REJECT",
+            "rationale": (
+                "Symbolic cut should suppress C. ACCEPT requires post C mostly non-positive, "
+                "and a negative significant effect on C versus control."
+            ),
+            "key_metrics": {
+                "C_mean_post": C_mean_post,
+                "C_positive_frac_post": C_positive_frac_post,
+                "effect_C_post_mean": effect_C_post_mean,
+                "p_value_C_post_mean": p_value_C_post_mean,
+                "threshold_hit_t": threshold_hit_t,
+            },
+        }
+
+    ok = (
+        ((threshold_hit_t is not None) or (C_positive_frac_post >= 0.50))
+        and (C_mean_post > 0.10)
+        and (effect_C_post_mean > 0.10)
+        and (p_value_C_post_mean < 0.01)
+    )
+    return {
+        "verdict": "ACCEPT" if ok else "REJECT",
+        "rationale": (
+            "Seuil cumulatif détecté si C devient positivement persistant post, avec un effet positif "
+            "significatif sur C versus contrôle."
+        ),
+        "key_metrics": {
+            "C_mean_post": C_mean_post,
+            "C_positive_frac_post": C_positive_frac_post,
+            "effect_C_post_mean": effect_C_post_mean,
+            "p_value_C_post_mean": p_value_C_post_mean,
+            "threshold_hit_t": threshold_hit_t,
+        },
+    }
+
 def run_one(
     *,
     outdir: Path,
@@ -236,6 +310,10 @@ def run_one(
     }]).to_csv(tabdir / "summary.csv", index=False)
 
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+    verdict = compute_verdict_from_summary(summary)
+    (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
+
 
     # Figures
     _plot_series(df_c, df_t, "S", t0, figdir / "s_t.png", "S(t) control vs test")

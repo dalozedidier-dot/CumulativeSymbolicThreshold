@@ -1,0 +1,6 @@
+{
+  "test": "synthetic_demo_threshold",
+  "verdict": "ACCEPT",
+  "threshold_detected": true,
+  "threshold_value": 0.13617419472999256
+}
