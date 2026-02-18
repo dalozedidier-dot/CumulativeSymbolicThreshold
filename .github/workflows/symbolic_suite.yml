@@ -1,0 +1,61 @@
+name: Symbolic Suite T4 T5 T7
+
+on:
+  workflow_dispatch:
+    inputs:
+      reps:
+        description: "Number of replicates per condition"
+        required: false
+        default: "50"
+      seed:
+        description: "Random seed"
+        required: false
+        default: "42"
+  schedule:
+    - cron: "0 2 * * 1"  # Mondays 02:00 UTC
+
+jobs:
+  symbolic_suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f 04_Code/requirements.txt ]; then pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .; fi
+          pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+
+      - name: Run symbolic suite
+        run: |
+          set -e
+          mkdir -p _ci_out
+          python -V | tee _ci_out/python_version.txt
+          pip -V | tee _ci_out/pip_version.txt
+          pip list | tee _ci_out/pip_list.txt
+
+          if [ -f 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py ]; then
+            python 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py               --outdir _ci_out/symbolic_suite               --reps "${{ inputs.reps || '50' }}"               --seed "${{ inputs.seed || '42' }}"               2>&1 | tee _ci_out/symbolic_suite.log
+          else
+            echo "Missing 04_Code/pipeline/run_symbolic_suite_T4_T5_T7.py. Apply the symbolic suite patch first." | tee _ci_out/symbolic_suite.log
+            exit 1
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: symbolic_suite_${{ github.run_id }}
+          path: _ci_out
+          if-no-files-found: warn
