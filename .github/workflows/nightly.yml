@@ -1,0 +1,54 @@
+name: Nightly Canonical Run
+
+on:
+  schedule:
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f 04_Code/requirements.txt ]; then pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .; fi
+          pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+
+      - name: Run canonical suite
+        run: |
+          set -e
+          mkdir -p _ci_out
+          date -u | tee _ci_out/run_utc.txt
+          if [ -f run_all_tests.py ]; then
+            python run_all_tests.py 2>&1 | tee _ci_out/run.log
+          elif [ -f 04_Code/pipeline/run_all_tests.py ]; then
+            python 04_Code/pipeline/run_all_tests.py 2>&1 | tee _ci_out/run.log
+          else
+            echo "No run_all_tests.py found." | tee _ci_out/run.log
+            exit 1
+          fi
+          if [ -d 05_Results ]; then
+            cp -R 05_Results _ci_out/05_Results
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly_artifacts_${{ github.run_id }}
+          path: _ci_out
+          if-no-files-found: warn
