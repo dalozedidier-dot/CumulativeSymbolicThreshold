@@ -19,7 +19,7 @@ Exemple:
 python 04_Code/pipeline/run_real_data_demo.py \
   --input 03_Data/real/pilot_cpi/real.csv \
   --outdir 05_Results/real/pilot_cpi/run_0001 \
-  --col-time date --col-O O --col-R R --col-I I --col-demand demand --col-S S \
+  --col-time date --time-mode index --col-O O --col-R R --col-I I --col-demand demand --col-S S \
   --auto-scale \
   --sigma-star 0.0 --tau 500 \
   --k 2.5 --m 3 --baseline-n 50 \

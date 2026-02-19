@@ -96,9 +96,14 @@ def _normalize_proxy(x: np.ndarray, method: str) -> np.ndarray:
     return _robust_minmax(x)
 
 
-def _to_t_column(df: pd.DataFrame, col_time: str) -> pd.Series:
+def _to_t_column(df: pd.DataFrame, col_time: str, time_mode: str = "index") -> pd.Series:
     if col_time not in df.columns:
         raise SystemExit(f"Missing time column: {col_time}")
+
+    # When using real data, windows and detectors operate in "steps".
+    # So the safest default is to map time to a simple 0..n-1 index after sorting.
+    if str(time_mode).lower() == "index":
+        return pd.Series(np.arange(len(df), dtype=int))
 
     s = df[col_time]
     # Try numeric
@@ -140,6 +145,8 @@ def main() -> int:
     ap.add_argument("--outdir", required=True)
 
     ap.add_argument("--col-time", default="t")
+    ap.add_argument("--time-mode", default="index", choices=["index", "value"],
+                    help="How to interpret time: index=0..n-1 (recommended), value=use numeric or days since start for dates")
     ap.add_argument("--col-O", default="O")
     ap.add_argument("--col-R", default="R")
     ap.add_argument("--col-I", default="I")
@@ -173,8 +180,22 @@ def main() -> int:
 
     # Build standard columns
     df = df_raw.copy()
-    df["t"] = _to_t_column(df, str(args.col_time))
-    df = df.sort_values("t").reset_index(drop=True)
+
+    # Sort by the provided time column when possible, then build a step index.
+    col_time = str(args.col_time)
+    if col_time in df.columns:
+        # Try datetime sort key first, then numeric.
+        dt_key = pd.to_datetime(df[col_time], errors="coerce", utc=True)
+        if dt_key.notna().sum() >= int(0.9 * len(df)):
+            df = df.assign(_sort_key=dt_key).sort_values("_sort_key").drop(columns=["_sort_key"])
+        else:
+            num_key = pd.to_numeric(df[col_time], errors="coerce")
+            if num_key.notna().sum() >= int(0.9 * len(df)):
+                df = df.assign(_sort_key=num_key).sort_values("_sort_key").drop(columns=["_sort_key"])
+
+    # Create the internal time index used everywhere else in the pipeline.
+    df["t"] = _to_t_column(df, col_time, str(args.time_mode))
+    df = df.reset_index(drop=True)
 
     # Proxies
     for col, name in [(args.col_O, "O"), (args.col_R, "R"), (args.col_I, "I")]:
