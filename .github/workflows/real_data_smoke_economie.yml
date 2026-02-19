@@ -1,0 +1,51 @@
+name: Real Data Smoke (ORI-C) - Economie
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: "Path to real CSV"
+        required: true
+        default: "03_Data/real/economie/pilot_cpi/real.csv"
+
+jobs:
+  real_data_smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SECTOR: "economie"
+      DATASET: "03_Data/real/economie/pilot_cpi/real.csv"
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+
+      - name: Run pipeline
+        run: |
+          set -e
+          OUTDIR="_ci_out/real_data_smoke/economie/run_${{ github.run_id }}"
+          mkdir -p "$OUTDIR"
+          echo "sector=economie" > "$OUTDIR/sector.txt"
+
+          python 04_Code/pipeline/run_real_data_demo.py             --input "$DATASET"             --outdir "$OUTDIR"             --control-mode no_symbolic
+
+          python 04_Code/pipeline/tests_causaux.py             --run-dir "$OUTDIR"             --alpha 0.01
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_data_smoke_${{ github.run_id }}_economie
+          path: _ci_out/real_data_smoke/economie
