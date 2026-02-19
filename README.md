@@ -24,6 +24,26 @@ python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/ori_c_demo
 python 04_Code/pipeline/tests_causaux.py --outdir 05_Results/ori_c_demo
 ```
 
+### Données réelles (pilote)
+
+Un point d'entrée est fourni pour exécuter ORI-C sur un CSV réel (proxies O,R,I et optionnellement demand,S), puis lancer les tests causaux.
+
+Exemple rapide (dataset pilote CPI):
+
+```bash
+python 04_Code/pipeline/run_real_data_demo.py \
+  --input 03_Data/real/pilot_cpi/real.csv \
+  --outdir 05_Results/real/pilot_cpi/run_0001 \
+  --col-time date --auto-scale --control-mode no_symbolic
+
+python 04_Code/pipeline/tests_causaux.py \
+  --run-dir 05_Results/real/pilot_cpi/run_0001 \
+  --alpha 0.01 --lags 1-10 --pre-horizon 200 --post-horizon 200 --pdf
+```
+
+Guide: `04_Code/pipeline/README_REAL_DATA.md`.
+
+
 Cadre méthodique reproductible pour tester l'hypothèse d'un basculement vers un régime symbolique cumulatif.
 
 Noyau:

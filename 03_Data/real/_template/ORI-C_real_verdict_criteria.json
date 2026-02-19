@@ -1,0 +1,72 @@
+{
+  "name": "ORI-C real-data verdict criteria (template)",
+  "inputs": {
+    "required_columns": [
+      "t",
+      "O",
+      "R",
+      "I"
+    ],
+    "optional_columns": [
+      "demand",
+      "S0"
+    ]
+  },
+  "run_real_data_demo_outputs": {
+    "timeseries_csv": "tables/real_timeseries_oric.csv",
+    "summary_json": "tables/summary.json",
+    "figure": "figures/svc_real.png"
+  },
+  "run_tests_causaux_outputs": {
+    "summary_csv": "tables/causal_tests_summary.csv",
+    "verdict_json": "tables/verdict.json",
+    "report_md": "tables/causal_report.md",
+    "report_pdf_optional": "tables/causal_report.pdf"
+  },
+  "recommended_parameters": {
+    "run_real_data_demo": {
+      "cap_scale": 1000.0,
+      "auto_scale": true,
+      "sigma_star": 0.0,
+      "tau_or_s_decay": "tau>0 => s_decay=1/tau ; sinon s_decay=0.002",
+      "threshold_detector": {
+        "k": 2.5,
+        "m": 3,
+        "baseline_n": 50
+      }
+    },
+    "tests_causaux": {
+      "alpha": 0.01,
+      "lags": "1-10",
+      "pre_horizon": 500,
+      "post_horizon": 500,
+      "baseline_n": 50,
+      "c_mean_post_min": "0.1 (si C est centré, sinon preferer 0.0 et utiliser C_mean_post_minus_pre)"
+    }
+  },
+  "decision_rule": {
+    "use": "tables/verdict.json produced by tests_causaux.py",
+    "accept_when": [
+      "verdict == 'seuil_detecte'",
+      "binary_detected == true",
+      "no_false_positives_pre == true",
+      "boot_ci_low_C > 0",
+      "min_granger_S_to_deltaC_p <= alpha"
+    ],
+    "indeterminate_when": [
+      "verdict == 'non_detecte' (threshold absent or statistics insufficient)"
+    ],
+    "falsified_when": [
+      "verdict == 'falsifie' (threshold exists but fails stability or produces pre false positives)"
+    ],
+    "reporting_minimum": [
+      "threshold_hit_t",
+      "threshold_value",
+      "C_mean_pre, C_mean_post, C_mean_post_minus_pre",
+      "C_positive_frac_post",
+      "p_value_mean_shift_C",
+      "min_granger_S_to_deltaC_p",
+      "reverse_warning"
+    ]
+  }
+}

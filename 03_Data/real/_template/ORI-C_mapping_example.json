@@ -1,0 +1,22 @@
+{
+  "description": "Exemple de mapping pour passer d'un CSV brut aux colonnes attendues par ORI-C (O,R,I,demand).",
+  "input_columns_example": {
+    "time": "date",
+    "structure_proxy": "org_density_norm",
+    "adaptability_proxy": "innovation_rate_norm",
+    "cohesion_proxy": "retention_norm",
+    "demand_proxy": "load_mw"
+  },
+  "target_columns": {
+    "t": "t (entier croissant) ou timestamp converti en entier",
+    "O": "structure_proxy (normalise 0..1)",
+    "R": "adaptability_proxy (normalise 0..1)",
+    "I": "cohesion_proxy (normalise 0..1)",
+    "demand": "demand_proxy (meme unite sur toute la serie)"
+  },
+  "notes": [
+    "run_real_data_demo.py attend O,R,I dans [0,1].",
+    "Si demand n'existe pas, le script l'approxime par 0.90 * Cap.",
+    "Si demand existe, utiliser --auto-scale pour ajuster cap_scale automatiquement."
+  ]
+}

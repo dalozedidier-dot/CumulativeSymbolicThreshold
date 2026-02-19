@@ -250,6 +250,172 @@ def run_oric(cfg: ORICConfig) -> pd.DataFrame:
     return df
 
 
+
+
+def _auto_cap_scale_from_demand(
+    base_cap: np.ndarray,
+    demand: np.ndarray,
+    *,
+    cap_scale_default: float,
+    demand_to_cap_ratio: float = 0.90,
+) -> float:
+    """Estimate a cap_scale so that median(demand) ~= demand_to_cap_ratio * median(Cap).
+
+    Cap is computed as Cap = base_cap * cap_scale, where base_cap = O * R * I in [0,1].
+    This is a pragmatic alignment for real data where demand is in an arbitrary unit.
+    """
+    x = np.asarray(base_cap, dtype=float)
+    d = np.asarray(demand, dtype=float)
+    if len(x) == 0:
+        return float(cap_scale_default)
+    if len(d) == 0 or np.all(~np.isfinite(d)):
+        return float(cap_scale_default)
+
+    x_med = float(np.nanmedian(x))
+    d_med = float(np.nanmedian(d))
+    if not np.isfinite(x_med) or x_med <= 1e-12 or not np.isfinite(d_med) or d_med <= 0.0:
+        return float(cap_scale_default)
+
+    scale = d_med / (float(demand_to_cap_ratio) * x_med + 1e-12)
+    if not np.isfinite(scale) or scale <= 0.0:
+        return float(cap_scale_default)
+    return float(scale)
+
+
+def run_oric_from_observations(
+    df_obs: pd.DataFrame,
+    cfg: ORICConfig,
+    *,
+    col_t: str = "t",
+    col_O: str = "O",
+    col_R: str = "R",
+    col_I: str = "I",
+    col_demand: str = "demand",
+    col_S: str | None = None,
+    auto_scale: bool = True,
+    demand_to_cap_ratio: float = 0.90,
+) -> pd.DataFrame:
+    """Run ORI-C mechanics on observed (real) time series.
+
+    The observed series provides O(t), R(t), I(t) in [0,1] and optionally demand(t).
+    If col_S is provided, S(t) is taken as observed (clipped to [0,1]) and the internal
+    symbolic accumulation step is skipped. Otherwise, S(t) evolves from Sigma(t) with
+    the same gate and decay as the synthetic simulator.
+
+    The goal is to produce the same core columns as synthetic runs:
+    t, O, R, I, Cap, demand, Sigma, S, V, C, delta_C, threshold_value, threshold_hit.
+
+    This function does not apply discrete interventions.
+    """
+    df = df_obs.copy()
+
+    if col_t not in df.columns:
+        raise ValueError(f"Missing required time column: {col_t}")
+    for c in [col_O, col_R, col_I]:
+        if c not in df.columns:
+            raise ValueError(f"Missing required column: {c}")
+
+    t = pd.to_numeric(df[col_t], errors="coerce").fillna(0).astype(int).to_numpy()
+    O = pd.to_numeric(df[col_O], errors="coerce").astype(float).to_numpy()
+    R = pd.to_numeric(df[col_R], errors="coerce").astype(float).to_numpy()
+    I = pd.to_numeric(df[col_I], errors="coerce").astype(float).to_numpy()
+
+    # Basic clipping for numeric safety
+    O = np.clip(O, 0.01, 0.99)
+    R = np.clip(R, 0.01, 0.99)
+    I = np.clip(I, 0.01, 0.99)
+
+    base_cap = O * R * I
+
+    demand = None
+    if col_demand in df.columns:
+        demand = pd.to_numeric(df[col_demand], errors="coerce").astype(float).to_numpy()
+    else:
+        demand = np.full(len(base_cap), np.nan, dtype=float)
+
+    cap_scale = float(cfg.cap_scale)
+    if bool(auto_scale):
+        cap_scale = _auto_cap_scale_from_demand(
+            base_cap,
+            demand,
+            cap_scale_default=float(cfg.cap_scale),
+            demand_to_cap_ratio=float(demand_to_cap_ratio),
+        )
+
+    Cap = base_cap * cap_scale
+
+    # If demand is missing, use the synthetic convention demand ~= 0.90 * Cap
+    if np.all(~np.isfinite(demand)):
+        demand = float(demand_to_cap_ratio) * Cap
+
+    # Prepare S source
+    use_S_obs = (col_S is not None) and (col_S in df.columns)
+    if use_S_obs:
+        S_obs = pd.to_numeric(df[col_S], errors="coerce").astype(float).to_numpy()
+        S_obs = np.clip(np.nan_to_num(S_obs, nan=0.0), 0.0, 1.0)
+    else:
+        S_obs = None
+
+    # Initial S
+    if cfg.S0 is not None:
+        S = float(np.clip(cfg.S0, 0.0, 1.0))
+    elif use_S_obs and S_obs is not None and len(S_obs) > 0:
+        S = float(S_obs[0])
+    else:
+        S = 0.20
+
+    C = 0.0
+    rows: list[dict] = []
+
+    for i in range(int(len(t))):
+        Sigma = float(max(0.0, float(demand[i]) - float(Cap[i])))
+
+        if use_S_obs and S_obs is not None:
+            S = float(S_obs[i])
+            Sigma_symbolic = float(max(0.0, Sigma - float(cfg.sigma_star)))
+        else:
+            Sigma_symbolic = float(max(0.0, Sigma - float(cfg.sigma_star)))
+            S = float(np.clip(S + cfg.sigma_to_S_alpha * Sigma_symbolic - float(cfg.S_decay) * S, 0.0, 1.0))
+
+        mismatch_frac = Sigma / (float(Cap[i]) + 1e-9)
+        V = float(np.clip(1.0 - 1.2 * mismatch_frac, 0.0, 1.0))
+
+        C = float(C + cfg.C_beta * S - cfg.C_gamma * V)
+
+        rows.append(
+            {
+                "t": int(t[i]),
+                "O": float(O[i]),
+                "R": float(R[i]),
+                "I": float(I[i]),
+                "Cap": float(Cap[i]),
+                "demand": float(demand[i]),
+                "Sigma": float(Sigma),
+                "Sigma_symbolic": float(Sigma_symbolic),
+                "S": float(S),
+                "V": float(V),
+                "C": float(C),
+                "intervention": "real",
+            }
+        )
+
+    out = pd.DataFrame(rows)
+    out["delta_C"] = out["C"].diff().fillna(0.0)
+
+    thr_idx, thr_val = _detect_threshold(out["delta_C"], cfg.k, cfg.m, cfg.baseline_n)
+    out["threshold_value"] = float(thr_val)
+    out["threshold_hit"] = 0
+    if thr_idx is not None:
+        out.loc[thr_idx, "threshold_hit"] = 1
+
+    # Keep alignment info
+    out["cap_scale_used"] = float(cap_scale)
+    out["demand_to_cap_ratio"] = float(demand_to_cap_ratio)
+    out["S_is_observed"] = bool(use_S_obs)
+
+    return out
+
+
 # Backwards compatibility wrapper: older scripts refer to generate_oric_synth
 
 def generate_oric_synth(cfg: ORICConfig, seed: int | None = None) -> pd.DataFrame:
