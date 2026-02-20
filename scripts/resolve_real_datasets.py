@@ -35,7 +35,6 @@ def main() -> int:
                 if p.is_file():
                     out.append(p.as_posix())
 
-    # de-dup
     seen = set()
     dedup: list[str] = []
     for p in out:

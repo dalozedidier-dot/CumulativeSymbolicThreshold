@@ -12,7 +12,7 @@ on:
         required: false
         default: "false"
       col_time:
-        description: Name of the time column in the CSV (must exist). Default matches run_real_data_demo.py (t).
+        description: Name of the time column in the CSV (default t)
         required: false
         default: "t"
       time_mode:
@@ -57,6 +57,17 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "statsmodels>=0.14"
 
+      - name: Prepare outdir
+        run: |
+          set -euo pipefail
+          mkdir -p "_ci_out/real_data_smoke/economie"
+          echo "git_sha=${{ github.sha }}" > "_ci_out/real_data_smoke/economie/run_meta.txt"
+          python -V >> "_ci_out/real_data_smoke/economie/run_meta.txt"
+          pip -V >> "_ci_out/real_data_smoke/economie/run_meta.txt"
+          echo "workspace=$(pwd)" >> "_ci_out/real_data_smoke/economie/run_meta.txt"
+          echo "tree 03_Data/real/economie:" >> "_ci_out/real_data_smoke/economie/run_meta.txt"
+          ls -la "03_Data/real/economie" >> "_ci_out/real_data_smoke/economie/run_meta.txt" 2>&1 || true
+
       - name: Resolve datasets
         run: |
           set -euo pipefail
@@ -73,10 +84,12 @@ jobs:
             python scripts/resolve_real_datasets.py --sector "economie" $EXTRA > _datasets.json
           fi
 
-          echo "Resolved datasets:"
           cat _datasets.json
-
           python -c "import json; d=json.load(open('_datasets.json')); assert d, 'No datasets found for sector economie'"
+
+          # write one path per line (robust to spaces)
+          python -c "import json; [print(x) for x in json.load(open('_datasets.json'))]" > _datasets.txt
+          echo "datasets_count=$(wc -l < _datasets.txt)" >> "_ci_out/real_data_smoke/economie/run_meta.txt"
 
       - name: Run pipeline for each dataset
         run: |
@@ -89,7 +102,8 @@ jobs:
           TIME_MODE="${{ github.event.inputs.time_mode }}"
 
           i=0
-          for ds in $(python -c "import json; print(' '.join(json.load(open('_datasets.json'))))"); do
+          while IFS= read -r ds; do
+            [ -z "$ds" ] && continue
             if [ ! -f "$ds" ]; then
               echo "Dataset not found: $ds" 1>&2
               exit 1
@@ -102,14 +116,34 @@ jobs:
             echo "col_time=$COL_TIME" > "$OUTDIR/col_time.txt"
             echo "time_mode=$TIME_MODE" > "$OUTDIR/time_mode.txt"
 
-            python 04_Code/pipeline/run_real_data_demo.py               --input "$ds"               --outdir "$OUTDIR"               --col-time "$COL_TIME"               --time-mode "$TIME_MODE"               --normalize robust               --control-mode no_symbolic               --k 2.5               --m 3               --baseline-n 50 2>&1 | tee "$OUTDIR/run_real_data_demo.log"
+            # Run demo (capture exit code explicitly, but keep logs)
+            set +e
+            python 04_Code/pipeline/run_real_data_demo.py               --input "$ds"               --outdir "$OUTDIR"               --col-time "$COL_TIME"               --time-mode "$TIME_MODE"               --normalize robust               --control-mode no_symbolic               --k 2.5               --m 3               --baseline-n 50 > "$OUTDIR/run_real_data_demo.log" 2>&1
+            rc_demo=$?
+            set -e
+            echo "rc_demo=$rc_demo" > "$OUTDIR/rc_demo.txt"
+            if [ $rc_demo -ne 0 ]; then
+              echo "run_real_data_demo failed for $ds (rc=$rc_demo)" 1>&2
+              tail -n 120 "$OUTDIR/run_real_data_demo.log" 1>&2 || true
+              exit $rc_demo
+            fi
 
-            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --lags 1-10               --pre-horizon "$PRE"               --post-horizon "$POST"               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot "$NBOOT"               --seed 123               --n-steps-min 200               --pdf 2>&1 | tee "$OUTDIR/tests_causaux.log"
+            set +e
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --lags 1-10               --pre-horizon "$PRE"               --post-horizon "$POST"               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot "$NBOOT"               --seed 123               --n-steps-min 200               --pdf > "$OUTDIR/tests_causaux.log" 2>&1
+            rc_causal=$?
+            set -e
+            echo "rc_causal=$rc_causal" > "$OUTDIR/rc_causal.txt"
+            if [ $rc_causal -ne 0 ]; then
+              echo "tests_causaux failed for $ds (rc=$rc_causal)" 1>&2
+              tail -n 120 "$OUTDIR/tests_causaux.log" 1>&2 || true
+              exit $rc_causal
+            fi
 
             i=$((i+1))
-          done
+          done < _datasets.txt
 
-      - name: Upload artifacts
+      - name: Upload artifacts (always)
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: real_data_smoke_economie_${{ github.run_id }}
