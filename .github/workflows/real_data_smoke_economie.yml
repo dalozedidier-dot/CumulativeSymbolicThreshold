@@ -158,9 +158,9 @@ jobs:
             echo "done" > "${OUTDIR}/logs/_done.txt"
           }
 
-  run_one "01_pilot" "03_Data/real/economie/pilot_cpi/real.csv" "year" "industrial_production_i15" "berd_pc_gdp" "ict_spec_pc_ent_ge10"
-  run_one "02_bundle_v1_FR" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_FR.csv" "year" "O" "R" "I"
-  run_one "03_bundle_v2_FR" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_FR.csv" "year" "O" "R" "I"
+          run_one "01_pilot" "03_Data/real/economie/pilot_cpi/real.csv" "year" "industrial_production_i15" "berd_pc_gdp" "ict_spec_pc_ent_ge10"
+          run_one "02_bundle_v1_FR" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_FR.csv" "year" "O" "R" "I"
+          run_one "03_bundle_v2_FR" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_FR.csv" "year" "O" "R" "I"
 
           # Always write a sha256 manifest for audit
           python 04_Code/pipeline/make_sha256_manifest.py \
