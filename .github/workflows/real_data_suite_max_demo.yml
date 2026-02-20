@@ -7,11 +7,27 @@ on:
         description: Include bundle processed CSVs under 03_Data/real/_bundles
         required: false
         default: "true"
+      pre_horizon:
+        description: Pre horizon length (steps)
+        required: false
+        default: "200"
+      post_horizon:
+        description: Post horizon length (steps)
+        required: false
+        default: "200"
+      n_boot:
+        description: Bootstrap replicates
+        required: false
+        default: "200"
+      alpha:
+        description: Alpha for causal tests
+        required: false
+        default: "0.01"
 
 jobs:
   suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +54,6 @@ jobs:
           set -euo pipefail
           SECTOR="${{ matrix.sector }}"
           INCLUDE="${{ github.event.inputs.include_bundles }}"
-
           EXTRA=""
           if [ "$INCLUDE" = "true" ]; then
             EXTRA="--include-bundles"
@@ -49,24 +64,24 @@ jobs:
           echo "Resolved datasets:"
           cat _datasets.json
 
-          python - << 'PY'
-          import json
-          from pathlib import Path
-          ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
-          if not ds:
-              raise SystemExit("No datasets found for this sector.")
-          PY
+          python -c "import json; d=json.load(open('_datasets.json')); assert len(d)>0, 'No datasets found for sector ' + '${{ matrix.sector }}'"
+          python -c "import json; d=json.load(open('_datasets.json')); [print(x) for x in d]" > _datasets.txt
 
       - name: Run suite
         run: |
           set -euo pipefail
           SECTOR="${{ matrix.sector }}"
+          PRE="${{ github.event.inputs.pre_horizon }}"
+          POST="${{ github.event.inputs.post_horizon }}"
+          NBOOT="${{ github.event.inputs.n_boot }}"
+          ALPHA="${{ github.event.inputs.alpha }}"
 
           i=0
           while read -r ds; do
             if [ -z "$ds" ]; then
               continue
             fi
+
             OUTDIR="_ci_out/real_data_suite/$SECTOR/run_${{ github.run_id }}_ds$(printf "%02d" "$i")"
             mkdir -p "$OUTDIR"
             echo "sector=$SECTOR" > "$OUTDIR/sector.txt"
@@ -74,17 +89,10 @@ jobs:
 
             python 04_Code/pipeline/run_real_data_demo.py               --input "$ds"               --outdir "$OUTDIR"               --col-time date               --time-mode index               --normalize robust               --control-mode no_symbolic               --k 2.5               --m 3               --baseline-n 50 2>&1 | tee "$OUTDIR/run_real_data_demo.log"
 
-            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha 0.01               --lags 1-10               --pre-horizon 200               --post-horizon 200               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot 200               --seed 123               --n-steps-min 200               --pdf 2>&1 | tee "$OUTDIR/tests_causaux.log"
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --lags 1-10               --pre-horizon "$PRE"               --post-horizon "$POST"               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot "$NBOOT"               --seed 123               --n-steps-min 200               --pdf 2>&1 | tee "$OUTDIR/tests_causaux.log"
 
             i=$((i+1))
-          done < <(python - << 'PY'
-import json
-from pathlib import Path
-ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
-for d in ds:
-    print(d)
-PY
-          )
+          done < _datasets.txt
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

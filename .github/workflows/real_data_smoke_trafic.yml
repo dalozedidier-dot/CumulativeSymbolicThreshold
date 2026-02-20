@@ -48,7 +48,7 @@ on:
 jobs:
   run_real_data:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -69,7 +69,6 @@ jobs:
       - name: Resolve datasets
         run: |
           set -euo pipefail
-
           DATASET_INPUT="${{ github.event.inputs.dataset }}"
           INCLUDE_BUNDLES="${{ github.event.inputs.include_bundles }}"
 
@@ -87,19 +86,12 @@ jobs:
           echo "Resolved datasets:"
           cat _datasets.json
 
-          python - << 'PY'
-          import json
-          from pathlib import Path
-
-          ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
-          if not ds:
-              raise SystemExit("No datasets found. Add 03_Data/real/trafic/pilot_*/real.csv or pass dataset input.")
-          PY
+          python -c "import json; d=json.load(open('_datasets.json')); assert len(d)>0, 'No datasets found. Add 03_Data/real/trafic/pilot_*/real.csv or pass dataset input.'"
+          python -c "import json; d=json.load(open('_datasets.json')); [print(x) for x in d]" > _datasets.txt
 
       - name: Run pipeline for each dataset
         run: |
           set -euo pipefail
-
           PRE="${{ github.event.inputs.pre_horizon }}"
           POST="${{ github.event.inputs.post_horizon }}"
           NBOOT="${{ github.event.inputs.n_boot }}"
@@ -125,14 +117,7 @@ jobs:
             python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --lags 1-10               --pre-horizon "$PRE"               --post-horizon "$POST"               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot "$NBOOT"               --seed 123               --n-steps-min 200               --pdf 2>&1 | tee "$OUTDIR/tests_causaux.log"
 
             i=$((i+1))
-          done < <(python - << 'PY'
-import json
-from pathlib import Path
-ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
-for d in ds:
-    print(d)
-PY
-          )
+          done < _datasets.txt
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
