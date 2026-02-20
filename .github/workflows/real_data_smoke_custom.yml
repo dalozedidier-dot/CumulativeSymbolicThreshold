@@ -93,7 +93,7 @@ jobs:
           python 04_Code/pipeline/run_real_data_demo.py             --input "${{ inputs.dataset_csv }}"             --outdir "${RUN_DIR}"             --col-time "${{ inputs.col_time }}"             --time-mode "${{ inputs.time_mode }}"             --col-O "${{ inputs.col_O }}"             --col-R "${{ inputs.col_R }}"             --col-I "${{ inputs.col_I }}"             --col-demand "${{ inputs.col_demand }}"             --col-S "${{ inputs.col_S }}"             --normalize "${{ inputs.normalize }}"             --control-mode "${{ inputs.control_mode }}"             > "${ROOT}/run_real_data_demo.log" 2>&1
           echo $? > "${ROOT}/rc_demo.txt"
 
-          python 04_Code/pipeline/tests_causaux.py             --run-dir "${RUN_DIR}"             --mode real             > "${ROOT}/tests_causaux.log" 2>&1
+          python 04_Code/pipeline/tests_causaux.py             --run-dir "${RUN_DIR}"             --pdf             > "${ROOT}/tests_causaux.log" 2>&1
           echo $? > "${ROOT}/rc_causal.txt"
 
           if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then
