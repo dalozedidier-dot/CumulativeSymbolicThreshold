@@ -4,7 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ExperimentLogger:
@@ -17,7 +17,7 @@ class ExperimentLogger:
 
     def log(self, event: str, payload: Dict[str, Any]) -> None:
         rec = {
-            "ts_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "ts_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "event": event,
             "payload": payload,
         }

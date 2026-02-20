@@ -275,6 +275,9 @@ def main() -> int:
             auto_scale=bool(args.auto_scale),
             demand_to_cap_ratio=float(args.demand_to_cap_ratio),
         )
+    else:
+        df_control = df_test.copy()
+
     # Protocol invariant: C(t) is a cumulative measure and must be nonnegative.
     # Some proxy normalizations can shift the computed C below 0.
     # We correct this with a constant offset (does not change ΔC) and record it.
@@ -287,10 +290,6 @@ def main() -> int:
             df_control['C'] = df_control['C'] + c_offset
         else:
             c_offset = 0.0
-    meta['c_offset'] = c_offset
-
-    else:
-        df_control = df_test.copy()
 
     # Write outputs
     df_test.to_csv(tabdir / "test_timeseries.csv", index=False)
@@ -313,6 +312,7 @@ def main() -> int:
         "control_mode": str(args.control_mode),
         "time_mode": time_mode,
         "col_time": col_time,
+        "c_offset": c_offset,
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
