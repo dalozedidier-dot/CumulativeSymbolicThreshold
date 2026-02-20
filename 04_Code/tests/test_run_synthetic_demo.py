@@ -19,7 +19,9 @@ def test_compute_V_simple():
 
 
 def test_detect_threshold_basic():
-    delta_C = pd.Series([0.0, 0.0, 1.0, 1.0, 1.0])
-    idx, thr = detect_threshold(delta_C, k=2.0, m=3, ref_frac=0.4)
+    # 10 baseline zeros then 5 ones; baseline window kept in the zero-region,
+    # so threshold == 0.0 and the first confirmed m=3 run starts at index 10.
+    delta_C = pd.Series([0.0] * 10 + [1.0] * 5)
+    idx, thr = detect_threshold(delta_C, k=2.0, m=3, baseline_n=8)
     assert thr == pytest.approx(0.0)
-    assert idx == 2
+    assert idx == 10
