@@ -1,0 +1,104 @@
+name: Real data long (ORI-C) - Custom CSV
+
+on:
+  workflow_dispatch:
+    inputs:
+      csv_path:
+        description: "Path to a real-data CSV inside the repo (recommended: 03_Data/real/_custom/<file>.csv)"
+        required: true
+        default: "03_Data/real/_custom/custom.csv"
+
+permissions:
+  contents: read
+
+jobs:
+  long_custom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run ORI-C real data (long profile) then causals
+        shell: bash
+        env:
+          CSV_PATH: ${{ inputs.csv_path }}
+          OUTDIR: _ci_out/real_data_long/custom/run_${{ github.run_id }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "${OUTDIR}"
+
+          if [ ! -f "${CSV_PATH}" ]; then
+            echo "Missing CSV: ${CSV_PATH}" | tee "${OUTDIR}/missing_input.txt"
+            exit 2
+          fi
+
+          echo "dataset=custom" > "${OUTDIR}/dataset.txt"
+          echo "csv_path=${CSV_PATH}" >> "${OUTDIR}/dataset.txt"
+          echo "policy=locked_long_profile" > "${OUTDIR}/policy.txt"
+
+          # Long-series profile (fixed ex ante)
+          K="2.5"
+          M="3"
+          BASELINE_N="50"
+          PRE_H="250"
+          POST_H="250"
+          ALPHA="0.01"
+          LAGS="1-10"
+          MAXLAG="10"
+          BLOCK="25"
+          N_BOOT="800"
+          SEED="123"
+          C_MEAN_POST_MIN="0.1"
+
+          cat > "${OUTDIR}/params.txt" << EOF
+          k=${K}
+          m=${M}
+          baseline_n=${BASELINE_N}
+          pre_horizon=${PRE_H}
+          post_horizon=${POST_H}
+          alpha=${ALPHA}
+          lags=${LAGS}
+          maxlag=${MAXLAG}
+          block=${BLOCK}
+          n_boot=${N_BOOT}
+          seed=${SEED}
+          c_mean_post_min=${C_MEAN_POST_MIN}
+          time_mode=index
+          normalize=robust
+          control_mode=no_symbolic
+          EOF
+
+          set +e
+          python 04_Code/pipeline/run_real_data_demo.py                 --input "${CSV_PATH}"                 --outdir "${OUTDIR}"                 --time-mode index                 --normalize robust                 --control-mode no_symbolic                 --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                 2>&1 | tee "${OUTDIR}/run_real_data_demo.log"
+          rc_demo=${PIPESTATUS[0]}
+          echo "${rc_demo}" > "${OUTDIR}/rc_demo.txt"
+          if [ "${rc_demo}" -ne 0 ]; then
+            exit "${rc_demo}"
+          fi
+
+          python 04_Code/pipeline/tests_causaux.py                 --run-dir "${OUTDIR}"                 --alpha "${ALPHA}"                 --c-mean-post-min "${C_MEAN_POST_MIN}"                 --lags "${LAGS}"                 --maxlag "${MAXLAG}"                 --pre-horizon "${PRE_H}"                 --post-horizon "${POST_H}"                 --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                 --block "${BLOCK}"                 --n-boot "${N_BOOT}"                 --seed "${SEED}"                 --pdf                 2>&1 | tee "${OUTDIR}/tests_causaux.log"
+          rc_causal=${PIPESTATUS[0]}
+          echo "${rc_causal}" > "${OUTDIR}/rc_causal.txt"
+          exit "${rc_causal}"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_data_long_custom_${{ github.run_id }}
+          path: _ci_out/real_data_long/custom/run_${{ github.run_id }}
+          if-no-files-found: warn
