@@ -1,4 +1,4 @@
-name: Real data smoke (energie)
+name: Real data suite (ORI-C) - energie
 
 on:
   workflow_dispatch:
@@ -9,9 +9,10 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
+  suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,19 +21,65 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: "pip"
 
-      - name: Install
+      - name: Install dependencies
         run: |
+          set -e
           python -V
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install -r requirements.txt
+          python -m pip install "pytest>=8.0" || true
+          python -m pip list
 
-      - name: Run datasets
+      - name: Run real data suite (locked params)
         shell: bash
+        env:
+          OUTBASE: _ci_out/real_data_suite/energie/run_${{ github.run_id }}
         run: |
-          set +e
-          mkdir -p _ci_out/real_data_smoke
-          echo "sector=energie" > _ci_out/real_data_smoke/sector.txt
+          set -Eeuo pipefail
+          SECTOR="energie"
+          RUN_ID="${{ github.run_id }}"
+          OUTBASE="_ci_out/real_data_suite/${SECTOR}/run_${RUN_ID}"
+          mkdir -p "${OUTBASE}"
+
+          echo "sector=${SECTOR}" > "${OUTBASE}/sector.txt"
+          echo "run_id=${RUN_ID}" > "${OUTBASE}/run_id.txt"
+          echo "policy=locked_params_no_post_observation_tuning" > "${OUTBASE}/policy.txt"
+
+          # Fixed, preregistered parameters (do not tune from n_steps)
+          K="2.5"
+          M="3"
+          BASELINE_N="50"
+          ALPHA="0.01"
+          PRE_H="500"
+          POST_H="500"
+          LAGS="1-10"
+          MAXLAG="10"
+          BLOCK="25"
+          N_BOOT="800"
+          SEED="123"
+          C_MEAN_POST_MIN="0.1"
+
+          cat > "${OUTBASE}/params.txt" << 'EOF'
+          k=2.5
+          m=3
+          baseline_n=50
+          alpha=0.01
+          pre_horizon=500
+          post_horizon=500
+          lags=1-10
+          maxlag=10
+          block=25
+          n_boot=800
+          seed=123
+          c_mean_post_min=0.1
+          time_mode=index
+          normalize=robust (pilot), none (bundles)
+          control_mode=no_symbolic
+          EOF
+
+          rc=0
 
           run_one () {
             local label="$1"
@@ -40,76 +87,106 @@ jobs:
             shift 2
             local extra_args="$@"
 
-            mkdir -p "_ci_out/real_data_smoke/$label"
-            echo "CSV=$csv" > "_ci_out/real_data_smoke/$label/dataset.txt"
+            local out="${OUTBASE}/${label}"
+            mkdir -p "${out}"
 
-            python 04_Code/pipeline/run_real_data_demo.py               --input "$csv"               --outdir "_ci_out/real_data_smoke/$label"               --time-mode index               --normalize robust               $extra_args               > "_ci_out/real_data_smoke/$label/run_real_data_demo.log" 2>&1
-            echo "rc_demo=$?" > "_ci_out/real_data_smoke/$label/rc_demo.txt"
+            echo "label=${label}" > "${out}/dataset.txt"
+            echo "csv=${csv}" >> "${out}/dataset.txt"
 
-            if [ -f "_ci_out/real_data_smoke/$label/tables/summary.json" ]; then
-              N_STEPS="$(python -c "import json; print(int(json.load(open('_ci_out/real_data_smoke/$label/tables/summary.json'))['n_steps']))" 2>/dev/null)"
-              if [ -z "$N_STEPS" ]; then N_STEPS=0; fi
-
-              BASELINE_N="$(python -c "import math; n=int('$N_STEPS'); print(max(10, min(50, int(math.floor(0.05*n)))))")"
-              HORIZON="$(python -c "import math; n=int('$N_STEPS'); print(max(10, min(250, int(math.floor(n/2)))))")"
-              MAXLAG="$(python -c "import math; n=int('$N_STEPS'); print(max(3, min(10, int(max(3, math.floor(n/10))))))")"
-              BLOCK="$(python -c "import math; n=int('$N_STEPS'); print(max(5, min(25, int(max(5, math.floor(n/5))))))")"
-
-              printf "n_steps=%s
-baseline_n=%s
-horizon=%s
-maxlag=%s
-block=%s
-"                 "$N_STEPS" "$BASELINE_N" "$HORIZON" "$MAXLAG" "$BLOCK"                 > "_ci_out/real_data_smoke/$label/params_dynamic.txt"
-
-              python 04_Code/pipeline/tests_causaux.py                 --run-dir "_ci_out/real_data_smoke/$label"                 --alpha 0.01                 --c-mean-post-min 0.1                 --lags "1-$MAXLAG"                 --maxlag "$MAXLAG"                 --pre-horizon "$HORIZON"                 --post-horizon "$HORIZON"                 --k 2.5                 --m 3                 --baseline-n "$BASELINE_N"                 --block "$BLOCK"                 --n-boot 800                 --seed 123                 --n-steps-min 20                 --pdf                 > "_ci_out/real_data_smoke/$label/tests_causaux.log" 2>&1
-              echo "rc_causal=$?" > "_ci_out/real_data_smoke/$label/rc_causal.txt"
-            else
-              echo "rc_causal=99" > "_ci_out/real_data_smoke/$label/rc_causal.txt"
+            set +e
+            python 04_Code/pipeline/run_real_data_demo.py                   --input "${csv}"                   --outdir "${out}"                   --time-mode index                   --normalize robust                   --control-mode no_symbolic                   --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                   ${extra_args}                   2>&1 | tee "${out}/run_real_data_demo.log"
+            local rc_demo=${PIPESTATUS[0]}
+            echo "${rc_demo}" > "${out}/rc_demo.txt"
+            if [ "${rc_demo}" -ne 0 ]; then
+              rc=1
+              set -e
+              return 0
             fi
+
+            python 04_Code/pipeline/tests_causaux.py                   --run-dir "${out}"                   --alpha "${ALPHA}"                   --c-mean-post-min "${C_MEAN_POST_MIN}"                   --lags "${LAGS}"                   --maxlag "${MAXLAG}"                   --pre-horizon "${PRE_H}"                   --post-horizon "${POST_H}"                   --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                   --block "${BLOCK}"                   --n-boot "${N_BOOT}"                   --seed "${SEED}"                   --pdf                   2>&1 | tee "${out}/tests_causaux.log"
+            local rc_causal=${PIPESTATUS[0]}
+            echo "${rc_causal}" > "${out}/rc_causal.txt"
+            if [ "${rc_causal}" -ne 0 ]; then
+              rc=1
+            fi
+            set -e
+            return 0
           }
 
-          # Pilot (raw proxies)
-          run_one "01_pilot" "03_Data/real/energie/pilot_energie/real.csv"             --col-time year             --col-O industrial_production_i15             --col-R berd_pc_gdp             --col-I ict_spec_pc_ent_ge10             --control-mode no_symbolic
+          # Dataset 01: pilot raw proxies
+          run_one "01_pilot" "03_Data/real/energie/pilot_energie/real.csv"                 --col-time year                 --col-O industrial_production_i15                 --col-R berd_pc_gdp                 --col-I ict_spec_pc_ent_ge10
 
-          # Bundles v1/v2 (already ORI-C canonical)
-          run_one "02_bundle_v1_BE" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_BE.csv"             --col-time t --col-O O --col-R R --col-I I --col-S S --control-mode no_symbolic
+          # Dataset 02: bundles v1 (already canonical ORI-C inputs)
+          run_one "02_bundle_v1EU27_2020" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputsEU27_2020.csv"                 --col-time year                 --col-O O --col-R R --col-I I --col-S S                 --normalize none
 
-          run_one "03_bundle_v2_BE" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv"             --col-time t --col-O O --col-R R --col-I I --col-S S --control-mode no_symbolic
+          # Dataset 03: bundles v2 (already canonical ORI-C inputs)
+          run_one "03_bundle_v2EU27_2020" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputsEU27_2020.csv"                 --col-time year                 --col-O O --col-R R --col-I I --col-S S                 --normalize none
 
-          python - <<'PY'
-          import json
-          import pathlib
+          python - << 'PY'
+          import hashlib, json, os, pathlib, time
 
-          base = pathlib.Path("_ci_out/real_data_smoke")
-          sector = base.joinpath("sector.txt").read_text(encoding="utf-8").strip().split("=", 1)[-1] if base.joinpath("sector.txt").exists() else "unknown"
+          outbase = pathlib.Path(os.environ["OUTBASE"])
 
-          out = {"sector": sector, "datasets": []}
-          for d in sorted([p for p in base.iterdir() if p.is_dir() and p.name[:2].isdigit()]):
-              v = d / "tables" / "verdict.json"
-              if v.exists():
-                  j = json.load(open(v, "r", encoding="utf-8"))
-                  out["datasets"].append(
-                      {
-                          "dataset": d.name,
-                          "verdict": j.get("verdict"),
-                          "binary_detected": j.get("binary_detected"),
-                          "threshold_hit_t": j.get("threshold_hit_t"),
-                          "reverse_warning": j.get("reverse_warning"),
-                          "ok_p_source": (j.get("criteria", {}) or {}).get("ok_p_source"),
-                      }
-                  )
-              else:
-                  out["datasets"].append({"dataset": d.name, "verdict": "missing"})
-          json.dump(out, open(base / "summary.json", "w", encoding="utf-8"), indent=2)
+          def sha256(p: pathlib.Path) -> str:
+            h = hashlib.sha256()
+            with p.open("rb") as f:
+              for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                h.update(chunk)
+            return h.hexdigest()
+
+          datasets = []
+          for d in sorted([p for p in outbase.iterdir() if p.is_dir() and p.name[:2].isdigit()]):
+            verdict = d / "tables" / "verdict.json"
+            item = {"dataset": d.name}
+            if verdict.exists():
+              try:
+                j = json.loads(verdict.read_text(encoding="utf-8"))
+                item.update({
+                  "verdict": j.get("verdict"),
+                  "binary_detected": j.get("binary_detected"),
+                  "threshold_hit_t": j.get("threshold_hit_t"),
+                  "reverse_warning": j.get("reverse_warning"),
+                  "ok_p_source": (j.get("criteria") or {}).get("ok_p_source"),
+                  "series_short": j.get("series_short"),
+                })
+              except Exception as e:
+                item["verdict"] = "read_error"
+                item["error"] = str(e)
+            else:
+              item["verdict"] = "missing"
+            datasets.append(item)
+
+          summary = {
+            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "sector": (outbase / "sector.txt").read_text(encoding="utf-8").strip().split("=", 1)[-1],
+            "datasets": datasets,
+          }
+          (outbase / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+          files = []
+          for p in sorted(outbase.rglob("*")):
+            if p.is_file():
+              files.append({
+                "path": str(p.relative_to(outbase)),
+                "sha256": sha256(p),
+                "bytes": p.stat().st_size,
+              })
+          (outbase / "manifest.json").write_text(
+            json.dumps({"generated_utc": summary["generated_utc"], "files": files}, indent=2),
+            encoding="utf-8",
+          )
+          print("summary.json and manifest.json written under", outbase)
           PY
 
-          find _ci_out/real_data_smoke -maxdepth 3 -type f -print > _ci_out/real_data_smoke/ps.txt || true
-          exit 0
+          if [ "${rc}" -ne 0 ]; then
+            echo "One or more datasets failed. See rc_*.txt and logs under ${OUTBASE}"
+          fi
+          exit "${rc}"
 
-      - name: Upload artifact
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_smoke_energie_${{ github.run_id }}
-          path: _ci_out/real_data_smoke
+          name: real_data_suite_energie_${{ github.run_id }}
+          path: _ci_out/real_data_suite/energie/run_${{ github.run_id }}
+          if-no-files-found: warn
