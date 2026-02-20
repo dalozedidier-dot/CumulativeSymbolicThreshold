@@ -118,11 +118,74 @@ pytest>=8.0
 # From repo root
 PYTHONPATH=04_Code pytest -q
 
-# Or via 04_Code prefix
+# Or target specific folder
 PYTHONPATH=04_Code pytest 04_Code/tests/ -q
 ```
 
-Test files live in `04_Code/tests/`. Root `conftest.py` adds `src/` to `sys.path`. The `04_Code/tests/conftest.py` file handles import resolution for pipeline modules.
+### Test locations
+
+| Location | Purpose |
+|----------|---------|
+| `src/oric/tests/test_smoke.py` | Package smoke test (imports, shapes, value ranges) |
+| `04_Code/tests/test_oric_pipeline.py` | Pipeline: column contract, intervention effects |
+| `04_Code/tests/test_run_synthetic_demo.py` | Unit tests for `compute_V()` and `detect_threshold()` |
+
+### `sys.path` setup
+
+- Root `conftest.py` adds `src/` → enables `import oric`
+- `04_Code/tests/conftest.py` adds `04_Code/` → enables `import pipeline.*`
+
+These must not be removed or bypassed.
+
+## Importable Package — `src/oric/`
+
+The `src/oric/` directory is an installable Python package (the root `conftest.py` adds `src/` to `sys.path`). It provides the reusable low-level library.
+
+| Module | Key exports |
+|--------|-------------|
+| `ori_core.py` | `compute_cap_projection()`, `compute_sigma()`, `compute_viability()`, `summarize_run()` |
+| `symbolic.py` | `compute_stock_S()`, `compute_order_C()`, `detect_s_star_piecewise()` |
+| `prereg.py` | `PreregSpec` frozen dataclass — all ex-ante fixed parameters |
+| `randomization.py` | `RandomizationEngine` — deterministic seed generation and condition assignment |
+| `logger.py` | `ExperimentLogger` — JSONL append-only experiment log |
+
+### `PreregSpec` defaults
+
+```python
+@dataclass(frozen=True)
+class PreregSpec:
+    alpha: float = 0.01        # significance level (non-negotiable)
+    ci_level: float = 0.99     # 99% confidence intervals
+    n_min: int = 50            # minimum valid runs per condition
+
+    # SESOI
+    sesoi_cap_rel: float = 0.10         # +10% relative vs baseline
+    sesoi_v_rel: float = -0.10          # -10% relative vs baseline
+    sesoi_c_robust_sd: float = 0.30     # +0.3 robust SD via MAD
+
+    # Threshold detection
+    window_W: int = 20
+    window_mu: int = 10
+    k_sigma: float = 2.5
+    m_consecutive: int = 3
+
+    # Weights (all ex ante)
+    omega_v: tuple = (0.25, 0.25, 0.25, 0.25)   # V(t) weights
+    alpha_s: tuple = (0.25, 0.25, 0.25, 0.25)    # S(t) weights
+
+    # Functional forms
+    cap_form: str = "product"
+    sigma_form: str = "relu_diff"
+    v_form: str = "weighted_mean"
+    s_form: str = "weighted_mean"
+
+    # Power
+    power_bootstrap_B: int = 500
+    power_gate_min: float = 0.70
+    power_target: float = 0.80
+```
+
+`PreregSpec` serializes to JSON for audit trails and cannot be modified post-construction.
 
 ## Key Pipeline Scripts
 
@@ -205,6 +268,20 @@ python 04_Code/pipeline/tests_causaux.py \
 ```
 
 Real data CSV format: required columns `t` (or date), `O`, `R`, `I` (normalized to [0,1]); optional `demand`, `S`.
+
+### Synthetic datasets (`03_Data/synthetic/`)
+
+| File | Description |
+|------|-------------|
+| `synthetic_minimal.csv` | Pre-threshold regime, no transition |
+| `synthetic_with_transition.csv` | Contains a regime transition (use for T2/T3/robustness) |
+| `synthetic_with_threshold.csv` | Explicit threshold crossing |
+| `synthetic_test6_s_star.csv` | For sigma-star (Σ*) gate testing |
+| `synthetic_example.csv` | Generic example |
+
+### Real data (`03_Data/real/`)
+
+Sector directories: `economie/`, `energie/`, `meteo/`, `pilot_cpi/`, `trafic/`. Each contains `real.csv` with columns `t`, `O`, `R`, `I` (pre-normalized to [0,1]), optionally `demand`, `S`. Real data bundles (v1/v2) are in `_bundles/`.
 
 See `04_Code/pipeline/README_REAL_DATA.md` for full reference.
 
@@ -289,6 +366,18 @@ From `CONTRIBUTING.md`:
 3. **Avoid circularity** between V(t), S(t), and C(t) definitions.
 4. **Add a minimal example** whenever introducing a new concept.
 5. **Never modify parameters after observing data.** Any parameter change must be treated as a new pre-registration.
+
+## Code Conventions
+
+- **Frozen dataclasses** for all config objects (`ORICConfig`, `PreregSpec`, `Config`). Never mutate; construct a new instance.
+- **`from __future__ import annotations`** at the top of every source file.
+- **Modern type hints**: `str | None`, `list[str]`, `tuple[int | None, float]` (Python 3.10+ style).
+- **`_col(df, name, default)`** defensive pattern: tolerate missing optional columns gracefully — do not `KeyError` on optional inputs.
+- **Dual column naming for compatibility**: `ori_c_pipeline.py` writes both `demand` and `demande_env`; do not remove either.
+- **JSONL audit log**: `ExperimentLogger` appends structured JSON records with UTC timestamps. Do not replace with print statements.
+- **No linting tooling**: No `.flake8`, `ruff.toml`, `mypy.ini`, or `pyproject.toml`. CI does not run linters. Focus on correctness, not style.
+- **Output directory**: always created via `Path.mkdir(parents=True, exist_ok=True)` before writing. Never assume it exists.
+- **All config parameters from JSON**: `04_Code/configs/example_config.json` shows the schema. Use `--config` flag for `compute_variables.py`.
 
 ## Important Constraints for AI Assistants
 
