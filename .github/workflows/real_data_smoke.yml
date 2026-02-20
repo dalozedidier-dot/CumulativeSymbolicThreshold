@@ -89,6 +89,7 @@ jobs:
 
           if [ ! -f "${{ inputs.dataset_csv }}" ]; then
             echo "ERREUR: dataset introuvable: ${{ inputs.dataset_csv }}" > "${ROOT}/ERROR.txt"
+            exit 1
           fi
 
           RUN_DIR="${ROOT}/run"

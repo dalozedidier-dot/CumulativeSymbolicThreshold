@@ -65,7 +65,7 @@ jobs:
               python 04_Code/pipeline/run_all_tests.py 2>&1 | tee _ci_out/run.log
             fi
           elif [ "$SUITE" = "ori_demo" ]; then
-            python 04_Code/pipeline/run_ori_c_demo.py --outdir _ci_out/ori_demo --n-runs "$N_RUNS" --master-seed "$SEED" 2>&1 | tee _ci_out/run.log
+            python 04_Code/pipeline/run_ori_c_demo.py --outdir _ci_out/ori_demo --n-runs "$N_RUNS" --seed-base "$SEED" 2>&1 | tee _ci_out/run.log
           elif [ "$SUITE" = "synthetic_demo" ]; then
             INPUT="03_Data/synthetic/synthetic_with_threshold.csv"
             if [ ! -f "$INPUT" ]; then INPUT="03_Data/synthetic/synthetic_minimal.csv"; fi
@@ -75,7 +75,7 @@ jobs:
             if [ ! -f "$INPUT" ]; then INPUT="03_Data/synthetic/synthetic_minimal.csv"; fi
             python 04_Code/pipeline/run_robustness.py --input "$INPUT" --outdir _ci_out/robustness 2>&1 | tee _ci_out/run.log
           elif [ "$SUITE" = "reinjection" ]; then
-            python 04_Code/pipeline/run_reinjection_demo.py --outdir _ci_out/reinjection --n-runs "$N_RUNS" --master-seed "$SEED" 2>&1 | tee _ci_out/run.log
+            python 04_Code/pipeline/run_reinjection_demo.py --outdir _ci_out/reinjection --seed "$SEED" 2>&1 | tee _ci_out/run.log
           elif [ "$SUITE" = "neuro" ]; then
             if [ -f 04_Code/pipeline/run_bump_attractor.py ]; then
               python 04_Code/pipeline/run_bump_attractor.py --outdir _ci_out/neuro_test9a --n-runs "$N_RUNS" --master-seed "$SEED" 2>&1 | tee _ci_out/run.log

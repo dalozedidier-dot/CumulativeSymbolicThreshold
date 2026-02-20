@@ -31,7 +31,7 @@ jobs:
 
       - name: Run canonical suite
         run: |
-          set -e
+          set -eo pipefail
           mkdir -p _ci_out
           date -u | tee _ci_out/run_utc.txt
           if [ -f run_all_tests.py ]; then
