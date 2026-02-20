@@ -3,16 +3,15 @@
 
 Run ORI-C mechanics on real (observed) time series.
 
-Input
-A CSV with at least:
-- a time column (date or integer), and
-- O, R, I proxies in [0,1]
+Input:
+- A CSV with at least:
+  - a time column (date or integer) OR no time column if --time-mode index is used, and
+  - O, R, I proxies in [0,1]
+- Optional columns:
+  - demand (same unit over the series)
+  - S (symbolic proxy) in [0,1]
 
-Optional columns:
-- demand (same unit over the series)
-- S (symbolic proxy) in [0,1]
-
-Outputs (single run)
+Outputs (single run):
 - <outdir>/tables/test_timeseries.csv
 - <outdir>/tables/control_timeseries.csv
 - <outdir>/tables/summary.json
@@ -20,33 +19,37 @@ Outputs (single run)
 - <outdir>/figures/c_t.png
 - <outdir>/figures/delta_c_t.png
 
-Notes
-- If demand is missing, demand is approximated as 0.90 * Cap (synthetic convention).
+Notes:
+- If demand is missing, demand is approximated as demand_to_cap_ratio * Cap (synthetic convention).
 - If S is missing, S is endogenously updated from Sigma (gate + decay) as in the synthetic model.
 - The script can also build a simple control by forcing S(t)=0 (control-mode no_symbolic).
+
+Important:
+- When --time-mode index is used (recommended for CI), the script no longer requires that the
+  --col-time column exists in the CSV. It will use the row order as-is and map time to 0..n-1.
 """
 
 from __future__ import annotations
 
+import argparse
+import json
 import sys
 from pathlib import Path
+from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # Ensure 04_Code is on sys.path so `import pipeline.*` works when scripts are executed directly.
 _CODE_DIR = Path(__file__).resolve().parents[1]
 if str(_CODE_DIR) not in sys.path:
     sys.path.insert(0, str(_CODE_DIR))
 
-import argparse
-import json
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
+from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
 
 
-def _mkdirs(outdir: Path) -> tuple[Path, Path]:
+def _mkdirs(outdir: Path) -> Tuple[Path, Path]:
     tabdir = outdir / "tables"
     figdir = outdir / "figures"
     tabdir.mkdir(parents=True, exist_ok=True)
@@ -61,13 +64,16 @@ def _robust_minmax(x: np.ndarray, q_lo: float = 0.02, q_hi: float = 0.98) -> np.
     finite = np.isfinite(x)
     if not finite.any():
         return np.zeros_like(x)
+
     lo = float(np.quantile(x[finite], q_lo))
     hi = float(np.quantile(x[finite], q_hi))
-    if not np.isfinite(lo) or not np.isfinite(hi) or abs(hi - lo) < 1e-12:
+    if (not np.isfinite(lo)) or (not np.isfinite(hi)) or abs(hi - lo) < 1e-12:
         lo = float(np.nanmin(x[finite]))
         hi = float(np.nanmax(x[finite]))
-    if not np.isfinite(lo) or not np.isfinite(hi) or abs(hi - lo) < 1e-12:
+
+    if (not np.isfinite(lo)) or (not np.isfinite(hi)) or abs(hi - lo) < 1e-12:
         return np.zeros_like(x)
+
     y = (x - lo) / (hi - lo)
     return np.clip(y, 0.0, 1.0)
 
@@ -79,10 +85,12 @@ def _minmax(x: np.ndarray) -> np.ndarray:
     finite = np.isfinite(x)
     if not finite.any():
         return np.zeros_like(x)
+
     lo = float(np.nanmin(x[finite]))
     hi = float(np.nanmax(x[finite]))
-    if not np.isfinite(lo) or not np.isfinite(hi) or abs(hi - lo) < 1e-12:
+    if (not np.isfinite(lo)) or (not np.isfinite(hi)) or abs(hi - lo) < 1e-12:
         return np.zeros_like(x)
+
     y = (x - lo) / (hi - lo)
     return np.clip(y, 0.0, 1.0)
 
@@ -97,30 +105,31 @@ def _normalize_proxy(x: np.ndarray, method: str) -> np.ndarray:
 
 
 def _to_t_column(df: pd.DataFrame, col_time: str, time_mode: str = "index") -> pd.Series:
-    if col_time not in df.columns:
-        raise SystemExit(f"Missing time column: {col_time}")
+    """Create internal integer time index column used by the pipeline.
 
-    # When using real data, windows and detectors operate in "steps".
-    # So the safest default is to map time to a simple 0..n-1 index after sorting.
+    - time_mode="index": use 0..n-1, does not require col_time to exist.
+    - time_mode="value": parse col_time as numeric or datetime and convert to int steps.
+    """
     if str(time_mode).lower() == "index":
         return pd.Series(np.arange(len(df), dtype=int))
 
+    if col_time not in df.columns:
+        raise SystemExit(f"Missing time column: {col_time}")
+
     s = df[col_time]
+
     # Try numeric
     t_num = pd.to_numeric(s, errors="coerce")
     if t_num.notna().sum() >= int(0.9 * len(s)):
-        t = t_num.ffill().bfill().fillna(0).astype(int)
-        return t
+        return t_num.ffill().bfill().fillna(0).astype(int)
 
     # Try datetime
     dt = pd.to_datetime(s, errors="coerce", utc=True)
     if dt.notna().sum() >= int(0.9 * len(s)):
         dt = dt.ffill().bfill()
-        # convert to integer index (days since start)
         t0 = dt.iloc[0]
         t = (dt - t0).dt.total_seconds() / 86400.0
-        t = t.fillna(0.0).round().astype(int)
-        return t
+        return t.fillna(0.0).round().astype(int)
 
     # Fallback: use row index
     return pd.Series(np.arange(len(df), dtype=int))
@@ -143,33 +152,31 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True, help="CSV with columns time,O,R,I and optional demand,S")
     ap.add_argument("--outdir", required=True)
-
     ap.add_argument("--col-time", default="t")
-    ap.add_argument("--time-mode", default="index", choices=["index", "value"],
-                    help="How to interpret time: index=0..n-1 (recommended), value=use numeric or days since start for dates")
+    ap.add_argument(
+        "--time-mode",
+        default="index",
+        choices=["index", "value"],
+        help="index=0..n-1 (recommended), value=use numeric or days since start for dates",
+    )
     ap.add_argument("--col-O", default="O")
     ap.add_argument("--col-R", default="R")
     ap.add_argument("--col-I", default="I")
     ap.add_argument("--col-demand", default="demand")
     ap.add_argument("--col-S", default="S")
-
     ap.add_argument("--normalize", default="robust", choices=["none", "minmax", "robust"])
     ap.add_argument("--auto-scale", action="store_true", help="Align cap_scale to demand median (recommended when demand is provided)")
     ap.add_argument("--cap-scale", type=float, default=1000.0)
     ap.add_argument("--demand-to-cap-ratio", type=float, default=0.90)
-
     ap.add_argument("--sigma-star", type=float, default=0.0)
     ap.add_argument("--tau", type=float, default=500.0, help="If tau>0, S_decay=1/tau, else keep default S_decay")
     ap.add_argument("--sigma-to-S-alpha", type=float, default=0.0008)
     ap.add_argument("--S0", type=float, default=0.20)
-
     ap.add_argument("--C-beta", type=float, default=0.40)
     ap.add_argument("--C-gamma", type=float, default=0.12)
-
     ap.add_argument("--k", type=float, default=2.5)
     ap.add_argument("--m", type=int, default=3)
     ap.add_argument("--baseline-n", type=int, default=50)
-
     ap.add_argument("--control-mode", default="same", choices=["same", "no_symbolic"])
     args = ap.parse_args()
 
@@ -177,14 +184,14 @@ def main() -> int:
     tabdir, figdir = _mkdirs(outdir)
 
     df_raw = pd.read_csv(Path(args.input))
-
-    # Build standard columns
     df = df_raw.copy()
 
-    # Sort by the provided time column when possible, then build a step index.
     col_time = str(args.col_time)
-    if col_time in df.columns:
-        # Try datetime sort key first, then numeric.
+    time_mode = str(args.time_mode)
+
+    # Sort by the provided time column when it exists and time_mode is "value".
+    # In "index" mode, we allow missing time column and keep row order.
+    if time_mode.lower() == "value" and col_time in df.columns:
         dt_key = pd.to_datetime(df[col_time], errors="coerce", utc=True)
         if dt_key.notna().sum() >= int(0.9 * len(df)):
             df = df.assign(_sort_key=dt_key).sort_values("_sort_key").drop(columns=["_sort_key"])
@@ -194,7 +201,7 @@ def main() -> int:
                 df = df.assign(_sort_key=num_key).sort_values("_sort_key").drop(columns=["_sort_key"])
 
     # Create the internal time index used everywhere else in the pipeline.
-    df["t"] = _to_t_column(df, col_time, str(args.time_mode))
+    df["t"] = _to_t_column(df, col_time, time_mode)
     df = df.reset_index(drop=True)
 
     # Proxies
@@ -213,12 +220,12 @@ def main() -> int:
         df["demand"] = np.nan
 
     # Optional observed S
-    has_S = (str(args.col_S) in df.columns)
+    has_S = str(args.col_S) in df.columns
     if has_S:
         s = pd.to_numeric(df[str(args.col_S)], errors="coerce").to_numpy(dtype=float)
         df["S"] = np.clip(np.nan_to_num(s, nan=0.0), 0.0, 1.0)
 
-    # Build config
+    # Config
     S_decay = 0.002
     if float(args.tau) > 0.0:
         S_decay = 1.0 / float(args.tau)
@@ -271,13 +278,13 @@ def main() -> int:
     else:
         df_control = df_test.copy()
 
-    # Write
+    # Write outputs
     df_test.to_csv(tabdir / "test_timeseries.csv", index=False)
     df_control.to_csv(tabdir / "control_timeseries.csv", index=False)
 
-    # Summary
     thr_hit = int(df_test.index[df_test["threshold_hit"] > 0][0]) if bool((df_test["threshold_hit"] > 0).any()) else None
     thr_t = None if thr_hit is None else int(df_test.loc[int(thr_hit), "t"])
+
     summary = {
         "input_csv": str(Path(args.input)),
         "n_steps": int(len(df_test)),
@@ -290,6 +297,8 @@ def main() -> int:
         "cap_scale_used": float(df_test["cap_scale_used"].iloc[0]) if "cap_scale_used" in df_test.columns else float(args.cap_scale),
         "S_is_observed": bool(df_test["S_is_observed"].iloc[0]) if "S_is_observed" in df_test.columns else bool(has_S),
         "control_mode": str(args.control_mode),
+        "time_mode": time_mode,
+        "col_time": col_time,
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
