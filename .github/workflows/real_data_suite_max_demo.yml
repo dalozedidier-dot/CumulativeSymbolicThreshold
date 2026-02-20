@@ -4,22 +4,25 @@ on:
   workflow_dispatch:
     inputs:
       include_bundles:
-        description: "Include bundle processed CSVs (can be many)"
+        description: Include bundle processed CSVs under 03_Data/real/_bundles
         required: false
         default: "true"
 
 jobs:
   suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         sector: ["economie", "energie", "trafic", "meteo"]
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
@@ -27,29 +30,43 @@ jobs:
       - name: Install dependencies
         run: |
           set -euo pipefail
-python -m pip install --upgrade pip setuptools wheel
-          python -m pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "statsmodels>=0.14"
 
-      - name: Run sector matrix
+      - name: Resolve datasets
         run: |
           set -euo pipefail
-SECTOR="${{ matrix.sector }}"
+          SECTOR="${{ matrix.sector }}"
           INCLUDE="${{ github.event.inputs.include_bundles }}"
+
           EXTRA=""
-          if [ "$INCLUDE" = "true" ]; then EXTRA="--include-bundles"; fi
+          if [ "$INCLUDE" = "true" ]; then
+            EXTRA="--include-bundles"
+          fi
 
           python scripts/resolve_real_datasets.py --sector "$SECTOR" $EXTRA > _datasets.json
+          echo "Sector: $SECTOR"
+          echo "Resolved datasets:"
+          cat _datasets.json
+
           python - << 'PY'
           import json
           from pathlib import Path
-          data = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
-          print(f"datasets={len(data)}")
-          if not data:
-              raise SystemExit("No datasets found")
+          ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
+          if not ds:
+              raise SystemExit("No datasets found for this sector.")
           PY
+
+      - name: Run suite
+        run: |
+          set -euo pipefail
+          SECTOR="${{ matrix.sector }}"
 
           i=0
           while read -r ds; do
+            if [ -z "$ds" ]; then
+              continue
+            fi
             OUTDIR="_ci_out/real_data_suite/$SECTOR/run_${{ github.run_id }}_ds$(printf "%02d" "$i")"
             mkdir -p "$OUTDIR"
             echo "sector=$SECTOR" > "$OUTDIR/sector.txt"
@@ -63,8 +80,8 @@ SECTOR="${{ matrix.sector }}"
           done < <(python - << 'PY'
 import json
 from pathlib import Path
-data = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
-for d in data:
+ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
+for d in ds:
     print(d)
 PY
           )

@@ -2,15 +2,141 @@ name: Real Data Smoke (ORI-C) - Economie
 
 on:
   workflow_dispatch:
+    inputs:
+      dataset:
+        description: Optional explicit CSV path (repo-relative). Leave empty to auto-pick pilots.
+        required: false
+        default: ""
+      include_bundles:
+        description: Include bundle processed CSVs under 03_Data/real/_bundles
+        required: false
+        default: "false"
+      pre_horizon:
+        description: Pre horizon length (steps)
+        required: false
+        default: "200"
+      post_horizon:
+        description: Post horizon length (steps)
+        required: false
+        default: "200"
+      n_boot:
+        description: Bootstrap replicates
+        required: false
+        default: "200"
+      alpha:
+        description: Alpha for causal tests
+        required: false
+        default: "0.01"
+
+  push:
+    branches: ["main"]
+    paths:
+      - "04_Code/pipeline/run_real_data_demo.py"
+      - "04_Code/pipeline/tests_causaux.py"
+      - "03_Data/real/economie/**"
+      - "scripts/resolve_real_datasets.py"
+      - ".github/workflows/real_data_smoke_economie.yml"
+
+  pull_request:
+    paths:
+      - "04_Code/pipeline/run_real_data_demo.py"
+      - "04_Code/pipeline/tests_causaux.py"
+      - "03_Data/real/economie/**"
+      - "scripts/resolve_real_datasets.py"
+      - ".github/workflows/real_data_smoke_economie.yml"
 
 jobs:
-  run:
+  run_real_data:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: |
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
           set -euo pipefail
-          echo "workflow ok for economie"
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "statsmodels>=0.14"
+
+      - name: Resolve datasets
+        run: |
+          set -euo pipefail
+
+          DATASET_INPUT="${{ github.event.inputs.dataset }}"
+          INCLUDE_BUNDLES="${{ github.event.inputs.include_bundles }}"
+
+          EXTRA=""
+          if [ "$INCLUDE_BUNDLES" = "true" ]; then
+            EXTRA="--include-bundles"
+          fi
+
+          if [ -n "$DATASET_INPUT" ]; then
+            python scripts/resolve_real_datasets.py --sector "economie" --dataset "$DATASET_INPUT" $EXTRA > _datasets.json
+          else
+            python scripts/resolve_real_datasets.py --sector "economie" $EXTRA > _datasets.json
+          fi
+
+          echo "Resolved datasets:"
+          cat _datasets.json
+
+          python - << 'PY'
+          import json
+          from pathlib import Path
+
+          ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
+          if not ds:
+              raise SystemExit("No datasets found. Add 03_Data/real/economie/pilot_*/real.csv or pass dataset input.")
+          PY
+
+      - name: Run pipeline for each dataset
+        run: |
+          set -euo pipefail
+
+          PRE="${{ github.event.inputs.pre_horizon }}"
+          POST="${{ github.event.inputs.post_horizon }}"
+          NBOOT="${{ github.event.inputs.n_boot }}"
+          ALPHA="${{ github.event.inputs.alpha }}"
+
+          i=0
+          while read -r ds; do
+            if [ -z "$ds" ]; then
+              continue
+            fi
+            if [ ! -f "$ds" ]; then
+              echo "Dataset not found: $ds" 1>&2
+              exit 1
+            fi
+
+            OUTDIR="_ci_out/real_data_smoke/economie/run_${{ github.run_id }}_ds$(printf "%02d" "$i")"
+            mkdir -p "$OUTDIR"
+            echo "sector=economie" > "$OUTDIR/sector.txt"
+            echo "dataset=$ds" > "$OUTDIR/dataset.txt"
+
+            python 04_Code/pipeline/run_real_data_demo.py               --input "$ds"               --outdir "$OUTDIR"               --col-time date               --time-mode index               --normalize robust               --control-mode no_symbolic               --k 2.5               --m 3               --baseline-n 50 2>&1 | tee "$OUTDIR/run_real_data_demo.log"
+
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --lags 1-10               --pre-horizon "$PRE"               --post-horizon "$POST"               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot "$NBOOT"               --seed 123               --n-steps-min 200               --pdf 2>&1 | tee "$OUTDIR/tests_causaux.log"
+
+            i=$((i+1))
+          done < <(python - << 'PY'
+import json
+from pathlib import Path
+ds = json.loads(Path("_datasets.json").read_text(encoding="utf-8"))
+for d in ds:
+    print(d)
+PY
+          )
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_data_smoke_economie_${{ github.run_id }}
+          path: _ci_out/real_data_smoke/economie
+          if-no-files-found: warn
