@@ -3,27 +3,46 @@ name: Real Data Suite (ORI-C) - Max Demo
 on:
   workflow_dispatch:
     inputs:
-      include_bundles:
-        description: Include bundle processed CSVs under 03_Data/real/_bundles
+      control_mode:
+        description: "same or no_symbolic"
         required: false
-        default: "true"
-      col_time:
-        description: Name of the time column in the CSV (default t)
+        default: "no_symbolic"
+      alpha:
+        description: "Alpha for tests_causaux"
         required: false
-        default: "t"
-      time_mode:
-        description: index=use 0..n-1 steps, value=use numeric/datetime values
+        default: "0.01"
+      pre_horizon:
+        description: "Pre horizon (steps)"
         required: false
-        default: "index"
+        default: "500"
+      post_horizon:
+        description: "Post horizon (steps)"
+        required: false
+        default: "500"
+
+permissions:
+  contents: read
 
 jobs:
   suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        sector: ["economie", "energie", "trafic", "meteo"]
+        sector:
+          - economie
+          - energie
+          - meteo
+          - trafic
+        include:
+          - sector: economie
+            input_csv: 03_Data/real/economie/pilot_cpi/real.csv
+          - sector: energie
+            input_csv: 03_Data/real/energie/pilot_energie/real.csv
+          - sector: meteo
+            input_csv: 03_Data/real/meteo/pilot_meteo/real.csv
+          - sector: trafic
+            input_csv: 03_Data/real/trafic/pilot_trafic/real.csv
 
     steps:
       - name: Checkout
@@ -33,76 +52,32 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install dependencies
         run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "statsmodels>=0.14"
-
-      - name: Prepare outdir
-        run: |
-          set -euo pipefail
-          SECTOR="${{ matrix.sector }}"
-          mkdir -p "_ci_out/real_data_suite/$SECTOR"
-          echo "git_sha=${{ github.sha }}" > "_ci_out/real_data_suite/$SECTOR/run_meta.txt"
-
-      - name: Resolve datasets
-        run: |
-          set -euo pipefail
-          SECTOR="${{ matrix.sector }}"
-          INCLUDE="${{ github.event.inputs.include_bundles }}"
-          EXTRA=""
-          if [ "$INCLUDE" = "true" ]; then
-            EXTRA="--include-bundles"
+          set -e
+          python -m pip install --upgrade pip
+          pip install -r 04_Code/requirements.txt
+          if [ -f 04_Code/requirements-dev.txt ]; then
+            pip install -r 04_Code/requirements-dev.txt
           fi
-          python scripts/resolve_real_datasets.py --sector "$SECTOR" $EXTRA > _datasets.json
-          python -c "import json; d=json.load(open('_datasets.json')); assert d, f'No datasets for {SECTOR}'"
-          python -c "import json; [print(x) for x in json.load(open('_datasets.json'))]" > _datasets.txt
 
-      - name: Run suite
+      - name: Run pipeline
         run: |
-          set -euo pipefail
-          SECTOR="${{ matrix.sector }}"
-          COL_TIME="${{ github.event.inputs.col_time }}"
-          TIME_MODE="${{ github.event.inputs.time_mode }}"
+          set -e
+          OUTDIR="_ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}"
+          mkdir -p "$OUTDIR"
+          python 04_Code/pipeline/run_real_data_demo.py             --input "${{ matrix.input_csv }}"             --outdir "$OUTDIR"             --col-time "year"             --time-mode "index"             --col-O "industrial_production_i15"             --col-R "berd_pc_gdp"             --col-I "ict_spec_pc_ent_ge10"             --normalize "robust"             --auto-scale             --control-mode "${{ inputs.control_mode }}"
+          python 04_Code/pipeline/tests_causaux.py             --run-dir "$OUTDIR"             --alpha "${{ inputs.alpha }}"             --pre-horizon "${{ inputs.pre_horizon }}"             --post-horizon "${{ inputs.post_horizon }}"             --pdf
 
-          i=0
-          while IFS= read -r ds; do
-            [ -z "$ds" ] && continue
-            OUTDIR="_ci_out/real_data_suite/$SECTOR/run_${{ github.run_id }}_ds$(printf "%02d" "$i")"
-            mkdir -p "$OUTDIR"
-            echo "sector=$SECTOR" > "$OUTDIR/sector.txt"
-            echo "dataset=$ds" > "$OUTDIR/dataset.txt"
-
-            set +e
-            python 04_Code/pipeline/run_real_data_demo.py               --input "$ds"               --outdir "$OUTDIR"               --col-time "$COL_TIME"               --time-mode "$TIME_MODE"               --normalize robust               --control-mode no_symbolic               --k 2.5               --m 3               --baseline-n 50 > "$OUTDIR/run_real_data_demo.log" 2>&1
-            rc_demo=$?
-            set -e
-            echo "rc_demo=$rc_demo" > "$OUTDIR/rc_demo.txt"
-            if [ $rc_demo -ne 0 ]; then
-              tail -n 120 "$OUTDIR/run_real_data_demo.log" 1>&2 || true
-              exit $rc_demo
-            fi
-
-            set +e
-            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha 0.01               --lags 1-10               --pre-horizon 200               --post-horizon 200               --k 2.5               --m 3               --baseline-n 50               --block 25               --n-boot 200               --seed 123               --n-steps-min 200               --pdf > "$OUTDIR/tests_causaux.log" 2>&1
-            rc_causal=$?
-            set -e
-            echo "rc_causal=$rc_causal" > "$OUTDIR/rc_causal.txt"
-            if [ $rc_causal -ne 0 ]; then
-              tail -n 120 "$OUTDIR/tests_causaux.log" 1>&2 || true
-              exit $rc_causal
-            fi
-
-            i=$((i+1))
-          done < _datasets.txt
-
-      - name: Upload artifacts (always)
-        if: ${{ always() }}
+      - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_suite_${{ github.run_id }}_${{ matrix.sector }}
-          path: _ci_out/real_data_suite/${{ matrix.sector }}
+          name: real_data_suite_${{ matrix.sector }}_${{ github.run_id }}
+          path: |
+            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/tables/**
+            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/figures/**
+            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/*.log
+            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/run_meta.txt
           if-no-files-found: warn
