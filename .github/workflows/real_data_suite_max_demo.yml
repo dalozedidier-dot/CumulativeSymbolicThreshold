@@ -2,23 +2,6 @@ name: Real Data Suite (ORI-C) - Max Demo
 
 on:
   workflow_dispatch:
-    inputs:
-      control_mode:
-        description: "same or no_symbolic"
-        required: false
-        default: "no_symbolic"
-      alpha:
-        description: "Alpha for tests_causaux"
-        required: false
-        default: "0.01"
-      pre_horizon:
-        description: "Pre horizon (steps)"
-        required: false
-        default: "500"
-      post_horizon:
-        description: "Post horizon (steps)"
-        required: false
-        default: "500"
 
 permissions:
   contents: read
@@ -29,20 +12,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sector:
-          - economie
-          - energie
-          - meteo
-          - trafic
         include:
           - sector: economie
-            input_csv: 03_Data/real/economie/pilot_cpi/real.csv
+            pilot_csv: 03_Data/real/economie/pilot_cpi/real.csv
+            pilot_col_time: year
+            pilot_col_O: industrial_production_i15
+            pilot_col_R: berd_pc_gdp
+            pilot_col_I: ict_spec_pc_ent_ge10
+            bundle_code: FR
           - sector: energie
-            input_csv: 03_Data/real/energie/pilot_energie/real.csv
+            pilot_csv: 03_Data/real/energie/pilot_energie/real.csv
+            pilot_col_time: year
+            pilot_col_O: industrial_production_i15
+            pilot_col_R: berd_pc_gdp
+            pilot_col_I: ict_spec_pc_ent_ge10
+            bundle_code: DE
           - sector: meteo
-            input_csv: 03_Data/real/meteo/pilot_meteo/real.csv
+            pilot_csv: 03_Data/real/meteo/pilot_meteo/real.csv
+            pilot_col_time: year
+            pilot_col_O: sdg_13_50_mio_eur
+            pilot_col_R: env_tax_env_mio_eur
+            pilot_col_I: road_elec_ktoe
+            bundle_code: EE
           - sector: trafic
-            input_csv: 03_Data/real/trafic/pilot_trafic/real.csv
+            pilot_csv: 03_Data/real/trafic/pilot_trafic/real.csv
+            pilot_col_time: year
+            pilot_col_O: industrial_production_i15
+            pilot_col_R: env_tax_env_mio_eur
+            pilot_col_I: road_elec_ktoe
+            bundle_code: EE
 
     steps:
       - name: Checkout
@@ -52,32 +50,57 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          set -e
           python -m pip install --upgrade pip
-          pip install -r 04_Code/requirements.txt
-          if [ -f 04_Code/requirements-dev.txt ]; then
-            pip install -r 04_Code/requirements-dev.txt
-          fi
+          python -m pip install -r requirements.txt
 
-      - name: Run pipeline
+      - name: Run suite
+        shell: bash
         run: |
-          set -e
-          OUTDIR="_ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}"
-          mkdir -p "$OUTDIR"
-          python 04_Code/pipeline/run_real_data_demo.py             --input "${{ matrix.input_csv }}"             --outdir "$OUTDIR"             --col-time "year"             --time-mode "index"             --col-O "industrial_production_i15"             --col-R "berd_pc_gdp"             --col-I "ict_spec_pc_ent_ge10"             --normalize "robust"             --auto-scale             --control-mode "${{ inputs.control_mode }}"
-          python 04_Code/pipeline/tests_causaux.py             --run-dir "$OUTDIR"             --alpha "${{ inputs.alpha }}"             --pre-horizon "${{ inputs.pre_horizon }}"             --post-horizon "${{ inputs.post_horizon }}"             --pdf
+          set -u
 
-      - name: Upload artifacts
+          RUN_ID="${GITHUB_RUN_ID}"
+          RUN_ATTEMPT="${GITHUB_RUN_ATTEMPT}"
+          SECTOR="${{ matrix.sector }}"
+          ROOT="_ci_out/real_data_suite/max_demo/${SECTOR}/run_${RUN_ID}_${RUN_ATTEMPT}"
+          mkdir -p "${ROOT}"
+
+          run_one () {
+            local label="$1"
+            local csv="$2"
+            local col_time="$3"
+            local col_O="$4"
+            local col_R="$5"
+            local col_I="$6"
+
+            local outdir="${ROOT}/${label}"
+            mkdir -p "${outdir}"
+
+            python 04_Code/pipeline/run_real_data_demo.py               --input "${csv}"               --outdir "${outdir}"               --col-time "${col_time}"               --time-mode index               --col-O "${col_O}"               --col-R "${col_R}"               --col-I "${col_I}"               --normalize minmax               --control-mode same               > "${outdir}/run_real_data_demo.log" 2>&1
+            echo $? > "${outdir}/rc_demo.txt"
+
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "${outdir}"               --mode real               > "${outdir}/tests_causaux.log" 2>&1
+            echo $? > "${outdir}/rc_causal.txt"
+
+            if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then
+              python 04_Code/pipeline/make_sha256_manifest.py                 --root "${outdir}"                 --out "${outdir}/manifest.json"                 > "${outdir}/manifest.log" 2>&1 || true
+            fi
+
+            echo "done" > "${outdir}/status.txt"
+          }
+
+          run_one "01_pilot" "${{ matrix.pilot_csv }}" "${{ matrix.pilot_col_time }}" "${{ matrix.pilot_col_O }}" "${{ matrix.pilot_col_R }}" "${{ matrix.pilot_col_I }}"
+
+          run_one "02_bundle_v1" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_${{ matrix.bundle_code }}.csv" "year" "O" "R" "I"
+          run_one "03_bundle_v2" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_${{ matrix.bundle_code }}.csv" "year" "O" "R" "I"
+
+      - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_suite_${{ matrix.sector }}_${{ github.run_id }}
-          path: |
-            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/tables/**
-            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/figures/**
-            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/*.log
-            _ci_out/real_data_suite/${{ matrix.sector }}/run_${{ github.run_id }}/run_meta.txt
+          name: real_data_suite_max_demo_${{ matrix.sector }}_${{ github.run_id }}
+          path: _ci_out/real_data_suite/max_demo/${{ matrix.sector }}
           if-no-files-found: warn

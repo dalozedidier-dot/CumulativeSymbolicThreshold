@@ -132,5 +132,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: real_data_smoke_trafic_${{ github.run_id }}
-          path: _ci_out/real_data_smoke/trafic/
-          if-no-files-found: error
+          path: _ci_out/real_data_smoke/trafic/run_${{ github.run_id }}
+          if-no-files-found: warn

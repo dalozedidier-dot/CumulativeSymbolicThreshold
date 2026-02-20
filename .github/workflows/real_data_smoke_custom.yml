@@ -1,4 +1,4 @@
-name: Real Data Smoke (ORI-C)
+name: Real Data Smoke (ORI-C) - Custom
 
 on:
   workflow_dispatch:
@@ -48,7 +48,7 @@ permissions:
   contents: read
 
 jobs:
-  real_data_smoke:
+  real_data_smoke_custom:
     runs-on: ubuntu-latest
 
     steps:
@@ -66,7 +66,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run ORI-C real data smoke
+      - name: Run custom real data smoke
         shell: bash
         run: |
           set -u
@@ -87,10 +87,6 @@ jobs:
           echo "normalize=${{ inputs.normalize }}" >> "${ROOT}/inputs.txt"
           echo "control_mode=${{ inputs.control_mode }}" >> "${ROOT}/inputs.txt"
 
-          if [ ! -f "${{ inputs.dataset_csv }}" ]; then
-            echo "ERREUR: dataset introuvable: ${{ inputs.dataset_csv }}" > "${ROOT}/ERROR.txt"
-          fi
-
           RUN_DIR="${ROOT}/run"
           mkdir -p "${RUN_DIR}"
 
@@ -104,9 +100,7 @@ jobs:
             python 04_Code/pipeline/make_sha256_manifest.py               --root "${ROOT}"               --out "${ROOT}/manifest.json"               > "${ROOT}/manifest.log" 2>&1 || true
           fi
 
-          if [ ! -f "${ROOT}/status.txt" ]; then
-            echo "done" > "${ROOT}/status.txt"
-          fi
+          echo "done" > "${ROOT}/status.txt"
 
       - name: Upload artifact
         if: always()

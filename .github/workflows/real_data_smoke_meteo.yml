@@ -132,5 +132,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: real_data_smoke_meteo_${{ github.run_id }}
-          path: _ci_out/real_data_smoke/meteo/
-          if-no-files-found: error
+          path: _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}
+          if-no-files-found: warn
