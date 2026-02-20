@@ -58,7 +58,7 @@ def main() -> int:
     ap.add_argument("--S0", type=float, default=0.20)
     ap.add_argument("--injection-add", type=float, default=0.25)
 
-    ap.add_argument("--demand-noise", type=float, default=0.0)
+    ap.add_argument("--demand-noise", type=float, default=0.10)
     ap.add_argument("--sigma-star", type=float, default=1e9)
 
     args = ap.parse_args()
@@ -66,68 +66,88 @@ def main() -> int:
     outdir = Path(args.outdir)
     figdir, tabdir = _make_dirs(outdir)
 
+    # Unpaired design: independent seeds for control vs injection.
+    # A paired design (same seed for both) makes diff_injection_minus_control constant
+    # across all pairs when sigma_star is high (S decays deterministically from S0,
+    # and V paths cancel). Using independent seeds gives genuine variance in C_end,
+    # enabling a valid two-sample test.
+    n = int(args.n)
     rows = []
-    for i in range(int(args.n)):
-        seed = int(args.seed) + i
+    for i in range(n):
+        seed_ctrl = int(args.seed) + i
+        seed_inj = int(args.seed) + n + i  # independent seeds → genuine replication
 
-        cfg_common = ORICConfig(
-            seed=seed,
+        cfg_ctrl = ORICConfig(
+            seed=seed_ctrl,
             n_steps=int(args.t_steps),
+            intervention="none",
             intervention_point=int(args.t0),
             intervention_duration=1,
             demand_noise=float(args.demand_noise),
             sigma_star=float(args.sigma_star),
             S0=float(args.S0),
         )
-
-        df_ctrl = run_oric(ORICConfig(**{**cfg_common.__dict__, "intervention": "none"}))
-        df_inj = run_oric(
-            ORICConfig(
-                **{
-                    **cfg_common.__dict__,
-                    "intervention": "symbolic_injection",
-                    "symbolic_injection_add": float(args.injection_add),
-                }
-            )
+        cfg_inj = ORICConfig(
+            seed=seed_inj,
+            n_steps=int(args.t_steps),
+            intervention="symbolic_injection",
+            intervention_point=int(args.t0),
+            intervention_duration=1,
+            demand_noise=float(args.demand_noise),
+            sigma_star=float(args.sigma_star),
+            S0=float(args.S0),
+            symbolic_injection_add=float(args.injection_add),
         )
+
+        df_ctrl = run_oric(cfg_ctrl)
+        df_inj = run_oric(cfg_inj)
 
         rows.append(
             {
-                "seed": seed,
+                "seed_ctrl": seed_ctrl,
+                "seed_inj": seed_inj,
                 "C_end_control": float(df_ctrl["C"].iloc[-1]),
                 "C_end_injection": float(df_inj["C"].iloc[-1]),
-                "diff_injection_minus_control": float(df_inj["C"].iloc[-1] - df_ctrl["C"].iloc[-1]),
             }
         )
 
     res = pd.DataFrame(rows)
     res.to_csv(tabdir / "paired_results.csv", index=False)
 
-    diffs = res["diff_injection_minus_control"].to_numpy(dtype=float)
-    tstat, pval = stats.ttest_1samp(diffs, popmean=0.0)
+    # Independent (unpaired) two-sample t-test: H1: mean(C_end_injection) > mean(C_end_control)
+    c_ctrl = res["C_end_control"].to_numpy(dtype=float)
+    c_inj = res["C_end_injection"].to_numpy(dtype=float)
+    tstat, pval = stats.ttest_ind(c_inj, c_ctrl, alternative="greater")
+    mean_diff = float(np.mean(c_inj) - np.mean(c_ctrl))
 
     summary = {
-        "n": int(args.n),
+        "n": n,
         "seed_base": int(args.seed),
         "t_steps": int(args.t_steps),
         "t0": int(args.t0),
         "S0": float(args.S0),
         "injection_add": float(args.injection_add),
-        "mean_diff": float(np.mean(diffs)),
+        "design": "unpaired_independent_seeds",
+        "demand_noise": float(args.demand_noise),
+        "mean_C_end_control": float(np.mean(c_ctrl)),
+        "mean_C_end_injection": float(np.mean(c_inj)),
+        "mean_diff": mean_diff,
         "p_value": float(pval),
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
+    verdict_token = "ACCEPT" if float(pval) < 0.01 and mean_diff > 0 else "INDETERMINATE"
     verdict = {
         "test": "T5_symbolic_injection",
-        "verdict": "ACCEPT" if float(pval) < 0.01 and float(np.mean(diffs)) > 0 else "INDETERMINATE",
-        "mean_diff": float(np.mean(diffs)),
+        "verdict": verdict_token,
+        "mean_diff": mean_diff,
         "p_value": float(pval),
     }
     (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
+    (outdir / "verdict.txt").write_text(verdict_token, encoding="utf-8")
 
     plt.figure(figsize=(8, 5))
-    plt.boxplot([res["C_end_control"], res["C_end_injection"]], labels=["control", "injection"])
+    plt.boxplot([res["C_end_control"].to_numpy(), res["C_end_injection"].to_numpy()], labels=["control", "injection"])
     plt.ylabel("C_end")
     plt.title("C_end: control vs injection")
     plt.tight_layout()

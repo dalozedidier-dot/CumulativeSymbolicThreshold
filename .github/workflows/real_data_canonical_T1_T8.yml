@@ -227,7 +227,8 @@ jobs:
             --baseline-n 50 \
             2>&1 | tee "${ROOT}/suite.log"
 
-          echo $? > "${ROOT}/rc.txt"
+          # PIPESTATUS[0] = python exit code; plain $? would give tee's exit code (always 0)
+          echo ${PIPESTATUS[0]} > "${ROOT}/rc.txt"
 
           VERDICT=$(cat "${ROOT}/verdict.txt" 2>/dev/null || echo "UNKNOWN")
           echo "verdict=${VERDICT}" >> "$GITHUB_OUTPUT"

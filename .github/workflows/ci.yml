@@ -46,7 +46,7 @@ jobs:
 
       - name: Run canonical suite
         run: |
-          set -e
+          set -eo pipefail
           mkdir -p _ci_out
           python -V | tee _ci_out/python_version.txt
           pip -V | tee _ci_out/pip_version.txt

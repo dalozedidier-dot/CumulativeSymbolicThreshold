@@ -62,7 +62,7 @@ def main() -> int:
     ap.add_argument("--tau", type=float, default=0.0)
     ap.add_argument("--s-decay", type=float, default=0.002)
 
-    ap.add_argument("--demand-noise", type=float, default=0.0)
+    ap.add_argument("--demand-noise", type=float, default=0.10)
     ap.add_argument("--ori-trend", type=float, default=0.0)
 
     args = ap.parse_args()
@@ -75,12 +75,18 @@ def main() -> int:
     else:
         s_decay = float(args.s_decay)
 
+    # Unpaired design: independent seeds for rich vs poor.
+    # With demand_noise > 0, V varies per seed → C_end has real variance across seeds.
+    # A paired design (same seed for both) would cancel all stochasticity, making
+    # diff_rich_minus_poor constant and the t-test degenerate (std=0).
+    n = int(args.n)
     rows = []
-    for i in range(int(args.n)):
-        seed = int(args.seed) + i
+    for i in range(n):
+        seed_rich = int(args.seed) + i
+        seed_poor = int(args.seed) + n + i  # independent seeds → genuine replication
 
-        cfg_common = ORICConfig(
-            seed=seed,
+        cfg_rich = ORICConfig(
+            seed=seed_rich,
             n_steps=int(args.t_steps),
             intervention="none",
             intervention_point=int(args.t_steps // 3),
@@ -89,50 +95,71 @@ def main() -> int:
             S_decay=float(s_decay),
             demand_noise=float(args.demand_noise),
             ori_trend=float(args.ori_trend),
+            S0=float(args.S_rich),
+        )
+        cfg_poor = ORICConfig(
+            seed=seed_poor,
+            n_steps=int(args.t_steps),
+            intervention="none",
+            intervention_point=int(args.t_steps // 3),
+            intervention_duration=0,
+            sigma_star=float(args.sigma_star),
+            S_decay=float(s_decay),
+            demand_noise=float(args.demand_noise),
+            ori_trend=float(args.ori_trend),
+            S0=float(args.S_poor),
         )
 
-        df_rich = run_oric(ORICConfig(**{**cfg_common.__dict__, "S0": float(args.S_rich)}))
-        df_poor = run_oric(ORICConfig(**{**cfg_common.__dict__, "S0": float(args.S_poor)}))
+        df_rich = run_oric(cfg_rich)
+        df_poor = run_oric(cfg_poor)
 
         rows.append(
             {
-                "seed": seed,
+                "seed_rich": seed_rich,
+                "seed_poor": seed_poor,
                 "C_end_rich": float(df_rich["C"].iloc[-1]),
                 "C_end_poor": float(df_poor["C"].iloc[-1]),
-                "diff_rich_minus_poor": float(df_rich["C"].iloc[-1] - df_poor["C"].iloc[-1]),
             }
         )
 
     res = pd.DataFrame(rows)
     res.to_csv(tabdir / "paired_results.csv", index=False)
 
-    # Paired test on diff
-    diffs = res["diff_rich_minus_poor"].to_numpy(dtype=float)
-    tstat, pval = stats.ttest_1samp(diffs, popmean=0.0)
+    # Independent (unpaired) two-sample t-test: H1: mean(C_end_rich) > mean(C_end_poor)
+    c_rich = res["C_end_rich"].to_numpy(dtype=float)
+    c_poor = res["C_end_poor"].to_numpy(dtype=float)
+    tstat, pval = stats.ttest_ind(c_rich, c_poor, alternative="greater")
+    mean_diff = float(np.mean(c_rich) - np.mean(c_poor))
 
     summary = {
-        "n": int(args.n),
+        "n": n,
         "seed_base": int(args.seed),
         "t_steps": int(args.t_steps),
         "S_rich": float(args.S_rich),
         "S_poor": float(args.S_poor),
-        "mean_diff": float(np.mean(diffs)),
+        "design": "unpaired_independent_seeds",
+        "demand_noise": float(args.demand_noise),
+        "mean_C_end_rich": float(np.mean(c_rich)),
+        "mean_C_end_poor": float(np.mean(c_poor)),
+        "mean_diff": mean_diff,
         "p_value": float(pval),
     }
 
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
+    verdict_token = "ACCEPT" if float(pval) < 0.01 and mean_diff > 0 else "INDETERMINATE"
     verdict = {
         "test": "T4_symbolic_S_rich_vs_poor",
-        "verdict": "ACCEPT" if float(pval) < 0.01 and float(np.mean(diffs)) > 0 else "INDETERMINATE",
-        "mean_diff": float(np.mean(diffs)),
+        "verdict": verdict_token,
+        "mean_diff": mean_diff,
         "p_value": float(pval),
     }
     (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
+    (outdir / "verdict.txt").write_text(verdict_token, encoding="utf-8")
 
     # Simple plot
     plt.figure(figsize=(8, 5))
-    plt.boxplot([res["C_end_poor"], res["C_end_rich"]], labels=["poor", "rich"])
+    plt.boxplot([res["C_end_poor"].to_numpy(), res["C_end_rich"].to_numpy()], labels=["poor", "rich"])
     plt.ylabel("C_end")
     plt.title("C_end: S0 poor vs rich")
     plt.tight_layout()
