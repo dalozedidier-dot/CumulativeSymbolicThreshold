@@ -34,16 +34,12 @@ jobs:
           set -u -o pipefail
 
           SECTOR="meteo"
-          RUN_ID="${GITHUB_RUN_ID}"
+          RUN_ID="$GITHUB_RUN_ID"
           ROOT="_ci_out/real_data_smoke/meteo/run_${RUN_ID}"
-
-          mkdir -p "${ROOT}"
-          echo "${SECTOR}" > "${ROOT}/sector.txt"
-
-          {
-            echo "run_id=${RUN_ID}"
-            echo "sha=${GITHUB_SHA}"
-          } > "${ROOT}/run_meta.txt"
+          mkdir -p "$ROOT"
+          echo "$SECTOR" > "$ROOT/sector.txt"
+          echo "run_id=$RUN_ID" > "$ROOT/run_meta.txt"
+          echo "sha=$GITHUB_SHA" >> "$ROOT/run_meta.txt"
 
           # Fixed, explicit parameters (protocol consistency)
           ALPHA="0.01"
@@ -63,33 +59,32 @@ jobs:
           K="2.5"
           M="3"
           BASELINE_N="50"
-
           NORMALIZE="robust"
           TIME_MODE="index"
           CONTROL_MODE="no_symbolic"
 
-          # Params trace (always present in artefact)
-          : > "${ROOT}/params.txt"
-          echo "alpha=${ALPHA}" >> "${ROOT}/params.txt"
-          echo "pre_horizon=${PRE_H}" >> "${ROOT}/params.txt"
-          echo "post_horizon=${POST_H}" >> "${ROOT}/params.txt"
-          echo "lags=${LAGS}" >> "${ROOT}/params.txt"
-          echo "c_mean_post_min=${C_MEAN_POST_MIN}" >> "${ROOT}/params.txt"
-          echo "" >> "${ROOT}/params.txt"
-          echo "cap_scale=${CAP_SCALE}" >> "${ROOT}/params.txt"
-          echo "demand_to_cap_ratio=${DEMAND_TO_CAP_RATIO}" >> "${ROOT}/params.txt"
-          echo "sigma_star=${SIGMA_STAR}" >> "${ROOT}/params.txt"
-          echo "tau=${TAU}" >> "${ROOT}/params.txt"
-          echo "sigma_to_S_alpha=${SIGMA_TO_S_ALPHA}" >> "${ROOT}/params.txt"
-          echo "S0=${S0}" >> "${ROOT}/params.txt"
-          echo "C_beta=${C_BETA}" >> "${ROOT}/params.txt"
-          echo "C_gamma=${C_GAMMA}" >> "${ROOT}/params.txt"
-          echo "k=${K}" >> "${ROOT}/params.txt"
-          echo "m=${M}" >> "${ROOT}/params.txt"
-          echo "baseline_n=${BASELINE_N}" >> "${ROOT}/params.txt"
-          echo "normalize=${NORMALIZE}" >> "${ROOT}/params.txt"
-          echo "time_mode=${TIME_MODE}" >> "${ROOT}/params.txt"
-          echo "control_mode=${CONTROL_MODE}" >> "${ROOT}/params.txt"
+          # params trace (always present in artefact)
+          : > "$ROOT/params.txt"
+          echo "alpha=$ALPHA" >> "$ROOT/params.txt"
+          echo "pre_horizon=$PRE_H" >> "$ROOT/params.txt"
+          echo "post_horizon=$POST_H" >> "$ROOT/params.txt"
+          echo "lags=$LAGS" >> "$ROOT/params.txt"
+          echo "c_mean_post_min=$C_MEAN_POST_MIN" >> "$ROOT/params.txt"
+          echo "" >> "$ROOT/params.txt"
+          echo "cap_scale=$CAP_SCALE" >> "$ROOT/params.txt"
+          echo "demand_to_cap_ratio=$DEMAND_TO_CAP_RATIO" >> "$ROOT/params.txt"
+          echo "sigma_star=$SIGMA_STAR" >> "$ROOT/params.txt"
+          echo "tau=$TAU" >> "$ROOT/params.txt"
+          echo "sigma_to_S_alpha=$SIGMA_TO_S_ALPHA" >> "$ROOT/params.txt"
+          echo "S0=$S0" >> "$ROOT/params.txt"
+          echo "C_beta=$C_BETA" >> "$ROOT/params.txt"
+          echo "C_gamma=$C_GAMMA" >> "$ROOT/params.txt"
+          echo "k=$K" >> "$ROOT/params.txt"
+          echo "m=$M" >> "$ROOT/params.txt"
+          echo "baseline_n=$BASELINE_N" >> "$ROOT/params.txt"
+          echo "normalize=$NORMALIZE" >> "$ROOT/params.txt"
+          echo "time_mode=$TIME_MODE" >> "$ROOT/params.txt"
+          echo "control_mode=$CONTROL_MODE" >> "$ROOT/params.txt"
 
           RC_GLOBAL=0
 
@@ -101,78 +96,41 @@ jobs:
             local COL_R="$5"
             local COL_I="$6"
 
-            local OUTDIR="${ROOT}/${DS_NAME}"
-            mkdir -p "${OUTDIR}/logs"
-
-            echo "${INPUT_CSV}" > "${OUTDIR}/dataset.txt"
-            echo "${COL_TIME}" > "${OUTDIR}/col_time.txt"
-            echo "${TIME_MODE}" > "${OUTDIR}/time_mode.txt"
+            local OUTDIR="$ROOT/$DS_NAME"
+            mkdir -p "$OUTDIR/logs"
+            echo "$INPUT_CSV" > "$OUTDIR/dataset.txt"
+            echo "$COL_TIME" > "$OUTDIR/col_time.txt"
+            echo "$TIME_MODE" > "$OUTDIR/time_mode.txt"
 
             # ORI-C run
-            python 04_Code/pipeline/run_real_data_demo.py \
-              --input "${INPUT_CSV}" \
-              --outdir "${OUTDIR}" \
-              --col-time "${COL_TIME}" \
-              --time-mode "${TIME_MODE}" \
-              --col-O "${COL_O}" \
-              --col-R "${COL_R}" \
-              --col-I "${COL_I}" \
-              --col-demand "demand" \
-              --col-S "S" \
-              --normalize "${NORMALIZE}" \
-              --cap-scale "${CAP_SCALE}" \
-              --demand-to-cap-ratio "${DEMAND_TO_CAP_RATIO}" \
-              --sigma-star "${SIGMA_STAR}" \
-              --tau "${TAU}" \
-              --sigma-to-S-alpha "${SIGMA_TO_S_ALPHA}" \
-              --S0 "${S0}" \
-              --C-beta "${C_BETA}" \
-              --C-gamma "${C_GAMMA}" \
-              --k "${K}" \
-              --m "${M}" \
-              --baseline-n "${BASELINE_N}" \
-              --control-mode "${CONTROL_MODE}" \
-              2>&1 | tee "${OUTDIR}/logs/run_real_data_demo.log"
+            python 04_Code/pipeline/run_real_data_demo.py               --input "$INPUT_CSV"               --outdir "$OUTDIR"               --col-time "$COL_TIME"               --time-mode "$TIME_MODE"               --col-O "$COL_O"               --col-R "$COL_R"               --col-I "$COL_I"               --col-demand "demand"               --col-S "S"               --normalize "$NORMALIZE"               --cap-scale "$CAP_SCALE"               --demand-to-cap-ratio "$DEMAND_TO_CAP_RATIO"               --sigma-star "$SIGMA_STAR"               --tau "$TAU"               --sigma-to-S-alpha "$SIGMA_TO_S_ALPHA"               --S0 "$S0"               --C-beta "$C_BETA"               --C-gamma "$C_GAMMA"               --k "$K"               --m "$M"               --baseline-n "$BASELINE_N"               --control-mode "$CONTROL_MODE"               2>&1 | tee "$OUTDIR/logs/run_real_data_demo.log"
             local RC_DEMO="${PIPESTATUS[0]}"
-            echo "${RC_DEMO}" > "${OUTDIR}/rc_demo.txt"
-            if [ "${RC_DEMO}" -ne 0 ]; then
+            echo "$RC_DEMO" > "$OUTDIR/rc_demo.txt"
+            if [ "$RC_DEMO" -ne 0 ]; then
               RC_GLOBAL=1
             fi
 
             # Causal tests
-            python 04_Code/pipeline/tests_causaux.py \
-              --run-dir "${OUTDIR}" \
-              --alpha "${ALPHA}" \
-              --pre-horizon "${PRE_H}" \
-              --post-horizon "${POST_H}" \
-              --lags "${LAGS}" \
-              --c-mean-post-min "${C_MEAN_POST_MIN}" \
-              --pdf \
-              2>&1 | tee "${OUTDIR}/logs/tests_causaux.log"
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --pre-horizon "$PRE_H"               --post-horizon "$POST_H"               --lags "$LAGS"               --c-mean-post-min "$C_MEAN_POST_MIN"               --pdf               2>&1 | tee "$OUTDIR/logs/tests_causaux.log"
             local RC_CAUSAL="${PIPESTATUS[0]}"
-            echo "${RC_CAUSAL}" > "${OUTDIR}/rc_causal.txt"
-            if [ "${RC_CAUSAL}" -ne 0 ]; then
+            echo "$RC_CAUSAL" > "$OUTDIR/rc_causal.txt"
+            if [ "$RC_CAUSAL" -ne 0 ]; then
               RC_GLOBAL=1
             fi
 
-            echo "done" > "${OUTDIR}/logs/_done.txt"
+            echo "done" > "$OUTDIR/logs/_done.txt"
           }
 
           run_one "01_pilot" "03_Data/real/meteo/pilot_meteo/real.csv" "year" "sdg_13_50_mio_eur" "env_tax_env_mio_eur" "road_elec_ktoe"
           run_one "02_bundle_v1_EE" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EE.csv" "year" "O" "R" "I"
           run_one "03_bundle_v2_EE" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EE.csv" "year" "O" "R" "I"
 
-          # Always write a sha256 manifest for audit
-          python 04_Code/pipeline/make_sha256_manifest.py \
-            --root "${ROOT}" \
-            --out "${ROOT}/manifest_sha256.json"
-
-          exit "${RC_GLOBAL}"
+          exit "$RC_GLOBAL"
 
       - name: Upload artefacts (_ci_out)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: real_data_smoke_meteo_${{ github.run_id }}
-          path: _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}
+          path: _ci_out/real_data_smoke/meteo/
           if-no-files-found: error
