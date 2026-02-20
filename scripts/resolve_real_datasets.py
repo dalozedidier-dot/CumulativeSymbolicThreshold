@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve real-data datasets for ORI-C CI.
-
-Outputs a JSON list of repo-relative paths.
-
-Priority:
-1) If --dataset is provided, return that single path.
-2) Else, return pilot datasets under 03_Data/real/<sector>/pilot_*/real.csv
-3) If --include-bundles, also include bundle processed CSVs under 03_Data/real/_bundles/**/data_real_v*/processed/*.csv
-"""
+"""Resolve real-data datasets for ORI-C CI (repo-relative paths)."""
 
 from __future__ import annotations
 
@@ -43,6 +35,7 @@ def main() -> int:
                 if p.is_file():
                     out.append(p.as_posix())
 
+    # de-dup
     seen = set()
     dedup: list[str] = []
     for p in out:
