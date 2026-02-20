@@ -26,7 +26,7 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -49,7 +49,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     pipeline_dir = repo_root / "04_Code" / "pipeline"
 
-    run_id = args.run_id or datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     results_root = Path(args.results_root) / "canonical_runs" / run_id
     results_root.mkdir(parents=True, exist_ok=True)
 
