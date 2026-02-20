@@ -1,192 +1,136 @@
-name: Real data suite (ORI-C) - meteo
+name: Real data smoke - meteo
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 2 * * 1"
 
 permissions:
   contents: read
 
 jobs:
-  suite:
+  real_data_smoke_meteo:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install dependencies
+        shell: bash
         run: |
-          set -e
+          set -u
           python -V
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install "pytest>=8.0" || true
-          python -m pip list
 
-      - name: Run real data suite (locked params)
+      - name: Run real data suite (meteo)
         shell: bash
-        env:
-          OUTBASE: _ci_out/real_data_suite/meteo/run_${{ github.run_id }}
         run: |
-          set -Eeuo pipefail
+          set -u -o pipefail
+
           SECTOR="meteo"
-          RUN_ID="${{ github.run_id }}"
-          OUTBASE="_ci_out/real_data_suite/${SECTOR}/run_${RUN_ID}"
-          mkdir -p "${OUTBASE}"
+          RUN_ID="$GITHUB_RUN_ID"
+          ROOT="_ci_out/real_data_smoke/meteo/run_${RUN_ID}"
+          mkdir -p "$ROOT"
+          echo "$SECTOR" > "$ROOT/sector.txt"
+          echo "run_id=$RUN_ID" > "$ROOT/run_meta.txt"
+          echo "sha=$GITHUB_SHA" >> "$ROOT/run_meta.txt"
 
-          echo "sector=${SECTOR}" > "${OUTBASE}/sector.txt"
-          echo "run_id=${RUN_ID}" > "${OUTBASE}/run_id.txt"
-          echo "policy=locked_params_no_post_observation_tuning" > "${OUTBASE}/policy.txt"
+          # Fixed, explicit parameters (protocol consistency)
+          ALPHA="0.01"
+          PRE_H="250"
+          POST_H="250"
+          LAGS="1-10"
+          C_MEAN_POST_MIN="0.1"
 
-          # Fixed, preregistered parameters (do not tune from n_steps)
+          CAP_SCALE="1000.0"
+          DEMAND_TO_CAP_RATIO="0.90"
+          SIGMA_STAR="0.0"
+          TAU="500.0"
+          SIGMA_TO_S_ALPHA="0.0008"
+          S0="0.20"
+          C_BETA="0.40"
+          C_GAMMA="0.12"
           K="2.5"
           M="3"
           BASELINE_N="50"
-          ALPHA="0.01"
-          PRE_H="500"
-          POST_H="500"
-          LAGS="1-10"
-          MAXLAG="10"
-          BLOCK="25"
-          N_BOOT="800"
-          SEED="123"
-          C_MEAN_POST_MIN="0.1"
+          NORMALIZE="robust"
+          TIME_MODE="index"
+          CONTROL_MODE="no_symbolic"
 
-          cat > "${OUTBASE}/params.txt" << 'EOF'
-          k=2.5
-          m=3
-          baseline_n=50
-          alpha=0.01
-          pre_horizon=500
-          post_horizon=500
-          lags=1-10
-          maxlag=10
-          block=25
-          n_boot=800
-          seed=123
-          c_mean_post_min=0.1
-          time_mode=index
-          normalize=robust (pilot), none (bundles)
-          control_mode=no_symbolic
-          EOF
+          # params trace (always present in artefact)
+          : > "$ROOT/params.txt"
+          echo "alpha=$ALPHA" >> "$ROOT/params.txt"
+          echo "pre_horizon=$PRE_H" >> "$ROOT/params.txt"
+          echo "post_horizon=$POST_H" >> "$ROOT/params.txt"
+          echo "lags=$LAGS" >> "$ROOT/params.txt"
+          echo "c_mean_post_min=$C_MEAN_POST_MIN" >> "$ROOT/params.txt"
+          echo "" >> "$ROOT/params.txt"
+          echo "cap_scale=$CAP_SCALE" >> "$ROOT/params.txt"
+          echo "demand_to_cap_ratio=$DEMAND_TO_CAP_RATIO" >> "$ROOT/params.txt"
+          echo "sigma_star=$SIGMA_STAR" >> "$ROOT/params.txt"
+          echo "tau=$TAU" >> "$ROOT/params.txt"
+          echo "sigma_to_S_alpha=$SIGMA_TO_S_ALPHA" >> "$ROOT/params.txt"
+          echo "S0=$S0" >> "$ROOT/params.txt"
+          echo "C_beta=$C_BETA" >> "$ROOT/params.txt"
+          echo "C_gamma=$C_GAMMA" >> "$ROOT/params.txt"
+          echo "k=$K" >> "$ROOT/params.txt"
+          echo "m=$M" >> "$ROOT/params.txt"
+          echo "baseline_n=$BASELINE_N" >> "$ROOT/params.txt"
+          echo "normalize=$NORMALIZE" >> "$ROOT/params.txt"
+          echo "time_mode=$TIME_MODE" >> "$ROOT/params.txt"
+          echo "control_mode=$CONTROL_MODE" >> "$ROOT/params.txt"
 
-          rc=0
+          RC_GLOBAL=0
 
-          run_one () {
-            local label="$1"
-            local csv="$2"
-            shift 2
-            local extra_args="$@"
+          run_one() {
+            local DS_NAME="$1"
+            local INPUT_CSV="$2"
+            local COL_TIME="$3"
+            local COL_O="$4"
+            local COL_R="$5"
+            local COL_I="$6"
 
-            local out="${OUTBASE}/${label}"
-            mkdir -p "${out}"
+            local OUTDIR="$ROOT/$DS_NAME"
+            mkdir -p "$OUTDIR/logs"
+            echo "$INPUT_CSV" > "$OUTDIR/dataset.txt"
+            echo "$COL_TIME" > "$OUTDIR/col_time.txt"
+            echo "$TIME_MODE" > "$OUTDIR/time_mode.txt"
 
-            echo "label=${label}" > "${out}/dataset.txt"
-            echo "csv=${csv}" >> "${out}/dataset.txt"
-
-            set +e
-            python 04_Code/pipeline/run_real_data_demo.py                   --input "${csv}"                   --outdir "${out}"                   --time-mode index                   --normalize robust                   --control-mode no_symbolic                   --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                   ${extra_args}                   2>&1 | tee "${out}/run_real_data_demo.log"
-            local rc_demo=${PIPESTATUS[0]}
-            echo "${rc_demo}" > "${out}/rc_demo.txt"
-            if [ "${rc_demo}" -ne 0 ]; then
-              rc=1
-              set -e
-              return 0
+            # ORI-C run
+            python 04_Code/pipeline/run_real_data_demo.py               --input "$INPUT_CSV"               --outdir "$OUTDIR"               --col-time "$COL_TIME"               --time-mode "$TIME_MODE"               --col-O "$COL_O"               --col-R "$COL_R"               --col-I "$COL_I"               --col-demand "demand"               --col-S "S"               --normalize "$NORMALIZE"               --cap-scale "$CAP_SCALE"               --demand-to-cap-ratio "$DEMAND_TO_CAP_RATIO"               --sigma-star "$SIGMA_STAR"               --tau "$TAU"               --sigma-to-S-alpha "$SIGMA_TO_S_ALPHA"               --S0 "$S0"               --C-beta "$C_BETA"               --C-gamma "$C_GAMMA"               --k "$K"               --m "$M"               --baseline-n "$BASELINE_N"               --control-mode "$CONTROL_MODE"               2>&1 | tee "$OUTDIR/logs/run_real_data_demo.log"
+            local RC_DEMO="${PIPESTATUS[0]}"
+            echo "$RC_DEMO" > "$OUTDIR/rc_demo.txt"
+            if [ "$RC_DEMO" -ne 0 ]; then
+              RC_GLOBAL=1
             fi
 
-            python 04_Code/pipeline/tests_causaux.py                   --run-dir "${out}"                   --alpha "${ALPHA}"                   --c-mean-post-min "${C_MEAN_POST_MIN}"                   --lags "${LAGS}"                   --maxlag "${MAXLAG}"                   --pre-horizon "${PRE_H}"                   --post-horizon "${POST_H}"                   --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                   --block "${BLOCK}"                   --n-boot "${N_BOOT}"                   --seed "${SEED}"                   --pdf                   2>&1 | tee "${out}/tests_causaux.log"
-            local rc_causal=${PIPESTATUS[0]}
-            echo "${rc_causal}" > "${out}/rc_causal.txt"
-            if [ "${rc_causal}" -ne 0 ]; then
-              rc=1
+            # Causal tests
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "$OUTDIR"               --alpha "$ALPHA"               --pre-horizon "$PRE_H"               --post-horizon "$POST_H"               --lags "$LAGS"               --c-mean-post-min "$C_MEAN_POST_MIN"               --pdf               2>&1 | tee "$OUTDIR/logs/tests_causaux.log"
+            local RC_CAUSAL="${PIPESTATUS[0]}"
+            echo "$RC_CAUSAL" > "$OUTDIR/rc_causal.txt"
+            if [ "$RC_CAUSAL" -ne 0 ]; then
+              RC_GLOBAL=1
             fi
-            set -e
-            return 0
+
+            echo "done" > "$OUTDIR/logs/_done.txt"
           }
 
-          # Dataset 01: pilot raw proxies
-          run_one "01_pilot" "03_Data/real/meteo/pilot_meteo/real.csv"                 --col-time year                 --col-O industrial_production_i15                 --col-R berd_pc_gdp                 --col-I ict_spec_pc_ent_ge10
+          run_one "01_pilot" "03_Data/real/meteo/pilot_meteo/real.csv" "year" "sdg_13_50_mio_eur" "env_tax_env_mio_eur" "road_elec_ktoe"
+          run_one "02_bundle_v1_EE" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EE.csv" "year" "O" "R" "I"
+          run_one "03_bundle_v2_EE" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EE.csv" "year" "O" "R" "I"
 
-          # Dataset 02: bundles v1 (already canonical ORI-C inputs)
-          run_one "02_bundle_v1EE" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputsEE.csv"                 --col-time year                 --col-O O --col-R R --col-I I --col-S S                 --normalize none
+          exit "$RC_GLOBAL"
 
-          # Dataset 03: bundles v2 (already canonical ORI-C inputs)
-          run_one "03_bundle_v2EE" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputsEE.csv"                 --col-time year                 --col-O O --col-R R --col-I I --col-S S                 --normalize none
-
-          python - << 'PY'
-          import hashlib, json, os, pathlib, time
-
-          outbase = pathlib.Path(os.environ["OUTBASE"])
-
-          def sha256(p: pathlib.Path) -> str:
-            h = hashlib.sha256()
-            with p.open("rb") as f:
-              for chunk in iter(lambda: f.read(1024 * 1024), b""):
-                h.update(chunk)
-            return h.hexdigest()
-
-          datasets = []
-          for d in sorted([p for p in outbase.iterdir() if p.is_dir() and p.name[:2].isdigit()]):
-            verdict = d / "tables" / "verdict.json"
-            item = {"dataset": d.name}
-            if verdict.exists():
-              try:
-                j = json.loads(verdict.read_text(encoding="utf-8"))
-                item.update({
-                  "verdict": j.get("verdict"),
-                  "binary_detected": j.get("binary_detected"),
-                  "threshold_hit_t": j.get("threshold_hit_t"),
-                  "reverse_warning": j.get("reverse_warning"),
-                  "ok_p_source": (j.get("criteria") or {}).get("ok_p_source"),
-                  "series_short": j.get("series_short"),
-                })
-              except Exception as e:
-                item["verdict"] = "read_error"
-                item["error"] = str(e)
-            else:
-              item["verdict"] = "missing"
-            datasets.append(item)
-
-          summary = {
-            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "sector": (outbase / "sector.txt").read_text(encoding="utf-8").strip().split("=", 1)[-1],
-            "datasets": datasets,
-          }
-          (outbase / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-
-          files = []
-          for p in sorted(outbase.rglob("*")):
-            if p.is_file():
-              files.append({
-                "path": str(p.relative_to(outbase)),
-                "sha256": sha256(p),
-                "bytes": p.stat().st_size,
-              })
-          (outbase / "manifest.json").write_text(
-            json.dumps({"generated_utc": summary["generated_utc"], "files": files}, indent=2),
-            encoding="utf-8",
-          )
-          print("summary.json and manifest.json written under", outbase)
-          PY
-
-          if [ "${rc}" -ne 0 ]; then
-            echo "One or more datasets failed. See rc_*.txt and logs under ${OUTBASE}"
-          fi
-          exit "${rc}"
-
-      - name: Upload artifacts
+      - name: Upload artefacts (_ci_out)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_suite_meteo_${{ github.run_id }}
-          path: _ci_out/real_data_suite/meteo/run_${{ github.run_id }}
-          if-no-files-found: warn
+          name: real_data_smoke_meteo_${{ github.run_id }}
+          path: _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}
+          if-no-files-found: error

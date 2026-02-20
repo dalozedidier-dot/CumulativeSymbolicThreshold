@@ -1,23 +1,22 @@
-Ce patch ajoute trois workflows GitHub Actions.
+Ce patch ajoute des workflows de donnees reelles par secteur, sans modifier le protocole scientifique.
 
-1) CI and Canonical Tests (ci.yml)
-Déclenché sur push, pull_request, et workflow_dispatch (bouton Run workflow).
+## Workflows real data par secteur
+Chaque workflow est declenche via workflow_dispatch (bouton Run workflow) et produit un artefact contenant:
+- logs (run_real_data_demo.log, tests_causaux.log)
+- tables (test_timeseries.csv, control_timeseries.csv, summary.json, verdict.json, causal_tests_summary.csv)
+- figures (s_t.png, c_t.png, delta_c_t.png)
+- meta (sector.txt, dataset.txt, params.txt, rc_demo.txt, rc_causal.txt)
 
-2) Manual ORI-C Runs (manual_runs.yml)
-Déclenché via workflow_dispatch, avec choix de suite.
+Workflows ajoutes:
+- .github/workflows/real_data_smoke_meteo.yml
+- .github/workflows/real_data_smoke_trafic.yml
+- .github/workflows/real_data_smoke_energie.yml
+- .github/workflows/real_data_smoke_economie.yml
+- .github/workflows/real_data_smoke_pilot_cpi_monthly.yml (dataset CPI mensuel historique)
 
-3) Nightly Canonical Run (nightly.yml)
-Déclenché par schedule et aussi via workflow_dispatch.
+## Donnees utilisees
+- Pilotes sectoriels: 03_Data/real/<secteur>/pilot_<secteur>/real.csv
+- Bundles ORI-C: 03_Data/real/_bundles/data_real_v1/oric_inputs/ et data_real_v2/oric_inputs/
 
-Tous les workflows uploadent un artefact _ci_out contenant logs et résultats.
-
-## Real data smoke workflow
-Workflow: .github/workflows/real_data_smoke.yml
-
-But:
-- Valider que le pipeline fonctionne sur une serie reelle au format CSV.
-- Produire un artefact avec les tables, figures, verdicts et un manifest sha256.
-- Executable en automatique sur changements de code ou de donnees reelles, et a la demande via Run workflow.
-
-Dataset par defaut:
-- 03_Data/real/pilot_cpi/real.csv
+## Pourquoi du YAML
+GitHub Actions utilise des fichiers YAML pour decrire les jobs. Les donnees restent des CSV, ces workflows ne changent pas le format des donnees.

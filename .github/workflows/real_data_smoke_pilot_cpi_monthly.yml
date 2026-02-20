@@ -1,4 +1,4 @@
-name: Real data smoke - energie
+name: Real data smoke - Pilot CPI monthly
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  real_data_smoke_energie:
+  real_data_smoke_pilot_cpi_monthly:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -28,14 +28,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run real data suite (energie)
+      - name: Run real data suite (pilot_cpi_monthly)
         shell: bash
         run: |
           set -u -o pipefail
 
-          SECTOR="energie"
+          SECTOR="pilot_cpi_monthly"
           RUN_ID="$GITHUB_RUN_ID"
-          ROOT="_ci_out/real_data_smoke/energie/run_${RUN_ID}"
+          ROOT="_ci_out/real_data_smoke/pilot_cpi_monthly/run_${RUN_ID}"
           mkdir -p "$ROOT"
           echo "$SECTOR" > "$ROOT/sector.txt"
           echo "run_id=$RUN_ID" > "$ROOT/run_meta.txt"
@@ -121,9 +121,9 @@ jobs:
             echo "done" > "$OUTDIR/logs/_done.txt"
           }
 
-          run_one "01_pilot" "03_Data/real/energie/pilot_energie/real.csv" "year" "industrial_production_i15" "berd_pc_gdp" "ict_spec_pc_ent_ge10"
-          run_one "02_bundle_v1_EU27_2020" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EU27_2020.csv" "year" "O" "R" "I"
-          run_one "03_bundle_v2_EU27_2020" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EU27_2020.csv" "year" "O" "R" "I"
+          run_one "01_pilot" "03_Data/real/pilot_cpi/real.csv" "date" "O" "R" "I"
+          run_one "02_bundle_v1_FR" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_FR.csv" "year" "O" "R" "I"
+          run_one "03_bundle_v2_FR" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_FR.csv" "year" "O" "R" "I"
 
           exit "$RC_GLOBAL"
 
@@ -131,6 +131,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_smoke_energie_${{ github.run_id }}
-          path: _ci_out/real_data_smoke/energie/run_${{ github.run_id }}
+          name: real_data_smoke_pilot_cpi_monthly_${{ github.run_id }}
+          path: _ci_out/real_data_smoke/pilot_cpi_monthly/run_${{ github.run_id }}
           if-no-files-found: error
