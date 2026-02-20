@@ -43,10 +43,11 @@ class Weights:
     wR: float = 0.35
     wI: float = 0.25
 
-    # Viability V proxy
-    w_survie: float = 0.35
-    w_energie: float = 0.35
-    w_integrite: float = 0.30
+    # Viability V proxy (four equal ex-ante weights per PreregSpec.omega_v)
+    w_survie: float = 0.25
+    w_energie: float = 0.25
+    w_integrite: float = 0.25
+    w_persistance: float = 0.25
 
     # Symbolic stock S proxy
     w_repertoire: float = 0.25
@@ -96,8 +97,12 @@ def compute_V(df: pd.DataFrame, w: Weights) -> pd.Series:
         energie = _col(df, "energie_nette", 0.0)
         integrite = _col(df, "integrite", 0.0)
         pers = _col(df, "persistance", 1.0)
-        v = w.w_survie * survie + w.w_energie * energie + w.w_integrite * integrite
-        v = v * pers
+        v = (
+            w.w_survie * survie
+            + w.w_energie * energie
+            + w.w_integrite * integrite
+            + w.w_persistance * pers
+        )
         v = np.clip(v.to_numpy(), 0.0, 1.0)
         return pd.Series(v, index=df.index, name="V")
 
@@ -218,7 +223,7 @@ def detect_threshold(
         if float(x.iloc[i]) > thr:
             consec += 1
             if consec >= int(m):
-                return int(i), float(thr)
+                return int(i - m + 1), float(thr)
         else:
             consec = 0
 
