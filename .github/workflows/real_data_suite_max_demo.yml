@@ -26,7 +26,7 @@ jobs:
             pilot_col_O: industrial_production_i15
             pilot_col_R: berd_pc_gdp
             pilot_col_I: ict_spec_pc_ent_ge10
-            bundle_code: DE
+            bundle_code: EU27_2020
           - sector: meteo
             pilot_csv: 03_Data/real/meteo/pilot_meteo/real.csv
             pilot_col_time: year
@@ -40,7 +40,7 @@ jobs:
             pilot_col_O: industrial_production_i15
             pilot_col_R: env_tax_env_mio_eur
             pilot_col_I: road_elec_ktoe
-            bundle_code: EE
+            bundle_code: DE
 
     steps:
       - name: Checkout
