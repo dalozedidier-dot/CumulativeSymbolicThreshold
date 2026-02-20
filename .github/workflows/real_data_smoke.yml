@@ -1,48 +1,36 @@
-name: Real Data Smoke (ORI-C)
+name: Real data smoke (custom dataset)
 
 on:
   workflow_dispatch:
     inputs:
       dataset:
-        description: "Path to real CSV (must be in the repo)"
+        description: Path to a CSV file inside the repo
         required: true
         default: "03_Data/real/pilot_cpi/real.csv"
-      pre_horizon:
-        description: "Pre horizon length"
-        required: false
-        default: "200"
-      post_horizon:
-        description: "Post horizon length"
-        required: false
-        default: "200"
-      n_boot:
-        description: "Bootstrap replicates for CI (smoke)"
-        required: false
-        default: "200"
-  push:
-    branches: ["main"]
-    paths:
-      - "04_Code/pipeline/run_real_data_demo.py"
-      - "04_Code/pipeline/tests_causaux.py"
-      - "03_Data/real/**"
-      - ".github/workflows/real_data_smoke.yml"
-  pull_request:
-    paths:
-      - "04_Code/pipeline/run_real_data_demo.py"
-      - "04_Code/pipeline/tests_causaux.py"
-      - "03_Data/real/**"
-      - ".github/workflows/real_data_smoke.yml"
+      col_time:
+        description: Time column name
+        required: true
+        default: "date"
+      col_O:
+        description: O proxy column name
+        required: true
+        default: "O"
+      col_R:
+        description: R proxy column name
+        required: true
+        default: "R"
+      col_I:
+        description: I proxy column name
+        required: true
+        default: "I"
+
+permissions:
+  contents: read
 
 jobs:
   real_data_smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    env:
-      DATASET: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dataset || '03_Data/real/pilot_cpi/real.csv' }}
-      PRE_HORIZON: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.pre_horizon || '200' }}
-      POST_HORIZON: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_horizon || '200' }}
-      N_BOOT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.n_boot || '200' }}
-
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,56 +39,101 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install dependencies
+        shell: bash
         run: |
-          set -e
-          python -m pip install --upgrade pip setuptools wheel
+          set -u
+          python -V
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
 
-          python -m pip install             "numpy>=1.26"             "pandas>=2.0"             "matplotlib>=3.8"             "scipy>=1.11"             "pytest>=8.0"             "statsmodels>=0.14"
-
-          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt;           elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
-
-          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
-
-      - name: Run real data pipeline (smoke)
+      - name: Run ORI-C + causal tests
+        shell: bash
         run: |
-          set -e
-          mkdir -p _ci_out
-          python -V | tee _ci_out/python_version.txt
-          pip -V | tee _ci_out/pip_version.txt
-          pip list | tee _ci_out/pip_list.txt
+          set -u -o pipefail
 
-          OUTDIR="_ci_out/real_data_smoke/run_${{ github.run_id }}"
-          mkdir -p "$OUTDIR"
+          INPUT_CSV="${{ inputs.dataset }}"
+          COL_TIME="${{ inputs.col_time }}"
+          COL_O="${{ inputs.col_O }}"
+          COL_R="${{ inputs.col_R }}"
+          COL_I="${{ inputs.col_I }}"
 
-          echo "dataset=$DATASET pre_horizon=$PRE_HORIZON post_horizon=$POST_HORIZON n_boot=$N_BOOT" | tee "$OUTDIR/params.txt"
+          RUN_ID="${{GITHUB_RUN_ID}}"
+          ROOT="_ci_out/real_data_smoke/custom/run_${{RUN_ID}}"
+          mkdir -p "${{ROOT}}/logs"
 
-          python 04_Code/pipeline/run_real_data_demo.py             --input "$DATASET"             --outdir "$OUTDIR"             --col-time date             --normalize robust             --control-mode same             --k 2.5 --m 3 --baseline-n 50             2>&1 | tee "$OUTDIR/run_real_data_demo.log"
+          # Fixed parameters
+          ALPHA="0.01"
+          PRE_H="250"
+          POST_H="250"
+          LAGS="1-10"
+          C_MEAN_POST_MIN="0.1"
 
-          python 04_Code/pipeline/tests_causaux.py             --run-dir "$OUTDIR"             --alpha 0.01             --lags 1-10             --pre-horizon "$PRE_HORIZON"             --post-horizon "$POST_HORIZON"             --k 2.5 --m 3 --baseline-n 50             --block 25             --n-boot "$N_BOOT"             --seed 123             --n-steps-min 200             --pdf             2>&1 | tee "$OUTDIR/tests_causaux.log"
+          CAP_SCALE="1000.0"
+          DEMAND_TO_CAP_RATIO="0.90"
+          SIGMA_STAR="0.0"
+          TAU="500.0"
+          SIGMA_TO_S_ALPHA="0.0008"
+          S0="0.20"
+          C_BETA="0.40"
+          C_GAMMA="0.12"
+          K="2.5"
+          M="3"
+          BASELINE_N="50"
+          NORMALIZE="robust"
+          TIME_MODE="index"
+          CONTROL_MODE="no_symbolic"
 
-          python - << 'PY'
-          import hashlib, json, os, pathlib, time
-          outdir = pathlib.Path(os.environ.get("OUTDIR", "_ci_out/real_data_smoke"))
-          # OUTDIR is not exported by bash, so compute it from run_id folder pattern
-          base = pathlib.Path("_ci_out/real_data_smoke")
-          runs = sorted([p for p in base.glob("run_*") if p.is_dir()])
-          outdir = runs[-1] if runs else base
-          items = []
-          for p in sorted(outdir.rglob("*")):
-            if p.is_file():
-              h = hashlib.sha256(p.read_bytes()).hexdigest()
-              items.append({"path": str(p.relative_to(outdir)), "sha256": h, "bytes": p.stat().st_size})
-          (outdir / "manifest.json").write_text(json.dumps({"generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "files": items}, indent=2), encoding="utf-8")
-          print(f"manifest written: {outdir/'manifest.json'}")
-          PY
+          echo "${{INPUT_CSV}}" > "${{ROOT}}/dataset.txt"
+          {{
+            echo "run_id=${{RUN_ID}}"
+            echo "sha=${{GITHUB_SHA}}"
+          }} > "${{ROOT}}/run_meta.txt"
 
-      - name: Upload artifacts
+          python 04_Code/pipeline/run_real_data_demo.py \
+            --input "${{INPUT_CSV}}" \
+            --outdir "${{ROOT}}" \
+            --col-time "${{COL_TIME}}" \
+            --time-mode "${{TIME_MODE}}" \
+            --col-O "${{COL_O}}" \
+            --col-R "${{COL_R}}" \
+            --col-I "${{COL_I}}" \
+            --col-demand "demand" \
+            --col-S "S" \
+            --normalize "${{NORMALIZE}}" \
+            --cap-scale "${{CAP_SCALE}}" \
+            --demand-to-cap-ratio "${{DEMAND_TO_CAP_RATIO}}" \
+            --sigma-star "${{SIGMA_STAR}}" \
+            --tau "${{TAU}}" \
+            --sigma-to-S-alpha "${{SIGMA_TO_S_ALPHA}}" \
+            --S0 "${{S0}}" \
+            --C-beta "${{C_BETA}}" \
+            --C-gamma "${{C_GAMMA}}" \
+            --k "${{K}}" \
+            --m "${{M}}" \
+            --baseline-n "${{BASELINE_N}}" \
+            --control-mode "${{CONTROL_MODE}}" \
+            2>&1 | tee "${{ROOT}}/logs/run_real_data_demo.log"
+
+          python 04_Code/pipeline/tests_causaux.py \
+            --run-dir "${{ROOT}}" \
+            --alpha "${{ALPHA}}" \
+            --pre-horizon "${{PRE_H}}" \
+            --post-horizon "${{POST_H}}" \
+            --lags "${{LAGS}}" \
+            --c-mean-post-min "${{C_MEAN_POST_MIN}}" \
+            --pdf \
+            2>&1 | tee "${{ROOT}}/logs/tests_causaux.log"
+
+          python 04_Code/pipeline/make_sha256_manifest.py \
+            --root "${{ROOT}}" \
+            --out "${{ROOT}}/manifest_sha256.json"
+
+      - name: Upload artefacts (_ci_out)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_smoke_${{ github.run_id }}
-          path: _ci_out/real_data_smoke
-          if-no-files-found: warn
+          name: real_data_smoke_custom_${{ github.run_id }}
+          path: _ci_out/real_data_smoke/custom/run_${{ github.run_id }}
+          if-no-files-found: error
