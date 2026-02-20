@@ -147,6 +147,42 @@ jobs:
             col_R: R
             col_I: I
 
+          # ── Custom datasets (_custom/) ─────────────────────────────────
+          - label: custom_BE
+            input: 03_Data/real/_custom/custom_BE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: custom_economie_FR
+            input: 03_Data/real/_custom/economie_FR.csv
+            col_time: year
+            col_O: solar_collector_ths_m2
+            col_R: heat_pump_cap_ath_mw
+            col_I: industrial_production_i15
+
+          - label: custom_energie_EU27
+            input: 03_Data/real/_custom/energie_EU27.csv
+            col_time: year
+            col_O: solar_collector_ths_m2
+            col_R: heat_pump_cap_ath_mw
+            col_I: industrial_production_i15
+
+          - label: custom_meteo_EE
+            input: 03_Data/real/_custom/meteo_EE.csv
+            col_time: year
+            col_O: solar_collector_ths_m2
+            col_R: heat_pump_cap_ath_mw
+            col_I: industrial_production_i15
+
+          - label: custom_trafic_DE
+            input: 03_Data/real/_custom/trafic_DE.csv
+            col_time: year
+            col_O: solar_collector_ths_m2
+            col_R: heat_pump_cap_ath_mw
+            col_I: industrial_production_i15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
