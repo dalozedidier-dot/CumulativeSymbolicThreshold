@@ -1,0 +1,242 @@
+name: Real Data Canonical T1–T8 (ORI-C)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "04_Code/pipeline/run_real_data_demo.py"
+      - "04_Code/pipeline/run_real_data_canonical_suite.py"
+      - "04_Code/pipeline/tests_causaux.py"
+      - "03_Data/real/**"
+      - "03_Data/real/_bundles/**"
+
+permissions:
+  contents: read
+
+jobs:
+  canonical_real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Sector pilots (raw Eurostat columns) ──────────────────────
+          - label: economie_FR
+            input: 03_Data/real/economie/pilot_cpi/real.csv
+            col_time: year
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: ict_spec_pc_ent_ge10
+
+          - label: energie_EU27
+            input: 03_Data/real/energie/pilot_energie/real.csv
+            col_time: year
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: ict_spec_pc_ent_ge10
+
+          - label: meteo_EE
+            input: 03_Data/real/meteo/pilot_meteo/real.csv
+            col_time: year
+            col_O: sdg_13_50_mio_eur
+            col_R: env_tax_env_mio_eur
+            col_I: road_elec_ktoe
+
+          - label: trafic_DE
+            input: 03_Data/real/trafic/pilot_trafic/real.csv
+            col_time: year
+            col_O: industrial_production_i15
+            col_R: env_tax_env_mio_eur
+            col_I: road_elec_ktoe
+
+          # ── Pilot CPI monthly (pre-normalised) ────────────────────────
+          - label: pilot_cpi_monthly
+            input: 03_Data/real/pilot_cpi/real.csv
+            col_time: date
+            col_O: O
+            col_R: R
+            col_I: I
+
+          # ── Bundles v1 (pre-normalised O/R/I) ─────────────────────────
+          - label: bundle_v1_FR
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_FR.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v1_DE
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_DE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v1_EE
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v1_EU27
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EU27_2020.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          # ── Bundles v1 — domaines manquants : BE et panel ─────────────
+          - label: bundle_v1_BE
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_BE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v1_panel
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_panel.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          # ── Bundles v2 ─────────────────────────────────────────────────
+          - label: bundle_v2_FR
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_FR.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v2_BE
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v2_DE
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_DE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v2_EE
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v2_EU27
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EU27_2020.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: bundle_v2_panel
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_panel.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          # ── Custom datasets (_custom/) ─────────────────────────────────
+          - label: custom_BE
+            input: 03_Data/real/_custom/custom_BE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: custom_economie_FR
+            input: 03_Data/real/_custom/economie_FR.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: custom_energie_EU27
+            input: 03_Data/real/_custom/energie_EU27.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: custom_meteo_EE
+            input: 03_Data/real/_custom/meteo_EE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+          - label: custom_trafic_DE
+            input: 03_Data/real/_custom/trafic_DE.csv
+            col_time: year
+            col_O: O
+            col_R: R
+            col_I: I
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run canonical T1–T8 (${{ matrix.label }})
+        shell: bash
+        run: |
+          set -u
+
+          LABEL="${{ matrix.label }}"
+          RUN_ID="${GITHUB_RUN_ID}"
+          ROOT="_ci_out/canonical_real/${LABEL}/run_${RUN_ID}"
+          mkdir -p "${ROOT}"
+
+          python 04_Code/pipeline/run_real_data_canonical_suite.py \
+            --input "${{ matrix.input }}" \
+            --outdir "${ROOT}" \
+            --col-time "${{ matrix.col_time }}" \
+            --time-mode index \
+            --col-O "${{ matrix.col_O }}" \
+            --col-R "${{ matrix.col_R }}" \
+            --col-I "${{ matrix.col_I }}" \
+            --normalize robust \
+            --alpha 0.01 \
+            --lags 1-10 \
+            --pre-horizon 250 \
+            --post-horizon 250 \
+            --c-mean-post-min 0.1 \
+            --k 2.5 \
+            --m 3 \
+            --baseline-n 50 \
+            2>&1 | tee "${ROOT}/suite.log"
+
+          echo $? > "${ROOT}/rc.txt"
+
+          VERDICT=$(cat "${ROOT}/verdict.txt" 2>/dev/null || echo "UNKNOWN")
+          echo "verdict=${VERDICT}" >> "$GITHUB_OUTPUT"
+          echo "Verdict for ${LABEL}: ${VERDICT}"
+
+      - name: Upload artifact (${{ matrix.label }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical_real_${{ matrix.label }}_${{ github.run_id }}
+          path: _ci_out/canonical_real/${{ matrix.label }}
+          if-no-files-found: warn

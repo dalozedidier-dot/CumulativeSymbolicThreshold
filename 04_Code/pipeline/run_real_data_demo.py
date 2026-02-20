@@ -183,7 +183,12 @@ def main() -> int:
     outdir = Path(args.outdir)
     tabdir, figdir = _mkdirs(outdir)
 
-    df_raw = pd.read_csv(Path(args.input))
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print(f"ERREUR: dataset introuvable: {input_path}", file=sys.stderr)
+        return 1
+
+    df_raw = pd.read_csv(input_path)
     df = df_raw.copy()
 
     col_time = str(args.col_time)
