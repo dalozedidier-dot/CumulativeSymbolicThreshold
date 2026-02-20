@@ -1,0 +1,78 @@
+{
+  "file": "estat_hsw_exp5a.tsv.gz",
+  "dims": [
+    "freq",
+    "sex",
+    "age",
+    "nace_r1",
+    "unit",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "2007"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "sex": [
+      "F",
+      "M",
+      "T"
+    ],
+    "age": [
+      "Y15-34",
+      "Y15-64",
+      "Y35-54",
+      "Y35-64",
+      "Y55-64"
+    ],
+    "nace_r1": [
+      "A_B",
+      "C_E",
+      "F",
+      "G-I",
+      "J-Q",
+      "TOTAL"
+    ],
+    "unit": [
+      "PC_EMP"
+    ],
+    "geo": [
+      "AT",
+      "BE",
+      "BG",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EA19",
+      "EE",
+      "EL",
+      "ES",
+      "EU27_2020",
+      "EU28",
+      "FI",
+      "FR",
+      "HR",
+      "HU",
+      "IE",
+      "IS",
+      "IT",
+      "LT",
+      "LU",
+      "LV",
+      "MT",
+      "NL",
+      "NO",
+      "PL",
+      "PT",
+      "RO",
+      "SE",
+      "SI",
+      "SK",
+      "UK"
+    ]
+  },
+  "sha256_1mb_prefix": "e255d2eb24f7969a8610c9941f5c4b1a620834661665ed22fb2ab24d34b8de7a"
+}

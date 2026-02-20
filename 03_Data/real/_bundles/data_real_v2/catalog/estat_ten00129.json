@@ -1,0 +1,92 @@
+{
+  "file": "estat_ten00129.tsv.gz",
+  "dims": [
+    "freq",
+    "nrg_bal",
+    "siec",
+    "unit",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "nrg_bal": [
+      "FC_IND_E"
+    ],
+    "siec": [
+      "C0000X0350-0370",
+      "C0350-0370",
+      "E7000",
+      "G3000",
+      "H8000",
+      "N900H",
+      "O4000XBIO",
+      "P1000",
+      "RA000",
+      "S2000",
+      "TOTAL",
+      "W6100_6220"
+    ],
+    "unit": [
+      "KTOE"
+    ],
+    "geo": [
+      "AL",
+      "AT",
+      "BA",
+      "BE",
+      "BG",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EE",
+      "EL",
+      "ES",
+      "EU27_2020",
+      "FI",
+      "FR",
+      "GE",
+      "HR",
+      "HU",
+      "IE",
+      "IS",
+      "IT",
+      "LT",
+      "LU",
+      "LV",
+      "MD",
+      "ME",
+      "MK",
+      "MT",
+      "NL",
+      "NO",
+      "PL",
+      "PT",
+      "RO",
+      "RS",
+      "SE",
+      "SI",
+      "SK",
+      "TR",
+      "UA",
+      "UK"
+    ]
+  },
+  "sha256_1mb_prefix": "f8b5f7f2c8b6aab67cd2e5c26ee94bc4ae6f23befb258c8f018e937b55061d7a"
+}

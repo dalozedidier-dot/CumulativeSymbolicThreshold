@@ -1,0 +1,76 @@
+{
+  "file": "estat_earn_ses_pub1s.tsv.gz",
+  "dims": [
+    "freq",
+    "unit",
+    "sex",
+    "sizeclas",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "2006",
+    "2010",
+    "2014",
+    "2018",
+    "2022"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "unit": [
+      "PC"
+    ],
+    "sex": [
+      "F",
+      "M",
+      "T"
+    ],
+    "sizeclas": [
+      "GE10"
+    ],
+    "geo": [
+      "AL",
+      "AT",
+      "BA",
+      "BE",
+      "BG",
+      "CH",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EA17",
+      "EA18",
+      "EA19",
+      "EA20",
+      "EE",
+      "EL",
+      "ES",
+      "EU27_2007",
+      "EU27_2020",
+      "EU28",
+      "FI",
+      "FR",
+      "HR",
+      "HU",
+      "IE",
+      "IS",
+      "IT",
+      "LT",
+      "LU",
+      "LV",
+      "ME",
+      "MK",
+      "MT",
+      "NL",
+      "NO",
+      "PL",
+      "PT",
+      "RO",
+      "RS",
+      "SE"
+    ]
+  },
+  "sha256_1mb_prefix": "cf41965d7678c6df34ff179b661103691e0a4097b1bc8a9c71782f226a384b38"
+}

@@ -1,0 +1,104 @@
+{
+  "file": "estat_lfsa_etgar.tsv.gz",
+  "dims": [
+    "freq",
+    "unit",
+    "sex",
+    "age",
+    "reason",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "1983",
+    "1984",
+    "1985",
+    "1986",
+    "1987",
+    "1988",
+    "1989",
+    "1990",
+    "1991",
+    "1992",
+    "1993",
+    "1994",
+    "1995",
+    "1996",
+    "1997",
+    "1998",
+    "1999",
+    "2000",
+    "2001",
+    "2002"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "unit": [
+      "PC_SAL"
+    ],
+    "sex": [
+      "F"
+    ],
+    "age": [
+      "Y15-19",
+      "Y15-24",
+      "Y15-29",
+      "Y15-39",
+      "Y15-59",
+      "Y15-64",
+      "Y15-74"
+    ],
+    "reason": [
+      "EDUC_TNG",
+      "JOB_TCTR",
+      "NF_PJOB",
+      "NRP",
+      "NW_PJOB",
+      "OTH",
+      "PROB",
+      "TOTAL"
+    ],
+    "geo": [
+      "AT",
+      "BA",
+      "BE",
+      "BG",
+      "CH",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EA21",
+      "EE",
+      "EL",
+      "ES",
+      "EU27_2020",
+      "FI",
+      "FR",
+      "HR",
+      "HU",
+      "IE",
+      "IS",
+      "IT",
+      "LT",
+      "LU",
+      "LV",
+      "ME",
+      "MK",
+      "MT",
+      "NL",
+      "NO",
+      "PL",
+      "PT",
+      "RO",
+      "RS",
+      "SE",
+      "SI",
+      "SK",
+      "TR",
+      "UK"
+    ]
+  },
+  "sha256_1mb_prefix": "4611e6e7e0c05e2b09da895774ecedc1898cb6c8376eaae21d81d12714f60a42"
+}

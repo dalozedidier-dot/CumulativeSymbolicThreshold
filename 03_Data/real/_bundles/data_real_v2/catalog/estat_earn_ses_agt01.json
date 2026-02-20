@@ -1,0 +1,87 @@
+{
+  "file": "estat_earn_ses_agt01.tsv.gz",
+  "dims": [
+    "freq",
+    "unit",
+    "nace_r1",
+    "cpayagr",
+    "emp_cont",
+    "sex",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "2002"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "unit": [
+      "NR"
+    ],
+    "nace_r1": [
+      "C",
+      "C-E"
+    ],
+    "cpayagr": [
+      "ENT",
+      "IND",
+      "INDREG",
+      "NAT",
+      "NONE",
+      "OTH",
+      "TOTAL",
+      "UNIT",
+      "UNK"
+    ],
+    "emp_cont": [
+      "APP_TRN",
+      "LTD_X_APP_TRN",
+      "NLTD",
+      "OTH",
+      "TOTAL",
+      "UNK"
+    ],
+    "sex": [
+      "F",
+      "M",
+      "T"
+    ],
+    "geo": [
+      "AT",
+      "BE",
+      "BG",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EA",
+      "EA12",
+      "EE",
+      "EL",
+      "ES",
+      "EU15",
+      "EU25",
+      "FI",
+      "FR",
+      "HU",
+      "IE",
+      "IT",
+      "LT",
+      "LU",
+      "LV",
+      "MT",
+      "NL",
+      "NMS10",
+      "NO",
+      "PL",
+      "PT",
+      "RO",
+      "SE",
+      "SI",
+      "SK",
+      "UK"
+    ]
+  },
+  "sha256_1mb_prefix": "4b73d032b9a5d09cbec2b0a3d6923f4b592a498104f46cff21dd979afbbb15f3"
+}

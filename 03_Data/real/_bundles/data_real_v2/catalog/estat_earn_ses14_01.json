@@ -1,0 +1,95 @@
+{
+  "file": "estat_earn_ses14_01.tsv.gz",
+  "dims": [
+    "freq",
+    "unit",
+    "cpayagr",
+    "sizeclas",
+    "nace_r2",
+    "sex",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "2014"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "unit": [
+      "NR"
+    ],
+    "cpayagr": [
+      "ENT"
+    ],
+    "sizeclas": [
+      "GE10"
+    ],
+    "nace_r2": [
+      "B",
+      "B-E",
+      "B-F",
+      "B-N",
+      "B-S",
+      "B-S_X_O",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "G-J",
+      "G-S",
+      "G-S_X_O",
+      "H",
+      "I",
+      "J",
+      "K",
+      "K-N",
+      "L",
+      "M"
+    ],
+    "sex": [
+      "F",
+      "M",
+      "T"
+    ],
+    "geo": [
+      "AT",
+      "BE",
+      "BG",
+      "CH",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EA17",
+      "EA18",
+      "EA19",
+      "EE",
+      "EL",
+      "ES",
+      "EU27_2007",
+      "EU28",
+      "FI",
+      "FR",
+      "HR",
+      "HU",
+      "IS",
+      "LT",
+      "LU",
+      "LV",
+      "ME",
+      "MT",
+      "NL",
+      "PL",
+      "PT",
+      "RO",
+      "RS",
+      "SI",
+      "SK",
+      "TR",
+      "UK"
+    ]
+  },
+  "sha256_1mb_prefix": "9204467389a5ac4fb89054626461a055e2a8e72737271237cb02ec4972c284e1"
+}

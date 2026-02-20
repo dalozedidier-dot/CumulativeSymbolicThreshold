@@ -1,0 +1,105 @@
+{
+  "file": "estat_lfsa_esgaed.tsv.gz",
+  "dims": [
+    "freq",
+    "unit",
+    "sex",
+    "age",
+    "isced11",
+    "wstatus",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "1983",
+    "1984",
+    "1985",
+    "1986",
+    "1987",
+    "1988",
+    "1989",
+    "1990",
+    "1991",
+    "1992",
+    "1993",
+    "1994",
+    "1995",
+    "1996",
+    "1997",
+    "1998",
+    "1999",
+    "2000",
+    "2001",
+    "2002"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "unit": [
+      "THS_PER"
+    ],
+    "sex": [
+      "F"
+    ],
+    "age": [
+      "Y15-19",
+      "Y15-24",
+      "Y15-39"
+    ],
+    "isced11": [
+      "ED0-2",
+      "ED34_44",
+      "ED35_45",
+      "ED3_4",
+      "ED5-8",
+      "NRP",
+      "TOTAL"
+    ],
+    "wstatus": [
+      "SELF",
+      "SELF_NS",
+      "SELF_S"
+    ],
+    "geo": [
+      "AT",
+      "BA",
+      "BE",
+      "BG",
+      "CH",
+      "CY",
+      "CZ",
+      "DE",
+      "DK",
+      "EA21",
+      "EE",
+      "EL",
+      "ES",
+      "EU27_2020",
+      "FI",
+      "FR",
+      "HR",
+      "HU",
+      "IE",
+      "IS",
+      "IT",
+      "LT",
+      "LU",
+      "LV",
+      "ME",
+      "MK",
+      "MT",
+      "NL",
+      "NO",
+      "PL",
+      "PT",
+      "RO",
+      "RS",
+      "SE",
+      "SI",
+      "SK",
+      "TR",
+      "UK"
+    ]
+  },
+  "sha256_1mb_prefix": "995e387ee496d7783a6c817310fc61bdb58936eed2cdb1fae8d12c7bfb710e70"
+}

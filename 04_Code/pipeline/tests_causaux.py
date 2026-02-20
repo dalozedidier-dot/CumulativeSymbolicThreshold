@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""04_Code/pipeline/tests_causaux.py
+"""
+04_Code/pipeline/tests_causaux.py
 
 Causal and falsifiability checks for the cumulative symbolic threshold.
 
@@ -11,40 +12,43 @@ Core intent
 Implemented checks (lightweight but stricter than the legacy diff-in-diff)
 - Threshold hit on delta_C (baseline-based)
 - No false positives pre-threshold (same detector, same baseline)
-- Mean shift test on C (pre vs post), with p-value
+- Mean shift test on C (pre vs post), with p-value (Welch)
 - Block bootstrap CI for (mean_post - mean_pre)
 - Granger causality tests (S -> delta_C, and reverse)
 - VAR causality test (S -> delta_C)
 - Cointegration test (C, S) as a robustness signal under non-stationarity
 
-Outputs
-- <outdir>/tables/causal_tests_summary.csv
-- <outdir>/tables/verdict.json
-- <outdir>/tables/causal_report.md
-- <outdir>/tables/causal_report.pdf (optional)
+Important real-data robustness rule
+- If Welch is not computable (p_value_mean_shift_C is NaN), do not hard-fail ok_p.
+  Use bootstrap CI as the decision fallback for "mean shift" evidence.
 
-Usage (recommended with run_ori_c_demo outputs)
+Outputs
+- tables/causal_tests_summary.csv
+- tables/verdict.json
+- tables/causal_report.md
+- tables/causal_report.pdf (optional)
+
+Usage (recommended with run_real_data_demo outputs)
 python 04_Code/pipeline/tests_causaux.py \
-  --run-dir 05_Results/threshold_validation/demo_001/run_0001 \
+  --run-dir 05_Results/real/.../ds_xxx \
   --alpha 0.01 --c-mean-post-min 0.1 --lags 1-10 --n-steps-min 2000
 """
 
 from __future__ import annotations
 
+import argparse
+import json
 import sys
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy import stats
 
 # Ensure 04_Code is on sys.path so `import pipeline.*` works when scripts are executed directly.
 _CODE_DIR = Path(__file__).resolve().parents[1]
 if str(_CODE_DIR) not in sys.path:
     sys.path.insert(0, str(_CODE_DIR))
-
-import argparse
-import json
-
-import numpy as np
-import pandas as pd
-from scipy import stats
 
 
 def _make_dirs(outdir: Path) -> Path:
@@ -93,7 +97,6 @@ def _detect_threshold(delta_C: np.ndarray, k: float, m: int, baseline_n: int) ->
                 return int(i), float(thr)
         else:
             consec = 0
-
     return None, float(thr)
 
 
@@ -108,7 +111,6 @@ def _block_bootstrap_mean_diff(
     rng = np.random.default_rng(int(seed))
     x_pre = np.asarray(x_pre, dtype=float)
     x_post = np.asarray(x_post, dtype=float)
-
     if len(x_pre) < 5 or len(x_post) < 5:
         return float("nan"), float("nan"), float("nan")
 
@@ -121,7 +123,7 @@ def _block_bootstrap_mean_diff(
         if n <= block:
             idx = rng.integers(0, n, size=n)
             return x[idx]
-        out = []
+        out: list[float] = []
         while len(out) < n:
             start = int(rng.integers(0, n - block))
             out.extend(list(x[start : start + block]))
@@ -146,15 +148,15 @@ def _safe_float(x) -> float:
         return float("nan")
 
 
-def _granger_pvalues(delta_c: np.ndarray, s: np.ndarray, lags: list[int]) -> dict:
+def _granger_pvalues(delta_c: np.ndarray, s: np.ndarray, lags: list[int]) -> dict[str, float]:
     # grangercausalitytests expects shape (n,2), tests whether 2nd col causes 1st col.
     try:
-        from statsmodels.tsa.stattools import grangercausalitytests
+        from statsmodels.tsa.stattools import grangercausalitytests  # type: ignore
 
         data = np.column_stack([delta_c, s])
         maxlag = int(max(lags))
         res = grangercausalitytests(data, maxlag=maxlag, verbose=False)
-        out = {}
+        out: dict[str, float] = {}
         for lag in lags:
             lag = int(lag)
             if lag in res:
@@ -167,7 +169,7 @@ def _granger_pvalues(delta_c: np.ndarray, s: np.ndarray, lags: list[int]) -> dic
 
 def _var_causality(delta_c: np.ndarray, s: np.ndarray, maxlag: int) -> tuple[float, int]:
     try:
-        from statsmodels.tsa.api import VAR
+        from statsmodels.tsa.api import VAR  # type: ignore
 
         df = pd.DataFrame({"delta_C": delta_c, "S": s}).dropna()
         if len(df) < max(20, maxlag * 5):
@@ -188,32 +190,31 @@ def _var_causality(delta_c: np.ndarray, s: np.ndarray, maxlag: int) -> tuple[flo
 
 def _cointegration_p(C: np.ndarray, S: np.ndarray) -> float:
     try:
-        from statsmodels.tsa.stattools import coint
+        from statsmodels.tsa.stattools import coint  # type: ignore
 
         x = np.asarray(C, dtype=float)
         y = np.asarray(S, dtype=float)
         n = min(len(x), len(y))
         if n < 50:
             return float("nan")
-        stat, p, _ = coint(x[:n], y[:n])
+
+        _, p, _ = coint(x[:n], y[:n])
         return _safe_float(p)
     except Exception:
         return float("nan")
 
 
 def _render_md(report: dict) -> str:
-    lines = []
+    lines: list[str] = []
     lines.append("# Rapport causal seuil cumulatif")
     lines.append("")
     lines.append(f"Run: {report.get('run_dir','')}".strip())
     lines.append("")
-
     lines.append("## Verdict")
     lines.append("")
     lines.append(f"- Verdict: {report['verdict']}")
     lines.append(f"- Binaire (seuil detecte): {report['binary_detected']}")
     lines.append("")
-
     lines.append("## Seuil et persistence")
     lines.append("")
     lines.append(f"- threshold_hit_t: {report.get('threshold_hit_t')}")
@@ -224,7 +225,6 @@ def _render_md(report: dict) -> str:
     lines.append(f"- C_positive_frac_post: {report.get('C_positive_frac_post'):.6g}")
     lines.append(f"- no_false_positives_pre: {report.get('no_false_positives_pre')}")
     lines.append("")
-
     lines.append("## Tests statistiques")
     lines.append("")
     lines.append(f"- p_value_mean_shift_C (Welch): {report.get('p_value_mean_shift_C'):.6g}")
@@ -232,10 +232,8 @@ def _render_md(report: dict) -> str:
         f"- bootstrap_mean_diff_C: {report.get('boot_mean_diff_C'):.6g} (95% CI [{report.get('boot_ci_low_C'):.6g}, {report.get('boot_ci_high_C'):.6g}])"
     )
     lines.append("")
-
     lines.append("## Causalite")
     lines.append("")
-
     g = report.get("granger_S_to_deltaC_p", {})
     if g:
         lines.append("Granger S -> delta_C (p-values par lag)")
@@ -243,9 +241,7 @@ def _render_md(report: dict) -> str:
             lines.append(f"- lag {k}: {g[k]:.6g}")
     else:
         lines.append("Granger S -> delta_C: non calcule")
-
     lines.append("")
-
     gr = report.get("granger_deltaC_to_S_p", {})
     if gr:
         lines.append("Granger delta_C -> S (p-values par lag)")
@@ -253,12 +249,10 @@ def _render_md(report: dict) -> str:
             lines.append(f"- lag {k}: {gr[k]:.6g}")
     else:
         lines.append("Granger delta_C -> S: non calcule")
-
     lines.append("")
     lines.append(f"- VAR causality S -> delta_C: p={report.get('var_S_to_deltaC_p'):.6g} (lag={report.get('var_lag_used')})")
     lines.append(f"- Cointegration(C,S): p={report.get('cointegration_p'):.6g}")
     lines.append("")
-
     lines.append("## Parametres")
     lines.append("")
     lines.append(f"- alpha: {report.get('alpha')}")
@@ -267,19 +261,22 @@ def _render_md(report: dict) -> str:
     lines.append(f"- pre_horizon: {report.get('pre_horizon')}")
     lines.append(f"- post_horizon: {report.get('post_horizon')}")
     lines.append(f"- baseline_n: {report.get('baseline_n')}")
-
+    lines.append("")
+    lines.append("## Critere ok_p (mean shift)")
+    lines.append("")
+    lines.append(f"- ok_p: {report.get('criteria',{}).get('ok_p')}")
+    lines.append(f"- ok_p_source: {report.get('criteria',{}).get('ok_p_source')}")
     return "\n".join(lines) + "\n"
 
 
 def _render_pdf(md_text: str, outpath: Path) -> None:
-    # Minimal PDF renderer using reportlab. No layout ambition, just stable export.
+    # Minimal PDF renderer using reportlab. PDF generation is optional.
     try:
-        from reportlab.lib.pagesizes import A4
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
-        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4  # type: ignore
+        from reportlab.pdfbase import pdfmetrics  # type: ignore
+        from reportlab.pdfbase.ttfonts import TTFont  # type: ignore
+        from reportlab.pdfgen import canvas  # type: ignore
 
-        # Use a standard font if available; fall back to built-in if not.
         try:
             pdfmetrics.registerFont(TTFont("DejaVuSans", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"))
             font_name = "DejaVuSans"
@@ -287,37 +284,31 @@ def _render_pdf(md_text: str, outpath: Path) -> None:
             font_name = "Helvetica"
 
         c = canvas.Canvas(str(outpath), pagesize=A4)
-        width, height = A4
-
+        _, height = A4
         c.setFont(font_name, 12)
+
         x = 40
         y = height - 50
         line_h = 14
-
         for raw in md_text.splitlines():
-            line = raw.replace("\t", "    ")
+            line = raw.replace("\t", " ")
             if y < 60:
                 c.showPage()
                 c.setFont(font_name, 12)
                 y = height - 50
             c.drawString(x, y, line[:180])
             y -= line_h
-
         c.save()
     except Exception:
-        # PDF generation is optional
         return
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--run-dir", type=str, help="Directory containing tables/control_timeseries.csv and tables/test_timeseries.csv")
     src.add_argument("--control-csv", type=str, help="Control timeseries CSV")
-
     ap.add_argument("--test-csv", type=str, help="Test timeseries CSV (required if using --control-csv)")
-
     ap.add_argument("--outdir", type=str, default=None, help="Output directory. Default: run-dir")
 
     ap.add_argument("--alpha", type=float, default=0.01)
@@ -336,11 +327,9 @@ def main() -> int:
     ap.add_argument("--block", type=int, default=25)
     ap.add_argument("--n-boot", type=int, default=800)
     ap.add_argument("--seed", type=int, default=123)
-
     ap.add_argument("--n-steps-min", type=int, default=2000)
 
     ap.add_argument("--pdf", action="store_true", help="Also generate a minimal PDF report")
-
     args = ap.parse_args()
 
     if args.run_dir:
@@ -358,22 +347,16 @@ def main() -> int:
 
     tabdir = _make_dirs(outdir)
 
-    df_c = pd.read_csv(control_csv)
     df_t = pd.read_csv(test_csv)
 
     # Basic sanity
-    if len(df_t) < int(args.n_steps_min):
-        # Not a hard error, but record it
-        short_series = True
-    else:
-        short_series = False
-
+    short_series = bool(len(df_t) < int(args.n_steps_min))
     for col in ["t", "C", "S", "delta_C"]:
         if col not in df_t.columns:
             raise SystemExit(f"Missing column in test: {col}")
 
     # Determine threshold hit
-    thr_idx = None
+    thr_idx: int | None = None
     thr_val = float("nan")
     if "threshold_hit" in df_t.columns and bool((df_t["threshold_hit"] > 0).any()):
         thr_idx = int(df_t.index[df_t["threshold_hit"] > 0][0])
@@ -385,8 +368,13 @@ def main() -> int:
 
     # No false positives pre-threshold
     no_fp_pre = True
-    if thr_idx is not None:
-        hit2, _ = _detect_threshold(df_t.loc[df_t["t"] < int(thr_t), "delta_C"].to_numpy(dtype=float), float(args.k), int(args.m), int(args.baseline_n))
+    if thr_idx is not None and thr_t is not None:
+        hit2, _ = _detect_threshold(
+            df_t.loc[df_t["t"] < int(thr_t), "delta_C"].to_numpy(dtype=float),
+            float(args.k),
+            int(args.m),
+            int(args.baseline_n),
+        )
         if hit2 is not None:
             no_fp_pre = False
 
@@ -406,12 +394,17 @@ def main() -> int:
 
     C_mean_pre = float(pre["C"].mean()) if len(pre) else float("nan")
     C_mean_post = float(post["C"].mean()) if len(post) else float("nan")
-
     C_positive_frac_post = float((post["C"] > 0.0).mean()) if len(post) else float("nan")
 
     # Mean shift test (Welch)
     if len(pre) >= 10 and len(post) >= 10:
-        p_shift = float(stats.ttest_ind(post["C"].to_numpy(dtype=float), pre["C"].to_numpy(dtype=float), equal_var=False).pvalue)
+        p_shift = float(
+            stats.ttest_ind(
+                post["C"].to_numpy(dtype=float),
+                pre["C"].to_numpy(dtype=float),
+                equal_var=False,
+            ).pvalue
+        )
     else:
         p_shift = float("nan")
 
@@ -426,7 +419,6 @@ def main() -> int:
 
     # Causality tests (S -> delta_C)
     lags = _parse_lags(str(args.lags))
-
     dC = df_t["delta_C"].to_numpy(dtype=float)
     S = df_t["S"].to_numpy(dtype=float)
 
@@ -442,13 +434,18 @@ def main() -> int:
     # Criteria
     has_threshold = thr_idx is not None
     ok_c_level = bool(np.isfinite(C_mean_post) and (C_mean_post > float(args.c_mean_post_min)))
-    ok_p = bool(np.isfinite(p_shift) and (p_shift <= float(args.alpha)))
     ok_boot = bool(np.isfinite(boot_lo) and (boot_lo > 0.0))
-
     ok_granger = bool(np.isfinite(min_granger_s_to_dc) and (min_granger_s_to_dc <= float(args.alpha)))
 
-    # If reverse direction is also strongly significant, we do not automatically fail.
-    # We mark it as a warning signal in the report.
+    # Robust ok_p: Welch if available, else bootstrap fallback.
+    if np.isfinite(p_shift):
+        ok_p = bool(p_shift <= float(args.alpha))
+        ok_p_source = "welch"
+    else:
+        ok_p = bool(ok_boot)
+        ok_p_source = "bootstrap_fallback"
+
+    # Reverse direction significance is a warning, not an automatic fail.
     reverse_warning = bool(np.isfinite(min_granger_dc_to_s) and (min_granger_dc_to_s <= float(args.alpha)))
 
     # Verdict
@@ -500,6 +497,7 @@ def main() -> int:
             "has_threshold": bool(has_threshold),
             "ok_c_level": bool(ok_c_level),
             "ok_p": bool(ok_p),
+            "ok_p_source": str(ok_p_source),
             "ok_boot": bool(ok_boot),
             "ok_granger": bool(ok_granger),
         },
@@ -522,14 +520,13 @@ def main() -> int:
         "var_S_to_deltaC_p": float(var_p),
         "cointegration_p": float(coint_p),
         "reverse_warning": bool(reverse_warning),
+        "ok_p_source": str(ok_p_source),
     }
 
     pd.DataFrame([row]).to_csv(tabdir / "causal_tests_summary.csv", index=False)
     (tabdir / "verdict.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-
     md = _render_md(report)
     (tabdir / "causal_report.md").write_text(md, encoding="utf-8")
-
     if bool(args.pdf):
         _render_pdf(md, tabdir / "causal_report.pdf")
 

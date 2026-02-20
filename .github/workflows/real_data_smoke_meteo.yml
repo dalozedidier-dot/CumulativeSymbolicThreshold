@@ -1,29 +1,7 @@
-name: Real Data Smoke (ORI-C) - Meteo
+name: "Real data smoke (meteo)"
 
 on:
   workflow_dispatch:
-    inputs:
-      control_mode:
-        description: "same or no_symbolic"
-        required: false
-        default: "no_symbolic"
-      alpha:
-        description: "Alpha for tests_causaux"
-        required: false
-        default: "0.01"
-      pre_horizon:
-        description: "Pre horizon (steps)"
-        required: false
-        default: "500"
-      post_horizon:
-        description: "Post horizon (steps)"
-        required: false
-        default: "500"
-  push:
-    paths:
-      - "04_Code/pipeline/run_real_data_demo.py"
-      - "04_Code/pipeline/tests_causaux.py"
-      - ".github/workflows/real_data_smoke_meteo.yml"
 
 permissions:
   contents: read
@@ -31,6 +9,10 @@ permissions:
 jobs:
   real_data_smoke:
     runs-on: ubuntu-latest
+    env:
+      SECTOR: "meteo"
+      GEO: "EE"
+      SECTOR_ROOT: _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,47 +21,102 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: "pip"
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          set -e
-          python -m pip install --upgrade pip
-          pip install -r 04_Code/requirements.txt
-          if [ -f 04_Code/requirements-dev.txt ]; then
-            pip install -r 04_Code/requirements-dev.txt
+          python -V
+          pip -V
+          pip install -r requirements.txt
+
+      - name: Run real-data suite (meteo)
+        shell: bash
+        run: |
+          set -u
+
+          RUN_ID="${{ github.run_id }}"
+          ROOT="_ci_out/real_data_smoke/meteo/run_${RUN_ID}"
+
+          mkdir -p "${ROOT}"
+          echo "sector=meteo" > "${ROOT}/meta.txt"
+          echo "geo=EE" >> "${ROOT}/meta.txt"
+          echo "run_id=${RUN_ID}" >> "${ROOT}/meta.txt"
+
+          fail=0
+
+          run_one() {
+            label="$1"
+            csv="$2"
+            extra="$3"
+
+            outdir="${ROOT}/${label}"
+            mkdir -p "${outdir}"
+            echo "CSV=${csv}" > "${outdir}/dataset.txt"
+
+            set +e
+            python 04_Code/pipeline/run_real_data_demo.py --input "${csv}" --outdir "${outdir}" ${extra} > "${outdir}/run_real_data_demo.log" 2>&1
+            rc_demo=$?
+            echo "${rc_demo}" > "${outdir}/rc_demo.txt"
+            set -e
+
+            if [ $rc_demo -ne 0 ]; then
+              fail=1
+              return
+            fi
+
+            set +e
+            python 04_Code/pipeline/tests_causaux.py --run-dir "${outdir}" --alpha 0.01 --lags 1-10 --pre-horizon 250 --post-horizon 250 --pdf > "${outdir}/tests_causaux.log" 2>&1
+            rc_causal=$?
+            echo "${rc_causal}" > "${outdir}/rc_causal.txt"
+            set -e
+
+            if [ $rc_causal -ne 0 ]; then
+              fail=1
+            fi
+          }
+
+          # 1) Pilot sector dataset (raw columns)
+          run_one "01_pilot" "03_Data/real/meteo/pilot_meteo/real.csv" '--col-time year --time-mode index --normalize robust --control-mode no_symbolic --auto-scale --col-O sdg_13_50_mio_eur --col-R env_tax_env_mio_eur --col-I road_elec_ktoe'
+
+          # 2) Bundle v1 and v2 (already in ORI-C proxy format)
+          run_one "02_bundle_v1_EE" "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EE.csv" '--col-time year --time-mode index --normalize robust --control-mode no_symbolic --auto-scale --col-O O --col-R R --col-I I --col-S S'
+          run_one "03_bundle_v2_EE" "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EE.csv" '--col-time year --time-mode index --normalize robust --control-mode no_symbolic --auto-scale --col-O O --col-R R --col-I I --col-S S'
+
+          # Summarize
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["SECTOR_ROOT"])
+          rows = []
+          for ds in sorted([p for p in root.iterdir() if p.is_dir()]):
+              vpath = ds / "tables" / "verdict.json"
+              if vpath.exists():
+                  rep = json.loads(vpath.read_text(encoding="utf-8"))
+                  rows.append({
+                      "dataset": ds.name,
+                      "verdict": rep.get("verdict"),
+                      "binary_detected": rep.get("binary_detected"),
+                      "threshold_hit_t": rep.get("threshold_hit_t"),
+                      "reverse_warning": rep.get("reverse_warning"),
+                      "ok_p_source": rep.get("criteria", {}).get("ok_p_source"),
+                  })
+              else:
+                  rows.append({"dataset": ds.name, "verdict": "FAILED_OR_SKIPPED"})
+          (root / "summary.json").write_text(json.dumps({"sector": os.environ.get("SECTOR",""), "datasets": rows}, indent=2), encoding="utf-8")
+          print((root / "summary.json").read_text(encoding="utf-8"))
+          PY
+
+          if [ $fail -ne 0 ]; then
+            echo "One or more datasets failed." >&2
+            exit 2
           fi
 
-      - name: Run pipeline
-        run: |
-          set -e
-          OUTDIR="_ci_out/real_data_smoke/meteo/run_${{ github.run_id }}"
-          mkdir -p "$OUTDIR"
-          python 04_Code/pipeline/run_real_data_demo.py \
-            --input "03_Data/real/meteo/pilot_meteo/real.csv" \
-            --outdir "$OUTDIR" \
-            --col-time "year" \
-            --time-mode "index" \
-            --col-O "industrial_production_i15" \
-            --col-R "berd_pc_gdp" \
-            --col-I "ict_spec_pc_ent_ge10" \
-            --normalize "robust" \
-            --auto-scale \
-            --control-mode "${{ inputs.control_mode }}"
-          python 04_Code/pipeline/tests_causaux.py \
-            --run-dir "$OUTDIR" \
-            --alpha "${{ inputs.alpha }}" \
-            --pre-horizon "${{ inputs.pre_horizon }}" \
-            --post-horizon "${{ inputs.post_horizon }}" \
-            --pdf
-
-      - name: Upload artifacts
-        if: always()
+      - name: Upload artifacts (meteo)
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: real_data_smoke_meteo_${{ github.run_id }}
-          path: |
-            _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}/tables/**
-            _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}/figures/**
-            _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}/*.log
-            _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}/run_meta.txt
+          path: _ci_out/real_data_smoke/meteo/run_${{ github.run_id }}
           if-no-files-found: warn

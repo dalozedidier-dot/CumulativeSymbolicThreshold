@@ -1,0 +1,81 @@
+{
+  "file": "estat_earn_ses_monthly.tsv.gz",
+  "dims": [
+    "freq",
+    "nace_r2",
+    "isco08",
+    "worktime",
+    "age",
+    "sex",
+    "indic_se",
+    "geo"
+  ],
+  "year_columns_preview": [
+    "2002",
+    "2006",
+    "2010",
+    "2014",
+    "2018",
+    "2022"
+  ],
+  "dim_values_sample": {
+    "freq": [
+      "A"
+    ],
+    "nace_r2": [
+      "B-F"
+    ],
+    "isco08": [
+      "OC0"
+    ],
+    "worktime": [
+      "FT",
+      "PT"
+    ],
+    "age": [
+      "TOTAL",
+      "Y30-49",
+      "Y_GE50",
+      "Y_LT30"
+    ],
+    "sex": [
+      "F",
+      "M",
+      "T"
+    ],
+    "indic_se": [
+      "D1_E_EUR",
+      "D1_E_PPS",
+      "D9_E_EUR",
+      "D9_E_PPS",
+      "MEAN_E_EUR",
+      "MEAN_E_PPS",
+      "MEAN_HP",
+      "MEAN_OHP_SAL",
+      "MEAN_OHP_SALC",
+      "MEAN_OP_SALC_EUR",
+      "MEAN_OP_SALC_PPS",
+      "MEAN_OP_SAL_EUR",
+      "MEAN_OP_SAL_PPS",
+      "MEAN_SP_SALC_EUR",
+      "MEAN_SP_SALC_PPS",
+      "MEAN_SP_SAL_EUR",
+      "MEAN_SP_SAL_PPS",
+      "MED_E_EUR",
+      "MED_E_PPS"
+    ],
+    "geo": [
+      "CH",
+      "DE",
+      "EA17",
+      "EA18",
+      "EA19",
+      "EU27_2007",
+      "EU27_2020",
+      "IT",
+      "NL",
+      "SI"
+    ]
+  },
+  "sha256_1mb_prefix": "ba2ce8113076c9534ae58ab2ec37abb1aed4ba345d7b497f6ef4708961e61ef4"
+}

@@ -1,0 +1,13 @@
+file,dims,year_cols_preview
+estat_ten00129.tsv.gz,"freq,nrg_bal,siec,unit,geo","2013,2014,2015,2016,2017,2018,2019,2020"
+estat_nrg_ind_fecf.tsv.gz,"freq,nrg_bal,siec,unit,geo","1990,1991,1992,1993,1994,1995,1996,1997"
+estat_sdg_07_10.tsv.gz,"freq,unit,geo","2005,2006,2007,2008,2009,2010,2011,2012"
+estat_earn_ses_monthly.tsv.gz,"freq,nace_r2,isco08,worktime,age,sex,indic_se,geo","2002,2006,2010,2014,2018,2022"
+estat_earn_ses_agt01.tsv.gz,"freq,unit,nace_r1,cpayagr,emp_cont,sex,geo",2002
+estat_earn_ses14_01.tsv.gz,"freq,unit,cpayagr,sizeclas,nace_r2,sex,geo",2014
+estat_lfsa_esgaed.tsv.gz,"freq,unit,sex,age,isced11,wstatus,geo","1983,1984,1985,1986,1987,1988,1989,1990"
+estat_lfsa_etgar.tsv.gz,"freq,unit,sex,age,reason,geo","1983,1984,1985,1986,1987,1988,1989,1990"
+estat_earn_ses_pub1s.tsv.gz,"freq,unit,sex,sizeclas,geo","2006,2010,2014,2018,2022"
+estat_hsw_exp6a.tsv.gz,"freq,sex,age,nace_r1,unit,geo",2007
+estat_hsw_exp5a.tsv.gz,"freq,sex,age,nace_r1,unit,geo",2007
+estat_hsw_n2_02.tsv.gz,"freq,unit,nace_r2,geo","2008,2009,2010,2011,2012,2013,2014,2015"

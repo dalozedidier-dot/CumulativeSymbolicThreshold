@@ -1,0 +1,95 @@
+{
+  "created_utc": "2026-02-19",
+  "geos": [
+    "BE",
+    "DE",
+    "FR",
+    "EE",
+    "EU27_2020"
+  ],
+  "series": [
+    {
+      "name": "industrial_production_i15",
+      "source_file": "estat_sts_inpr_a.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "indic_bt": "PRD",
+        "nace_r2": "B-D",
+        "s_adj": "CA",
+        "unit": "I15"
+      }
+    },
+    {
+      "name": "berd_pc_gdp",
+      "source_file": "estat_rd_e_berdind.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "nace_r1": "TOTAL",
+        "unit": "PC_GDP"
+      }
+    },
+    {
+      "name": "env_tax_env_mio_eur",
+      "source_file": "estat_env_ac_taxind2.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "tax": "ENV",
+        "unit": "MIO_EUR",
+        "nace_r2": "TOTAL"
+      }
+    },
+    {
+      "name": "ict_spec_pc_ent_ge10",
+      "source_file": "estat_isoc_ske_itspe.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "size_emp": "GE10",
+        "nace_r2": "C10-S951_X_K",
+        "indic_is": "E_ITSP2",
+        "unit": "PC_ENT"
+      }
+    },
+    {
+      "name": "solar_collector_ths_m2",
+      "source_file": "estat_nrg_inf_stcs.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "plant_tec": "SOL_COL_SURF",
+        "unit": "THS_M2"
+      }
+    },
+    {
+      "name": "heat_pump_cap_ath_mw",
+      "source_file": "estat_nrg_inf_hptc.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "plant_tec": "CAP_HEAT",
+        "hp_tech": "ATH",
+        "unit": "MW"
+      }
+    },
+    {
+      "name": "road_elec_ktoe",
+      "source_file": "estat_ten00127.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "nrg_bal": "FC_TRA_ROAD_E",
+        "siec": "E7000",
+        "unit": "KTOE"
+      }
+    },
+    {
+      "name": "sdg_13_50_mio_eur",
+      "source_file": "estat_sdg_13_50.tsv.gz",
+      "filters": {
+        "freq": "A",
+        "unit": "MIO_EUR"
+      }
+    }
+  ],
+  "notes": [
+    "Les fichiers raw contiennent les sources originales (Eurostat TSV gz) fournies par l'utilisateur.",
+    "processed/oric_real_panel.csv est un panel (geo, year) avec séries brutes extraites et nettoyées.",
+    "oric_inputs/*.csv fournissent O,R,I,S normalisés sur [0,1] via z-score robuste (median, MAD) puis sigmoid, avec colonnes *_raw pour traçabilité."
+  ]
+}
