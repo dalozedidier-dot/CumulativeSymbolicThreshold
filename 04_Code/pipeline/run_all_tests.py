@@ -28,13 +28,13 @@ import csv
 import json
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
 
 def _ts() -> str:
-    return datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
 
 def _run_script(script_path: Path, outdir: Path, extra_args: List[str], log_path: Path) -> None:
