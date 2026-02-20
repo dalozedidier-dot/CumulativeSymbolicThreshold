@@ -1,0 +1,13 @@
+# ORI-C real data LITE bundle
+
+Ce bundle contient uniquement les sorties légères (processed + oric_inputs) de V1 et V2,
+plus des index des fichiers bruts (noms + tailles + sha256 sur 1MB) pour traçabilité.
+
+Structure:
+- data_real_v1/processed, data_real_v1/oric_inputs, manifest.json, README.md, v1_raw_index.csv
+- data_real_v2/processed, data_real_v2/oric_inputs, manifest.json, README.md, catalog/, v2_raw_index.csv
+
+Si tu veux reconstruire les dossiers raw à l'identique, copie les TSV.gz originaux dans:
+- data_real_v1/raw/
+- data_real_v2/raw/
+en respectant les noms listés dans v1_raw_index.csv et v2_raw_index.csv.

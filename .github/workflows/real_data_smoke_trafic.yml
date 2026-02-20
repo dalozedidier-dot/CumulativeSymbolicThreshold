@@ -4,9 +4,28 @@ on:
   workflow_dispatch:
     inputs:
       dataset:
-        description: "Path to real CSV"
+        description: "Path to real CSV (repo-relative)"
         required: true
-        default: "03_Data/real/trafic/pilot_traffic/real.csv"
+        default: "03_Data/real/trafic/pilot_trafic/real.csv"
+      alpha:
+        description: "Alpha for causal tests"
+        required: false
+        default: "0.01"
+
+  push:
+    branches: ["main"]
+    paths:
+      - "04_Code/pipeline/run_real_data_demo.py"
+      - "04_Code/pipeline/tests_causaux.py"
+      - "03_Data/real/trafic/pilot_trafic/**"
+      - ".github/workflows/real_data_smoke_trafic.yml"
+
+  pull_request:
+    paths:
+      - "04_Code/pipeline/run_real_data_demo.py"
+      - "04_Code/pipeline/tests_causaux.py"
+      - "03_Data/real/trafic/pilot_trafic/**"
+      - ".github/workflows/real_data_smoke_trafic.yml"
 
 jobs:
   real_data_smoke:
@@ -14,10 +33,10 @@ jobs:
     timeout-minutes: 25
     env:
       SECTOR: "trafic"
-      DATASET: "03_Data/real/trafic/pilot_traffic/real.csv"
+      DATASET: ${{ github.event.inputs.dataset || '03_Data/real/trafic/pilot_trafic/real.csv' }}
+      ALPHA: ${{ github.event.inputs.alpha || '0.01' }}
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -39,13 +58,15 @@ jobs:
           OUTDIR="_ci_out/real_data_smoke/trafic/run_${{ github.run_id }}"
           mkdir -p "$OUTDIR"
           echo "sector=trafic" > "$OUTDIR/sector.txt"
+          echo "dataset=$DATASET" > "$OUTDIR/dataset.txt"
 
-          python 04_Code/pipeline/run_real_data_demo.py             --input "$DATASET"             --outdir "$OUTDIR"             --control-mode no_symbolic
+          python 04_Code/pipeline/run_real_data_demo.py                 --input "$DATASET"                 --outdir "$OUTDIR"                 --control-mode no_symbolic 2>&1 | tee "$OUTDIR/run_real_data_demo.log"
 
-          python 04_Code/pipeline/tests_causaux.py             --run-dir "$OUTDIR"             --alpha 0.01
+          python 04_Code/pipeline/tests_causaux.py                 --run-dir "$OUTDIR"                 --alpha "$ALPHA" 2>&1 | tee "$OUTDIR/tests_causaux.log"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: real_data_smoke_${{ github.run_id }}_trafic
           path: _ci_out/real_data_smoke/trafic
+          if-no-files-found: warn
