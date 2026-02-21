@@ -27,6 +27,7 @@ This script does not touch repo files unless you pass --out.
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 from dataclasses import dataclass
 
 import numpy as np
