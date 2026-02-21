@@ -1,0 +1,9 @@
+test,verdict,detail
+T1,ACCEPT,"ρ_O=0.7338, ρ_R=0.7764, ρ_I=0.7794"
+T2,ACCEPT,"n_overload=134, Σ>0=100.0%"
+T3,ACCEPT,ρ_ΣV=-0.6222
+T4,ACCEPT,mean_within_r=0.6400
+T5,REJECT,
+T6,REJECT,
+T7,ACCEPT,
+T8,ACCEPT,
