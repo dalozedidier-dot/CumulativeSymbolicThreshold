@@ -77,6 +77,22 @@ jobs:
             post_horizon: 20
             lags: 1-3
 
+          # ── FRED monthly (1986–2025, 480 rows, INDPRO/TCU/T10YFF/WTI/M2) ─────
+          # GLOBAL VERDICT: ACCEPT (7/8: T1-T5 + T7 + T8, T6 INDETERMINATE)
+          - label: fred_monthly
+            input: 03_Data/real/fred_monthly/real.csv
+            col_time: date
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+            auto_scale: "true"
+            baseline_n: 60
+            pre_horizon: 120
+            post_horizon: 120
+            lags: 1-6
+
           # ── Pilot CPI monthly (pre-normalised, ~937 rows, real demand = inflation) ──
           - label: pilot_cpi_monthly
             input: 03_Data/real/pilot_cpi/real.csv
