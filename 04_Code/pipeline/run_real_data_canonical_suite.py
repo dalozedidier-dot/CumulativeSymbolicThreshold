@@ -250,6 +250,8 @@ def main() -> int:
     ap.add_argument("--col-demand", default="demand")
     ap.add_argument("--col-S", default="S")
     ap.add_argument("--normalize", default="robust", choices=["none", "minmax", "robust"])
+    ap.add_argument("--auto-scale", action="store_true",
+                    help="Align cap_scale to demand median (recommended when observed demand is provided)")
     ap.add_argument("--cap-scale", type=float, default=1000.0)
     ap.add_argument("--demand-to-cap-ratio", type=float, default=0.90)
     ap.add_argument("--sigma-star", type=float, default=0.0)
@@ -293,6 +295,7 @@ def main() -> int:
         "--col-I", args.col_I,
         "--col-demand", args.col_demand,
         "--col-S", args.col_S,
+        *(["--auto-scale"] if args.auto_scale else []),
         "--cap-scale", str(args.cap_scale),
         "--demand-to-cap-ratio", str(args.demand_to_cap_ratio),
         "--sigma-star", str(args.sigma_star),
