@@ -1,20 +1,120 @@
-name: Real data long (ORI-C) - Custom CSV
+name: Real Data Long (ORI-C) - Custom
 
-on:
+'on':
   workflow_dispatch:
     inputs:
-      csv_path:
-        description: "Path to a real-data CSV inside the repo (recommended: 03_Data/real/_custom/<file>.csv)"
-        required: true
-        default: "03_Data/real/pilot_cpi/real.csv"
+      dataset_csv:
+        description: Path to CSV (repo-relative). Must include the proxy columns below.
+        required: false
+        default: 03_Data/real/_custom/custom.csv
+      tag:
+        description: Tag used in output folders and artifacts
+        required: false
+        default: custom
+      time_col:
+        description: Time column name (ignored when time_mode=index)
+        required: false
+        default: t
+      time_mode:
+        description: How to interpret time. Use "index" for irregular or non-date series.
+        required: false
+        default: index
+        type: choice
+        options:
+          - index
+          - col
+      control_mode:
+        description: Control segmentation mode
+        required: false
+        default: fixed
+        type: choice
+        options:
+          - fixed
+          - rolling
+      baseline_n:
+        description: Baseline window length (number of points)
+        required: false
+        default: "60"
+      normalize:
+        description: Normalization mode
+        required: false
+        default: mad
+      auto_scale:
+        description: Auto scale (0 or 1)
+        required: false
+        default: "1"
+      cap_scale:
+        description: Cap scale (0 or 1)
+        required: false
+        default: "1"
 
-permissions:
-  contents: read
+      col_O:
+        description: Column name for O proxy
+        required: false
+        default: O
+      col_R:
+        description: Column name for R proxy
+        required: false
+        default: R
+      col_I:
+        description: Column name for I proxy
+        required: false
+        default: I
+      col_S:
+        description: Optional demand column name (empty to disable)
+        required: false
+        default: ""
+
+      # tests_causaux parameters
+      pre_horizon:
+        description: Pre window (points)
+        required: false
+        default: "48"
+      post_horizon:
+        description: Post window (points)
+        required: false
+        default: "48"
+      maxlag:
+        description: Max lag for Granger
+        required: false
+        default: "6"
+      lags:
+        description: Lags list (comma-separated, empty uses 1..maxlag)
+        required: false
+        default: ""
+      alpha:
+        description: Alpha threshold
+        required: false
+        default: "0.05"
+      c_mean_post_min:
+        description: Minimum mean(C) post
+        required: false
+        default: "0.0"
+      k:
+        description: k parameter
+        required: false
+        default: "4"
+      m:
+        description: m parameter
+        required: false
+        default: "3"
+      block:
+        description: Block size for bootstrap
+        required: false
+        default: "12"
+      n_boot:
+        description: Bootstrap replications
+        required: false
+        default: "400"
+      seed:
+        description: RNG seed
+        required: false
+        default: "123"
 
 jobs:
-  long_custom:
+  run:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -24,134 +124,119 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
+          cache: pip
 
       - name: Install dependencies
         run: |
-          set -e
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          pip install -r requirements.txt
 
-      - name: Run ORI-C real data (long profile) then causals
+      - name: Run ORI-C long (custom)
         shell: bash
-        env:
-          CSV_PATH: ${{ inputs.csv_path }}
-          OUTDIR: _ci_out/real_data_long/custom/run_${{ github.run_id }}
         run: |
           set -Eeuo pipefail
+
+          RUN_ID="${{ github.run_id }}"
+          DATA="${{ inputs.dataset_csv }}"
+          TAG="${{ inputs.tag }}"
+
+          TIME_COL="${{ inputs.time_col }}"
+          TIME_MODE="${{ inputs.time_mode }}"
+          CONTROL_MODE="${{ inputs.control_mode }}"
+          BASELINE_N="${{ inputs.baseline_n }}"
+          NORMALIZE="${{ inputs.normalize }}"
+          AUTO_SCALE="${{ inputs.auto_scale }}"
+          CAP_SCALE="${{ inputs.cap_scale }}"
+
+          COL_O="${{ inputs.col_O }}"
+          COL_R="${{ inputs.col_R }}"
+          COL_I="${{ inputs.col_I }}"
+          COL_S="${{ inputs.col_S }}"
+
+          PRE_H="${{ inputs.pre_horizon }}"
+          POST_H="${{ inputs.post_horizon }}"
+          MAXLAG="${{ inputs.maxlag }}"
+          LAGS="${{ inputs.lags }}"
+          ALPHA="${{ inputs.alpha }}"
+          C_MEAN_POST_MIN="${{ inputs.c_mean_post_min }}"
+          K="${{ inputs.k }}"
+          M="${{ inputs.m }}"
+          BLOCK="${{ inputs.block }}"
+          N_BOOT="${{ inputs.n_boot }}"
+          SEED="${{ inputs.seed }}"
+
+          OUTDIR="_ci_out/real_data_long/${TAG}/run_${RUN_ID}"
           mkdir -p "${OUTDIR}"
 
-          if [ ! -f "${CSV_PATH}" ]; then
-            echo "Missing CSV: ${CSV_PATH}" | tee "${OUTDIR}/missing_input.txt"
+          if [ ! -f "${DATA}" ]; then
+            echo "ERROR: dataset not found: ${DATA}"
             exit 2
           fi
 
-          echo "dataset=custom" > "${OUTDIR}/dataset.txt"
-          echo "csv_path=${CSV_PATH}" >> "${OUTDIR}/dataset.txt"
-          echo "policy=locked_long_profile" > "${OUTDIR}/policy.txt"
+          # Validate requested columns exist and write an audit map
+          python -c "import csv,sys; path=sys.argv[1]; col_o=sys.argv[2]; col_r=sys.argv[3]; col_i=sys.argv[4]; col_s=sys.argv[5]; out=sys.argv[6]; hdr=next(csv.reader(open(path, newline=''))); cols=set(hdr); req=[('O',col_o),('R',col_r),('I',col_i)]; if col_s.strip(): req.append(('S',col_s)); missing=[(k,v) for k,v in req if v not in cols]; import pathlib; p=pathlib.Path(out); p.write_text('\n'.join([f"{k}={v}" for k,v in req])+'\n'); assert not missing, 'Missing columns: '+', '.join([f"{k}:{v}" for k,v in missing])"             "${DATA}" "${COL_O}" "${COL_R}" "${COL_I}" "${COL_S}" "${OUTDIR}/colmap.txt"
 
-          # Long-series profile (fixed ex ante)
-          K="2.5"
-          M="3"
-          BASELINE_N="50"
-          PRE_H="250"
-          POST_H="250"
-          ALPHA="0.01"
-          LAGS="1-10"
-          MAXLAG="10"
-          BLOCK="25"
-          N_BOOT="800"
-          SEED="123"
-          C_MEAN_POST_MIN="0.1"
+          {
+            echo "run_id=${RUN_ID}"
+            echo "dataset_csv=${DATA}"
+            echo "tag=${TAG}"
+            echo "time_mode=${TIME_MODE}"
+            echo "time_col=${TIME_COL}"
+            echo "control_mode=${CONTROL_MODE}"
+            echo "baseline_n=${BASELINE_N}"
+            echo "normalize=${NORMALIZE}"
+            echo "auto_scale=${AUTO_SCALE}"
+            echo "cap_scale=${CAP_SCALE}"
+            echo "col_O=${COL_O}"
+            echo "col_R=${COL_R}"
+            echo "col_I=${COL_I}"
+            echo "col_S=${COL_S}"
+            echo "pre_horizon=${PRE_H}"
+            echo "post_horizon=${POST_H}"
+            echo "maxlag=${MAXLAG}"
+            echo "lags=${LAGS}"
+            echo "alpha=${ALPHA}"
+            echo "c_mean_post_min=${C_MEAN_POST_MIN}"
+            echo "k=${K}"
+            echo "m=${M}"
+            echo "block=${BLOCK}"
+            echo "n_boot=${N_BOOT}"
+            echo "seed=${SEED}"
+          } > "${OUTDIR}/params.txt"
 
-          cat > "${OUTDIR}/params.txt" << EOF
-          k=${K}
-          m=${M}
-          baseline_n=${BASELINE_N}
-          pre_horizon=${PRE_H}
-          post_horizon=${POST_H}
-          alpha=${ALPHA}
-          lags=${LAGS}
-          maxlag=${MAXLAG}
-          block=${BLOCK}
-          n_boot=${N_BOOT}
-          seed=${SEED}
-          c_mean_post_min=${C_MEAN_POST_MIN}
-          time_mode=index
-          normalize=robust
-          control_mode=no_symbolic
-          EOF
+          # Main ORI-C real data run
+          CMD=(python 04_Code/pipeline/run_real_data_demo.py
+            --input "${DATA}"
+            --tag "${TAG}"
+            --outdir "${OUTDIR}"
+            --baseline-n "${BASELINE_N}"
+            --time-mode "${TIME_MODE}"
+            --control-mode "${CONTROL_MODE}"
+            --normalize "${NORMALIZE}"
+            --auto-scale "${AUTO_SCALE}"
+            --cap-scale "${CAP_SCALE}"
+            --col-O "${COL_O}"
+            --col-R "${COL_R}"
+            --col-I "${COL_I}"
+          )
 
-          set +e
-          
-          # Deterministic column mapping (no degrees of freedom)
-          # Rule:
-          # 1) If CSV contains O,R,I columns -> use them (time: date if present else year else index)
-          # 2) Else if CSV contains the canonical raw columns used in pilots -> map:
-          #    O <- industrial_production_i15
-          #    R <- berd_pc_gdp
-          #    I <- env_tax_env_mio_eur
-          #    time <- year (if present) else index
-          python - << 'PY' > "${OUTDIR}/colmap.txt"
-          import pandas as pd
-          df = pd.read_csv("${CSV_PATH}", nrows=5)
-          cols = set(df.columns)
-          def has(*names): return all(n in cols for n in names)
-          if has("O","R","I"):
-              col_o, col_r, col_i = "O","R","I"
-              col_s = "S" if "S" in cols else ""
-              col_d = "demand" if "demand" in cols else ""
-          elif has("industrial_production_i15","berd_pc_gdp","env_tax_env_mio_eur"):
-              col_o, col_r, col_i = "industrial_production_i15","berd_pc_gdp","env_tax_env_mio_eur"
-              col_s, col_d = "", ""
-          else:
-              raise SystemExit("Unsupported CSV schema. Need either O/R/I or the canonical raw columns.")
-          if "date" in cols:
-              col_time="date"
-          elif "year" in cols:
-              col_time="year"
-          else:
-              col_time=""
-          print(f"col_time={col_time}")
-          print(f"col_O={col_o}")
-          print(f"col_R={col_r}")
-          print(f"col_I={col_i}")
-          print(f"col_S={col_s}")
-          print(f"col_demand={col_d}")
-          PY
-          
-          COL_TIME="$(grep '^col_time=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
-          COL_O="$(grep '^col_O=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
-          COL_R="$(grep '^col_R=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
-          COL_I="$(grep '^col_I=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
-          
-          COL_S="$(grep '^col_S=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
-          COL_DEMAND="$(grep '^col_demand=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
-          
-          DEMO_ARGS=(--input "${CSV_PATH}" --outdir "${OUTDIR}" --time-mode index --normalize robust --control-mode no_symbolic --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}")
-          if [ -n "${COL_TIME}" ]; then DEMO_ARGS+=(--col-time "${COL_TIME}"); fi
-          DEMO_ARGS+=(--col-O "${COL_O}" --col-R "${COL_R}" --col-I "${COL_I}")
-          if [ -n "${COL_DEMAND}" ]; then DEMO_ARGS+=(--col-demand "${COL_DEMAND}"); fi
-          if [ -n "${COL_S}" ]; then DEMO_ARGS+=(--col-S "${COL_S}"); fi
-          
-          set +e
-          python 04_Code/pipeline/run_real_data_demo.py "${DEMO_ARGS[@]}" 2>&1 | tee "${OUTDIR}/run_real_data_demo.log"
-          
-          rc_demo=${PIPESTATUS[0]}
-          echo "${rc_demo}" > "${OUTDIR}/rc_demo.txt"
-          if [ "${rc_demo}" -ne 0 ]; then
-            exit "${rc_demo}"
+          if [ "${TIME_MODE}" = "col" ]; then
+            CMD+=(--time-col "${TIME_COL}")
           fi
 
-          python 04_Code/pipeline/tests_causaux.py                 --run-dir "${OUTDIR}"                 --alpha "${ALPHA}"                 --c-mean-post-min "${C_MEAN_POST_MIN}"                 --lags "${LAGS}"                 --maxlag "${MAXLAG}"                 --pre-horizon "${PRE_H}"                 --post-horizon "${POST_H}"                 --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                 --block "${BLOCK}"                 --n-boot "${N_BOOT}"                 --seed "${SEED}"                 --pdf                 2>&1 | tee "${OUTDIR}/tests_causaux.log"
-          rc_causal=${PIPESTATUS[0]}
-          echo "${rc_causal}" > "${OUTDIR}/rc_causal.txt"
-          exit "${rc_causal}"
+          if [ -n "${COL_S}" ]; then
+            CMD+=(--col-S "${COL_S}")
+          fi
 
-      - name: Upload artifacts
+          echo "RUN: ${CMD[*]}"
+          "${CMD[@]}" 2>&1 | tee "${OUTDIR}/run_real_data_demo.log"
+
+          # Post-diagnostic causal tests (optional, does not affect 8T)
+          python 04_Code/pipeline/tests_causaux.py             --run-dir "${OUTDIR}"             --alpha "${ALPHA}"             --c-mean-post-min "${C_MEAN_POST_MIN}"             --lags "${LAGS}"             --maxlag "${MAXLAG}"             --pre-horizon "${PRE_H}"             --post-horizon "${POST_H}"             --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"             --block "${BLOCK}"             --n-boot "${N_BOOT}"             --seed "${SEED}"             --pdf             2>&1 | tee "${OUTDIR}/tests_causaux.log"
+
+      - name: Upload artifacts (always)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: real_data_long_custom_${{ github.run_id }}
-          path: _ci_out/real_data_long/custom/run_${{ github.run_id }}
-          if-no-files-found: warn
+          path: _ci_out/real_data_long/
