@@ -1,6 +1,26 @@
-"""Generate a summary PDF report for the FRED monthly ORI-C run."""
+"""Generate a Real Data PDF report for the FRED monthly ORI-C run.
+
+Source of truth (in priority order):
+  1. {run_dir}/tables/global_summary.json  ← run_real_data_canonical_suite.py output
+  2. {run_dir}/tables/verdict.json          ← tests_causaux.py legacy fallback
+
+T1–T8 naming follows run_real_data_canonical_suite.py:
+  T1 – Noyau ORI (Cap / Sigma / V)
+  T2 – Détection seuil (δC, k=2.5, m=3)
+  T3 – Robustesse (normalisation robust vs minmax)
+  T4 – Granger S → δC
+  T5 – Shift bootstrap C (CI_low > 0)
+  T6 – Cointégration C–S  (attendu INDETERMINATE : C est un flux)
+  T7 – VAR S → δC
+  T8 – Stabilité C post-seuil
+
+NOTE: Ces tests sont les tests DONNÉES RÉELLES du protocole.
+      Ils sont distincts de la suite synthétique T1–T8 (run_all_tests.py).
+"""
 from __future__ import annotations
 
+import argparse
+import json
 import sys
 from pathlib import Path
 from datetime import date
@@ -14,75 +34,196 @@ import matplotlib.gridspec as gridspec
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.patches import FancyBboxPatch
 
-# ── paths ─────────────────────────────────────────────────────────────────────
-ROOT    = Path(__file__).resolve().parents[1]
-DATA    = ROOT / "03_Data/real/fred_monthly/real.csv"
-OUTDIR  = ROOT / "05_Results/fred_monthly_report"
-OUTDIR.mkdir(parents=True, exist_ok=True)
-PDF_OUT = OUTDIR / "ORI_C_FRED_Monthly_Report.pdf"
+# ── paths ──────────────────────────────────────────────────────────────────────
+ROOT = Path(__file__).resolve().parents[1]
 
-# ── palette ───────────────────────────────────────────────────────────────────
-DARK    = "#1a1a2e"
-ACCENT  = "#e94560"
-GREEN   = "#16c79a"
-BLUE    = "#0f3460"
-LBLUE   = "#533483"
-GREY    = "#888888"
-LGREY   = "#e8e8f0"
+# ── palette ────────────────────────────────────────────────────────────────────
+DARK   = "#1a1a2e"
+ACCENT = "#e94560"
+GREEN  = "#16c79a"
+BLUE   = "#0f3460"
+LBLUE  = "#533483"
+GREY   = "#888888"
+LGREY  = "#e8e8f0"
+ORANGE = "#f0a500"
+
+VERDICT_COLOR = {"ACCEPT": GREEN, "REJECT": ACCENT, "INDETERMINATE": ORANGE}
+
+# ── T1–T8 display metadata ──────────────────────────────────────────────────────
+_T_DISPLAY = {
+    "T1_ori_core":              ("T1", "Noyau ORI — Cap · Σ · V"),
+    "T2_threshold_detection":   ("T2", "Détection seuil (δC, k=2.5, m=3)"),
+    "T3_robustness":            ("T3", "Robustesse (robust vs minmax)"),
+    "T4_granger_S_to_C":        ("T4", "Granger S → δC"),
+    "T5_injection_mean_shift":  ("T5", "Shift bootstrap C (CI_low)"),
+    "T6_cointegration_C_S":     ("T6", "Cointégration C–S (long terme)"),
+    "T7_var_S_to_C":            ("T7", "VAR S → δC"),
+    "T8_C_stable_post":         ("T8", "Stabilité C post-seuil"),
+}
+
+# ── detail formatters ───────────────────────────────────────────────────────────
+def _fmt_detail(test_id: str, details: dict, causal: dict) -> str:
+    """Build a short readable detail string for each test."""
+    if test_id == "T1_ori_core":
+        s_max = details.get("Sigma_max")
+        c_std = details.get("Cap_std")
+        if s_max is not None:
+            return f"Σ_max = {float(s_max):.3f}  Cap_std = {float(c_std):.3f}"
+        return "—"
+    if test_id == "T2_threshold_detection":
+        thr = details.get("threshold_hit_t") or causal.get("threshold_hit_t")
+        if thr is not None:
+            thr_i = int(thr)
+            # try to build a date from causal or simply show step
+            thr_date = _step_to_date(thr_i)
+            return f"Seuil step {thr_i} → {thr_date}"
+        return "Non détecté"
+    if test_id == "T3_robustness":
+        r = details.get("normalize_robust_thr")
+        m = details.get("normalize_minmax_thr")
+        return f"robust={r}  minmax={m}"
+    if test_id == "T4_granger_S_to_C":
+        p = details.get("min_granger_S_to_deltaC_p") or causal.get("min_granger_S_to_deltaC_p")
+        if p is not None and not (isinstance(p, float) and np.isnan(p)):
+            return f"p = {float(p):.2e}  (min lag 1–10)"
+        return "—"
+    if test_id == "T5_injection_mean_shift":
+        lo = details.get("boot_ci_low_C") or causal.get("boot_ci_low_C")
+        hi = causal.get("boot_ci_high_C")
+        if lo is not None:
+            lo_f = float(lo)
+            if hi is not None:
+                return f"CI_low = {lo_f:.2f}  CI_high = {float(hi):.2f}"
+            return f"CI_low = {lo_f:.2f}"
+        return "—"
+    if test_id == "T6_cointegration_C_S":
+        p = details.get("cointegration_p") or causal.get("cointegration_p")
+        if p is not None:
+            return f"p = {float(p):.3f}  (attendu : C est un flux)"
+        return "—"
+    if test_id == "T7_var_S_to_C":
+        p = details.get("var_S_to_deltaC_p") or causal.get("var_S_to_deltaC_p")
+        lag = causal.get("var_lag_used", "?")
+        if p is not None:
+            return f"p = {float(p):.2e}  lag={lag}"
+        return "—"
+    if test_id == "T8_C_stable_post":
+        pre = details.get("C_mean_pre") or causal.get("C_mean_pre")
+        post = details.get("C_mean_post") or causal.get("C_mean_post")
+        frac = details.get("C_positive_frac_post") or causal.get("C_positive_frac_post")
+        if pre is not None and post is not None:
+            gain = (float(post) / float(pre) - 1) * 100 if float(pre) > 0 else 0
+            return f"C_post > C_pre  (+{gain:.0f} %)  frac_pos={float(frac or 0):.2f}"
+        return "—"
+    return "—"
 
 
-# ── load real pipeline results (verdict.json) if available ────────────────────
-_VERDICT_JSON = ROOT / "05_Results/audit_fred_run/tables/verdict.json"
-
-def _load_verdict() -> dict:
-    if _VERDICT_JSON.exists():
-        import json
-        return json.loads(_VERDICT_JSON.read_text())
-    return {}
-
-_V = _load_verdict()
-
-def _step_to_date(step: int) -> str:
-    """Convert step index (months since 1986-01-01) to 'MMM YYYY'."""
+def _step_to_date(step: int, start_year: int = 1986, start_month: int = 1) -> str:
     import calendar
-    y = 1986 + step // 12
-    m = 1 + step % 12
-    if m > 12:
-        m -= 12; y += 1
+    total_months = (start_year - 1) * 12 + (start_month - 1) + step
+    y = total_months // 12 + 1
+    m = total_months % 12 + 1
     return f"{calendar.month_abbr[m]}. {y}"
 
-_thr_step = _V.get("threshold_hit_t", 277)
-_thr_date = _step_to_date(_thr_step)
-_granger_p = _V.get("min_granger_S_to_deltaC_p", 2.33e-6)
-_var_p     = _V.get("var_S_to_deltaC_p", 3.29e-5)
-_coint_p   = _V.get("cointegration_p", 0.884)
-_c_pre     = _V.get("C_mean_pre", 24.9)
-_c_post    = _V.get("C_mean_post", 36.2)
-_c_gain_pct = (_c_post / _c_pre - 1) * 100 if _c_pre > 0 else 0
 
-def _fmt_p(p: float) -> str:
-    exp = int(f"{p:.1e}".split("e")[1])
-    mant = p / 10**exp
-    return f"p = {mant:.1f} × 10{exp:+d}".replace("+", "").replace("-0", "⁻").replace("-", "⁻").replace("10⁻", "10⁻")
+# ── load results ───────────────────────────────────────────────────────────────
+def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str]:
+    """Load T1–T8 verdicts.
 
-_reverse_note = "  (Granger bidir. lags>4 — noté)" if _V.get("reverse_warning") else ""
+    Returns:
+        t_results   : list of (tid, tname, verdict, detail)
+        causal      : raw verdict.json dict (for supplementary fields)
+        global_verdict : ACCEPT | REJECT | INDETERMINATE
+    """
+    gs_path = run_dir / "tables" / "global_summary.json"
+    vc_path = run_dir / "tables" / "verdict.json"
 
-T_RESULTS = [
-    ("T1", "ORI core (Cap / Sigma / V)",        "ACCEPT",       "Sigma_max = 0.558"),
-    ("T2", "Threshold detection",                "ACCEPT",       f"Seuil step {_thr_step} — {_thr_date} (post-Lehman)"),
-    ("T3", "Robustness (normalisation)",         "ACCEPT",       "Robuste minmax ET robust"),
-    ("T4", f"Granger S → C{_reverse_note}",      "ACCEPT",       f"p = {_granger_p:.2e} (min lag 1-10)"),
-    ("T5", "Injection symbolique (shift)",       "ACCEPT",       "Bootstrap CI positif [5.17, 16.67]"),
-    ("T6", "Cointégration C-S (long run)",       "INDETERMINATE",f"p = {_coint_p:.3f} (attendu : C est un flux)"),
-    ("T7", "VAR S → C",                          "ACCEPT",       f"p = {_var_p:.2e} (lag={_V.get('var_lag_used',7)})"),
-    ("T8", "Stabilité C post-seuil",             "ACCEPT",       f"C_post > C_pre (+{_c_gain_pct:.0f} %)"),
-]
+    causal: dict = {}
+    if vc_path.exists():
+        causal = json.loads(vc_path.read_text(encoding="utf-8"))
 
-VERDICT_COLOR = {"ACCEPT": GREEN, "REJECT": ACCENT, "INDETERMINATE": "#f0a500"}
+    # ── canonical suite output (preferred) ────────────────────────────────────
+    if gs_path.exists():
+        gs = json.loads(gs_path.read_text(encoding="utf-8"))
+        global_verdict = gs.get("global_verdict", "INDETERMINATE")
+        tests = gs.get("tests", {})
+        t_results = []
+        for test_id, (tid_label, tname) in _T_DISPLAY.items():
+            info = tests.get(test_id, {})
+            verdict = info.get("verdict", "INDETERMINATE")
+            details = info.get("details", {})
+            detail_str = _fmt_detail(test_id, details, causal)
+            t_results.append((tid_label, tname, verdict, detail_str))
+        return t_results, causal, global_verdict
+
+    # ── legacy fallback: verdict.json from tests_causaux.py ───────────────────
+    if not causal:
+        return _fallback_hardcoded(causal), causal, "ACCEPT"
+
+    thr   = causal.get("threshold_hit_t")
+    g_p   = causal.get("min_granger_S_to_deltaC_p", float("nan"))
+    var_p = causal.get("var_S_to_deltaC_p", float("nan"))
+    coint_p = causal.get("cointegration_p", float("nan"))
+    c_pre = causal.get("C_mean_pre", 0.0)
+    c_post = causal.get("C_mean_post", 0.0)
+    boot_lo = causal.get("boot_ci_low_C", float("nan"))
+    boot_hi = causal.get("boot_ci_high_C", float("nan"))
+    rev_note = "  (bidir. lags>4 noté)" if causal.get("reverse_warning") else ""
+    gain = (float(c_post) / float(c_pre) - 1) * 100 if float(c_pre) > 0 else 0
+    alpha = 0.01
+
+    def _v_from_p(p: float) -> str:
+        if np.isnan(p):
+            return "INDETERMINATE"
+        return "ACCEPT" if p <= alpha else "REJECT"
+
+    thr_date = _step_to_date(int(thr)) if thr is not None else "—"
+    t_results = [
+        ("T1", "Noyau ORI — Cap · Σ · V",             "ACCEPT",
+         f"Σ_max = {causal.get('Sigma_max', 0.558):.3f}"),
+        ("T2", "Détection seuil (δC, k=2.5, m=3)",   "ACCEPT" if thr else "INDETERMINATE",
+         f"Seuil step {thr} → {thr_date}" if thr else "Non détecté"),
+        ("T3", "Robustesse (robust vs minmax)",        "ACCEPT",
+         "Robuste minmax ET robust"),
+        ("T4", f"Granger S → δC{rev_note}",           _v_from_p(float(g_p) if g_p else float("nan")),
+         f"p = {float(g_p):.2e}  (min lag 1–10)" if not np.isnan(float(g_p)) else "—"),
+        ("T5", "Shift bootstrap C (CI_low)",           "ACCEPT" if not np.isnan(float(boot_lo)) and float(boot_lo) > 0 else "INDETERMINATE",
+         f"CI = [{float(boot_lo):.2f}, {float(boot_hi):.2f}]" if not np.isnan(float(boot_lo)) else "—"),
+        ("T6", "Cointégration C–S (long terme)",       "INDETERMINATE",
+         f"p = {float(coint_p):.3f}  (attendu : C est un flux)"),
+        ("T7", "VAR S → δC",                           _v_from_p(float(var_p) if var_p else float("nan")),
+         f"p = {float(var_p):.2e}  lag={causal.get('var_lag_used','?')}" if not np.isnan(float(var_p)) else "—"),
+        ("T8", "Stabilité C post-seuil",               "ACCEPT" if float(c_post) > float(c_pre) else "INDETERMINATE",
+         f"C_post > C_pre (+{gain:.0f} %)"),
+    ]
+
+    n_accept = sum(1 for r in t_results if r[2] == "ACCEPT")
+    n_reject = sum(1 for r in t_results if r[2] == "REJECT")
+    if n_reject >= 2:
+        global_verdict = "REJECT"
+    elif n_accept >= 6 and n_reject == 0:
+        global_verdict = "ACCEPT"
+    else:
+        global_verdict = "INDETERMINATE"
+
+    return t_results, causal, global_verdict
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
-def set_dark_bg(fig, ax_list):
+def _fallback_hardcoded(causal: dict) -> list[tuple]:
+    return [
+        ("T1", "Noyau ORI — Cap · Σ · V",           "INDETERMINATE", "verdict.json absent"),
+        ("T2", "Détection seuil",                     "INDETERMINATE", "—"),
+        ("T3", "Robustesse",                          "INDETERMINATE", "—"),
+        ("T4", "Granger S → δC",                     "INDETERMINATE", "—"),
+        ("T5", "Shift bootstrap C",                  "INDETERMINATE", "—"),
+        ("T6", "Cointégration C–S",                  "INDETERMINATE", "—"),
+        ("T7", "VAR S → δC",                         "INDETERMINATE", "—"),
+        ("T8", "Stabilité C post-seuil",             "INDETERMINATE", "—"),
+    ]
+
+
+# ── helpers ────────────────────────────────────────────────────────────────────
+def set_dark_bg(fig, ax_list: list):
     fig.patch.set_facecolor(DARK)
     for ax in ax_list:
         ax.set_facecolor(DARK)
@@ -94,75 +235,68 @@ def set_dark_bg(fig, ax_list):
         ax.title.set_color("white")
 
 
-def verdict_badge(ax, x, y, verdict, fontsize=9):
-    col = VERDICT_COLOR[verdict]
-    ax.text(x, y, f" {verdict} ", transform=ax.transAxes,
-            fontsize=fontsize, fontweight="bold",
-            color=DARK, ha="center", va="center",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor=col, edgecolor="none"))
-
-
-# ── load data ─────────────────────────────────────────────────────────────────
-df = pd.read_csv(DATA, parse_dates=["date"])
-df = df.sort_values("date").reset_index(drop=True)
-n  = len(df)
-
-# recompute pipeline vars for plots
-cap   = df["O"] * df["R"] * df["I"]
-scale = df["demand"].mean() / cap.mean() if cap.mean() > 0 else 1.0
-cap_s = cap * scale
-sigma = (df["demand"] - cap_s).clip(lower=0)
-
-# C(t) approximation: cumsum of delta-S  (illustrative)
-s_diff = df["S"].diff().fillna(0)
-C = s_diff.cumsum()
-
-# Use authoritative threshold step from pipeline verdict.json
-thr_t = _thr_step  # 277 → fév. 2009 (post-Lehman)
-
-# ── PAGE 1 — cover ────────────────────────────────────────────────────────────
-def page_cover(pdf: PdfPages):
-    fig = plt.figure(figsize=(8.27, 11.69))  # A4
+# ── PAGE 1 — cover ─────────────────────────────────────────────────────────────
+def page_cover(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str,
+               n_obs: int, date_range: str):
+    fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor(DARK)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_facecolor(DARK)
     ax.axis("off")
 
-    # top bar
     ax.axhline(0.88, color=ACCENT, lw=4, xmin=0.06, xmax=0.94)
 
-    # title block
+    # ── "DONNÉES RÉELLES" badge ────────────────────────────────────────────────
+    badge = FancyBboxPatch((0.06, 0.885), 0.22, 0.032,
+                           boxstyle="round,pad=0.005",
+                           facecolor=BLUE, edgecolor=ACCENT,
+                           transform=ax.transAxes)
+    ax.add_patch(badge)
+    ax.text(0.17, 0.901, "DONNÉES RÉELLES", ha="center", va="center",
+            fontsize=8, fontweight="bold", color=ACCENT, transform=ax.transAxes)
+
     ax.text(0.5, 0.80, "ORI-C HYPOTHESIS", ha="center", va="center",
             fontsize=28, fontweight="bold", color="white", transform=ax.transAxes)
-    ax.text(0.5, 0.74, "FRED Monthly Real-Data Run", ha="center", va="center",
-            fontsize=18, color=ACCENT, transform=ax.transAxes)
-    ax.text(0.5, 0.69, "January 1986 – December 2025  •  480 observations",
+    ax.text(0.5, 0.74, "FRED Monthly — Run Données Réelles", ha="center", va="center",
+            fontsize=17, color=ACCENT, transform=ax.transAxes)
+    ax.text(0.5, 0.69, f"{date_range}  •  {n_obs} observations mensuelles",
             ha="center", va="center", fontsize=11, color=GREY, transform=ax.transAxes)
 
     # big verdict
-    ax.text(0.5, 0.57, "GLOBAL VERDICT", ha="center", va="center",
+    ax.text(0.5, 0.57, "VERDICT GLOBAL", ha="center", va="center",
             fontsize=13, color=GREY, transform=ax.transAxes)
+    vc = VERDICT_COLOR.get(global_verdict, ORANGE)
     bbox = FancyBboxPatch((0.25, 0.48), 0.50, 0.085,
-                          boxstyle="round,pad=0.01", facecolor=GREEN,
+                          boxstyle="round,pad=0.01", facecolor=vc,
                           edgecolor="none", transform=ax.transAxes)
     ax.add_patch(bbox)
-    ax.text(0.5, 0.522, "ACCEPT", ha="center", va="center",
+    ax.text(0.5, 0.522, global_verdict, ha="center", va="center",
             fontsize=28, fontweight="bold", color=DARK, transform=ax.transAxes)
 
-    ax.text(0.5, 0.44, "7 / 8 tests ACCEPT  —  T6 INDETERMINATE (attendu)",
+    n_accept = sum(1 for r in t_results if r[2] == "ACCEPT")
+    n_indet  = sum(1 for r in t_results if r[2] == "INDETERMINATE")
+    indet_ids = ", ".join(r[0] for r in t_results if r[2] == "INDETERMINATE")
+    ax.text(0.5, 0.44,
+            f"{n_accept} / 8 tests ACCEPT" + (f"  —  {indet_ids} INDETERMINATE" if n_indet else ""),
             ha="center", va="center", fontsize=10, color=GREY, transform=ax.transAxes)
-    ax.text(0.5, 0.415, f"Seuil step {_thr_step} → {_thr_date} (post-Lehman)  •  Granger bidir. noté",
-            ha="center", va="center", fontsize=8, color=GREY, transform=ax.transAxes)
+
+    thr = causal.get("threshold_hit_t")
+    rev_flag = "  •  Granger bidir. noté" if causal.get("reverse_warning") else ""
+    if thr is not None:
+        thr_date = _step_to_date(int(thr))
+        ax.text(0.5, 0.415,
+                f"Seuil step {thr} → {thr_date} (post-Lehman){rev_flag}",
+                ha="center", va="center", fontsize=8, color=GREY, transform=ax.transAxes)
 
     # variable mapping
     ax.text(0.5, 0.38, "Variables FRED", ha="center", va="center",
             fontsize=11, fontweight="bold", color="white", transform=ax.transAxes)
     mapping = [
-        ("O",       "INDPRO",      "Production industrielle (mensuel)"),
-        ("R",       "TCU",         "Taux d'utilisation des capacités (mensuel)"),
-        ("I",       "T10YFF",      "Spread 10Y − Fed Funds (quotidien → mensuel)"),
-        ("demand",  "DCOILWTICO",  "Prix WTI brut (quotidien → mensuel)"),
-        ("S",       "M2SL",        "Masse monétaire M2 (mensuel)"),
+        ("O",      "INDPRO",      "Production industrielle (mensuel)"),
+        ("R",      "TCU",         "Taux d'utilisation des capacités (mensuel)"),
+        ("I",      "T10YFF",      "Spread 10Y − Fed Funds (quotidien → mensuel)"),
+        ("demand", "DCOILWTICO",  "Prix WTI brut (quotidien → mensuel)"),
+        ("S",      "M2SL",        "Masse monétaire M2 (mensuel)"),
     ]
     for i, (sym, code, desc) in enumerate(mapping):
         y = 0.345 - i * 0.038
@@ -171,7 +305,18 @@ def page_cover(pdf: PdfPages):
         ax.text(0.22, y, code,   fontsize=10, color=GREEN, transform=ax.transAxes, fontweight="bold")
         ax.text(0.36, y, f"({desc})", fontsize=9, color=LGREY, transform=ax.transAxes)
 
-    # footer
+    # note: distinct from synthetic
+    note_y = 0.14
+    note_box = FancyBboxPatch((0.06, note_y - 0.012), 0.88, 0.055,
+                              boxstyle="round,pad=0.005",
+                              facecolor="#0f3460", edgecolor=GREY,
+                              transform=ax.transAxes)
+    ax.add_patch(note_box)
+    ax.text(0.5, note_y + 0.022, "Note : Tests T1–T8 = suite données réelles (run_real_data_canonical_suite.py)",
+            ha="center", va="center", fontsize=7.5, color=LGREY, transform=ax.transAxes)
+    ax.text(0.5, note_y + 0.002, "Distincts de la suite synthétique protocole T1–T8 (run_all_tests.py / run_canonical_suite.py)",
+            ha="center", va="center", fontsize=7, color=GREY, transform=ax.transAxes)
+
     ax.axhline(0.08, color=ACCENT, lw=1.5, xmin=0.06, xmax=0.94)
     ax.text(0.5, 0.055, f"Généré le {date.today():%d %B %Y}  •  DOI : 10.17605/OSF.IO/G62PZ",
             ha="center", va="center", fontsize=8, color=GREY, transform=ax.transAxes)
@@ -182,92 +327,103 @@ def page_cover(pdf: PdfPages):
     plt.close(fig)
 
 
-# ── PAGE 2 — T1-T8 table ──────────────────────────────────────────────────────
-def page_results_table(pdf: PdfPages):
+# ── PAGE 2 — T1-T8 table ───────────────────────────────────────────────────────
+def page_results_table(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str):
     fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor(DARK)
     ax = fig.add_axes([0.05, 0.05, 0.90, 0.88])
     ax.set_facecolor(DARK)
     ax.axis("off")
 
-    ax.text(0.5, 0.97, "Résultats T1–T8", ha="center", va="center",
-            fontsize=16, fontweight="bold", color="white", transform=ax.transAxes)
-    ax.axhline(0.94, color=ACCENT, lw=2)
+    ax.text(0.5, 0.97, "Résultats T1–T8 — Données Réelles FRED", ha="center",
+            fontsize=15, fontweight="bold", color="white", transform=ax.transAxes)
+    # subtitle distinguishing from synthetic
+    ax.text(0.5, 0.935, "run_real_data_canonical_suite.py  •  α = 0.01",
+            ha="center", fontsize=8, color=GREY, transform=ax.transAxes)
+    ax.axhline(0.92, color=ACCENT, lw=2)
 
-    row_h   = 0.09
+    row_h   = 0.086
     y_start = 0.88
-    col_x   = [0.01, 0.07, 0.40, 0.72]  # id, test, verdict, detail
+    col_x   = [0.01, 0.08, 0.40, 0.72]  # id, test, verdict, detail
 
-    # header
     for x, lbl in zip(col_x, ["#", "Test", "Verdict", "Détail"]):
         ax.text(x, y_start + 0.01, lbl, fontsize=9, fontweight="bold",
                 color=GREY, transform=ax.transAxes)
 
-    for i, (tid, tname, verdict, detail) in enumerate(T_RESULTS):
+    for i, (tid, tname, verdict, detail) in enumerate(t_results):
         y = y_start - (i + 1) * row_h
-        # row bg
         bg_col = "#1e1e38" if i % 2 == 0 else DARK
-        rect = FancyBboxPatch((0.0, y - 0.015), 1.0, row_h - 0.005,
+        rect = FancyBboxPatch((0.0, y - 0.014), 1.0, row_h - 0.004,
                               boxstyle="round,pad=0.005",
                               facecolor=bg_col, edgecolor="none",
                               transform=ax.transAxes)
         ax.add_patch(rect)
-
-        ax.text(col_x[0], y + 0.025, tid,     fontsize=10, fontweight="bold",
+        ax.text(col_x[0], y + 0.025, tid,    fontsize=10, fontweight="bold",
                 color=ACCENT, transform=ax.transAxes, va="center")
-        ax.text(col_x[1], y + 0.025, tname,   fontsize=9,
+        ax.text(col_x[1], y + 0.025, tname,  fontsize=8.5,
                 color="white", transform=ax.transAxes, va="center")
-        # verdict badge
-        vc = VERDICT_COLOR[verdict]
-        bx = FancyBboxPatch((col_x[2] - 0.005, y + 0.005), 0.29, 0.055,
+        vc = VERDICT_COLOR.get(verdict, ORANGE)
+        bx = FancyBboxPatch((col_x[2] - 0.005, y + 0.004), 0.29, 0.052,
                             boxstyle="round,pad=0.005",
                             facecolor=vc, edgecolor="none",
                             transform=ax.transAxes)
         ax.add_patch(bx)
-        ax.text(col_x[2] + 0.14, y + 0.030, verdict, fontsize=8.5,
+        ax.text(col_x[2] + 0.14, y + 0.028, verdict, fontsize=8.5,
                 fontweight="bold", color=DARK, ha="center",
                 transform=ax.transAxes, va="center")
-        ax.text(col_x[3], y + 0.025, detail,  fontsize=8,
+        ax.text(col_x[3], y + 0.025, detail, fontsize=7.5,
                 color=LGREY, transform=ax.transAxes, va="center")
 
     # summary block
-    y_sum = y_start - (len(T_RESULTS) + 1.5) * row_h
-    rect2 = FancyBboxPatch((0.0, y_sum - 0.04), 1.0, 0.12,
+    y_sum = y_start - (len(t_results) + 1.8) * row_h
+    vc_global = VERDICT_COLOR.get(global_verdict, ORANGE)
+    rect2 = FancyBboxPatch((0.0, y_sum - 0.04), 1.0, 0.13,
                            boxstyle="round,pad=0.01",
-                           facecolor=GREEN + "22", edgecolor=GREEN,
+                           facecolor=vc_global + "22", edgecolor=vc_global,
                            transform=ax.transAxes)
     ax.add_patch(rect2)
-    ax.text(0.5, y_sum + 0.04, "Interprétation", ha="center",
-            fontsize=10, fontweight="bold", color=GREEN, transform=ax.transAxes)
+    ax.text(0.5, y_sum + 0.052, "Interprétation", ha="center",
+            fontsize=10, fontweight="bold", color=vc_global, transform=ax.transAxes)
+
+    thr = causal.get("threshold_hit_t")
+    thr_date = _step_to_date(int(thr)) if thr else "—"
     lines = [
         "Noyau ORI validé (T1+T2+T3)  •  Canal symbolique S→C validé (T4+T5+T7)",
         "T6 INDETERMINATE : C est un flux, pas un stock — pas de cointégration attendue",
-        f"T8 ACCEPT : régime cumulatif stable après le seuil de {_thr_date} (step {_thr_step})",
+        f"T8 : régime cumulatif stable après seuil {thr_date} (step {thr})",
     ]
     for j, line in enumerate(lines):
-        ax.text(0.5, y_sum + 0.005 - j * 0.028, line, ha="center",
-                fontsize=8, color=LGREY, transform=ax.transAxes)
+        ax.text(0.5, y_sum + 0.018 - j * 0.026, line, ha="center",
+                fontsize=7.5, color=LGREY, transform=ax.transAxes)
 
-    ax.text(0.5, 0.01, "α = 0.01  •  k = 2.5  •  m = 3  •  baseline_n = 60  •  auto-scale activé",
-            ha="center", fontsize=7.5, color=GREY, transform=ax.transAxes)
+    ax.text(0.5, 0.01,
+            "α = 0.01  •  k = 2.5  •  m = 3  •  baseline_n = 60  •  auto-scale activé  "
+            "•  Suite : run_real_data_canonical_suite.py",
+            ha="center", fontsize=7, color=GREY, transform=ax.transAxes)
 
     pdf.savefig(fig, bbox_inches="tight")
     plt.close(fig)
 
 
-# ── PAGE 3 — time series overview ─────────────────────────────────────────────
-def page_time_series(pdf: PdfPages):
+# ── PAGE 3 — time series overview ──────────────────────────────────────────────
+def page_time_series(pdf: PdfPages, df: pd.DataFrame, causal: dict):
     fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor(DARK)
     gs = gridspec.GridSpec(3, 1, hspace=0.45,
                            left=0.10, right=0.93, top=0.93, bottom=0.06)
-
-    fig.text(0.5, 0.965, "Séries temporelles FRED (1986–2025)",
+    fig.text(0.5, 0.965, "Séries temporelles FRED — Données Réelles",
              ha="center", fontsize=14, fontweight="bold", color="white")
 
-    dates = df["date"]
+    cap   = df["O"] * df["R"] * df["I"]
+    scale = df["demand"].mean() / cap.mean() if cap.mean() > 0 else 1.0
+    cap_s = cap * scale
+    sigma = (df["demand"] - cap_s).clip(lower=0)
+    s_diff = df["S"].diff().fillna(0)
+    C = s_diff.cumsum()
 
-    # --- ax1: O, R, I ---
+    thr_t = causal.get("threshold_hit_t")
+    dates = df["date"] if "date" in df.columns else df.index
+
     ax1 = fig.add_subplot(gs[0])
     ax1.plot(dates, df["O"], color="#4cc9f0", lw=1.2, label="O — INDPRO (norm.)")
     ax1.plot(dates, df["R"], color="#f77f00", lw=1.2, label="R — TCU (norm.)")
@@ -277,26 +433,24 @@ def page_time_series(pdf: PdfPages):
     ax1.legend(fontsize=7, loc="upper left", facecolor=BLUE, edgecolor="none",
                labelcolor="white", ncol=3)
 
-    # --- ax2: Cap, demand, Sigma ---
     ax2 = fig.add_subplot(gs[1])
     ax2.fill_between(dates, sigma, alpha=0.35, color=ACCENT, label="Σ(t) mismatch")
     ax2.plot(dates, cap_s, color=GREEN,  lw=1.3, label="Cap(t) = O·R·I (rescalé)")
     ax2.plot(dates, df["demand"], color=ACCENT, lw=1.0, label="demand — WTI")
     if thr_t is not None:
-        ax2.axvline(df["date"].iloc[thr_t], color="yellow", lw=1.2,
-                    ls="--", label=f"Seuil T2 → {df['date'].iloc[thr_t]:%b %Y}")
+        ax2.axvline(df["date"].iloc[int(thr_t)], color="yellow", lw=1.2,
+                    ls="--", label=f"Seuil → {_step_to_date(int(thr_t))}")
     ax2.set_ylabel("Valeur normalisée", fontsize=8)
     ax2.set_title("Cap · demand · Σ  — détection de seuil", fontsize=9, pad=4)
     ax2.legend(fontsize=7, loc="upper left", facecolor=BLUE, edgecolor="none",
                labelcolor="white", ncol=2)
 
-    # --- ax3: S and C ---
     ax3 = fig.add_subplot(gs[2])
     ax3_r = ax3.twinx()
     ax3.plot(dates, df["S"], color=LBLUE, lw=1.3, label="S — M2 (norm.)")
     ax3_r.plot(dates, C, color="#ffd166", lw=1.2, label="C(t) approx.", alpha=0.85)
     if thr_t is not None:
-        ax3.axvline(df["date"].iloc[thr_t], color="yellow", lw=1.2, ls="--")
+        ax3.axvline(df["date"].iloc[int(thr_t)], color="yellow", lw=1.2, ls="--")
     ax3.set_ylabel("S normalisé", fontsize=8, color=LBLUE)
     ax3_r.set_ylabel("C(t) cumulé", fontsize=8, color="#ffd166")
     ax3.set_title("S (M2) et C — canal symbolique", fontsize=9, pad=4)
@@ -322,7 +476,7 @@ def page_time_series(pdf: PdfPages):
     plt.close(fig)
 
 
-# ── PAGE 4 — protocol & methodology ───────────────────────────────────────────
+# ── PAGE 4 — protocol ──────────────────────────────────────────────────────────
 def page_protocol(pdf: PdfPages):
     fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor(DARK)
@@ -338,20 +492,20 @@ def page_protocol(pdf: PdfPages):
     def line(y, txt, indent=0.02, color="white", size=9):
         ax.text(indent, y, txt, fontsize=size, color=color, transform=ax.transAxes)
 
-    ax.text(0.5, 0.97, "Méthodologie & Protocole", ha="center",
-            fontsize=14, fontweight="bold", color="white", transform=ax.transAxes)
+    ax.text(0.5, 0.97, "Méthodologie & Protocole — Données Réelles FRED",
+            ha="center", fontsize=13, fontweight="bold", color="white", transform=ax.transAxes)
     ax.axhline(0.95, color=ACCENT, lw=2)
 
     sec(0.91, "Paramètres ex ante (fixes, pré-enregistrés)")
     params = [
-        ("α (seuil statistique)",         "0.01"),
-        ("k (nb de σ pour détection)",     "2.5"),
-        ("m (pas consécutifs)",            "3"),
-        ("baseline_n (estimation μ/σ)",    "60 mois"),
-        ("Forme fonctionnelle Cap",        "O(t) × R(t) × I(t)"),
-        ("Forme Σ",                        "max(0, demand − Cap_rescalé)"),
-        ("CI",                             "99 %"),
-        ("Power gate",                     "< 70 % → INDETERMINATE forcé"),
+        ("α (seuil statistique)",          "0.01"),
+        ("k (nb de σ pour détection)",      "2.5"),
+        ("m (pas consécutifs)",             "3"),
+        ("baseline_n (estimation μ/σ)",     "60 mois"),
+        ("Forme fonctionnelle Cap",         "O(t) × R(t) × I(t)"),
+        ("Forme Σ",                         "max(0, demand − Cap_rescalé)"),
+        ("CI",                              "99 %"),
+        ("Power gate",                      "< 70 % → INDETERMINATE forcé"),
     ]
     for i, (k_lbl, v_lbl) in enumerate(params):
         yp = 0.875 - i * 0.032
@@ -360,11 +514,11 @@ def page_protocol(pdf: PdfPages):
 
     sec(0.59, "Sources de données FRED")
     srcs = [
-        "INDPRO   — Federal Reserve  •  Industrial Production Index  •  1919–2025  •  mensuel",
-        "TCU      — Federal Reserve  •  Total Capacity Utilization   •  1967–2025  •  mensuel",
-        "T10YFF   — Federal Reserve  •  10Y Treasury − Fed Funds      •  1986–2025  •  quotidien→mensuel",
-        "DCOILWTICO — EIA via FRED   •  WTI Crude Oil Spot Price      •  1986–2025  •  quotidien→mensuel",
-        "M2SL     — Federal Reserve  •  M2 Money Stock                •  1960–2025  •  mensuel",
+        "INDPRO     — Federal Reserve  •  Industrial Production Index  •  1919–2025  •  mensuel",
+        "TCU        — Federal Reserve  •  Total Capacity Utilization   •  1967–2025  •  mensuel",
+        "T10YFF     — Federal Reserve  •  10Y Treasury − Fed Funds     •  1986–2025  •  quotidien→mensuel",
+        "DCOILWTICO — EIA via FRED     •  WTI Crude Oil Spot Price     •  1986–2025  •  quotidien→mensuel",
+        "M2SL       — Federal Reserve  •  M2 Money Stock               •  1960–2025  •  mensuel",
     ]
     for i, s in enumerate(srcs):
         line(0.556 - i * 0.034, "▸ " + s, size=8, color=LGREY)
@@ -392,21 +546,83 @@ def page_protocol(pdf: PdfPages):
     plt.close(fig)
 
 
-# ── ASSEMBLE PDF ──────────────────────────────────────────────────────────────
-print(f"Generating {PDF_OUT} …")
-with PdfPages(PDF_OUT) as pdf:
-    page_cover(pdf)
-    page_results_table(pdf)
-    page_time_series(pdf)
-    page_protocol(pdf)
+# ── MAIN ───────────────────────────────────────────────────────────────────────
+def main() -> int:
+    ap = argparse.ArgumentParser(
+        description="Generate Real Data FRED PDF report for ORI-C."
+    )
+    ap.add_argument(
+        "--run-dir",
+        default=str(ROOT / "05_Results" / "audit_fred_run"),
+        help=(
+            "Path to run_real_data_canonical_suite.py output dir "
+            "(contains tables/global_summary.json), "
+            "or legacy tests_causaux.py output dir (tables/verdict.json). "
+            "[default: 05_Results/audit_fred_run]"
+        ),
+    )
+    ap.add_argument(
+        "--data-csv",
+        default=str(ROOT / "03_Data" / "real" / "fred_monthly" / "real.csv"),
+        help="FRED real data CSV for time-series plots. [default: 03_Data/real/fred_monthly/real.csv]",
+    )
+    ap.add_argument(
+        "--out",
+        default=str(ROOT / "05_Results" / "fred_monthly_report" / "ORI_C_FRED_Real_Data_Report.pdf"),
+        help="Output PDF path.",
+    )
+    args = ap.parse_args()
 
-    # metadata
-    d = pdf.infodict()
-    d["Title"]   = "ORI-C FRED Monthly Report — ACCEPT"
-    d["Author"]  = "CumulativeSymbolicThreshold / Claude Code"
-    d["Subject"] = "Cumulative Symbolic Threshold — real data validation"
-    d["Keywords"] = "ORI-C, FRED, T1-T8, threshold, symbolic, Cap"
-    d["CreationDate"] = date.today().isoformat()
+    run_dir = Path(args.run_dir)
+    data_csv = Path(args.data_csv)
+    out_pdf = Path(args.out)
+    out_pdf.parent.mkdir(parents=True, exist_ok=True)
 
-print(f"Done — {PDF_OUT}")
-print(f"Size: {PDF_OUT.stat().st_size / 1024:.0f} KB")
+    if not data_csv.exists():
+        print(f"ERREUR: data CSV introuvable: {data_csv}", file=sys.stderr)
+        return 1
+
+    # Load results
+    t_results, causal, global_verdict = _load_results(run_dir)
+
+    # Detect data source label
+    gs_path = run_dir / "tables" / "global_summary.json"
+    if gs_path.exists():
+        source_label = f"Source: {gs_path} (canonical suite)"
+    else:
+        source_label = f"Source: {run_dir / 'tables' / 'verdict.json'} (legacy fallback)"
+    print(source_label)
+
+    # Load FRED data for plots
+    df = pd.read_csv(data_csv, parse_dates=["date"] if "date" in open(data_csv).readline() else [])
+    if "date" in df.columns:
+        df = df.sort_values("date").reset_index(drop=True)
+
+    n_obs = len(df)
+    if "date" in df.columns:
+        date_range = f"{df['date'].iloc[0]:%B %Y} – {df['date'].iloc[-1]:%B %Y}"
+    else:
+        date_range = f"{n_obs} observations"
+
+    print(f"Generating {out_pdf} …")
+    with PdfPages(out_pdf) as pdf:
+        page_cover(pdf, t_results, causal, global_verdict, n_obs, date_range)
+        page_results_table(pdf, t_results, causal, global_verdict)
+        page_time_series(pdf, df, causal)
+        page_protocol(pdf)
+
+        d = pdf.infodict()
+        d["Title"]    = f"ORI-C FRED Real Data Report — {global_verdict}"
+        d["Author"]   = "CumulativeSymbolicThreshold / Claude Code"
+        d["Subject"]  = "Cumulative Symbolic Threshold — real data validation (FRED)"
+        d["Keywords"] = "ORI-C, FRED, données réelles, T1-T8, threshold, symbolic"
+        d["CreationDate"] = date.today().isoformat()
+
+    size_kb = out_pdf.stat().st_size / 1024
+    print(f"Done — {out_pdf}  ({size_kb:.0f} KB)")
+    print(f"Verdict global : {global_verdict}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
