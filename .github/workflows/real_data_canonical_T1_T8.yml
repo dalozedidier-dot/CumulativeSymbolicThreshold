@@ -23,49 +23,49 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ── Sector pilots (raw Eurostat columns, ~35–44 rows annual) ──
+          # ── Sector pilots (_custom/ files: ~48–62 rows annual, best-coverage columns) ──
           - label: economie_FR
-            input: 03_Data/real/economie/pilot_cpi/real.csv
+            input: 03_Data/real/_custom/economie_FR.csv
             col_time: year
             col_O: industrial_production_i15
             col_R: berd_pc_gdp
-            col_I: ict_spec_pc_ent_ge10
-            baseline_n: 15
-            pre_horizon: 15
-            post_horizon: 15
+            col_I: solar_collector_ths_m2
+            baseline_n: 20
+            pre_horizon: 20
+            post_horizon: 20
             lags: 1-3
 
           - label: energie_EU27
-            input: 03_Data/real/energie/pilot_energie/real.csv
+            input: 03_Data/real/_custom/energie_EU27.csv
             col_time: year
             col_O: industrial_production_i15
-            col_R: berd_pc_gdp
-            col_I: ict_spec_pc_ent_ge10
-            baseline_n: 15
-            pre_horizon: 15
-            post_horizon: 15
+            col_R: solar_collector_ths_m2
+            col_I: heat_pump_cap_ath_mw
+            baseline_n: 20
+            pre_horizon: 20
+            post_horizon: 20
             lags: 1-3
 
           - label: meteo_EE
-            input: 03_Data/real/meteo/pilot_meteo/real.csv
+            input: 03_Data/real/_custom/meteo_EE.csv
             col_time: year
-            col_O: sdg_13_50_mio_eur
-            col_R: env_tax_env_mio_eur
-            col_I: road_elec_ktoe
-            baseline_n: 15
-            pre_horizon: 15
-            post_horizon: 15
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
+            baseline_n: 20
+            pre_horizon: 20
+            post_horizon: 20
             lags: 1-3
 
           - label: trafic_DE
-            input: 03_Data/real/trafic/pilot_trafic/real.csv
+            input: 03_Data/real/_custom/trafic_DE.csv
             col_time: year
             col_O: industrial_production_i15
-            col_R: env_tax_env_mio_eur
-            col_I: road_elec_ktoe
-            baseline_n: 15
-            pre_horizon: 15
-            post_horizon: 15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
+            baseline_n: 20
+            pre_horizon: 20
+            post_horizon: 20
             lags: 1-3
 
           # ── Pilot CPI monthly (pre-normalised, ~937 rows) ─────────────
@@ -254,9 +254,9 @@ jobs:
           - label: custom_economie_FR
             input: 03_Data/real/_custom/economie_FR.csv
             col_time: year
-            col_O: O
-            col_R: R
-            col_I: I
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
             baseline_n: 20
             pre_horizon: 25
             post_horizon: 25
@@ -265,9 +265,9 @@ jobs:
           - label: custom_energie_EU27
             input: 03_Data/real/_custom/energie_EU27.csv
             col_time: year
-            col_O: O
-            col_R: R
-            col_I: I
+            col_O: industrial_production_i15
+            col_R: solar_collector_ths_m2
+            col_I: heat_pump_cap_ath_mw
             baseline_n: 20
             pre_horizon: 25
             post_horizon: 25
@@ -276,9 +276,9 @@ jobs:
           - label: custom_meteo_EE
             input: 03_Data/real/_custom/meteo_EE.csv
             col_time: year
-            col_O: O
-            col_R: R
-            col_I: I
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
             baseline_n: 20
             pre_horizon: 25
             post_horizon: 25
@@ -287,9 +287,9 @@ jobs:
           - label: custom_trafic_DE
             input: 03_Data/real/_custom/trafic_DE.csv
             col_time: year
-            col_O: O
-            col_R: R
-            col_I: I
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
             baseline_n: 20
             pre_horizon: 25
             post_horizon: 25
