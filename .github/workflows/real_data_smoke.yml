@@ -43,6 +43,22 @@ on:
         description: "same ou no_symbolic"
         required: true
         default: "same"
+      baseline_n:
+        description: "Taille de la fenetre baseline pour detection seuil"
+        required: false
+        default: "20"
+      pre_horizon:
+        description: "Nombre de steps pre-seuil pour tests causaux"
+        required: false
+        default: "25"
+      post_horizon:
+        description: "Nombre de steps post-seuil pour tests causaux"
+        required: false
+        default: "25"
+      lags:
+        description: "Lags Granger/VAR (ex: 1-3 ou 1-5)"
+        required: false
+        default: "1-5"
 
 permissions:
   contents: read
@@ -94,10 +110,14 @@ jobs:
           RUN_DIR="${ROOT}/run"
           mkdir -p "${RUN_DIR}"
 
-          python 04_Code/pipeline/run_real_data_demo.py             --input "${{ inputs.dataset_csv }}"             --outdir "${RUN_DIR}"             --col-time "${{ inputs.col_time }}"             --time-mode "${{ inputs.time_mode }}"             --col-O "${{ inputs.col_O }}"             --col-R "${{ inputs.col_R }}"             --col-I "${{ inputs.col_I }}"             --col-demand "${{ inputs.col_demand }}"             --col-S "${{ inputs.col_S }}"             --normalize "${{ inputs.normalize }}"             --control-mode "${{ inputs.control_mode }}"             > "${ROOT}/run_real_data_demo.log" 2>&1
+          python 04_Code/pipeline/run_real_data_demo.py             --input "${{ inputs.dataset_csv }}"             --outdir "${RUN_DIR}"             --col-time "${{ inputs.col_time }}"             --time-mode "${{ inputs.time_mode }}"             --col-O "${{ inputs.col_O }}"             --col-R "${{ inputs.col_R }}"             --col-I "${{ inputs.col_I }}"             --col-demand "${{ inputs.col_demand }}"             --col-S "${{ inputs.col_S }}"             --normalize "${{ inputs.normalize }}"             --control-mode "${{ inputs.control_mode }}"             --baseline-n "${{ inputs.baseline_n }}"             > "${ROOT}/run_real_data_demo.log" 2>&1
           echo $? > "${ROOT}/rc_demo.txt"
 
+
+          python 04_Code/pipeline/tests_causaux.py             --run-dir "${RUN_DIR}"             --baseline-n "${{ inputs.baseline_n }}"             --pre-horizon "${{ inputs.pre_horizon }}"             --post-horizon "${{ inputs.post_horizon }}"             --lags "${{ inputs.lags }}"             > "${ROOT}/tests_causaux.log" 2>&1
+
           python 04_Code/pipeline/tests_causaux.py             --run-dir "${RUN_DIR}"             --pdf             > "${ROOT}/tests_causaux.log" 2>&1
+
           echo $? > "${ROOT}/rc_causal.txt"
 
           if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then
