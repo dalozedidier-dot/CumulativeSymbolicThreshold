@@ -23,13 +23,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ── Sector pilots (raw Eurostat columns) ──────────────────────
+          # ── Sector pilots (raw Eurostat columns, ~35–44 rows annual) ──
           - label: economie_FR
             input: 03_Data/real/economie/pilot_cpi/real.csv
             col_time: year
             col_O: industrial_production_i15
             col_R: berd_pc_gdp
             col_I: ict_spec_pc_ent_ge10
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: energie_EU27
             input: 03_Data/real/energie/pilot_energie/real.csv
@@ -37,6 +41,10 @@ jobs:
             col_O: industrial_production_i15
             col_R: berd_pc_gdp
             col_I: ict_spec_pc_ent_ge10
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: meteo_EE
             input: 03_Data/real/meteo/pilot_meteo/real.csv
@@ -44,6 +52,10 @@ jobs:
             col_O: sdg_13_50_mio_eur
             col_R: env_tax_env_mio_eur
             col_I: road_elec_ktoe
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: trafic_DE
             input: 03_Data/real/trafic/pilot_trafic/real.csv
@@ -51,22 +63,34 @@ jobs:
             col_O: industrial_production_i15
             col_R: env_tax_env_mio_eur
             col_I: road_elec_ktoe
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
-          # ── Pilot CPI monthly (pre-normalised) ────────────────────────
+          # ── Pilot CPI monthly (pre-normalised, ~937 rows) ─────────────
           - label: pilot_cpi_monthly
             input: 03_Data/real/pilot_cpi/real.csv
             col_time: date
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 50
+            pre_horizon: 250
+            post_horizon: 250
+            lags: 1-10
 
-          # ── Bundles v1 (pre-normalised O/R/I) ─────────────────────────
+          # ── Bundles v1 (pre-normalised O/R/I, ~35–44 rows annual) ─────
           - label: bundle_v1_FR
             input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_FR.csv
             col_time: year
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v1_DE
             input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_DE.csv
@@ -74,6 +98,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v1_EE
             input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EE.csv
@@ -81,6 +109,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v1_EU27
             input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_EU27_2020.csv
@@ -88,29 +120,45 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
-          # ── Bundles v1 — domaines manquants : BE et panel ─────────────
           - label: bundle_v1_BE
             input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_BE.csv
             col_time: year
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
+          # ── Bundle v1 panel (~193 rows, stacked countries) ────────────
           - label: bundle_v1_panel
             input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_panel.csv
             col_time: year
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 30
+            pre_horizon: 50
+            post_horizon: 50
+            lags: 1-5
 
-          # ── Bundles v2 ─────────────────────────────────────────────────
+          # ── Bundles v2 (pre-normalised O/R/I, ~35–44 rows annual) ─────
           - label: bundle_v2_FR
             input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_FR.csv
             col_time: year
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v2_BE
             input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv
@@ -118,6 +166,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v2_DE
             input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_DE.csv
@@ -125,6 +177,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v2_EE
             input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EE.csv
@@ -132,6 +188,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
           - label: bundle_v2_EU27
             input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_EU27_2020.csv
@@ -139,21 +199,57 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 15
+            pre_horizon: 15
+            post_horizon: 15
+            lags: 1-3
 
+          # ── Bundle v2 panel (~193 rows, stacked countries) ────────────
           - label: bundle_v2_panel
             input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_panel.csv
             col_time: year
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 30
+            pre_horizon: 50
+            post_horizon: 50
+            lags: 1-5
 
-          # ── Custom datasets (_custom/) ─────────────────────────────────
+          # ── Long synthetic annual profiles (250 rows, for power tests) ─
+          - label: synthetic_long_annual
+            input: 03_Data/synthetic/synthetic_long_annual.csv
+            col_time: t
+            col_O: O
+            col_R: R
+            col_I: I
+            baseline_n: 50
+            pre_horizon: 100
+            post_horizon: 100
+            lags: 1-5
+
+          - label: synthetic_long_annual_no_thr
+            input: 03_Data/synthetic/synthetic_long_annual_no_thr.csv
+            col_time: t
+            col_O: O
+            col_R: R
+            col_I: I
+            baseline_n: 50
+            pre_horizon: 100
+            post_horizon: 100
+            lags: 1-5
+
+          # ── Custom datasets (_custom/, ~49–101 rows) ──────────────────
           - label: custom_BE
             input: 03_Data/real/_custom/custom_BE.csv
             col_time: year
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 20
+            pre_horizon: 25
+            post_horizon: 25
+            lags: 1-5
 
           - label: custom_economie_FR
             input: 03_Data/real/_custom/economie_FR.csv
@@ -161,6 +257,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 20
+            pre_horizon: 25
+            post_horizon: 25
+            lags: 1-5
 
           - label: custom_energie_EU27
             input: 03_Data/real/_custom/energie_EU27.csv
@@ -168,6 +268,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 20
+            pre_horizon: 25
+            post_horizon: 25
+            lags: 1-5
 
           - label: custom_meteo_EE
             input: 03_Data/real/_custom/meteo_EE.csv
@@ -175,6 +279,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 20
+            pre_horizon: 25
+            post_horizon: 25
+            lags: 1-5
 
           - label: custom_trafic_DE
             input: 03_Data/real/_custom/trafic_DE.csv
@@ -182,6 +290,10 @@ jobs:
             col_O: O
             col_R: R
             col_I: I
+            baseline_n: 20
+            pre_horizon: 25
+            post_horizon: 25
+            lags: 1-5
 
     steps:
       - name: Checkout
@@ -218,13 +330,13 @@ jobs:
             --col-I "${{ matrix.col_I }}" \
             --normalize robust \
             --alpha 0.01 \
-            --lags 1-10 \
-            --pre-horizon 250 \
-            --post-horizon 250 \
+            --lags "${{ matrix.lags }}" \
+            --pre-horizon "${{ matrix.pre_horizon }}" \
+            --post-horizon "${{ matrix.post_horizon }}" \
             --c-mean-post-min 0.1 \
             --k 2.5 \
             --m 3 \
-            --baseline-n 50 \
+            --baseline-n "${{ matrix.baseline_n }}" \
             2>&1 | tee "${ROOT}/suite.log"
 
           # PIPESTATUS[0] = python exit code; plain $? would give tee's exit code (always 0)
