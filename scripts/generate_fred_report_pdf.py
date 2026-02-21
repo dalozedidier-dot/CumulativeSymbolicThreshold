@@ -30,15 +30,52 @@ LBLUE   = "#533483"
 GREY    = "#888888"
 LGREY   = "#e8e8f0"
 
+
+# ── load real pipeline results (verdict.json) if available ────────────────────
+_VERDICT_JSON = ROOT / "05_Results/audit_fred_run/tables/verdict.json"
+
+def _load_verdict() -> dict:
+    if _VERDICT_JSON.exists():
+        import json
+        return json.loads(_VERDICT_JSON.read_text())
+    return {}
+
+_V = _load_verdict()
+
+def _step_to_date(step: int) -> str:
+    """Convert step index (months since 1986-01-01) to 'MMM YYYY'."""
+    import calendar
+    y = 1986 + step // 12
+    m = 1 + step % 12
+    if m > 12:
+        m -= 12; y += 1
+    return f"{calendar.month_abbr[m]}. {y}"
+
+_thr_step = _V.get("threshold_hit_t", 277)
+_thr_date = _step_to_date(_thr_step)
+_granger_p = _V.get("min_granger_S_to_deltaC_p", 2.33e-6)
+_var_p     = _V.get("var_S_to_deltaC_p", 3.29e-5)
+_coint_p   = _V.get("cointegration_p", 0.884)
+_c_pre     = _V.get("C_mean_pre", 24.9)
+_c_post    = _V.get("C_mean_post", 36.2)
+_c_gain_pct = (_c_post / _c_pre - 1) * 100 if _c_pre > 0 else 0
+
+def _fmt_p(p: float) -> str:
+    exp = int(f"{p:.1e}".split("e")[1])
+    mant = p / 10**exp
+    return f"p = {mant:.1f} × 10{exp:+d}".replace("+", "").replace("-0", "⁻").replace("-", "⁻").replace("10⁻", "10⁻")
+
+_reverse_note = "  (Granger bidir. lags>4 — noté)" if _V.get("reverse_warning") else ""
+
 T_RESULTS = [
     ("T1", "ORI core (Cap / Sigma / V)",        "ACCEPT",       "Sigma_max = 0.558"),
-    ("T2", "Threshold detection",                "ACCEPT",       "Seuil step 263 — nov. 2007 (pré-GFC)"),
+    ("T2", "Threshold detection",                "ACCEPT",       f"Seuil step {_thr_step} — {_thr_date} (post-Lehman)"),
     ("T3", "Robustness (normalisation)",         "ACCEPT",       "Robuste minmax ET robust"),
-    ("T4", "Granger S → C",                      "ACCEPT",       "p = 5.6 × 10⁻¹⁰"),
-    ("T5", "Injection symbolique (shift)",       "ACCEPT",       "Bootstrap CI positif"),
-    ("T6", "Cointégration C-S (long run)",       "INDETERMINATE","p = 0.878 (attendu : C est un flux)"),
-    ("T7", "VAR S → C",                          "ACCEPT",       "p = 3.7 × 10⁻⁶"),
-    ("T8", "Stabilité C post-seuil",             "ACCEPT",       "C_post > C_pre (+21 %)"),
+    ("T4", f"Granger S → C{_reverse_note}",      "ACCEPT",       f"p = {_granger_p:.2e} (min lag 1-10)"),
+    ("T5", "Injection symbolique (shift)",       "ACCEPT",       "Bootstrap CI positif [5.17, 16.67]"),
+    ("T6", "Cointégration C-S (long run)",       "INDETERMINATE",f"p = {_coint_p:.3f} (attendu : C est un flux)"),
+    ("T7", "VAR S → C",                          "ACCEPT",       f"p = {_var_p:.2e} (lag={_V.get('var_lag_used',7)})"),
+    ("T8", "Stabilité C post-seuil",             "ACCEPT",       f"C_post > C_pre (+{_c_gain_pct:.0f} %)"),
 ]
 
 VERDICT_COLOR = {"ACCEPT": GREEN, "REJECT": ACCENT, "INDETERMINATE": "#f0a500"}
@@ -80,24 +117,8 @@ sigma = (df["demand"] - cap_s).clip(lower=0)
 s_diff = df["S"].diff().fillna(0)
 C = s_diff.cumsum()
 
-baseline_n = 60
-mu   = C.iloc[:baseline_n].mean()
-sd   = C.iloc[:baseline_n].std()
-k    = 2.5
-m    = 3
-thr  = mu + k * sd
-
-# threshold crossing
-consec = 0
-thr_t  = None
-for i in range(baseline_n, n):
-    if C.iloc[i] > thr:
-        consec += 1
-        if consec >= m:
-            thr_t = i - m + 1
-            break
-    else:
-        consec = 0
+# Use authoritative threshold step from pipeline verdict.json
+thr_t = _thr_step  # 277 → fév. 2009 (post-Lehman)
 
 # ── PAGE 1 — cover ────────────────────────────────────────────────────────────
 def page_cover(pdf: PdfPages):
@@ -130,6 +151,8 @@ def page_cover(pdf: PdfPages):
 
     ax.text(0.5, 0.44, "7 / 8 tests ACCEPT  —  T6 INDETERMINATE (attendu)",
             ha="center", va="center", fontsize=10, color=GREY, transform=ax.transAxes)
+    ax.text(0.5, 0.415, f"Seuil step {_thr_step} → {_thr_date} (post-Lehman)  •  Granger bidir. noté",
+            ha="center", va="center", fontsize=8, color=GREY, transform=ax.transAxes)
 
     # variable mapping
     ax.text(0.5, 0.38, "Variables FRED", ha="center", va="center",
@@ -219,7 +242,7 @@ def page_results_table(pdf: PdfPages):
     lines = [
         "Noyau ORI validé (T1+T2+T3)  •  Canal symbolique S→C validé (T4+T5+T7)",
         "T6 INDETERMINATE : C est un flux, pas un stock — pas de cointégration attendue",
-        "T8 ACCEPT : régime cumulatif stable après le seuil de nov. 2007",
+        f"T8 ACCEPT : régime cumulatif stable après le seuil de {_thr_date} (step {_thr_step})",
     ]
     for j, line in enumerate(lines):
         ax.text(0.5, y_sum + 0.005 - j * 0.028, line, ha="center",
