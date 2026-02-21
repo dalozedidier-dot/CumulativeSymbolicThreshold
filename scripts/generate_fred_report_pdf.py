@@ -58,7 +58,10 @@ _T_DISPLAY = {
     "T5_injection_mean_shift":  ("T5", "Shift bootstrap C (CI_low)"),
     "T6_cointegration_C_S":     ("T6", "Cointégration C–S (long terme)"),
     "T7_var_S_to_C":            ("T7", "VAR S → δC"),
-    "T8_C_stable_post":         ("T8", "Stabilité C post-seuil"),
+    # T8 note: definition changed in v1.1 (dose-response → stability post-threshold).
+    # Non comparable to any report using T8 = dose-response (pre-v1.1).
+    # Not in DECISION_RULES v1/v2 aggregation (covers T1-T7 only).
+    "T8_C_stable_post":         ("T8", "Stabilité C post-seuil  [v1.1 réel]"),
 }
 
 # ── detail formatters ───────────────────────────────────────────────────────────
@@ -396,9 +399,30 @@ def page_results_table(pdf: PdfPages, t_results: list, causal: dict, global_verd
         ax.text(0.5, y_sum + 0.018 - j * 0.026, line, ha="center",
                 fontsize=7.5, color=LGREY, transform=ax.transAxes)
 
+    # T8 definition-change warning box
+    warn_y = y_start - (len(t_results) + 5.4) * row_h
+    warn_box = FancyBboxPatch((0.0, warn_y - 0.012), 1.0, 0.075,
+                              boxstyle="round,pad=0.005",
+                              facecolor="#2a1a00", edgecolor=ORANGE,
+                              transform=ax.transAxes)
+    ax.add_patch(warn_box)
+    ax.text(0.5, warn_y + 0.050, "⚠  T8 — Amendement de définition (v1.1)",
+            ha="center", fontsize=8, fontweight="bold", color=ORANGE, transform=ax.transAxes)
+    ax.text(0.5, warn_y + 0.026,
+            "T8 v≤1.0 = dose-response S→C  ≠  T8 v1.1 = stabilité C post-seuil",
+            ha="center", fontsize=7.5, color=LGREY, transform=ax.transAxes)
+    ax.text(0.5, warn_y + 0.006,
+            "Un changement de verdict T8 entre deux versions est un changement de définition,"
+            " pas un revirement statistique.",
+            ha="center", fontsize=7, color=GREY, transform=ax.transAxes)
+    ax.text(0.5, warn_y - 0.012,
+            "T8 n'est pas dans les DECISION_RULES v1/v2 (agrégation limitée à T1–T7). "
+            "Test confirmatoire secondaire.",
+            ha="center", fontsize=6.5, color=GREY, transform=ax.transAxes)
+
     ax.text(0.5, 0.01,
             "α = 0.01  •  k = 2.5  •  m = 3  •  baseline_n = 60  •  auto-scale activé  "
-            "•  Suite : run_real_data_canonical_suite.py",
+            "•  Suite : run_real_data_canonical_suite.py  •  DECISION_RULES v1/v2 : T1–T7",
             ha="center", fontsize=7, color=GREY, transform=ax.transAxes)
 
     pdf.savefig(fig, bbox_inches="tight")
@@ -536,11 +560,32 @@ def page_protocol(pdf: PdfPages):
     for i, s in enumerate(steps):
         line(0.340 - i * 0.034, s, size=8, color=LGREY)
 
-    sec(0.12, "Pré-enregistrement & reproductibilité")
-    line(0.092, "▸ DOI OSF : 10.17605/OSF.IO/G62PZ", color=GREEN, size=9)
-    line(0.065, "▸ Seed fixe pour chaque run ; config JSON archivé dans 04_Code/configs/", size=8, color=LGREY)
-    line(0.040, "▸ Résultats CI GitHub Actions reproductibles (Python 3.12, requirements.txt)", size=8, color=LGREY)
-    line(0.015, "▸ Tout changement de paramètre = nouveau pré-enregistrement obligatoire", size=8, color=LGREY)
+    sec(0.22, "Historique T8 — Amendement de protocole")
+    t8_lines = [
+        ("v≤1.0 (retiré)",   "dose-response S→C",      "Réponse quantitative de C à différentes doses de S"),
+        ("v1.1  (synthét.)", "Reinjection recovery",    "Coupure symbolique + réinjection → récupération C  [run_reinjection_demo.py]"),
+        ("v1.1  (réel)   ",  "Stabilité C post-seuil", "C_positive_frac_post > 0.5  ET  C_mean_post > C_mean_pre"),
+    ]
+    for i, (ver, short, desc) in enumerate(t8_lines):
+        y8 = 0.190 - i * 0.030
+        ax.text(0.02, y8, ver,   fontsize=7.5, color=ORANGE, transform=ax.transAxes, fontfamily="monospace")
+        ax.text(0.22, y8, short, fontsize=7.5, color=GREEN,  transform=ax.transAxes, fontweight="bold")
+        ax.text(0.44, y8, desc,  fontsize=7,   color=LGREY,  transform=ax.transAxes)
+    ax.text(0.02, 0.102,
+            "▸ DECISION_RULES v1/v2 définissent T1–T7 uniquement. T8 est hors périmètre pré-enregistré.",
+            fontsize=7.5, color=ORANGE, transform=ax.transAxes)
+    ax.text(0.02, 0.080,
+            "▸ Un changement de verdict T8 entre rapports de versions différentes reflète"
+            " le changement de définition,",
+            fontsize=7, color=GREY, transform=ax.transAxes)
+    ax.text(0.02, 0.063,
+            "  pas une instabilité statistique. Ne pas interpréter comme un revirement.",
+            fontsize=7, color=GREY, transform=ax.transAxes)
+
+    sec(0.045, "Pré-enregistrement & reproductibilité")
+    line(0.022, "▸ DOI OSF : 10.17605/OSF.IO/G62PZ", color=GREEN, size=9)
+    line(-0.005, "▸ Seed fixe ; config JSON archivé dans 04_Code/configs/  •  CI GitHub Actions reproductibles (Python 3.12)", size=7.5, color=LGREY)
+    line(-0.025, "▸ Tout changement de paramètre ou de définition de test = nouveau pré-enregistrement obligatoire", size=7.5, color=LGREY)
 
     pdf.savefig(fig, bbox_inches="tight")
     plt.close(fig)
