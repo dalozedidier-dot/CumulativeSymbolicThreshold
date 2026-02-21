@@ -1,0 +1,362 @@
+{
+  "stable": {
+    "protocol_version": "v1.0.0",
+    "pre_registered_thresholds": {
+      "H1_correlation_threshold": 0.6,
+      "H1_persistence_window": 30,
+      "H2_stationarity_pvalue": 0.05,
+      "H3_R_unbounded_growth_ratio": 1.5,
+      "H4_unilateral_survival_window": 60,
+      "H4_survival_threshold": 0.8,
+      "regime_prediction_accuracy_min": 0.6,
+      "emballement_E_persistence": 20,
+      "emballement_R_persistence": 20,
+      "emballement_no_transition_window": 60,
+      "ode_residual_r2_min": 0.3,
+      "L_effectiveness_min_reduction": 0.05
+    },
+    "n_tests": 5,
+    "n_rejected": 1,
+    "tests": [
+      {
+        "hypothesis": "H1",
+        "test_name": "separation_PO",
+        "rejected": false,
+        "score": 0.0036543758285963977,
+        "threshold": 0.6,
+        "p_value": 0.820149492253519,
+        "interpretation": "H1 non r\u00e9fut\u00e9e : 0% des fen\u00eatres (seuil 80%). Corr\u00e9lation moyenne = 0.004.",
+        "details": {
+          "mean_rolling_corr": 0.0036543758285963977,
+          "frac_windows_above_threshold": 0.0,
+          "global_corr": 0.011940717706720519,
+          "global_pvalue": 0.820149492253519,
+          "window": 30,
+          "n_windows": 335
+        }
+      },
+      {
+        "hypothesis": "H2",
+        "test_name": "cumulative_E",
+        "rejected": false,
+        "score": -1.0,
+        "threshold": 0.05,
+        "p_value": 0.5,
+        "interpretation": "H2 non r\u00e9fut\u00e9e : E(t) non stationnaire (ADF p=0.5000). Autocorr\u00e9lation lag-1 = 0.968.",
+        "details": {
+          "adf_statistic": -1.0,
+          "adf_pvalue": 0.5,
+          "autocorrelation_lag1": 0.9684283103735984,
+          "series_length": 365
+        }
+      },
+      {
+        "hypothesis": "H3",
+        "test_name": "finite_resilience",
+        "rejected": "False",
+        "score": -1.089459082810019,
+        "threshold": 1.5,
+        "p_value": 0.3730160211752926,
+        "interpretation": "H3 non r\u00e9fut\u00e9e : R_slope=0.0004, E_slope=-0.0220.",
+        "details": {
+          "e_slope": -0.022009794030284177,
+          "e_pvalue": 9.007033930536602e-36,
+          "r_slope": 0.0004414246464014494,
+          "r_pvalue": 0.3730160211752926,
+          "r_max_min_ratio": -1.089459082810019,
+          "e_growing": "False",
+          "r_growing": "False"
+        }
+      },
+      {
+        "hypothesis": "PRED_EMBALLEMENT",
+        "test_name": "emballement",
+        "rejected": false,
+        "score": 0.0,
+        "threshold": 20.0,
+        "p_value": null,
+        "interpretation": "Aucune conjonction persistante dE>0 & dR<0 d\u00e9tect\u00e9e.",
+        "details": {
+          "conjonction_runs": 0
+        }
+      },
+      {
+        "hypothesis": "PRED_L_EFFECT",
+        "test_name": "L_effectiveness",
+        "rejected": true,
+        "score": -0.000571559939331278,
+        "threshold": 0.05,
+        "p_value": null,
+        "interpretation": "L R\u00c9FUT\u00c9 : r\u00e9duction moyenne de @(t) = -0.0006 < 0.05. L'op\u00e9rateur de limite n'a pas d'effet mesurable.",
+        "details": {
+          "n_activations": 91,
+          "mean_reduction": -0.000571559939331278,
+          "frac_effective": 0.4725274725274725,
+          "reductions": [
+            -0.008766380608679847,
+            -0.02686925318692135,
+            0.0036305933738722818,
+            0.00339603716216752,
+            0.026854797544147768,
+            0.01605991293989295,
+            0.0039794161596881095,
+            -0.014309329394924908,
+            -0.007966004915193281,
+            -0.011992758912364732,
+            -0.009096091953810115,
+            -0.012121601099618129,
+            -0.0070067881747959415,
+            -0.007734022392931639,
+            0.012595322767776862,
+            0.014200278262072263,
+            -0.007237751032389994,
+            -0.009226470212616578,
+            -0.008278923719434506,
+            0.008990866641137352
+          ]
+        }
+      }
+    ],
+    "verdict": "HYPOTH\u00c8SES R\u00c9FUT\u00c9ES : PRED_L_EFFECT. Le cadre n\u00e9cessite une r\u00e9vision sur ces points."
+  },
+  "oscillating": {
+    "protocol_version": "v1.0.0",
+    "pre_registered_thresholds": {
+      "H1_correlation_threshold": 0.6,
+      "H1_persistence_window": 30,
+      "H2_stationarity_pvalue": 0.05,
+      "H3_R_unbounded_growth_ratio": 1.5,
+      "H4_unilateral_survival_window": 60,
+      "H4_survival_threshold": 0.8,
+      "regime_prediction_accuracy_min": 0.6,
+      "emballement_E_persistence": 20,
+      "emballement_R_persistence": 20,
+      "emballement_no_transition_window": 60,
+      "ode_residual_r2_min": 0.3,
+      "L_effectiveness_min_reduction": 0.05
+    },
+    "n_tests": 5,
+    "n_rejected": 1,
+    "tests": [
+      {
+        "hypothesis": "H1",
+        "test_name": "separation_PO",
+        "rejected": false,
+        "score": 0.04771334253881497,
+        "threshold": 0.6,
+        "p_value": 0.013217040907550453,
+        "interpretation": "H1 non r\u00e9fut\u00e9e : 0% des fen\u00eatres (seuil 80%). Corr\u00e9lation moyenne = 0.048.",
+        "details": {
+          "mean_rolling_corr": 0.04771334253881497,
+          "frac_windows_above_threshold": 0.0,
+          "global_corr": 0.12959462671192043,
+          "global_pvalue": 0.013217040907550453,
+          "window": 30,
+          "n_windows": 335
+        }
+      },
+      {
+        "hypothesis": "H2",
+        "test_name": "cumulative_E",
+        "rejected": false,
+        "score": -1.0,
+        "threshold": 0.05,
+        "p_value": 0.5,
+        "interpretation": "H2 non r\u00e9fut\u00e9e : E(t) non stationnaire (ADF p=0.5000). Autocorr\u00e9lation lag-1 = 0.998.",
+        "details": {
+          "adf_statistic": -1.0,
+          "adf_pvalue": 0.5,
+          "autocorrelation_lag1": 0.9979255645153955,
+          "series_length": 365
+        }
+      },
+      {
+        "hypothesis": "H3",
+        "test_name": "finite_resilience",
+        "rejected": "False",
+        "score": -0.8041260252355558,
+        "threshold": 1.5,
+        "p_value": 0.003223424061505106,
+        "interpretation": "H3 non r\u00e9fut\u00e9e : R_slope=-0.0012, E_slope=-0.0415.",
+        "details": {
+          "e_slope": -0.04153213169118447,
+          "e_pvalue": 1.3685456095752341e-14,
+          "r_slope": -0.0011855272988013238,
+          "r_pvalue": 0.003223424061505106,
+          "r_max_min_ratio": -0.8041260252355558,
+          "e_growing": "False",
+          "r_growing": "False"
+        }
+      },
+      {
+        "hypothesis": "PRED_EMBALLEMENT",
+        "test_name": "emballement",
+        "rejected": false,
+        "score": 0.0,
+        "threshold": 20.0,
+        "p_value": null,
+        "interpretation": "Aucune conjonction persistante dE>0 & dR<0 d\u00e9tect\u00e9e.",
+        "details": {
+          "conjonction_runs": 0
+        }
+      },
+      {
+        "hypothesis": "PRED_L_EFFECT",
+        "test_name": "L_effectiveness",
+        "rejected": true,
+        "score": -0.0028905829665089363,
+        "threshold": 0.05,
+        "p_value": null,
+        "interpretation": "L R\u00c9FUT\u00c9 : r\u00e9duction moyenne de @(t) = -0.0029 < 0.05. L'op\u00e9rateur de limite n'a pas d'effet mesurable.",
+        "details": {
+          "n_activations": 47,
+          "mean_reduction": -0.0028905829665089363,
+          "frac_effective": 0.44680851063829785,
+          "reductions": [
+            -0.008353162498912936,
+            -0.024796257976125502,
+            0.0028497650481802417,
+            0.022851385305941663,
+            0.0007612043205578178,
+            -0.012100182515941138,
+            -0.016652713373795036,
+            -0.009266401120596512,
+            0.024259635455891715,
+            -0.010636586011888105,
+            0.005363676379934068,
+            0.0006663565437903252,
+            -0.002911117630270299,
+            -0.0007543448229767602,
+            0.0011021865602612868,
+            -0.0029647517046225147,
+            0.006738003197111264,
+            0.005564312040978514,
+            0.009699376659815129,
+            -0.01701810314758656
+          ]
+        }
+      }
+    ],
+    "verdict": "HYPOTH\u00c8SES R\u00c9FUT\u00c9ES : PRED_L_EFFECT. Le cadre n\u00e9cessite une r\u00e9vision sur ces points."
+  },
+  "bifurcation": {
+    "protocol_version": "v1.0.0",
+    "pre_registered_thresholds": {
+      "H1_correlation_threshold": 0.6,
+      "H1_persistence_window": 30,
+      "H2_stationarity_pvalue": 0.05,
+      "H3_R_unbounded_growth_ratio": 1.5,
+      "H4_unilateral_survival_window": 60,
+      "H4_survival_threshold": 0.8,
+      "regime_prediction_accuracy_min": 0.6,
+      "emballement_E_persistence": 20,
+      "emballement_R_persistence": 20,
+      "emballement_no_transition_window": 60,
+      "ode_residual_r2_min": 0.3,
+      "L_effectiveness_min_reduction": 0.05
+    },
+    "n_tests": 5,
+    "n_rejected": 1,
+    "tests": [
+      {
+        "hypothesis": "H1",
+        "test_name": "separation_PO",
+        "rejected": false,
+        "score": 0.05161910874682574,
+        "threshold": 0.6,
+        "p_value": 0.716976588694121,
+        "interpretation": "H1 non r\u00e9fut\u00e9e : 0% des fen\u00eatres (seuil 80%). Corr\u00e9lation moyenne = 0.052.",
+        "details": {
+          "mean_rolling_corr": 0.05161910874682574,
+          "frac_windows_above_threshold": 0.0,
+          "global_corr": 0.01903782694616425,
+          "global_pvalue": 0.716976588694121,
+          "window": 30,
+          "n_windows": 335
+        }
+      },
+      {
+        "hypothesis": "H2",
+        "test_name": "cumulative_E",
+        "rejected": false,
+        "score": -1.0,
+        "threshold": 0.05,
+        "p_value": 0.5,
+        "interpretation": "H2 non r\u00e9fut\u00e9e : E(t) non stationnaire (ADF p=0.5000). Autocorr\u00e9lation lag-1 = 1.000.",
+        "details": {
+          "adf_statistic": -1.0,
+          "adf_pvalue": 0.5,
+          "autocorrelation_lag1": 0.9999991609700565,
+          "series_length": 365
+        }
+      },
+      {
+        "hypothesis": "H3",
+        "test_name": "finite_resilience",
+        "rejected": "False",
+        "score": -0.15676735981892292,
+        "threshold": 1.5,
+        "p_value": 1.4664861585612121e-124,
+        "interpretation": "H3 non r\u00e9fut\u00e9e : R_slope=-0.0198, E_slope=19.6694.",
+        "details": {
+          "e_slope": 19.669372438801503,
+          "e_pvalue": 7.67824779703849e-47,
+          "r_slope": -0.01980508683306591,
+          "r_pvalue": 1.4664861585612121e-124,
+          "r_max_min_ratio": -0.15676735981892292,
+          "e_growing": "True",
+          "r_growing": "False"
+        }
+      },
+      {
+        "hypothesis": "PRED_EMBALLEMENT",
+        "test_name": "emballement",
+        "rejected": false,
+        "score": 0.0,
+        "threshold": 20.0,
+        "p_value": null,
+        "interpretation": "Aucune conjonction persistante dE>0 & dR<0 d\u00e9tect\u00e9e.",
+        "details": {
+          "conjonction_runs": 0
+        }
+      },
+      {
+        "hypothesis": "PRED_L_EFFECT",
+        "test_name": "L_effectiveness",
+        "rejected": true,
+        "score": -2.9615082819755463,
+        "threshold": 0.05,
+        "p_value": null,
+        "interpretation": "L R\u00c9FUT\u00c9 : r\u00e9duction moyenne de @(t) = -2.9615 < 0.05. L'op\u00e9rateur de limite n'a pas d'effet mesurable.",
+        "details": {
+          "n_activations": 23,
+          "mean_reduction": -2.9615082819755463,
+          "frac_effective": 0.34782608695652173,
+          "reductions": [
+            -0.010926814635577653,
+            -0.027995300320738936,
+            0.021404791365692066,
+            -0.009967222939717413,
+            0.00795508294156666,
+            0.026631673572600878,
+            0.010643805620520697,
+            0.0012275759153614896,
+            -0.02764441210554769,
+            0.023008815304411012,
+            0.017662986892944543,
+            0.023040786258532675,
+            -0.07460539582313008,
+            -0.1366646806312024,
+            -0.39715949161285646,
+            -1.3927101963550879,
+            -1.7287447760054846,
+            -3.425537348806765,
+            -5.5705873662837035,
+            -7.509671986849181
+          ]
+        }
+      }
+    ],
+    "verdict": "HYPOTH\u00c8SES R\u00c9FUT\u00c9ES : PRED_L_EFFECT. Le cadre n\u00e9cessite une r\u00e9vision sur ces points."
+  }
+}

@@ -31,7 +31,7 @@ Outputs
 Usage (recommended with run_real_data_demo outputs)
 python 04_Code/pipeline/tests_causaux.py \
   --run-dir 05_Results/real/.../ds_xxx \
-  --alpha 0.01 --c-mean-post-min 0.1 --lags 1-10 --n-steps-min 2000
+  --alpha 0.01 --c-mean-post-min 0.1 --lags 1-10 --n-steps-min 0
 """
 
 from __future__ import annotations
@@ -327,7 +327,7 @@ def main() -> int:
     ap.add_argument("--block", type=int, default=25)
     ap.add_argument("--n-boot", type=int, default=800)
     ap.add_argument("--seed", type=int, default=123)
-    ap.add_argument("--n-steps-min", type=int, default=2000)
+    ap.add_argument("--n-steps-min", type=int, default=0)
 
     ap.add_argument("--pdf", action="store_true", help="Also generate a minimal PDF report")
     args = ap.parse_args()
@@ -350,7 +350,8 @@ def main() -> int:
     df_t = pd.read_csv(test_csv)
 
     # Basic sanity
-    short_series = bool(len(df_t) < int(args.n_steps_min))
+    min_required = max(int(args.n_steps_min), int(args.baseline_n) + int(args.pre_horizon) + int(args.post_horizon), 30)
+    short_series = bool(len(df_t) < min_required)
     for col in ["t", "C", "S", "delta_C"]:
         if col not in df_t.columns:
             raise SystemExit(f"Missing column in test: {col}")

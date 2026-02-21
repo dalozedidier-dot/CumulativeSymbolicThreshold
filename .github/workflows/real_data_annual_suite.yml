@@ -1,0 +1,157 @@
+name: Real data annual profile suite (ORI-C)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  annual_suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -Eeuo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run ORI-C real data (annual profile) then causals
+        shell: bash
+        env:
+          OUTROOT: _ci_out/real_data_annual_suite/run_${{ github.run_id }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "${OUTROOT}"
+          echo "policy=locked_annual_profile" > "${OUTROOT}/policy.txt"
+          echo "sha=${GITHUB_SHA}" > "${OUTROOT}/run_meta.txt"
+          echo "run_id=${GITHUB_RUN_ID}" >> "${OUTROOT}/run_meta.txt"
+
+          # Annual-series profile (fixed ex ante, designed for 35-65 points)
+          K="2.5"
+          M="3"
+          BASELINE_N="10"
+          PRE_H="10"
+          POST_H="10"
+          ALPHA="0.01"
+          LAGS="1-5"
+          MAXLAG="5"
+          BLOCK="10"
+          N_BOOT="400"
+          SEED="123"
+          C_MEAN_POST_MIN="0.1"
+
+          cat > "${OUTROOT}/params.txt" << EOF
+          k=${K}
+          m=${M}
+          baseline_n=${BASELINE_N}
+          pre_horizon=${PRE_H}
+          post_horizon=${POST_H}
+          alpha=${ALPHA}
+          lags=${LAGS}
+          maxlag=${MAXLAG}
+          block=${BLOCK}
+          n_boot=${N_BOOT}
+          seed=${SEED}
+          c_mean_post_min=${C_MEAN_POST_MIN}
+          time_mode=index
+          normalize=robust
+          control_mode=no_symbolic
+          EOF
+
+          run_one() {
+            local NAME="$1"
+            local CSV="$2"
+            local OUTDIR="${OUTROOT}/${NAME}"
+            mkdir -p "${OUTDIR}"
+            echo "${CSV}" > "${OUTDIR}/dataset.txt"
+
+            if [ ! -f "${CSV}" ]; then
+              echo "Missing CSV: ${CSV}" > "${OUTDIR}/missing_input.txt"
+              return 2
+            fi
+
+            # Deterministic mapping, same rule as long_custom
+            python - << 'PY' > "${OUTDIR}/colmap.txt"
+            import pandas as pd
+            df = pd.read_csv("${CSV}", nrows=5)
+            cols = set(df.columns)
+            def has(*names): return all(n in cols for n in names)
+            if has("O","R","I"):
+                col_o, col_r, col_i = "O","R","I"
+                col_s = "S" if "S" in cols else ""
+                col_d = "demand" if "demand" in cols else ""
+            elif has("industrial_production_i15","berd_pc_gdp","env_tax_env_mio_eur"):
+                col_o, col_r, col_i = "industrial_production_i15","berd_pc_gdp","env_tax_env_mio_eur"
+                col_s, col_d = "", ""
+            else:
+                raise SystemExit("Unsupported CSV schema. Need either O/R/I or the canonical raw columns.")
+            if "date" in cols:
+                col_time="date"
+            elif "year" in cols:
+                col_time="year"
+            else:
+                col_time=""
+            print(f"col_time={col_time}")
+            print(f"col_O={col_o}")
+            print(f"col_R={col_r}")
+            print(f"col_I={col_i}")
+            print(f"col_S={col_s}")
+            print(f"col_demand={col_d}")
+            PY
+
+            COL_TIME="$(grep '^col_time=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
+            COL_O="$(grep '^col_O=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
+            COL_R="$(grep '^col_R=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
+            COL_I="$(grep '^col_I=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
+            COL_S="$(grep '^col_S=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
+            COL_DEMAND="$(grep '^col_demand=' "${OUTDIR}/colmap.txt" | cut -d= -f2-)"
+
+            DEMO_ARGS=(--input "${CSV}" --outdir "${OUTDIR}" --time-mode index --normalize robust --control-mode no_symbolic --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}")
+            if [ -n "${COL_TIME}" ]; then DEMO_ARGS+=(--col-time "${COL_TIME}"); fi
+            DEMO_ARGS+=(--col-O "${COL_O}" --col-R "${COL_R}" --col-I "${COL_I}")
+            if [ -n "${COL_DEMAND}" ]; then DEMO_ARGS+=(--col-demand "${COL_DEMAND}"); fi
+            if [ -n "${COL_S}" ]; then DEMO_ARGS+=(--col-S "${COL_S}"); fi
+
+            set +e
+            python 04_Code/pipeline/run_real_data_demo.py "${DEMO_ARGS[@]}" 2>&1 | tee "${OUTDIR}/run_real_data_demo.log"
+            rc_demo=${PIPESTATUS[0]}
+            echo "${rc_demo}" > "${OUTDIR}/rc_demo.txt"
+            if [ "${rc_demo}" -ne 0 ]; then
+              return "${rc_demo}"
+            fi
+
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "${OUTDIR}"               --alpha "${ALPHA}"               --c-mean-post-min "${C_MEAN_POST_MIN}"               --lags "${LAGS}"               --maxlag "${MAXLAG}"               --baseline-n "${BASELINE_N}"               --pre-horizon "${PRE_H}"               --post-horizon "${POST_H}"               --block "${BLOCK}"               --n-boot "${N_BOOT}"               --seed "${SEED}"               --pdf 2>&1 | tee "${OUTDIR}/tests_causaux.log"
+            rc_causal=${PIPESTATUS[0]}
+            echo "${rc_causal}" > "${OUTDIR}/rc_causal.txt"
+            return "${rc_causal}"
+          }
+
+          RC_GLOBAL=0
+          run_one "custom_BE" "03_Data/real/_custom/custom_BE.csv" || RC_GLOBAL=$?
+          run_one "economie_FR" "03_Data/real/_custom/economie_FR.csv" || RC_GLOBAL=$?
+          run_one "energie_EU27" "03_Data/real/_custom/energie_EU27.csv" || RC_GLOBAL=$?
+          run_one "meteo_EE" "03_Data/real/_custom/meteo_EE.csv" || RC_GLOBAL=$?
+          run_one "trafic_DE" "03_Data/real/_custom/trafic_DE.csv" || RC_GLOBAL=$?
+
+          echo "${RC_GLOBAL}" > "${OUTROOT}/rc_global.txt"
+          exit "${RC_GLOBAL}"
+
+      - name: Upload artefacts (annual suite)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_data_annual_suite_${{ github.run_id }}
+          path: _ci_out/real_data_annual_suite/run_${{ github.run_id }}
+          if-no-files-found: warn
