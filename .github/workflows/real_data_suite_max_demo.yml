@@ -67,7 +67,6 @@ jobs:
           SECTOR="${{ matrix.sector }}"
           ROOT="_ci_out/real_data_suite/max_demo/${SECTOR}/run_${RUN_ID}_${RUN_ATTEMPT}"
           mkdir -p "${ROOT}"
-
           run_one () {
             local label="$1"
             local csv="$2"
@@ -75,14 +74,17 @@ jobs:
             local col_O="$4"
             local col_R="$5"
             local col_I="$6"
-
             local outdir="${ROOT}/${label}"
             mkdir -p "${outdir}"
 
             python 04_Code/pipeline/run_real_data_demo.py               --input "${csv}"               --outdir "${outdir}"               --col-time "${col_time}"               --time-mode index               --col-O "${col_O}"               --col-R "${col_R}"               --col-I "${col_I}"               --normalize minmax               --control-mode same               --baseline-n 15               > "${outdir}/run_real_data_demo.log" 2>&1
             echo $? > "${outdir}/rc_demo.txt"
 
+
             python 04_Code/pipeline/tests_causaux.py               --run-dir "${outdir}"               --baseline-n 15               --pre-horizon 15               --post-horizon 15               --lags 1-3               > "${outdir}/tests_causaux.log" 2>&1
+
+            python 04_Code/pipeline/tests_causaux.py               --run-dir "${outdir}"               --pdf               > "${outdir}/tests_causaux.log" 2>&1
+
             echo $? > "${outdir}/rc_causal.txt"
 
             if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then

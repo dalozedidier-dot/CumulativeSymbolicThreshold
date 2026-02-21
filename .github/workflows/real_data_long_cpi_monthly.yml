@@ -1,0 +1,94 @@
+name: Real data long (ORI-C) - CPI monthly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 2 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  long_cpi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run ORI-C real data (long profile) then causals
+        shell: bash
+        env:
+          OUTDIR: _ci_out/real_data_long/cpi_monthly/run_${{ github.run_id }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "${OUTDIR}"
+
+          echo "dataset=cpi_monthly" > "${OUTDIR}/dataset.txt"
+          echo "policy=locked_long_profile" > "${OUTDIR}/policy.txt"
+
+          # Long-series profile (fixed ex ante)
+          K="2.5"
+          M="3"
+          BASELINE_N="50"
+          PRE_H="250"
+          POST_H="250"
+          ALPHA="0.01"
+          LAGS="1-10"
+          MAXLAG="10"
+          BLOCK="25"
+          N_BOOT="800"
+          SEED="123"
+          C_MEAN_POST_MIN="0.1"
+
+          cat > "${OUTDIR}/params.txt" << EOF
+          k=${K}
+          m=${M}
+          baseline_n=${BASELINE_N}
+          pre_horizon=${PRE_H}
+          post_horizon=${POST_H}
+          alpha=${ALPHA}
+          lags=${LAGS}
+          maxlag=${MAXLAG}
+          block=${BLOCK}
+          n_boot=${N_BOOT}
+          seed=${SEED}
+          c_mean_post_min=${C_MEAN_POST_MIN}
+          time_mode=index
+          normalize=robust
+          control_mode=no_symbolic
+          EOF
+
+          set +e
+          python 04_Code/pipeline/run_real_data_demo.py                 --input 03_Data/real/pilot_cpi/real.csv                 --outdir "${OUTDIR}"                 --time-mode index                 --col-time date                 --col-O O --col-R R --col-I I --col-S S                 --normalize robust                 --control-mode no_symbolic                 --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                 2>&1 | tee "${OUTDIR}/run_real_data_demo.log"
+          rc_demo=${PIPESTATUS[0]}
+          echo "${rc_demo}" > "${OUTDIR}/rc_demo.txt"
+          if [ "${rc_demo}" -ne 0 ]; then
+            exit "${rc_demo}"
+          fi
+
+          python 04_Code/pipeline/tests_causaux.py                 --run-dir "${OUTDIR}"                 --alpha "${ALPHA}"                 --c-mean-post-min "${C_MEAN_POST_MIN}"                 --lags "${LAGS}"                 --maxlag "${MAXLAG}"                 --pre-horizon "${PRE_H}"                 --post-horizon "${POST_H}"                 --k "${K}" --m "${M}" --baseline-n "${BASELINE_N}"                 --block "${BLOCK}"                 --n-boot "${N_BOOT}"                 --seed "${SEED}"                 --pdf                 2>&1 | tee "${OUTDIR}/tests_causaux.log"
+          rc_causal=${PIPESTATUS[0]}
+          echo "${rc_causal}" > "${OUTDIR}/rc_causal.txt"
+          exit "${rc_causal}"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_data_long_cpi_monthly_${{ github.run_id }}
+          path: _ci_out/real_data_long/cpi_monthly/run_${{ github.run_id }}
+          if-no-files-found: warn
