@@ -1,5 +1,74 @@
 # Changelog
 
+## v1.3 (2026-02-22) — Verrou machine "full support" + conformance suite données réelles
+
+### A — Verrou "full_statistical_support" : Option B machine-enforced
+
+**Constat d'audit** : la correction de vocabulaire en v1.2 était un garde-fou éditorial
+(règle dans la docstring). Tant que `run_mode=smoke_ci`, rien ne bloquait mécaniquement
+l'émission de "full support" en rapport. Un verrou calculé manquait.
+
+**Choix retenu : Option B** (gate machine, pas seulement convention).
+
+**Implémentation** (`analyse_verdicts_canonical.py` — réécrit) :
+
+Nouveau `_run_full_validation_gate()` : pour chaque test statistique (T1, T4–T8),
+lit `tables/verdict.json` ou `summary.json` et vérifie :
+1. Les 4 booléens du triplet **présents ET True** : `p_ok`, `ci_ok`, `sesoi_ok`, `power_ok`
+2. **N ≥ 50** par condition (champ : `n_runs_total` pour T1/T6, `n_runs` pour T8, `n` pour T4/T5 ; T7 exempt car B=500 >> 50)
+
+`_support_level(global_v, run_mode, gate_passed)` — nouveau troisième argument :
+
+| `run_mode` | `gate_passed` | `global` | → `support_level` |
+|-----------|--------------|---------|-------------------|
+| `full_statistical` | True | ACCEPT | `full_statistical_support` |
+| `full_statistical` | False | ACCEPT | `full_statistical_gates_failed` |
+| `smoke_ci` | (any) | ACCEPT | `smoke_ci_accept` |
+| (any) | (any) | REJECT | `rejected` |
+| (any) | (any) | INDETERMINATE | `inconclusive` |
+
+`global_verdict.json` contient désormais :
+- `full_validation_gate` : résultat détaillé par test (passed, reason si échec)
+- `forbidden_report_labels` : liste des labels interdits pour ce run spécifique
+  (ex. `["full support", "full empirical support", "full_statistical_support"]` pour smoke_ci)
+
+**Tests T2/T3** : exemptés du gate (test_type=fixed_data, n=1 par construction protocolaire).
+**Test T7** : exempt du check N (B=500 bootstrap >> N_MIN par construction).
+
+### B — Conformance suite données réelles
+
+**Constat** : `run_real_data_canonical_suite.py` utilisait une règle de verdict global
+non-protocolaire (≥6/8 ACCEPT → ACCEPT) divergeant de `analyse_verdicts_canonical.py`.
+
+**Correctif** (`run_real_data_canonical_suite.py`) :
+- Arbre décisionnel aligné : `_aggregate_core()` + `_aggregate_symbolic()` + `_aggregate_global()`
+  identiques à `analyse_verdicts_canonical.py` (DO NOT DIVERGE)
+- `_support_level_real()` : vocabulaire contrôlé pour la suite réelle
+  - `"real_data_canonical_support"` sur ACCEPT (jamais `"full_statistical_support"`)
+  - `"rejected"` / `"inconclusive"` sinon
+- `global_summary.json` contient `run_mode="real_data_canonical"`, `core_verdict`,
+  `symbolic_verdict`, `support_level`, `support_level_note`
+
+**Commentaire de pre-observation supprimé** de `real_data_canonical_T1_T8.yml`
+(commentaire hardcodant "GLOBAL VERDICT: ACCEPT (7/8 ...)" incompatible avec
+la discipline de pré-enregistrement).
+
+### C — Clarification vocabulaire statistique vs synthétique
+
+**Question** : "statistical c'est pas synthétique ?"
+
+Réponse documentée dans le commit et ce changelog :
+- `run_all_tests.py` T1–T8 : **simulation synthétique** (`ORICConfig` / `run_oric()`)
+  → `test_type="statistical"` signifie "tests statistiques sur tirages simulés", PAS données réelles
+- `run_real_data_canonical_suite.py` T1–T8 : **données observées réelles**
+  → Granger, VAR, cointégration, bootstrap CI sur vraies séries temporelles
+
+Pour la confirmation canonique protocolaire maximale, les DEUX suites doivent ACCEPT :
+1. Suite synthétique → `full_statistical_support`
+2. Suite données réelles → `real_data_canonical_support`
+
+---
+
 ## v1.2 (2026-02-22) — Correctifs audit structurel
 
 ### 6.1 — Seeds : correction de l'assertion "independent seeds" (faux)
