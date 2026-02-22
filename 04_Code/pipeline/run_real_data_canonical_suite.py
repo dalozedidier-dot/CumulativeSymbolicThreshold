@@ -212,20 +212,71 @@ def _map_causal_verdicts(
 
 
 # ---------------------------------------------------------------------------
-# Aggregate verdict
+# Canonical decision tree (mirrors analyse_verdicts_canonical.py — DO NOT DIVERGE)
 # ---------------------------------------------------------------------------
 
-def _global_verdict(t_verdicts: dict[str, str]) -> str:
-    vals = list(t_verdicts.values())
-    n_accept = vals.count("ACCEPT")
-    n_reject = vals.count("REJECT")
-    # Hard falsification: ≥ 2 REJECT → REJECT
-    if n_reject >= 2:
+# Maps the long test IDs used in this file → canonical T-keys
+_LONG_TO_SHORT: dict[str, str] = {
+    "T1_ori_core":             "T1",
+    "T2_threshold_detection":  "T2",
+    "T3_robustness":           "T3",
+    "T4_granger_S_to_C":       "T4",
+    "T5_injection_mean_shift":  "T5",
+    "T6_cointegration_C_S":    "T6",
+    "T7_var_S_to_C":           "T7",
+    "T8_C_stable_post":        "T8",
+}
+
+
+def _aggregate_core(v: dict[str, str]) -> str:
+    """Core ORI (T1,T2,T3): ACCEPT if all three ACCEPT, or T3 INDETERMINATE (low power on short series)."""
+    t1 = v.get("T1", "INDETERMINATE")
+    t2 = v.get("T2", "INDETERMINATE")
+    t3 = v.get("T3", "INDETERMINATE")
+    if "REJECT" in (t1, t2, t3):
         return "REJECT"
-    # Strong confirmation: ≥ 6 ACCEPT out of 8 and 0 REJECT
-    if n_accept >= 6 and n_reject == 0:
+    if t1 == "ACCEPT" and t2 == "ACCEPT" and t3 == "ACCEPT":
+        return "ACCEPT"
+    # T3 INDETERMINATE tolerated on real/short series (analogous to low-power branch)
+    if t1 == "ACCEPT" and t2 == "ACCEPT" and t3 == "INDETERMINATE":
         return "ACCEPT"
     return "INDETERMINATE"
+
+
+def _aggregate_symbolic(v: dict[str, str]) -> str:
+    """Symbolic (T4,T5,T6,T7): ACCEPT if T4 ACCEPT AND at least one of T5/T6/T7 ACCEPT."""
+    t4, t5 = v.get("T4", "INDETERMINATE"), v.get("T5", "INDETERMINATE")
+    t6, t7 = v.get("T6", "INDETERMINATE"), v.get("T7", "INDETERMINATE")
+    if "REJECT" in (t4, t5, t6, t7):
+        return "REJECT"
+    if t4 == "ACCEPT" and "ACCEPT" in (t5, t6, t7):
+        return "ACCEPT"
+    return "INDETERMINATE"
+
+
+def _aggregate_global(core: str, symbolic: str) -> str:
+    """Global: ACCEPT if core AND symbolic both ACCEPT."""
+    if core == "REJECT" or symbolic == "REJECT":
+        return "REJECT"
+    if core == "ACCEPT" and symbolic == "ACCEPT":
+        return "ACCEPT"
+    return "INDETERMINATE"
+
+
+def _support_level_real(global_v: str) -> str:
+    """Controlled vocabulary for real-data canonical suite.
+
+    'full_statistical_support' is NEVER emitted here — that label requires the
+    synthetic simulation suite (run_all_tests.py) with run_mode=full_statistical
+    and n>=50 per condition.  Real observed data confirmation uses its own token.
+    Do NOT substitute 'full support' or 'full empirical support' — those are
+    editorial claims, not calculated outputs.
+    """
+    if global_v == "ACCEPT":
+        return "real_data_canonical_support"
+    if global_v == "REJECT":
+        return "rejected"
+    return "inconclusive"
 
 
 # ---------------------------------------------------------------------------
@@ -402,7 +453,13 @@ def main() -> int:
     }
 
     t_verdicts_simple = {k: v for k, (v, _) in all_t.items()}
-    global_v = _global_verdict(t_verdicts_simple)
+
+    # Canonical decision tree: core (T1/T2/T3) then symbolic (T4/T5/T6/T7)
+    short_v = {_LONG_TO_SHORT.get(k, k): v for k, v in t_verdicts_simple.items()}
+    core_v = _aggregate_core(short_v)
+    symbolic_v = _aggregate_symbolic(short_v)
+    global_v = _aggregate_global(core_v, symbolic_v)
+    support = _support_level_real(global_v)
 
     # ------------------------------------------------------------------
     # Write outputs (canonical convention)
@@ -416,9 +473,20 @@ def main() -> int:
     pd.DataFrame(rows).to_csv(tabdir / "summary.csv", index=False)
 
     global_summary = {
+        "run_mode": "real_data_canonical",
         "input_csv": str(input_path),
-        "global_verdict": global_v,
         "alpha": float(args.alpha),
+        "core_verdict": core_v,
+        "symbolic_verdict": symbolic_v,
+        "global_verdict": global_v,
+        "support_level": support,
+        "support_level_note": (
+            "'real_data_canonical_support' is the only ACCEPT label for this suite. "
+            "'full_statistical_support' requires the synthetic simulation suite "
+            "(run_all_tests.py, run_mode=full_statistical, n>=50). "
+            "Do NOT replace either label with 'full support' or 'full empirical support' "
+            "— those are editorial claims, not calculated outputs."
+        ),
         "tests": {k: {"verdict": v, "details": d} for k, (v, d) in all_t.items()},
     }
     (tabdir / "global_summary.json").write_text(
@@ -435,7 +503,10 @@ def main() -> int:
         mark = "✓" if v == "ACCEPT" else ("✗" if v == "REJECT" else "?")
         print(f"  {mark} {test_id:<40} {v}")
     print(f"{'='*60}")
-    print(f"  GLOBAL VERDICT: {global_v}")
+    print(f"  CORE (T1+T2+T3):     {core_v}")
+    print(f"  SYMBOLIC (T4+T5+T6+T7): {symbolic_v}")
+    print(f"  GLOBAL VERDICT:      {global_v}")
+    print(f"  SUPPORT LEVEL:       {support}")
     print(f"{'='*60}\n")
 
     return 0
