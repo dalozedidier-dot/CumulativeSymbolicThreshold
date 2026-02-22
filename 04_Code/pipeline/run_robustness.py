@@ -163,6 +163,7 @@ def main() -> int:
         "verdict": verdict,
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    (outdir / "verdict.txt").write_text(verdict + "\n", encoding="utf-8")
 
     (tabdir / "verdict.json").write_text(
         json.dumps(

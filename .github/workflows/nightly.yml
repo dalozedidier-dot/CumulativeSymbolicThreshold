@@ -1,9 +1,20 @@
-name: Nightly — Full Statistical Canonical Suite
+name: Nightly — Full Canonical Proof (Synthetic + Real Data)
 
-# Runs the canonical T1–T8 suite WITHOUT --fast: n=60 per statistical test.
-# run_mode = "full_statistical" (all statistical tests N >= N_min=50).
-# This is the authoritative nightly validation run.
-# The triplet (p < 0.01 + CI 99% + SESOI + power gate >= 0.70) is fully enforced.
+# Authoritative nightly validation — two independent proof dimensions:
+#
+#   1. SYNTHETIC SIMULATION SUITE (run_all_tests.py, no --fast)
+#      run_mode = "full_statistical"  (n=60 per statistical test >= N_min=50)
+#      Triplet enforced: p < 0.01 + CI 99% + SESOI + power gate >= 0.70
+#      Gate: support_level = "full_statistical_support" ONLY if all triplet gates pass
+#
+#   2. REAL DATA CANONICAL SUITE (run_real_data_canonical_suite.py)
+#      run_mode = "real_data_canonical"
+#      Tests: Granger S→ΔC, VAR S→ΔC, cointegration C-S, bootstrap CI, threshold detection
+#      Gate: support_level = "real_data_canonical_support" ONLY if CORE+SYMBOLIC both ACCEPT
+#
+# Both suites must ACCEPT for the strongest canonical claim.
+# Neither is a substitute for the other.
+# "full support" / "full empirical support" are NEVER valid report labels.
 
 on:
   schedule:
@@ -15,9 +26,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  nightly_full:
+  # ── JOB 1: Synthetic simulation suite (full_statistical) ────────────────────
+  synthetic_full:
+    name: "Synthetic — full_statistical (n=60)"
     runs-on: ubuntu-latest
-    timeout-minutes: 90   # n=60 replications per test; 6 statistical tests → allow time
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -33,40 +46,157 @@ jobs:
         run: |
           set -e
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install \
-            "numpy>=1.26" \
-            "pandas>=2.0" \
-            "matplotlib>=3.8" \
-            "scipy>=1.11" \
-            "statsmodels>=0.14" \
-            "pytest>=8.0"
-          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt
           elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
-      - name: Log environment
-        run: |
-          mkdir -p _ci_out
-          date -u | tee _ci_out/run_utc.txt
-          python -V | tee _ci_out/python_version.txt
-          pip list | tee _ci_out/pip_list.txt
-
-      - name: Run canonical suite (full_statistical — no fast)
+      - name: Run synthetic canonical suite (full_statistical)
         run: |
           set -eo pipefail
+          mkdir -p _ci_out/synthetic
           # No --fast → full_statistical: n=60 per statistical test (>= N_min=50).
-          # Triplet enforced: p < 0.01 + CI 99% + SESOI + power gate >= 0.70.
+          # Triplet enforced: p + CI 99% + SESOI + power gate.
+          # Gate checked by analyse_verdicts_canonical.py → support_level in global_verdict.json
           PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
-            --outdir _ci_out/nightly_run \
-            2>&1 | tee _ci_out/run_all_tests.log
+            --outdir _ci_out/synthetic/canonical_tests \
+            2>&1 | tee _ci_out/synthetic/run_all_tests.log
 
-          if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
+          SYNTHETIC_SUPPORT=$(python -c "
+          import json, sys
+          p = '_ci_out/synthetic/canonical_tests'
+          gvj = __import__('pathlib').Path(p)
+          for name in ['global_verdict.json']:
+              f = gvj / name
+              if f.exists():
+                  d = json.loads(f.read_text())
+                  print(d.get('support_level', 'NOT_FOUND'))
+                  sys.exit(0)
+          # check in subdirs
+          import glob
+          for f in glob.glob(f'{p}/**/global_verdict.json', recursive=True):
+              d = json.loads(open(f).read())
+              print(d.get('support_level', 'NOT_FOUND'))
+              sys.exit(0)
+          print('NOT_FOUND')
+          " 2>/dev/null || echo "NOT_FOUND")
 
-      - name: Upload artifacts
+          echo "synthetic_support_level=${SYNTHETIC_SUPPORT}" >> "$GITHUB_OUTPUT"
+          echo "Synthetic support_level: ${SYNTHETIC_SUPPORT}"
+        id: synthetic_run
+
+      - name: Upload synthetic artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nightly_canonical_${{ github.run_id }}
-          path: _ci_out
+          name: nightly_synthetic_${{ github.run_id }}
+          path: _ci_out/synthetic
           retention-days: 30
           if-no-files-found: warn
+
+  # ── JOB 2: Real data canonical suite (FRED monthly) ────────────────────────
+  real_data_fred:
+    name: "Real Data FRED — real_data_canonical"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+
+      - name: Check real data present
+        run: |
+          if [ ! -f "03_Data/real/fred_monthly/real.csv" ]; then
+            echo "ERROR: 03_Data/real/fred_monthly/real.csv not found"
+            exit 1
+          fi
+          wc -l 03_Data/real/fred_monthly/real.csv
+          head -1 03_Data/real/fred_monthly/real.csv
+
+      - name: Run real data canonical suite (FRED monthly)
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/fred_monthly
+
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_canonical_suite.py \
+            --input  03_Data/real/fred_monthly/real.csv \
+            --outdir _ci_out/real/fred_monthly \
+            --col-time date \
+            --time-mode index \
+            --col-O O \
+            --col-R R \
+            --col-I I \
+            --col-demand demand \
+            --col-S S \
+            --auto-scale \
+            --normalize robust \
+            --alpha 0.01 \
+            --lags 1-6 \
+            --pre-horizon 120 \
+            --post-horizon 120 \
+            --baseline-n 60 \
+            --k 2.5 \
+            --m 3 \
+            2>&1 | tee _ci_out/real/fred_monthly/suite.log
+
+          VERDICT=$(cat _ci_out/real/fred_monthly/verdict.txt 2>/dev/null || echo "UNKNOWN")
+          SUPPORT=$(python -c "
+          import json
+          f = '_ci_out/real/fred_monthly/tables/global_summary.json'
+          d = json.loads(open(f).read())
+          print(d.get('support_level', 'NOT_FOUND'))
+          " 2>/dev/null || echo "NOT_FOUND")
+
+          echo "real_verdict=${VERDICT}" >> "$GITHUB_OUTPUT"
+          echo "real_support_level=${SUPPORT}" >> "$GITHUB_OUTPUT"
+          echo "Real data verdict: ${VERDICT}   support_level: ${SUPPORT}"
+        id: real_run
+
+      - name: Upload real data artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly_real_fred_${{ github.run_id }}
+          path: _ci_out/real/fred_monthly
+          retention-days: 30
+          if-no-files-found: warn
+
+  # ── JOB 3: Summary — dual canonical proof ───────────────────────────────────
+  dual_proof_summary:
+    name: "Dual Canonical Proof Summary"
+    needs: [synthetic_full, real_data_fred]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Print dual proof summary
+        run: |
+          echo "=========================================="
+          echo "ORI-C Nightly — Dual Canonical Proof"
+          echo "=========================================="
+          echo ""
+          echo "SYNTHETIC SIMULATION SUITE"
+          echo "  run_mode: full_statistical (n=60 per test)"
+          echo "  support_level: ${{ needs.synthetic_full.outputs.synthetic_support_level || 'see artifact' }}"
+          echo ""
+          echo "REAL DATA CANONICAL SUITE (FRED monthly)"
+          echo "  run_mode: real_data_canonical"
+          echo "  support_level: ${{ needs.real_data_fred.outputs.real_support_level || 'see artifact' }}"
+          echo ""
+          echo "FORBIDDEN IN ANY REPORT (regardless of verdict):"
+          echo "  - 'full support'"
+          echo "  - 'full empirical support'"
+          echo "  Use ONLY the machine-computed support_level tokens above."
+          echo "=========================================="
