@@ -75,7 +75,7 @@ def main() -> int:
     else:
         s_decay = float(args.s_decay)
 
-    # Unpaired design: independent seeds for rich vs poor.
+    # Unpaired design: distinct seeds for rich vs poor.
     # With demand_noise > 0, V varies per seed → C_end has real variance across seeds.
     # A paired design (same seed for both) would cancel all stochasticity, making
     # diff_rich_minus_poor constant and the t-test degenerate (std=0).
@@ -83,7 +83,7 @@ def main() -> int:
     rows = []
     for i in range(n):
         seed_rich = int(args.seed) + i
-        seed_poor = int(args.seed) + n + i  # independent seeds → genuine replication
+        seed_poor = int(args.seed) + n + i  # distinct seeds → genuine replication
 
         cfg_rich = ORICConfig(
             seed=seed_rich,

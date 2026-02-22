@@ -25,7 +25,7 @@ SESOI are fixed ex ante and stable across runs.
 Baseline is declared ex ante. Default baseline is the minimal condition for ORI and S, unless another baseline is explicitly preregistered.
 
 ## 3. Independence and minimal sample size
-- One run equals one independent observation. Independence is enforced through distinct seeds and full episode resets.
+- One run equals one separate observation. Separation is enforced through distinct seeds and full episode resets.
 - Minimal N per condition: N_min = 50 valid runs.
 
 ## 4. Quality gate

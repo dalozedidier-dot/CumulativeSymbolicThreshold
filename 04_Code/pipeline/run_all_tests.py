@@ -191,7 +191,7 @@ def main() -> int:
     })
 
     # T4 — Symbolic: S-rich vs S-poor on C_end
-    # test_type=statistical: N unpaired runs, within-test independent seeds (per-condition offset).
+    # test_type=statistical: N unpaired runs, within-test distinct seeds (per-condition offset).
     tests.append({
         "id": "T4_symbolic_S_rich_vs_poor_on_C",
         "script": scripts_dir / "run_symbolic_T4_s_rich_poor.py",
@@ -207,7 +207,7 @@ def main() -> int:
     })
 
     # T5 — Symbolic injection effect on C_end
-    # test_type=statistical: N unpaired runs, within-test independent seeds.
+    # test_type=statistical: N unpaired runs, within-test distinct seeds.
     tests.append({
         "id": "T5_symbolic_injection_effect_on_C",
         "script": scripts_dir / "run_symbolic_T5_injection.py",
