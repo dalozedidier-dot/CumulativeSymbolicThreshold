@@ -1,19 +1,29 @@
-name: Nightly Canonical Run
+name: Nightly — Full Statistical Canonical Suite
+
+# Runs the canonical T1–T8 suite WITHOUT --fast: n=60 per statistical test.
+# run_mode = "full_statistical" (all statistical tests N >= N_min=50).
+# This is the authoritative nightly validation run.
+# The triplet (p < 0.01 + CI 99% + SESOI + power gate >= 0.70) is fully enforced.
 
 on:
   schedule:
-    - cron: "15 2 * * *"
+    - cron: "15 2 * * *"   # 02:15 UTC daily
   workflow_dispatch:
 
+concurrency:
+  group: nightly-canonical
+  cancel-in-progress: false
+
 jobs:
-  nightly:
+  nightly_full:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90   # n=60 replications per test; 6 statistical tests → allow time
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -22,33 +32,41 @@ jobs:
       - name: Install dependencies
         run: |
           set -e
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f 04_Code/requirements.txt ]; then pip install -r 04_Code/requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e .; fi
-          pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install \
+            "numpy>=1.26" \
+            "pandas>=2.0" \
+            "matplotlib>=3.8" \
+            "scipy>=1.11" \
+            "statsmodels>=0.14" \
+            "pytest>=8.0"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
-      - name: Run canonical suite
+      - name: Log environment
         run: |
-          set -eo pipefail
           mkdir -p _ci_out
           date -u | tee _ci_out/run_utc.txt
-          if [ -f run_all_tests.py ]; then
-            python run_all_tests.py 2>&1 | tee _ci_out/run.log
-          elif [ -f 04_Code/pipeline/run_all_tests.py ]; then
-            python 04_Code/pipeline/run_all_tests.py 2>&1 | tee _ci_out/run.log
-          else
-            echo "No run_all_tests.py found." | tee _ci_out/run.log
-            exit 1
-          fi
-          if [ -d 05_Results ]; then
-            cp -R 05_Results _ci_out/05_Results
-          fi
+          python -V | tee _ci_out/python_version.txt
+          pip list | tee _ci_out/pip_list.txt
+
+      - name: Run canonical suite (full_statistical — no fast)
+        run: |
+          set -eo pipefail
+          # No --fast → full_statistical: n=60 per statistical test (>= N_min=50).
+          # Triplet enforced: p < 0.01 + CI 99% + SESOI + power gate >= 0.70.
+          PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
+            --outdir _ci_out/nightly_run \
+            2>&1 | tee _ci_out/run_all_tests.log
+
+          if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: nightly_artifacts_${{ github.run_id }}
+          name: nightly_canonical_${{ github.run_id }}
           path: _ci_out
+          retention-days: 30
           if-no-files-found: warn
