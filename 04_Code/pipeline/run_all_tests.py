@@ -9,29 +9,38 @@ Design rule (minimal, cadre intact)
 This runner
 - creates a timestamped run directory under --outdir
 - runs each test into a dedicated subfolder
-- writes global_summary.csv + manifest.json (with full seed table and run_mode)
+- writes global_summary.csv + seed_table.csv + manifest.json (full audit trail)
+- calls analyse_verdicts_canonical.py to produce a run_mode-aware global verdict
 
-SEED STRATEGY (accurate description, non-negotiable)
-- All per-test seeds are deterministic OFFSETS of the single --seed base (default 1234).
-- Seeds are NOT statistically independent between tests; they share the same PRNG lineage.
-- The offset values are fixed ex ante in the source:
-    T1 seed = base      (offset 0)
-    T2 seed = base      (offset 0)
-    T3 seed = base      (offset 0)
-    T4 seed = base      (offset 0)
-    T5 seed = base + 17
-    T6 seed = base + 3
-    T7 seed = base + 99
-    T8 seed = base + 5
-- The manifest.json writes the exact seed per test automatically; do NOT declare seeds manually.
+SEED STRATEGY (accurate, non-negotiable)
+- Each test receives a DISTINCT seed = base_seed + unique_offset (offsets 0–7, ex ante fixed).
+- "distinct" = no two tests share the same seed numeric value.
+- "independent" is NOT asserted: seeds share the same PRNG lineage (offsets of one base).
+  Statistical independence of RNG streams is NOT claimed.
+- Offsets are fixed here and verified by 04_Code/tests/test_seed_uniqueness.py (CI check).
+- base_seed default = 1234; change via --seed.
+
+  Offset table (ex ante, immutable):
+    T1  seed = base + 0   (default 1234)
+    T2  seed = base + 1   (default 1235)
+    T3  seed = base + 2   (default 1236)
+    T4  seed = base + 3   (default 1237)
+    T5  seed = base + 4   (default 1238)
+    T6  seed = base + 5   (default 1239)
+    T7  seed = base + 6   (default 1240)
+    T8  seed = base + 7   (default 1241)
+
+  Invariant: len(unique(offsets)) == 8.  Verified by CI test.
 
 RUN MODE
-- Tests using --n-runs 1 (T1, T6) are single-simulation deterministic runs (smoke).
-- Tests using --n N (T4, T5, T7) run N independent paired/unpaired simulations
-  (independent seeds within each test via per-condition offset).
-- A run where any test uses n_runs=1 is classified "smoke_ci", not "full_statistical".
-- "smoke_ci" output does not satisfy the triplet requirement (p + CI + SESOI + power gate)
-  of DECISION_RULES v1/v2. Do not claim "full empirical support" for smoke_ci runs.
+- Statistical tests (T1,T4,T5,T6,T7,T8): require N >= N_min=50 for "full_statistical".
+- Fixed-data tests (T2,T3): operate on a fixed CSV; n_runs=1 is inherent, not smoke.
+- run_mode="full_statistical" when all statistical tests have n_runs >= 50 (non-fast).
+- run_mode="smoke_ci"         when any statistical test has n_runs < 50 (--fast).
+- "full_statistical_support" is ONLY output by analyse_verdicts_canonical.py when:
+    (a) run_mode == "full_statistical"
+    (b) all statistical tests produce ACCEPT with fully-conformant verdict.json
+    (c) triplet (p + CI99% + SESOI + power gate) satisfied in every verdict.json
 
 Expected scripts
 - 04_Code/pipeline/run_ori_c_demo.py
@@ -53,6 +62,24 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+
+
+def _seed_offsets() -> list[dict]:
+    """Return the fixed per-test seed offsets (ex ante, immutable).
+
+    This is a pure data structure — no side effects, importable by tests.
+    Invariant enforced by test_seed_uniqueness.py: all offsets must be distinct.
+    """
+    return [
+        {"test_id": "T1_noyau_demand_shock",            "offset": 0, "test_type": "statistical"},
+        {"test_id": "T2_threshold_demo_on_dataset",     "offset": 1, "test_type": "fixed_data"},
+        {"test_id": "T3_robustness_on_dataset",         "offset": 2, "test_type": "fixed_data"},
+        {"test_id": "T4_symbolic_S_rich_vs_poor_on_C",  "offset": 3, "test_type": "statistical"},
+        {"test_id": "T5_symbolic_injection_effect_on_C","offset": 4, "test_type": "statistical"},
+        {"test_id": "T6_symbolic_cut_on_C",             "offset": 5, "test_type": "statistical"},
+        {"test_id": "T7_progressive_S_to_C_threshold",  "offset": 6, "test_type": "statistical"},
+        {"test_id": "T8_reinjection_recovery_on_C",     "offset": 7, "test_type": "statistical"},
+    ]
 
 
 def _ts() -> str:
@@ -107,177 +134,149 @@ def main() -> int:
 
     tests: List[Dict] = []
 
-    # Seed offsets are fixed ex ante — do NOT change post-observation.
-    # All seeds are deterministic offsets of args.seed (base).
-    # They are NOT statistically independent between tests.
-    _seed = args.seed  # base seed (default 1234)
+    # Build test list from the canonical offset table.
+    # Offsets are ex ante fixed in _seed_offsets(); do NOT change post-observation.
+    _base = args.seed  # base seed (default 1234)
+    _offsets = {d["test_id"]: d for d in _seed_offsets()}
 
-    # ------------------------
-    # T1 Noyau ORI: demand shock -> Sigma>0 -> V and C change
-    # test_type=statistical: N>=50 replications → between-run triplet test (p+CI99%+SESOI+power)
-    # ------------------------
-    tests.append(
-        {
-            "id": "T1_noyau_demand_shock",
-            "script": scripts_dir / "run_ori_c_demo.py",
-            "seed_used": _seed,           # = base + 0
-            "seed_formula": "base+0",
-            "n_runs_used": n_symbolic,
-            "test_type": "statistical",
-            "args": [
-                "--seed-base", str(_seed),
-                "--n-runs", str(n_symbolic),
-                "--n-steps", str(t_steps),
-                "--t0", str(t0),
-                "--intervention", "demand_shock",
-                "--intervention-duration", str(int(t_steps * 0.4)),
-                "--sigma-star", "0",
-                "--tau", "0",
-            ],
-        }
-    )
+    def _seed(test_id: str) -> int:
+        return _base + _offsets[test_id]["offset"]
 
-    # ------------------------
-    # T2 Threshold demo on a dataset that contains a transition
-    # test_type=fixed_data: operates on a fixed CSV; n_runs=1 is inherent (deterministic).
-    # Not subject to N_min=50 requirement (not a simulation-based inference test).
-    # ------------------------
-    tests.append(
-        {
-            "id": "T2_threshold_demo_on_dataset",
-            "script": scripts_dir / "run_synthetic_demo.py",
-            "seed_used": _seed,           # = base + 0
-            "seed_formula": "base+0",
-            "n_runs_used": 1,
-            "test_type": "fixed_data",
-            "args": ["--input", str(in_path), "--seed", str(_seed)],
-        }
-    )
+    def _sfmt(test_id: str) -> str:
+        return f"base+{_offsets[test_id]['offset']}"
 
-    # ------------------------
-    # T3 Robustness on the same dataset
+    # T1 — Noyau ORI: demand shock -> Sigma>0 -> V and C change
+    # test_type=statistical: N replications → between-run triplet (p+CI99%+SESOI+power)
+    tests.append({
+        "id": "T1_noyau_demand_shock",
+        "script": scripts_dir / "run_ori_c_demo.py",
+        "seed_used": _seed("T1_noyau_demand_shock"),
+        "seed_formula": _sfmt("T1_noyau_demand_shock"),
+        "n_runs_used": n_symbolic,
+        "test_type": "statistical",
+        "args": [
+            "--seed-base", str(_seed("T1_noyau_demand_shock")),
+            "--n-runs", str(n_symbolic),
+            "--n-steps", str(t_steps),
+            "--t0", str(t0),
+            "--intervention", "demand_shock",
+            "--intervention-duration", str(int(t_steps * 0.4)),
+            "--sigma-star", "0",
+            "--tau", "0",
+        ],
+    })
+
+    # T2 — Threshold demo on fixed transition dataset
+    # test_type=fixed_data: deterministic on fixed CSV; n_runs=1 is inherent, not smoke.
+    tests.append({
+        "id": "T2_threshold_demo_on_dataset",
+        "script": scripts_dir / "run_synthetic_demo.py",
+        "seed_used": _seed("T2_threshold_demo_on_dataset"),
+        "seed_formula": _sfmt("T2_threshold_demo_on_dataset"),
+        "n_runs_used": 1,
+        "test_type": "fixed_data",
+        "args": ["--input", str(in_path), "--seed", str(_seed("T2_threshold_demo_on_dataset"))],
+    })
+
+    # T3 — Robustness on the same fixed dataset
     # test_type=fixed_data: same reason as T2.
-    # ------------------------
-    tests.append(
-        {
-            "id": "T3_robustness_on_dataset",
-            "script": scripts_dir / "run_robustness.py",
-            "seed_used": _seed,           # = base + 0
-            "seed_formula": "base+0",
-            "n_runs_used": 1,
-            "test_type": "fixed_data",
-            "args": ["--input", str(in_path), "--seed", str(_seed)],
-        }
-    )
+    tests.append({
+        "id": "T3_robustness_on_dataset",
+        "script": scripts_dir / "run_robustness.py",
+        "seed_used": _seed("T3_robustness_on_dataset"),
+        "seed_formula": _sfmt("T3_robustness_on_dataset"),
+        "n_runs_used": 1,
+        "test_type": "fixed_data",
+        "args": ["--input", str(in_path), "--seed", str(_seed("T3_robustness_on_dataset"))],
+    })
 
-    # ------------------------
-    # T4 Symbolic: S rich vs poor on C
-    # test_type=statistical: N paired runs, within-test independent seeds via per-condition offset.
-    # ------------------------
-    tests.append(
-        {
-            "id": "T4_symbolic_S_rich_vs_poor_on_C",
-            "script": scripts_dir / "run_symbolic_T4_s_rich_poor.py",
-            "seed_used": _seed,           # = base + 0
-            "seed_formula": "base+0",
-            "n_runs_used": n_symbolic,
-            "test_type": "statistical",
-            "args": ["--n", str(n_symbolic), "--seed", str(_seed), "--t-steps", str(t_steps)],
-        }
-    )
+    # T4 — Symbolic: S-rich vs S-poor on C_end
+    # test_type=statistical: N unpaired runs, within-test independent seeds (per-condition offset).
+    tests.append({
+        "id": "T4_symbolic_S_rich_vs_poor_on_C",
+        "script": scripts_dir / "run_symbolic_T4_s_rich_poor.py",
+        "seed_used": _seed("T4_symbolic_S_rich_vs_poor_on_C"),
+        "seed_formula": _sfmt("T4_symbolic_S_rich_vs_poor_on_C"),
+        "n_runs_used": n_symbolic,
+        "test_type": "statistical",
+        "args": [
+            "--n", str(n_symbolic),
+            "--seed", str(_seed("T4_symbolic_S_rich_vs_poor_on_C")),
+            "--t-steps", str(t_steps),
+        ],
+    })
 
-    # ------------------------
-    # T5 Symbolic injection effect on C
-    # test_type=statistical: N paired runs, within-test independent seeds.
-    # Offset +17 to avoid seed collision with T1-T4 at the base level.
-    # ------------------------
-    _seed_t5 = _seed + 17
-    tests.append(
-        {
-            "id": "T5_symbolic_injection_effect_on_C",
-            "script": scripts_dir / "run_symbolic_T5_injection.py",
-            "seed_used": _seed_t5,        # = base + 17
-            "seed_formula": "base+17",
-            "n_runs_used": n_symbolic,
-            "test_type": "statistical",
-            "args": [
-                "--n", str(n_symbolic),
-                "--seed", str(_seed_t5),
-                "--t-steps", str(t_steps),
-                "--t0", str(int(t_steps * 0.45)),
-            ],
-        }
-    )
+    # T5 — Symbolic injection effect on C_end
+    # test_type=statistical: N unpaired runs, within-test independent seeds.
+    tests.append({
+        "id": "T5_symbolic_injection_effect_on_C",
+        "script": scripts_dir / "run_symbolic_T5_injection.py",
+        "seed_used": _seed("T5_symbolic_injection_effect_on_C"),
+        "seed_formula": _sfmt("T5_symbolic_injection_effect_on_C"),
+        "n_runs_used": n_symbolic,
+        "test_type": "statistical",
+        "args": [
+            "--n", str(n_symbolic),
+            "--seed", str(_seed("T5_symbolic_injection_effect_on_C")),
+            "--t-steps", str(t_steps),
+            "--t0", str(int(t_steps * 0.45)),
+        ],
+    })
 
-    # ------------------------
-    # T6 Symbolic cut on C (via ORI-C)
-    # test_type=statistical: N>=50 replications → between-run triplet test.
-    # Expected direction: NEGATIVE (C should collapse after symbolic cut).
-    # ------------------------
-    _seed_t6 = _seed + 3
-    tests.append(
-        {
-            "id": "T6_symbolic_cut_on_C",
-            "script": scripts_dir / "run_ori_c_demo.py",
-            "seed_used": _seed_t6,        # = base + 3
-            "seed_formula": "base+3",
-            "n_runs_used": n_symbolic,
-            "test_type": "statistical",
-            "args": [
-                "--seed-base", str(_seed_t6),
-                "--n-runs", str(n_symbolic),
-                "--n-steps", str(t_steps),
-                "--t0", str(int(t_steps * 0.45)),
-                "--intervention", "symbolic_cut",
-                "--intervention-duration", str(int(t_steps * 0.25)),
-                "--sigma-star", "0",
-                "--tau", "0",
-            ],
-        }
-    )
+    # T6 — Symbolic cut on C (expected direction: NEGATIVE)
+    # test_type=statistical: N replications → between-run triplet test.
+    tests.append({
+        "id": "T6_symbolic_cut_on_C",
+        "script": scripts_dir / "run_ori_c_demo.py",
+        "seed_used": _seed("T6_symbolic_cut_on_C"),
+        "seed_formula": _sfmt("T6_symbolic_cut_on_C"),
+        "n_runs_used": n_symbolic,
+        "test_type": "statistical",
+        "args": [
+            "--seed-base", str(_seed("T6_symbolic_cut_on_C")),
+            "--n-runs", str(n_symbolic),
+            "--n-steps", str(t_steps),
+            "--t0", str(int(t_steps * 0.45)),
+            "--intervention", "symbolic_cut",
+            "--intervention-duration", str(int(t_steps * 0.25)),
+            "--sigma-star", "0",
+            "--tau", "0",
+        ],
+    })
 
-    # ------------------------
-    # T7 Progressive sweep -> threshold detection on C_end(S)
-    # test_type=statistical: n_sweep >= N_min S0 levels.
-    # Offset +99 (large gap to avoid seed proximity to T1-T6).
-    # ------------------------
-    _seed_t7 = _seed + 99
-    tests.append(
-        {
-            "id": "T7_progressive_S_to_C_threshold",
-            "script": scripts_dir / "run_symbolic_T7_progressive_sweep.py",
-            "seed_used": _seed_t7,        # = base + 99
-            "seed_formula": "base+99",
-            "n_runs_used": n_sweep,
-            "test_type": "statistical",
-            "args": ["--n", str(n_sweep), "--seed", str(_seed_t7), "--t-steps", str(t_steps)],
-        }
-    )
+    # T7 — Progressive S0 sweep → threshold detection on C_end(S0)
+    # test_type=statistical: n_sweep S0 levels + bootstrap CI/power.
+    tests.append({
+        "id": "T7_progressive_S_to_C_threshold",
+        "script": scripts_dir / "run_symbolic_T7_progressive_sweep.py",
+        "seed_used": _seed("T7_progressive_S_to_C_threshold"),
+        "seed_formula": _sfmt("T7_progressive_S_to_C_threshold"),
+        "n_runs_used": n_sweep,
+        "test_type": "statistical",
+        "args": [
+            "--n", str(n_sweep),
+            "--seed", str(_seed("T7_progressive_S_to_C_threshold")),
+            "--t-steps", str(t_steps),
+        ],
+    })
 
-    # ------------------------
-    # T8 Reinjection recovery on C
-    # test_type=statistical: N>=50 replications → between-run triplet test on recovery slope.
-    # NOTE: T8 definition changed in v1.1 (dose-response → reinjection recovery).
-    #       Not included in DECISION_RULES v1/v2 formal aggregation (covers T1-T7).
-    # ------------------------
-    _seed_t8 = _seed + 5
-    tests.append(
-        {
-            "id": "T8_reinjection_recovery_on_C",
-            "script": scripts_dir / "run_reinjection_demo.py",
-            "seed_used": _seed_t8,        # = base + 5
-            "seed_formula": "base+5",
-            "n_runs_used": n_symbolic,
-            "test_type": "statistical",
-            "args": [
-                "--seed", str(_seed_t8),
-                "--n-runs", str(n_symbolic),
-                "--n-steps", str(t_steps),
-                "--intervention-point", str(int(t_steps * 0.35)),
-                "--reinjection-point", str(int(t_steps * 0.65)),
-            ],
-        }
-    )
+    # T8 — Reinjection recovery on C
+    # test_type=statistical: N replications → between-run triplet test on recovery slope.
+    tests.append({
+        "id": "T8_reinjection_recovery_on_C",
+        "script": scripts_dir / "run_reinjection_demo.py",
+        "seed_used": _seed("T8_reinjection_recovery_on_C"),
+        "seed_formula": _sfmt("T8_reinjection_recovery_on_C"),
+        "n_runs_used": n_symbolic,
+        "test_type": "statistical",
+        "args": [
+            "--seed", str(_seed("T8_reinjection_recovery_on_C")),
+            "--n-runs", str(n_symbolic),
+            "--n-steps", str(t_steps),
+            "--intervention-point", str(int(t_steps * 0.35)),
+            "--reinjection-point", str(int(t_steps * 0.65)),
+        ],
+    })
 
     # Determine run_mode before execution.
     # Classification is based on "statistical" tests only (test_type="statistical").
@@ -374,6 +373,16 @@ def main() -> int:
         "tests": rows,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    # Call aggregator: run_mode-aware global verdict (controlled vocabulary)
+    aggregator = scripts_dir / "analyse_verdicts_canonical.py"
+    if aggregator.exists():
+        agg_log = run_dir / "aggregator.log"
+        try:
+            _run_script(aggregator, run_dir, ["--run-dir", str(run_dir)], agg_log)
+        except Exception as exc:  # noqa: BLE001
+            # Aggregation failure must not abort the run; log it.
+            agg_log.write_text(f"Aggregator error: {exc}\n", encoding="utf-8")
 
     print(str(run_dir))
     return 0

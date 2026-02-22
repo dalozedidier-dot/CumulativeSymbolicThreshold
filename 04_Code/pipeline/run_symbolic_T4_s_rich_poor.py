@@ -131,6 +131,57 @@ def main() -> int:
     tstat, pval = stats.ttest_ind(c_rich, c_poor, alternative="greater")
     mean_diff = float(np.mean(c_rich) - np.mean(c_poor))
 
+    # --- Full triplet: p + CI 99% + SESOI + bootstrap power gate ---
+    n_r, n_p = len(c_rich), len(c_poor)
+    var_r = float(np.var(c_rich, ddof=1))
+    var_p = float(np.var(c_poor, ddof=1))
+    se_diff = float(np.sqrt(var_r / n_r + var_p / n_p))
+    # Welch-Satterthwaite degrees of freedom
+    df_w = (var_r / n_r + var_p / n_p) ** 2 / (
+        (var_r / n_r) ** 2 / (n_r - 1) + (var_p / n_p) ** 2 / (n_p - 1)
+    )
+    ci_low, ci_high = stats.t.interval(0.99, df=df_w, loc=mean_diff, scale=se_diff)
+
+    # SESOI: 0.30 × MAD of pooled within-group residuals (ex ante, PreregSpec.sesoi_c_robust_sd)
+    pooled_resid = np.concatenate([c_rich - np.mean(c_rich), c_poor - np.mean(c_poor)])
+    sesoi = 0.30 * float(stats.median_abs_deviation(pooled_resid, scale=1.0))
+
+    p_ok = float(pval) < 0.01
+    ci_ok = float(ci_low) > 0.0
+    sesoi_ok = mean_diff > sesoi
+
+    # Bootstrap power (B=500, seed-controlled)
+    rng = np.random.default_rng(int(args.seed))
+    B, rejections = 500, 0
+    for _ in range(B):
+        s_r = rng.choice(c_rich, size=n_r, replace=True)
+        s_p = rng.choice(c_poor, size=n_p, replace=True)
+        _, pb = stats.ttest_ind(s_r, s_p, alternative="greater")
+        if float(pb) < 0.01:
+            rejections += 1
+    power_est = rejections / B
+    power_ok = power_est >= 0.70
+
+    if not power_ok:
+        verdict_token = "INDETERMINATE"
+        rationale = f"Power gate: power={power_est:.3f} < 0.70. Increase N or effect size."
+    elif p_ok and ci_ok and sesoi_ok:
+        verdict_token = "ACCEPT"
+        rationale = (
+            f"Triplet: p={pval:.4f}<0.01, CI99%=[{ci_low:.4f},{ci_high:.4f}]>0, "
+            f"mean_diff={mean_diff:.4f}>SESOI={sesoi:.4f}, power={power_est:.3f}>=0.70."
+        )
+    else:
+        reasons = []
+        if not p_ok:
+            reasons.append(f"p={pval:.4f}>=0.01")
+        if not ci_ok:
+            reasons.append(f"CI99% lower={ci_low:.4f}<=0")
+        if not sesoi_ok:
+            reasons.append(f"mean_diff={mean_diff:.4f}<=SESOI={sesoi:.4f}")
+        verdict_token = "REJECT"
+        rationale = "Triplet failed: " + "; ".join(reasons)
+
     summary = {
         "n": n,
         "seed_base": int(args.seed),
@@ -143,16 +194,30 @@ def main() -> int:
         "mean_C_end_poor": float(np.mean(c_poor)),
         "mean_diff": mean_diff,
         "p_value": float(pval),
+        "ci_99_low": float(ci_low),
+        "ci_99_high": float(ci_high),
+        "sesoi": sesoi,
+        "p_ok": bool(p_ok),
+        "ci_ok": bool(ci_ok),
+        "sesoi_ok": bool(sesoi_ok),
+        "power_estimate": power_est,
+        "power_ok": bool(power_ok),
+        "verdict": verdict_token,
+        "rationale": rationale,
     }
 
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
-    verdict_token = "ACCEPT" if float(pval) < 0.01 and mean_diff > 0 else "INDETERMINATE"
     verdict = {
         "test": "T4_symbolic_S_rich_vs_poor",
         "verdict": verdict_token,
         "mean_diff": mean_diff,
         "p_value": float(pval),
+        "ci_99_low": float(ci_low),
+        "ci_99_high": float(ci_high),
+        "sesoi": sesoi,
+        "power_estimate": power_est,
+        "rationale": rationale,
     }
     (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
     (outdir / "verdict.txt").write_text(verdict_token, encoding="utf-8")
