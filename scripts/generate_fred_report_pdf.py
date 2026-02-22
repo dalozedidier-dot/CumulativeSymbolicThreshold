@@ -205,7 +205,7 @@ def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str, str, str]:
 
     # ── legacy fallback: verdict.json from tests_causaux.py ───────────────────
     if not causal:
-        return _fallback_hardcoded(causal), causal, "ACCEPT"
+        return _fallback_hardcoded(causal), causal, "INDETERMINATE", "inconclusive", "legacy_absent"
 
     thr   = causal.get("threshold_hit_t")
     g_p   = causal.get("min_granger_S_to_deltaC_p", float("nan"))
