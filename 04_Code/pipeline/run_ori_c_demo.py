@@ -256,6 +256,126 @@ def compute_verdict_from_summary(summary: dict) -> dict:
         },
     }
 
+def _aggregate_runs(
+    effects: "np.ndarray",
+    intervention: str,
+    seed_base: int,
+    alpha: float = 0.01,
+    ci_level: float = 0.99,
+    sesoi_c_robust_sd: float = 0.30,
+    power_bootstrap_B: int = 500,
+    power_gate_min: float = 0.70,
+) -> dict:
+    """Between-run statistical aggregation (triplet: p + CI + SESOI + power gate).
+
+    Protocol-mandated test per DECISION_RULES v1/v2 and PreregSpec.
+    Direction is determined by intervention:
+      - "symbolic_cut" → H1: mean_effect < 0 (negative expected)
+      - all others     → H1: mean_effect > 0 (positive expected)
+    """
+    n = len(effects)
+    if n < 2:
+        return {
+            "n_valid": n,
+            "verdict": "INDETERMINATE",
+            "rationale": f"Too few valid runs (n={n}) for statistical test. Need n>=2.",
+        }
+
+    direction = "negative" if intervention == "symbolic_cut" else "positive"
+
+    mean_eff = float(np.mean(effects))
+    mad_eff = float(stats.median_abs_deviation(effects, scale=1.0))
+    std_eff = float(np.std(effects, ddof=1))
+    se_eff = std_eff / np.sqrt(n)
+
+    t_res = stats.ttest_1samp(effects, 0.0)
+    t_stat = float(t_res.statistic)
+    p_two = float(t_res.pvalue)
+
+    if direction == "positive":
+        p_one = p_two / 2.0 if t_stat > 0 else 1.0 - p_two / 2.0
+    else:
+        p_one = p_two / 2.0 if t_stat < 0 else 1.0 - p_two / 2.0
+
+    ci_alpha = 1.0 - ci_level
+    ci_low, ci_high = float("nan"), float("nan")
+    if se_eff > 0:
+        ci_low, ci_high = stats.t.interval(ci_level, df=n - 1, loc=mean_eff, scale=se_eff)
+
+    sesoi = sesoi_c_robust_sd * mad_eff
+
+    p_ok = p_one < alpha
+    if direction == "positive":
+        ci_ok = float(ci_low) > 0.0 if np.isfinite(ci_low) else False
+        sesoi_ok = mean_eff > sesoi
+    else:
+        ci_ok = float(ci_high) < 0.0 if np.isfinite(ci_high) else False
+        sesoi_ok = abs(mean_eff) > sesoi
+
+    # Bootstrap power estimate (B=500, seed-controlled)
+    rng = np.random.default_rng(int(seed_base))
+    rejections = 0
+    for _ in range(int(power_bootstrap_B)):
+        sample = rng.choice(effects, size=n, replace=True)
+        t_b, p_b = stats.ttest_1samp(sample, 0.0)
+        t_b = float(t_b)
+        p_b = float(p_b)
+        if direction == "positive":
+            p_use = p_b / 2.0 if t_b > 0 else 1.0 - p_b / 2.0
+        else:
+            p_use = p_b / 2.0 if t_b < 0 else 1.0 - p_b / 2.0
+        if p_use < alpha:
+            rejections += 1
+    power_est = rejections / power_bootstrap_B
+    power_ok = power_est >= power_gate_min
+
+    if not power_ok:
+        verdict = "INDETERMINATE"
+        rationale = (
+            f"Power gate: estimated_power={power_est:.3f} < {power_gate_min}. "
+            "Inconclusive — increase N or effect size."
+        )
+    elif p_ok and ci_ok and sesoi_ok:
+        verdict = "ACCEPT"
+        rationale = (
+            f"Triplet satisfied: p_one={p_one:.4f}<{alpha}, "
+            f"CI{int(ci_level*100)}%=[{ci_low:.4f},{ci_high:.4f}] excludes 0 "
+            f"(direction={direction}), effect={mean_eff:.4f}>SESOI={sesoi:.4f}."
+        )
+    else:
+        verdict = "REJECT"
+        reasons = []
+        if not p_ok:
+            reasons.append(f"p_one={p_one:.4f}>={alpha}")
+        if not ci_ok:
+            reasons.append(f"CI does not exclude 0 (direction={direction})")
+        if not sesoi_ok:
+            reasons.append(f"|effect|={abs(mean_eff):.4f}<=SESOI={sesoi:.4f}")
+        rationale = "Triplet failed: " + "; ".join(reasons)
+
+    return {
+        "n_valid": n,
+        "intervention": intervention,
+        "direction": direction,
+        "mean_effect": mean_eff,
+        "mad_effect": mad_eff,
+        "std_effect": std_eff,
+        "se_effect": se_eff,
+        "t_stat": t_stat,
+        "p_one_sided": p_one,
+        f"ci_{int(ci_level*100)}_low": float(ci_low),
+        f"ci_{int(ci_level*100)}_high": float(ci_high),
+        "sesoi": sesoi,
+        "p_ok": bool(p_ok),
+        "ci_ok": bool(ci_ok),
+        "sesoi_ok": bool(sesoi_ok),
+        "power_estimate": power_est,
+        "power_ok": bool(power_ok),
+        "verdict": verdict,
+        "rationale": rationale,
+    }
+
+
 def run_one(
     *,
     outdir: Path,
@@ -514,6 +634,12 @@ def main() -> int:
             write_csd=not bool(args.no_csd),
         )
         summaries.append(summary)
+        # Write verdict.txt (canonical output convention)
+        tabdir_s = outdir / "tables"
+        vj = tabdir_s / "verdict.json"
+        if vj.exists():
+            vdata = json.loads(vj.read_text(encoding="utf-8"))
+            (outdir / "verdict.txt").write_text(str(vdata.get("verdict", "INDETERMINATE")), encoding="utf-8")
     else:
         for i in range(n_runs):
             seed = int(args.seed_base) + i
@@ -548,17 +674,34 @@ def main() -> int:
         tabdir, _ = _mkdirs(outdir)
         df_all.to_csv(tabdir / "summary_all.csv", index=False)
 
-        summary_obj = {
-            "n_runs": int(n_runs),
-            "seed_base": int(args.seed_base),
-            "intervention": str(args.intervention),
-            "sigma_star": float(args.sigma_star),
-            "tau": float(args.tau) if float(args.tau) > 0.0 else None,
-            "S_decay": float(s_decay),
-            "delta": int(args.delta),
-            "T": int(args.T),
-        }
-        (tabdir / "summary_all.json").write_text(json.dumps(summary_obj, indent=2), encoding="utf-8")
+        # Between-run statistical aggregation (triplet: p + CI99% + SESOI + power gate)
+        # This is the protocol-mandated test (DECISION_RULES v1/v2, PreregSpec defaults).
+        effects_raw = df_all["effect_C_post_mean"].dropna().to_numpy(dtype=float)
+        agg = _aggregate_runs(
+            effects=effects_raw,
+            intervention=str(args.intervention),
+            seed_base=int(args.seed_base),
+            alpha=0.01,
+            ci_level=0.99,
+            sesoi_c_robust_sd=0.30,
+            power_bootstrap_B=500,
+            power_gate_min=0.70,
+        )
+        agg["n_runs_total"] = int(n_runs)
+        agg["seed_base"] = int(args.seed_base)
+        agg["S_decay"] = float(s_decay)
+        agg["delta"] = int(args.delta)
+        agg["T_window"] = int(args.T)
+
+        # Write aggregate summary.json (canonical, overwrites run-level placeholder)
+        (tabdir / "summary.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
+        (tabdir / "summary_all.json").write_text(json.dumps(agg, indent=2), encoding="utf-8")
+        (tabdir / "verdict.json").write_text(
+            json.dumps({"verdict": agg["verdict"], "rationale": agg.get("rationale", "")}, indent=2),
+            encoding="utf-8",
+        )
+        # canonical verdict.txt
+        (outdir / "verdict.txt").write_text(agg["verdict"], encoding="utf-8")
 
         _write_index_md(outdir, df_all)
 
