@@ -347,6 +347,22 @@ jobs:
     if: always()
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          python -m pip install "matplotlib>=3.8"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+
       - name: Download all isolated test artifacts
         uses: actions/download-artifact@v4
         with:
@@ -500,6 +516,13 @@ jobs:
           if n_missing > 0:
               print(f"\nFAIL: {n_missing} test(s) missing or failed to produce verdict")
               fail = True
+          # Verdict gate: ALL tests must be ACCEPT for isolated proof
+          non_accept = [(s, t.get("verdict")) for s, t in tests_out.items()
+                        if t.get("verdict") != "ACCEPT"]
+          if non_accept:
+              for s, v in non_accept:
+                  print(f"\nFAIL: {s} verdict={v!r} — ACCEPT required for isolated proof")
+              fail = True
           if fail:
               sys.exit(1)
           print(f"\nOK: {n_accept}/8 ACCEPT  |  seeds distinct  |  all fields present")
@@ -565,11 +588,63 @@ jobs:
           print(md)
           PYEOF
 
+      - name: Reorganise artifacts into combined directory
+        if: always()
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PYEOF'
+          import os, shutil, glob
+
+          base_dir = "_isolated"
+          combined = "_combined"
+          os.makedirs(combined, exist_ok=True)
+
+          # Copy global_summary.json
+          gsf = os.path.join(base_dir, "global_summary.json")
+          if os.path.exists(gsf):
+              shutil.copy2(gsf, os.path.join(combined, "global_summary.json"))
+              print(f"Copied global_summary.json")
+
+          ORDERED = [
+              ("T1", "T1_noyau_demand_shock"),
+              ("T2", "T2_threshold_demo_on_dataset"),
+              ("T3", "T3_robustness_on_dataset"),
+              ("T4", "T4_symbolic_S_rich_vs_poor_on_C"),
+              ("T5", "T5_symbolic_injection_effect_on_C"),
+              ("T6", "T6_symbolic_cut_on_C"),
+              ("T7", "T7_progressive_S_to_C_threshold"),
+              ("T8", "T8_reinjection_recovery_on_C"),
+          ]
+
+          run_id = os.environ.get("GITHUB_RUN_ID", "")
+          for short, tid in ORDERED:
+              src = os.path.join(base_dir, f"isolated_{short}_{run_id}")
+              if not os.path.isdir(src):
+                  hits = glob.glob(os.path.join(base_dir, f"isolated_{short}_*"))
+                  src = hits[0] if hits else None
+              if src and os.path.isdir(src):
+                  dst = os.path.join(combined, tid)
+                  shutil.copytree(src, dst, dirs_exist_ok=True)
+                  print(f"Copied {short}: {src} -> {dst}")
+              else:
+                  print(f"WARN: no source dir found for {short}")
+          PYEOF
+
+      - name: Generate isolated proof PDF
+        if: always()
+        run: |
+          python 04_Code/pipeline/generate_isolated_report_pdf.py \
+            --run-dir _combined \
+            --out     _combined/isolated_proof_report.pdf \
+          && echo "PDF written: _combined/isolated_proof_report.pdf" \
+          || echo "WARNING: PDF generation failed (non-blocking)"
+
       - name: Upload combined artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nightly_isolated_${{ github.run_id }}
-          path: _isolated
+          path: _combined
           retention-days: 30
           if-no-files-found: warn
