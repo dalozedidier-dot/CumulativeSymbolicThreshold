@@ -60,6 +60,63 @@ jobs:
 
           if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
+      - name: Assert support level (hard gate)
+        # Reads the machine-computed support_level from global_verdict.json.
+        # Writes it to $GITHUB_STEP_SUMMARY so it is visible in the Actions UI.
+        # HARD RULE: if support_level contains "full_statistical" the step fails —
+        #   smoke_ci CANNOT produce full_statistical_support by construction.
+        run: |
+          python - <<'PYEOF'
+          import json, glob, sys, os
+
+          verdict_file = None
+          for f in glob.glob("_ci_out/**/global_verdict.json", recursive=True):
+              verdict_file = f
+              break
+
+          if verdict_file is None:
+              print("WARNING: global_verdict.json not found — cannot assert support level")
+              sys.exit(0)
+
+          d = json.loads(open(verdict_file).read())
+          run_mode      = d.get("run_mode", "UNKNOWN")
+          support_level = d.get("support_level", "UNKNOWN")
+          global_v      = d.get("global", "UNKNOWN")
+          forbidden     = d.get("forbidden_report_labels", [])
+
+          # HARD GATE: smoke_ci must NEVER produce full_statistical_support
+          if "full_statistical" in support_level:
+              print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
+              sys.exit(1)
+
+          summary = f"""## ORI-C CI Run — Support Level Assertion
+
+          | Field | Value |
+          |-------|-------|
+          | run_mode | `{run_mode}` |
+          | global verdict | `{global_v}` |
+          | support_level | `{support_level}` |
+
+          ### Meaning of `{support_level}`
+          This is a **smoke CI check** (`--fast`, n=20 < N_min=50).
+          It verifies the pipeline executes correctly — it does **NOT** satisfy
+          the DECISION_RULES v1/v2 triplet requirement (p + CI 99% + SESOI + power gate).
+
+          ### Labels FORBIDDEN in any report derived from this run
+          {chr(10).join(f"- `{lbl}`" for lbl in forbidden)}
+
+          For full statistical validation, see the **nightly workflow** (`nightly.yml`),
+          which runs with n=60 and enforces the complete triplet gate.
+          """
+          summary = "\n".join(line.lstrip() for line in summary.splitlines())
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if step_summary:
+              with open(step_summary, "a") as fh:
+                  fh.write(summary)
+          print(summary)
+          PYEOF
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
