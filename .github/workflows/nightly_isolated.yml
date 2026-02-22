@@ -475,6 +475,10 @@ jobs:
               elif verdict == "INDETERMINATE": n_indet  += 1
               else:                            n_missing += 1
 
+          if   n_accept == 8 and seeds_ok and fields_ok: global_verdict = "ACCEPT"
+          elif n_reject > 0:                              global_verdict = "REJECT"
+          else:                                           global_verdict = "INDETERMINATE"
+
           global_summary = {
               "run_id":          run_id,
               "commit_sha":      commit_sha,
@@ -490,6 +494,7 @@ jobs:
               "all_8_accept":    n_accept == 8,
               "seeds_distinct":  seeds_ok,
               "all_fields_present": fields_ok,
+              "global_verdict":  global_verdict,
               "tests":           tests_out,
               "forbidden_report_labels": ["full support", "full empirical support"],
               "forbidden_note": (
@@ -554,13 +559,17 @@ jobs:
               mode     = t.get("run_mode", "?")
               rows += f"| `{short}` | `{seed}` ({sf}) | {n_runs} | {ttype} | `{mode}` | `{verdict}` | {icon} |\n"
 
-          seeds_icon  = "OK" if d.get("seeds_distinct")    else "FAIL"
-          fields_icon = "OK" if d.get("all_fields_present") else "FAIL"
-          n_ok        = d.get("n_accept", 0)
-          all_ok      = "8/8 ACCEPT" if d.get("all_8_accept") else f"{n_ok}/8 ACCEPT"
+          seeds_icon   = "OK" if d.get("seeds_distinct")    else "FAIL"
+          fields_icon  = "OK" if d.get("all_fields_present") else "FAIL"
+          n_ok         = d.get("n_accept", 0)
+          all_ok       = "8/8 ACCEPT" if d.get("all_8_accept") else f"{n_ok}/8 ACCEPT"
+          gv           = d.get("global_verdict", "INDETERMINATE")
+          gv_badge     = "✅ ACCEPT" if gv == "ACCEPT" else ("❌ REJECT" if gv == "REJECT" else "⚠️ INDETERMINATE")
 
           lines = [
               "## ORI-C Nightly — Isolated T1..T8",
+              "",
+              f"### global_verdict: {gv_badge}",
               "",
               f"Result: {all_ok} | Seeds distinct: {seeds_icon} | All fields present: {fields_icon}",
               "",
