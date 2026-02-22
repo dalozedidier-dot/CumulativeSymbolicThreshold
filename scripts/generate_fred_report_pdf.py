@@ -130,13 +130,54 @@ def _step_to_date(step: int, start_year: int = 1986, start_month: int = 1) -> st
 
 
 # ── load results ───────────────────────────────────────────────────────────────
-def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str]:
+def _canonical_global(t8_map: dict[str, str]) -> tuple[str, str]:
+    """Canonical core/symbolic decision tree (mirrors analyse_verdicts_canonical.py).
+
+    Returns (global_verdict, support_level).
+    Used in the legacy fallback when global_summary.json is absent.
+    """
+    t1, t2, t3 = t8_map.get("T1", "INDETERMINATE"), t8_map.get("T2", "INDETERMINATE"), t8_map.get("T3", "INDETERMINATE")
+    t4, t5 = t8_map.get("T4", "INDETERMINATE"), t8_map.get("T5", "INDETERMINATE")
+    t6, t7 = t8_map.get("T6", "INDETERMINATE"), t8_map.get("T7", "INDETERMINATE")
+
+    # Core
+    if "REJECT" in (t1, t2, t3):
+        core = "REJECT"
+    elif t1 == "ACCEPT" and t2 == "ACCEPT" and t3 in ("ACCEPT", "INDETERMINATE"):
+        core = "ACCEPT"
+    else:
+        core = "INDETERMINATE"
+
+    # Symbolic
+    if "REJECT" in (t4, t5, t6, t7):
+        sym = "REJECT"
+    elif t4 == "ACCEPT" and "ACCEPT" in (t5, t6, t7):
+        sym = "ACCEPT"
+    else:
+        sym = "INDETERMINATE"
+
+    # Global
+    if core == "REJECT" or sym == "REJECT":
+        gv = "REJECT"
+    elif core == "ACCEPT" and sym == "ACCEPT":
+        gv = "ACCEPT"
+    else:
+        gv = "INDETERMINATE"
+
+    # Support level — legacy always gets "legacy_real_data", never "full_statistical_support"
+    sl = "real_data_canonical_support" if gv == "ACCEPT" else ("rejected" if gv == "REJECT" else "inconclusive")
+    return gv, sl
+
+
+def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str, str, str]:
     """Load T1–T8 verdicts.
 
     Returns:
-        t_results   : list of (tid, tname, verdict, detail)
-        causal      : raw verdict.json dict (for supplementary fields)
+        t_results    : list of (tid, tname, verdict, detail)
+        causal       : raw verdict.json dict (for supplementary fields)
         global_verdict : ACCEPT | REJECT | INDETERMINATE
+        support_level  : machine-computed token (e.g. "real_data_canonical_support")
+        run_mode       : source label (e.g. "real_data_canonical" or "legacy")
     """
     gs_path = run_dir / "tables" / "global_summary.json"
     vc_path = run_dir / "tables" / "verdict.json"
@@ -149,6 +190,9 @@ def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str]:
     if gs_path.exists():
         gs = json.loads(gs_path.read_text(encoding="utf-8"))
         global_verdict = gs.get("global_verdict", "INDETERMINATE")
+        # Read machine-computed tokens — never invent "full support"
+        support_level = gs.get("support_level", "inconclusive")
+        run_mode = gs.get("run_mode", "real_data_canonical")
         tests = gs.get("tests", {})
         t_results = []
         for test_id, (tid_label, tname) in _T_DISPLAY.items():
@@ -157,7 +201,7 @@ def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str]:
             details = info.get("details", {})
             detail_str = _fmt_detail(test_id, details, causal)
             t_results.append((tid_label, tname, verdict, detail_str))
-        return t_results, causal, global_verdict
+        return t_results, causal, global_verdict, support_level, run_mode
 
     # ── legacy fallback: verdict.json from tests_causaux.py ───────────────────
     if not causal:
@@ -200,16 +244,12 @@ def _load_results(run_dir: Path) -> tuple[list[tuple], dict, str]:
          f"C_post > C_pre (+{gain:.0f} %)"),
     ]
 
-    n_accept = sum(1 for r in t_results if r[2] == "ACCEPT")
-    n_reject = sum(1 for r in t_results if r[2] == "REJECT")
-    if n_reject >= 2:
-        global_verdict = "REJECT"
-    elif n_accept >= 6 and n_reject == 0:
-        global_verdict = "ACCEPT"
-    else:
-        global_verdict = "INDETERMINATE"
+    # Canonical decision tree (NOT the old ≥6/8 rule)
+    t8_map = {f"T{i+1}": r[2] for i, r in enumerate(t_results)}
+    global_verdict, support_level = _canonical_global(t8_map)
+    run_mode = "legacy"   # no global_summary.json → legacy path
 
-    return t_results, causal, global_verdict
+    return t_results, causal, global_verdict, support_level, run_mode
 
 
 def _fallback_hardcoded(causal: dict) -> list[tuple]:
@@ -240,7 +280,8 @@ def set_dark_bg(fig, ax_list: list):
 
 # ── PAGE 1 — cover ─────────────────────────────────────────────────────────────
 def page_cover(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str,
-               n_obs: int, date_range: str):
+               n_obs: int, date_range: str, support_level: str = "inconclusive",
+               run_mode: str = "real_data_canonical"):
     fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor(DARK)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -282,6 +323,15 @@ def page_cover(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str
     ax.text(0.5, 0.44,
             f"{n_accept} / 8 tests ACCEPT" + (f"  —  {indet_ids} INDETERMINATE" if n_indet else ""),
             ha="center", va="center", fontsize=10, color=GREY, transform=ax.transAxes)
+
+    # Machine-computed support level — display verbatim; never substitute editorial labels
+    sl_color = GREEN if support_level.endswith("_support") else (ACCENT if support_level == "rejected" else ORANGE)
+    ax.text(0.5, 0.418, f"support_level : {support_level}",
+            ha="center", va="center", fontsize=8, color=sl_color,
+            fontfamily="monospace", transform=ax.transAxes)
+    ax.text(0.5, 0.400, f"run_mode : {run_mode}",
+            ha="center", va="center", fontsize=7.5, color=GREY,
+            fontfamily="monospace", transform=ax.transAxes)
 
     thr = causal.get("threshold_hit_t")
     rev_flag = "  •  Granger bidir. noté" if causal.get("reverse_warning") else ""
@@ -331,7 +381,8 @@ def page_cover(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str
 
 
 # ── PAGE 2 — T1-T8 table ───────────────────────────────────────────────────────
-def page_results_table(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str):
+def page_results_table(pdf: PdfPages, t_results: list, causal: dict, global_verdict: str,
+                       support_level: str = "inconclusive", run_mode: str = "real_data_canonical"):
     fig = plt.figure(figsize=(8.27, 11.69))
     fig.patch.set_facecolor(DARK)
     ax = fig.add_axes([0.05, 0.05, 0.90, 0.88])
@@ -390,14 +441,30 @@ def page_results_table(pdf: PdfPages, t_results: list, causal: dict, global_verd
 
     thr = causal.get("threshold_hit_t")
     thr_date = _step_to_date(int(thr)) if thr else "—"
+    core_ids  = [r[0] for r in t_results[:3]]
+    sym_ids   = [r[0] for r in t_results[3:7]]
+    core_v    = [r[2] for r in t_results[:3]]
+    sym_v     = [r[2] for r in t_results[3:7]]
+    core_tag  = "T1+T2+T3 " + ("ACCEPT" if all(v == "ACCEPT" for v in core_v) else
+                                "partial" if "ACCEPT" in core_v else "INDETERMINATE")
+    sym_tag   = "T4+T5+T6+T7 " + ("ACCEPT" if (t_results[3][2] == "ACCEPT" and
+                                                  "ACCEPT" in [r[2] for r in t_results[4:7]])
+                                    else "partial")
     lines = [
-        "Noyau ORI validé (T1+T2+T3)  •  Canal symbolique S→C validé (T4+T5+T7)",
+        f"Noyau ORI : {core_tag}  •  Canal symbolique : {sym_tag}",
         "T6 INDETERMINATE : C est un flux, pas un stock — pas de cointégration attendue",
-        f"T8 : régime cumulatif stable après seuil {thr_date} (step {thr})",
+        f"T8 : C post-seuil {thr_date}  [test secondaire hors DECISION_RULES v1/v2]",
     ]
-    for j, line in enumerate(lines):
-        ax.text(0.5, y_sum + 0.018 - j * 0.026, line, ha="center",
+    for j, ln in enumerate(lines):
+        ax.text(0.5, y_sum + 0.018 - j * 0.026, ln, ha="center",
                 fontsize=7.5, color=LGREY, transform=ax.transAxes)
+
+    # Machine support level (never invent editorial equivalents)
+    sl_color = GREEN if support_level.endswith("_support") else (ACCENT if support_level == "rejected" else ORANGE)
+    ax.text(0.5, y_sum - 0.028,
+            f"support_level : {support_level}   run_mode : {run_mode}",
+            ha="center", fontsize=7.5, color=sl_color,
+            fontfamily="monospace", transform=ax.transAxes)
 
     # T8 definition-change warning box
     warn_y = y_start - (len(t_results) + 5.4) * row_h
@@ -628,14 +695,14 @@ def main() -> int:
         return 1
 
     # Load results
-    t_results, causal, global_verdict = _load_results(run_dir)
+    t_results, causal, global_verdict, support_level, run_mode = _load_results(run_dir)
 
     # Detect data source label
     gs_path = run_dir / "tables" / "global_summary.json"
     if gs_path.exists():
-        source_label = f"Source: {gs_path} (canonical suite)"
+        source_label = f"Source: {gs_path} (canonical suite)  support_level={support_level}  run_mode={run_mode}"
     else:
-        source_label = f"Source: {run_dir / 'tables' / 'verdict.json'} (legacy fallback)"
+        source_label = f"Source: {run_dir / 'tables' / 'verdict.json'} (legacy fallback)  support_level={support_level}"
     print(source_label)
 
     # Load FRED data for plots
@@ -651,13 +718,15 @@ def main() -> int:
 
     print(f"Generating {out_pdf} …")
     with PdfPages(out_pdf) as pdf:
-        page_cover(pdf, t_results, causal, global_verdict, n_obs, date_range)
-        page_results_table(pdf, t_results, causal, global_verdict)
+        page_cover(pdf, t_results, causal, global_verdict, n_obs, date_range,
+                   support_level=support_level, run_mode=run_mode)
+        page_results_table(pdf, t_results, causal, global_verdict,
+                           support_level=support_level, run_mode=run_mode)
         page_time_series(pdf, df, causal)
         page_protocol(pdf)
 
         d = pdf.infodict()
-        d["Title"]    = f"ORI-C FRED Real Data Report — {global_verdict}"
+        d["Title"]    = f"ORI-C FRED Real Data Report — {global_verdict} — {support_level}"
         d["Author"]   = "CumulativeSymbolicThreshold / Claude Code"
         d["Subject"]  = "Cumulative Symbolic Threshold — real data validation (FRED)"
         d["Keywords"] = "ORI-C, FRED, données réelles, T1-T8, threshold, symbolic"
@@ -665,7 +734,9 @@ def main() -> int:
 
     size_kb = out_pdf.stat().st_size / 1024
     print(f"Done — {out_pdf}  ({size_kb:.0f} KB)")
-    print(f"Verdict global : {global_verdict}")
+    print(f"Verdict global  : {global_verdict}")
+    print(f"support_level   : {support_level}")
+    print(f"run_mode        : {run_mode}")
     return 0
 
 
