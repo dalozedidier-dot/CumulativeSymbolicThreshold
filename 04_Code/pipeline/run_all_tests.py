@@ -94,9 +94,13 @@ def main() -> int:
     scripts_dir = root / "04_Code" / "pipeline"
     in_path = root / args.input
 
-    # Defaults tuned for CI runtimes
+    # Defaults tuned for CI runtimes.
+    # n_symbolic: N for simulation-based tests (T1,T4,T5,T6,T8).
+    #   fast=20 (CI quick), full=60 (>= N_min=50).
+    # n_sweep: N for T7 progressive sweep.
+    #   fast=15 (CI quick), full=50 (>= N_min=50).
     n_symbolic = 20 if args.fast else 60
-    n_sweep = 12 if args.fast else 40
+    n_sweep = 15 if args.fast else 50
 
     t_steps = 220 if args.fast else 260
     t0 = int(t_steps * 0.35)
@@ -109,8 +113,8 @@ def main() -> int:
     _seed = args.seed  # base seed (default 1234)
 
     # ------------------------
-    # T1 Noyau ORI: demand shock -> Sigma>0 -> V changes
-    # n_runs=1 → smoke run (single deterministic simulation, not a statistical sample)
+    # T1 Noyau ORI: demand shock -> Sigma>0 -> V and C change
+    # test_type=statistical: N>=50 replications → between-run triplet test (p+CI99%+SESOI+power)
     # ------------------------
     tests.append(
         {
@@ -118,10 +122,11 @@ def main() -> int:
             "script": scripts_dir / "run_ori_c_demo.py",
             "seed_used": _seed,           # = base + 0
             "seed_formula": "base+0",
-            "n_runs_used": 1,
+            "n_runs_used": n_symbolic,
+            "test_type": "statistical",
             "args": [
                 "--seed-base", str(_seed),
-                "--n-runs", "1",
+                "--n-runs", str(n_symbolic),
                 "--n-steps", str(t_steps),
                 "--t0", str(t0),
                 "--intervention", "demand_shock",
@@ -134,7 +139,8 @@ def main() -> int:
 
     # ------------------------
     # T2 Threshold demo on a dataset that contains a transition
-    # n_runs=1 (fixed dataset, deterministic threshold detection)
+    # test_type=fixed_data: operates on a fixed CSV; n_runs=1 is inherent (deterministic).
+    # Not subject to N_min=50 requirement (not a simulation-based inference test).
     # ------------------------
     tests.append(
         {
@@ -143,13 +149,14 @@ def main() -> int:
             "seed_used": _seed,           # = base + 0
             "seed_formula": "base+0",
             "n_runs_used": 1,
+            "test_type": "fixed_data",
             "args": ["--input", str(in_path), "--seed", str(_seed)],
         }
     )
 
     # ------------------------
     # T3 Robustness on the same dataset
-    # n_runs=1 (fixed dataset, robustness sweep)
+    # test_type=fixed_data: same reason as T2.
     # ------------------------
     tests.append(
         {
@@ -158,13 +165,14 @@ def main() -> int:
             "seed_used": _seed,           # = base + 0
             "seed_formula": "base+0",
             "n_runs_used": 1,
+            "test_type": "fixed_data",
             "args": ["--input", str(in_path), "--seed", str(_seed)],
         }
     )
 
     # ------------------------
     # T4 Symbolic: S rich vs poor on C
-    # n_symbolic independent paired runs (within-test independent seeds via per-condition offset)
+    # test_type=statistical: N paired runs, within-test independent seeds via per-condition offset.
     # ------------------------
     tests.append(
         {
@@ -173,14 +181,15 @@ def main() -> int:
             "seed_used": _seed,           # = base + 0
             "seed_formula": "base+0",
             "n_runs_used": n_symbolic,
+            "test_type": "statistical",
             "args": ["--n", str(n_symbolic), "--seed", str(_seed), "--t-steps", str(t_steps)],
         }
     )
 
     # ------------------------
     # T5 Symbolic injection effect on C
-    # Offset +17 to avoid T1-T4 seed collision at the base level
-    # n_symbolic independent paired runs (within-test independent seeds via per-condition offset)
+    # test_type=statistical: N paired runs, within-test independent seeds.
+    # Offset +17 to avoid seed collision with T1-T4 at the base level.
     # ------------------------
     _seed_t5 = _seed + 17
     tests.append(
@@ -190,6 +199,7 @@ def main() -> int:
             "seed_used": _seed_t5,        # = base + 17
             "seed_formula": "base+17",
             "n_runs_used": n_symbolic,
+            "test_type": "statistical",
             "args": [
                 "--n", str(n_symbolic),
                 "--seed", str(_seed_t5),
@@ -201,7 +211,8 @@ def main() -> int:
 
     # ------------------------
     # T6 Symbolic cut on C (via ORI-C)
-    # n_runs=1 → smoke run
+    # test_type=statistical: N>=50 replications → between-run triplet test.
+    # Expected direction: NEGATIVE (C should collapse after symbolic cut).
     # ------------------------
     _seed_t6 = _seed + 3
     tests.append(
@@ -210,10 +221,11 @@ def main() -> int:
             "script": scripts_dir / "run_ori_c_demo.py",
             "seed_used": _seed_t6,        # = base + 3
             "seed_formula": "base+3",
-            "n_runs_used": 1,
+            "n_runs_used": n_symbolic,
+            "test_type": "statistical",
             "args": [
                 "--seed-base", str(_seed_t6),
-                "--n-runs", "1",
+                "--n-runs", str(n_symbolic),
                 "--n-steps", str(t_steps),
                 "--t0", str(int(t_steps * 0.45)),
                 "--intervention", "symbolic_cut",
@@ -226,8 +238,8 @@ def main() -> int:
 
     # ------------------------
     # T7 Progressive sweep -> threshold detection on C_end(S)
-    # Offset +99 (large gap to avoid seed proximity to T1-T6)
-    # n_sweep independent runs (one run per S0 value)
+    # test_type=statistical: n_sweep >= N_min S0 levels.
+    # Offset +99 (large gap to avoid seed proximity to T1-T6).
     # ------------------------
     _seed_t7 = _seed + 99
     tests.append(
@@ -237,15 +249,16 @@ def main() -> int:
             "seed_used": _seed_t7,        # = base + 99
             "seed_formula": "base+99",
             "n_runs_used": n_sweep,
+            "test_type": "statistical",
             "args": ["--n", str(n_sweep), "--seed", str(_seed_t7), "--t-steps", str(t_steps)],
         }
     )
 
     # ------------------------
     # T8 Reinjection recovery on C
-    # n_runs=1 → smoke run
+    # test_type=statistical: N>=50 replications → between-run triplet test on recovery slope.
     # NOTE: T8 definition changed in v1.1 (dose-response → reinjection recovery).
-    #       Not in DECISION_RULES v1/v2 aggregation (covers T1-T7 only).
+    #       Not included in DECISION_RULES v1/v2 formal aggregation (covers T1-T7).
     # ------------------------
     _seed_t8 = _seed + 5
     tests.append(
@@ -254,9 +267,11 @@ def main() -> int:
             "script": scripts_dir / "run_reinjection_demo.py",
             "seed_used": _seed_t8,        # = base + 5
             "seed_formula": "base+5",
-            "n_runs_used": 1,
+            "n_runs_used": n_symbolic,
+            "test_type": "statistical",
             "args": [
                 "--seed", str(_seed_t8),
+                "--n-runs", str(n_symbolic),
                 "--n-steps", str(t_steps),
                 "--intervention-point", str(int(t_steps * 0.35)),
                 "--reinjection-point", str(int(t_steps * 0.65)),
@@ -265,13 +280,19 @@ def main() -> int:
     )
 
     # Determine run_mode before execution.
-    # run_mode="smoke_ci"         : any test uses n_runs=1 (pipeline execution check only)
-    # run_mode="full_statistical" : all tests use n_runs >= N_min (50)
-    # IMPORTANT: smoke_ci output does NOT satisfy DECISION_RULES v1/v2 triplet requirement
-    #            (p + CI 99% + SESOI + power gate). Do not claim "full empirical support"
-    #            or "full support" for smoke_ci runs.
-    n_runs_all = [t.get("n_runs_used", 1) for t in tests]
-    run_mode = "smoke_ci" if any(n == 1 for n in n_runs_all) else "full_statistical"
+    # Classification is based on "statistical" tests only (test_type="statistical").
+    # Tests with test_type="fixed_data" (T2, T3) operate on a deterministic fixed CSV and
+    # are legitimately n_runs=1 — they are NOT counted as "smoke" runs.
+    #
+    # run_mode="smoke_ci"         : any STATISTICAL test uses n_runs < N_min=50
+    # run_mode="full_statistical" : all STATISTICAL tests use n_runs >= N_min=50
+    #
+    # IMPORTANT: smoke_ci does NOT satisfy DECISION_RULES v1/v2 triplet requirement.
+    # Do not claim "full empirical support" or "full support" for smoke_ci runs.
+    N_MIN = 50
+    statistical_tests = [t for t in tests if t.get("test_type") == "statistical"]
+    stat_n_runs = [t.get("n_runs_used", 1) for t in statistical_tests]
+    run_mode = "smoke_ci" if any(n < N_MIN for n in stat_n_runs) else "full_statistical"
 
     # Seed table (auto-derived — exhaustive, not manually declared)
     seed_table = [
@@ -280,6 +301,7 @@ def main() -> int:
             "seed": t.get("seed_used", args.seed),
             "seed_formula": t.get("seed_formula", "base+0"),
             "n_runs": t.get("n_runs_used", 1),
+            "test_type": t.get("test_type", "statistical"),
         }
         for t in tests
     ]
@@ -301,6 +323,9 @@ def main() -> int:
         _run_script(t["script"], test_dir, t["args"], log_path)
 
         sj = _maybe_summary_json(test_dir)
+        # Also read verdict.txt if present (canonical output token)
+        vt = test_dir / "verdict.txt"
+        verdict_token = vt.read_text(encoding="utf-8").strip() if vt.exists() else ""
         rows.append(
             {
                 "test_id": t["id"],
@@ -310,6 +335,8 @@ def main() -> int:
                 "seed": t.get("seed_used", args.seed),
                 "seed_formula": t.get("seed_formula", "base+0"),
                 "n_runs": t.get("n_runs_used", 1),
+                "test_type": t.get("test_type", "statistical"),
+                "verdict": verdict_token,
             }
         )
 
@@ -318,7 +345,7 @@ def main() -> int:
     with summary_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(
             f,
-            fieldnames=["test_id", "script", "outdir", "summary_json", "seed", "seed_formula", "n_runs"],
+            fieldnames=["test_id", "script", "outdir", "summary_json", "seed", "seed_formula", "n_runs", "test_type", "verdict"],
         )
         w.writeheader()
         for r in rows:
@@ -327,7 +354,7 @@ def main() -> int:
     # Write seed_table.csv (correctif 6.1: auto-derived, exhaustive, not manual)
     seed_csv_path = run_dir / "seed_table.csv"
     with seed_csv_path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["test_id", "seed", "seed_formula", "n_runs"])
+        w = csv.DictWriter(f, fieldnames=["test_id", "seed", "seed_formula", "n_runs", "test_type"])
         w.writeheader()
         for row in seed_table:
             w.writerow(row)
