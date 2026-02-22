@@ -374,14 +374,20 @@ def main() -> int:
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
-    # Call aggregator: run_mode-aware global verdict (controlled vocabulary)
+    # Call aggregator: run_mode-aware global verdict (controlled vocabulary).
+    # NOTE: analyse_verdicts_canonical.py takes --run-dir, NOT --outdir.
+    # Do NOT use _run_script() here — it always prepends --outdir which
+    # would cause argparse to reject the call.
     aggregator = scripts_dir / "analyse_verdicts_canonical.py"
     if aggregator.exists():
         agg_log = run_dir / "aggregator.log"
+        cmd = [sys.executable, str(aggregator), "--run-dir", str(run_dir)]
         try:
-            _run_script(aggregator, run_dir, ["--run-dir", str(run_dir)], agg_log)
+            with agg_log.open("w", encoding="utf-8") as f:
+                f.write("CMD: " + " ".join(cmd) + "\n")
+                f.flush()
+                subprocess.run(cmd, check=True, stdout=f, stderr=subprocess.STDOUT)
         except Exception as exc:  # noqa: BLE001
-            # Aggregation failure must not abort the run; log it.
             agg_log.write_text(f"Aggregator error: {exc}\n", encoding="utf-8")
 
     print(str(run_dir))

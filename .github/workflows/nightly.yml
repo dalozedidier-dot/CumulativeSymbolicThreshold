@@ -1,9 +1,20 @@
-name: Nightly — Full Statistical Canonical Suite
+name: Nightly — Full Canonical Proof (Synthetic + Real Data)
 
-# Runs the canonical T1–T8 suite WITHOUT --fast: n=60 per statistical test.
-# run_mode = "full_statistical" (all statistical tests N >= N_min=50).
-# This is the authoritative nightly validation run.
-# The triplet (p < 0.01 + CI 99% + SESOI + power gate >= 0.70) is fully enforced.
+# Authoritative nightly validation — two independent proof dimensions:
+#
+#   1. SYNTHETIC SIMULATION SUITE (run_all_tests.py, no --fast)
+#      run_mode = "full_statistical"  (n=60 per statistical test >= N_min=50)
+#      Triplet enforced: p < 0.01 + CI 99% + SESOI + power gate >= 0.70
+#      Gate: support_level = "full_statistical_support" ONLY if all triplet gates pass
+#
+#   2. REAL DATA CANONICAL SUITE (run_real_data_canonical_suite.py, FRED monthly)
+#      run_mode = "real_data_canonical"
+#      Tests: Granger S→ΔC, VAR S→ΔC, cointegration C-S, bootstrap CI, threshold
+#      Gate: support_level = "real_data_canonical_support" ONLY if CORE+SYMBOLIC ACCEPT
+#
+# Both suites must ACCEPT for the strongest canonical claim.
+# Neither is a substitute for the other.
+# "full support" / "full empirical support" are NEVER valid report labels.
 
 on:
   schedule:
@@ -15,9 +26,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  nightly_full:
+  # ── JOB 1: Synthetic simulation suite (full_statistical) ────────────────────
+  synthetic_full:
+    name: "Synthetic — full_statistical (n=60)"
     runs-on: ubuntu-latest
-    timeout-minutes: 90   # n=60 replications per test; 6 statistical tests → allow time
+    timeout-minutes: 90
+
+    outputs:
+      synthetic_support_level: ${{ steps.synthetic_run.outputs.synthetic_support_level }}
+      synthetic_global_verdict: ${{ steps.synthetic_run.outputs.synthetic_global_verdict }}
 
     steps:
       - name: Checkout
@@ -33,40 +50,292 @@ jobs:
         run: |
           set -e
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install \
-            "numpy>=1.26" \
-            "pandas>=2.0" \
-            "matplotlib>=3.8" \
-            "scipy>=1.11" \
-            "statsmodels>=0.14" \
-            "pytest>=8.0"
-          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt
           elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
-      - name: Log environment
-        run: |
-          mkdir -p _ci_out
-          date -u | tee _ci_out/run_utc.txt
-          python -V | tee _ci_out/python_version.txt
-          pip list | tee _ci_out/pip_list.txt
-
-      - name: Run canonical suite (full_statistical — no fast)
+      - name: Run synthetic canonical suite (full_statistical)
+        id: synthetic_run
         run: |
           set -eo pipefail
+          mkdir -p _ci_out/synthetic
+
           # No --fast → full_statistical: n=60 per statistical test (>= N_min=50).
-          # Triplet enforced: p < 0.01 + CI 99% + SESOI + power gate >= 0.70.
+          # Triplet enforced: p + CI 99% + SESOI + power gate.
+          # Gate: support_level = "full_statistical_support" iff all triplet gates pass.
           PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
-            --outdir _ci_out/nightly_run \
-            2>&1 | tee _ci_out/run_all_tests.log
+            --outdir _ci_out/synthetic/canonical_tests \
+            2>&1 | tee _ci_out/synthetic/run_all_tests.log
 
-          if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
+          # Extract support_level from the nested timestamped run dir
+          SYNTHETIC_SUPPORT=$(python -c "
+          import json, glob, sys
+          p = '_ci_out/synthetic/canonical_tests'
+          for f in glob.glob(f'{p}/**/global_verdict.json', recursive=True):
+              d = json.loads(open(f).read())
+              print(d.get('support_level', 'NOT_FOUND'))
+              sys.exit(0)
+          print('NOT_FOUND')
+          " 2>/dev/null || echo "NOT_FOUND")
 
-      - name: Upload artifacts
+          SYNTHETIC_VERDICT=$(python -c "
+          import json, glob, sys
+          p = '_ci_out/synthetic/canonical_tests'
+          for f in glob.glob(f'{p}/**/global_verdict.json', recursive=True):
+              d = json.loads(open(f).read())
+              print(d.get('global', 'UNKNOWN'))
+              sys.exit(0)
+          print('UNKNOWN')
+          " 2>/dev/null || echo "UNKNOWN")
+
+          echo "synthetic_support_level=${SYNTHETIC_SUPPORT}" >> "$GITHUB_OUTPUT"
+          echo "synthetic_global_verdict=${SYNTHETIC_VERDICT}" >> "$GITHUB_OUTPUT"
+          echo "Synthetic support_level: ${SYNTHETIC_SUPPORT}   verdict: ${SYNTHETIC_VERDICT}"
+
+      - name: Upload synthetic artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nightly_canonical_${{ github.run_id }}
-          path: _ci_out
+          name: nightly_synthetic_${{ github.run_id }}
+          path: _ci_out/synthetic
+          retention-days: 30
+          if-no-files-found: warn
+
+  # ── JOB 2: Real data canonical suite (FRED monthly) ────────────────────────
+  real_data_fred:
+    name: "Real Data FRED — real_data_canonical"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    outputs:
+      real_support_level: ${{ steps.real_run.outputs.real_support_level }}
+      real_global_verdict: ${{ steps.real_run.outputs.real_global_verdict }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+
+      - name: Verify real data present
+        run: |
+          set -e
+          if [ ! -f "03_Data/real/fred_monthly/real.csv" ]; then
+            echo "ERROR: 03_Data/real/fred_monthly/real.csv not found"
+            exit 1
+          fi
+          echo "FRED monthly: $(wc -l < 03_Data/real/fred_monthly/real.csv) rows"
+          head -1 03_Data/real/fred_monthly/real.csv
+
+      - name: Run real data canonical suite (FRED monthly)
+        id: real_run
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/fred_monthly
+
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_canonical_suite.py \
+            --input  03_Data/real/fred_monthly/real.csv \
+            --outdir _ci_out/real/fred_monthly \
+            --col-time date \
+            --time-mode index \
+            --col-O O --col-R R --col-I I \
+            --col-demand demand \
+            --col-S S \
+            --auto-scale \
+            --normalize robust \
+            --alpha 0.01 \
+            --lags 1-6 \
+            --pre-horizon 120 \
+            --post-horizon 120 \
+            --baseline-n 60 \
+            --k 2.5 --m 3 \
+            2>&1 | tee _ci_out/real/fred_monthly/suite.log
+
+          VERDICT=$(cat _ci_out/real/fred_monthly/verdict.txt 2>/dev/null || echo "UNKNOWN")
+          SUPPORT=$(python -c "
+          import json
+          d = json.loads(open('_ci_out/real/fred_monthly/tables/global_summary.json').read())
+          print(d.get('support_level', 'NOT_FOUND'))
+          " 2>/dev/null || echo "NOT_FOUND")
+
+          echo "real_global_verdict=${VERDICT}" >> "$GITHUB_OUTPUT"
+          echo "real_support_level=${SUPPORT}" >> "$GITHUB_OUTPUT"
+          echo "Real data verdict: ${VERDICT}   support_level: ${SUPPORT}"
+
+      - name: Upload real data artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly_real_fred_${{ github.run_id }}
+          path: _ci_out/real/fred_monthly
+          retention-days: 30
+          if-no-files-found: warn
+
+  # ── JOB 3: Dual proof summary — combined artifact ───────────────────────────
+  dual_proof_summary:
+    name: "Dual Canonical Proof — Combined Artifact"
+    needs: [synthetic_full, real_data_fred]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download synthetic artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly_synthetic_${{ github.run_id }}
+          path: _combined/synthetic
+        continue-on-error: true
+
+      - name: Download real data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly_real_fred_${{ github.run_id }}
+          path: _combined/real_fred
+        continue-on-error: true
+
+      - name: Create dual_proof_manifest.json
+        env:
+          SYNTH_SUPPORT: ${{ needs.synthetic_full.outputs.synthetic_support_level }}
+          SYNTH_VERDICT: ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
+          REAL_SUPPORT:  ${{ needs.real_data_fred.outputs.real_support_level }}
+          REAL_VERDICT:  ${{ needs.real_data_fred.outputs.real_global_verdict }}
+        run: |
+          python - <<'PYEOF'
+          import json, glob, os
+          from datetime import datetime, timezone
+
+          synth_support = os.environ.get("SYNTH_SUPPORT", "NOT_FOUND")
+          synth_verdict = os.environ.get("SYNTH_VERDICT", "UNKNOWN")
+          real_support  = os.environ.get("REAL_SUPPORT",  "NOT_FOUND")
+          real_verdict  = os.environ.get("REAL_VERDICT",  "UNKNOWN")
+
+          # Pull gate details from the downloaded synthetic artifact
+          synth_gate = {}
+          for f in glob.glob("_combined/synthetic/**/global_verdict.json", recursive=True):
+              try:
+                  d = json.loads(open(f).read())
+                  synth_gate = d.get("full_validation_gate", {})
+              except Exception:
+                  pass
+              break
+
+          # Pull per-test details from the downloaded real data artifact
+          real_tests = {}
+          for f in glob.glob("_combined/real_fred/**/global_summary.json", recursive=True):
+              try:
+                  d = json.loads(open(f).read())
+                  real_tests = d.get("test_verdicts", {})
+              except Exception:
+                  pass
+              break
+
+          dual_status = (
+              "DUAL_PROOF_COMPLETE"
+              if synth_support == "full_statistical_support"
+              and real_support == "real_data_canonical_support"
+              else "DUAL_PROOF_INCOMPLETE"
+          )
+
+          manifest = {
+              "run_id": "${{ github.run_id }}",
+              "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+              "dual_proof_status": dual_status,
+              "proof_dimensions": {
+                  "synthetic": {
+                      "run_mode": "full_statistical",
+                      "n_per_statistical_test": 60,
+                      "global_verdict": synth_verdict,
+                      "support_level": synth_support,
+                      "gate_passed": synth_gate.get("gate_passed", None),
+                      "n_statistical_passed": synth_gate.get("n_passed", None),
+                  },
+                  "real_data_fred": {
+                      "run_mode": "real_data_canonical",
+                      "dataset": "FRED monthly (n=480, 1986-2025)",
+                      "global_verdict": real_verdict,
+                      "support_level": real_support,
+                  },
+              },
+              "forbidden_report_labels": [
+                  "full support",
+                  "full empirical support",
+              ],
+              "forbidden_note": (
+                  "Use only the machine-computed support_level tokens above. "
+                  "'full support' and 'full empirical support' are editorial claims "
+                  "not produced by this pipeline."
+              ),
+          }
+
+          os.makedirs("_combined", exist_ok=True)
+          with open("_combined/dual_proof_manifest.json", "w") as fh:
+              json.dump(manifest, fh, indent=2)
+          print(json.dumps(manifest, indent=2))
+          PYEOF
+
+      - name: Write GitHub step summary
+        env:
+          SYNTH_SUPPORT: ${{ needs.synthetic_full.outputs.synthetic_support_level }}
+          SYNTH_VERDICT: ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
+          REAL_SUPPORT:  ${{ needs.real_data_fred.outputs.real_support_level }}
+          REAL_VERDICT:  ${{ needs.real_data_fred.outputs.real_global_verdict }}
+        run: |
+          python - <<'PYEOF'
+          import os
+
+          synth_support = os.environ.get("SYNTH_SUPPORT", "NOT_FOUND")
+          synth_verdict = os.environ.get("SYNTH_VERDICT", "UNKNOWN")
+          real_support  = os.environ.get("REAL_SUPPORT",  "NOT_FOUND")
+          real_verdict  = os.environ.get("REAL_VERDICT",  "UNKNOWN")
+
+          def icon(s):
+              return "✅" if s in ("full_statistical_support", "real_data_canonical_support") else "❌"
+
+          dual_ok = (
+              synth_support == "full_statistical_support"
+              and real_support == "real_data_canonical_support"
+          )
+
+          md = f"""## ORI-C Nightly — Dual Canonical Proof
+
+          {"✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"}
+
+          | Dimension | run_mode | verdict | support_level | |
+          |-----------|----------|---------|---------------|---|
+          | Synthetic simulation | `full_statistical` (n=60) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
+          | Real data FRED (1986–2025) | `real_data_canonical` | `{real_verdict}` | `{real_support}` | {icon(real_support)} |
+
+          ### Labels FORBIDDEN in any report derived from any run
+          - `full support`
+          - `full empirical support`
+
+          Use **only** the machine-computed `support_level` tokens from `dual_proof_manifest.json`.
+          See artifact `nightly_dual_proof_{os.environ.get("GITHUB_RUN_ID", "")}` for combined manifest.
+          """
+          md = "\n".join(line.lstrip() for line in md.splitlines())
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if step_summary:
+              with open(step_summary, "a") as fh:
+                  fh.write(md)
+          print(md)
+          PYEOF
+
+      - name: Upload combined dual proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly_dual_proof_${{ github.run_id }}
+          path: _combined
           retention-days: 30
           if-no-files-found: warn
