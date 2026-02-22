@@ -115,15 +115,21 @@ def _read_manifest(run_dir: Path) -> dict:
 # ---------------------------------------------------------------------------
 
 def _load_verdict_json(test_dir: Path) -> dict:
-    """Load verdict.json or summary.json from a test's tables/ subdirectory."""
+    """Load and merge verdict.json + summary.json from a test's tables/ subdirectory.
+
+    Both files are read and merged so that keys present in either file are available
+    to the gate checker.  summary.json keys overwrite verdict.json keys on conflict
+    (summary.json is typically richer for statistical tests).
+    """
+    merged: dict = {}
     for fname in ("verdict.json", "summary.json"):
         p = test_dir / "tables" / fname
         if p.exists():
             try:
-                return json.loads(p.read_text(encoding="utf-8"))
+                merged.update(json.loads(p.read_text(encoding="utf-8")))
             except Exception:
-                return {}
-    return {}
+                pass
+    return merged
 
 
 def _n_from_json(data: dict, test_key: str) -> int:

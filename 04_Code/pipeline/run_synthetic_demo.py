@@ -338,13 +338,15 @@ def main() -> int:
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
+    verdict_token = "ACCEPT" if thr_idx is not None else "INDETERMINATE"
     verdict = {
         "test": "synthetic_demo_threshold",
-        "verdict": "ACCEPT" if thr_idx is not None else "INDETERMINATE",
+        "verdict": verdict_token,
         "threshold_detected": bool(thr_idx is not None),
         "threshold_value": float(thr_val),
     }
     (tabdir / "verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
+    (outdir / "verdict.txt").write_text(verdict_token + "\n", encoding="utf-8")
 
     _plot_C_with_threshold(df, thr_idx, figdir / "c_t_with_threshold.png")
     _plot_V_perturbation(df, figdir / "v_t_perturbation.png")
