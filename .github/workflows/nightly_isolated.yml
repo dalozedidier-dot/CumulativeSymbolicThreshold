@@ -396,6 +396,17 @@ jobs:
               ("T8", "T8_reinjection_recovery_on_C"),
           ]
 
+          TEST_NAMES = {
+              "T1": "Noyau — demand shock (Cap/Σ/V)",
+              "T2": "Threshold demo on fixed dataset",
+              "T3": "Robustness on fixed dataset",
+              "T4": "Symbolic S-rich vs S-poor → C",
+              "T5": "Symbolic injection effect → C",
+              "T6": "Symbolic cut → C",
+              "T7": "Progressive S sweep → threshold C",
+              "T8": "Reinjection recovery → C",
+          }
+
           tests_out   = {}
           seeds_seen  = {}           # seed → short_id
           seeds_ok    = True
@@ -459,6 +470,8 @@ jobs:
 
               tests_out[short] = {
                   "test_id":       tid,
+                  "name":          TEST_NAMES.get(short, tid),
+                  "path":          tid,
                   "test_type":     ttype,
                   "seed":          seed,
                   "seed_formula":  m.get("seed_formula"),
@@ -495,6 +508,10 @@ jobs:
               "seeds_distinct":  seeds_ok,
               "all_fields_present": fields_ok,
               "global_verdict":  global_verdict,
+              "reporting_phrase": (
+                  f"Nightly isolated (full_statistical) : global {global_verdict}, "
+                  f"{n_accept}/8 ACCEPT, seeds distincts."
+              ),
               "tests":           tests_out,
               "forbidden_report_labels": ["full support", "full empirical support"],
               "forbidden_note": (
@@ -547,7 +564,27 @@ jobs:
           d     = json.loads(open(f).read())
           tests = d.get("tests", {})
 
-          rows = ""
+          seeds_icon   = "OK" if d.get("seeds_distinct")    else "FAIL"
+          fields_icon  = "OK" if d.get("all_fields_present") else "FAIL"
+          n_ok         = d.get("n_accept", 0)
+          all_ok       = "8/8 ACCEPT" if d.get("all_8_accept") else f"{n_ok}/8 ACCEPT"
+          gv           = d.get("global_verdict", "INDETERMINATE")
+          gv_badge     = "✅ ACCEPT" if gv == "ACCEPT" else ("❌ REJECT" if gv == "REJECT" else "⚠️ INDETERMINATE")
+
+          reporting_phrase = d.get("reporting_phrase", "")
+
+          lines = [
+              "## ORI-C Nightly — Isolated T1..T8",
+              "",
+              f"### global_verdict: {gv_badge}",
+              "",
+              f"> **{reporting_phrase}**",
+              "",
+              f"Result: {all_ok} | Seeds distinct: {seeds_icon} | All fields present: {fields_icon}",
+              "",
+              "| Test | Name | Seed (formula) | n_runs | type | run_mode | verdict | status |",
+              "|------|------|----------------|--------|------|----------|---------|--------|",
+          ]
           for short in ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"]:
               t = tests.get(short, {})
               verdict  = t.get("verdict", "MISSING")
@@ -557,26 +594,8 @@ jobs:
               n_runs   = t.get("n_runs", "?")
               ttype    = t.get("test_type", "?")
               mode     = t.get("run_mode", "?")
-              rows += f"| `{short}` | `{seed}` ({sf}) | {n_runs} | {ttype} | `{mode}` | `{verdict}` | {icon} |\n"
-
-          seeds_icon   = "OK" if d.get("seeds_distinct")    else "FAIL"
-          fields_icon  = "OK" if d.get("all_fields_present") else "FAIL"
-          n_ok         = d.get("n_accept", 0)
-          all_ok       = "8/8 ACCEPT" if d.get("all_8_accept") else f"{n_ok}/8 ACCEPT"
-          gv           = d.get("global_verdict", "INDETERMINATE")
-          gv_badge     = "✅ ACCEPT" if gv == "ACCEPT" else ("❌ REJECT" if gv == "REJECT" else "⚠️ INDETERMINATE")
-
-          lines = [
-              "## ORI-C Nightly — Isolated T1..T8",
-              "",
-              f"### global_verdict: {gv_badge}",
-              "",
-              f"Result: {all_ok} | Seeds distinct: {seeds_icon} | All fields present: {fields_icon}",
-              "",
-              "| Test | Seed (formula) | n_runs | type | run_mode | verdict | status |",
-              "|------|----------------|--------|------|----------|---------|--------|",
-          ]
-          lines += rows.strip().splitlines()
+              name     = t.get("name", short)
+              lines.append(f"| `{short}` | {name} | `{seed}` ({sf}) | {n_runs} | {ttype} | `{mode}` | `{verdict}` | {icon} |")
           lines += [
               "",
               f"**base_seed:** `{d.get('base_seed')}` — seed(Tn) = base_seed + fixed_offset (distinct per-test, ex ante)",
