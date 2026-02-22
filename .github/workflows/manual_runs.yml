@@ -1,38 +1,57 @@
 name: Manual ORI-C Runs
 
+# On-demand dispatch for any subset of the pipeline.
+# suite="all"         → full canonical T1–T8 (same as nightly, but with custom seed)
+# suite="all_fast"    → canonical T1–T8 in fast/smoke mode (n=20)
+# suite="ori_demo"    → single ORI-C demo with chosen intervention
+# suite="synthetic"   → synthetic demo on fixed CSV
+# suite="robustness"  → robustness sweep on fixed CSV
+# suite="reinjection" → T8 reinjection with N replications
+
 on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "Which suite to run"
+        description: "Suite to run"
         required: true
-        default: "all"
+        default: "all_fast"
         type: choice
         options:
           - all
+          - all_fast
           - ori_demo
-          - synthetic_demo
+          - synthetic
           - robustness
           - reinjection
-          - neuro
       n_runs:
-        description: "Replicates per test where applicable"
+        description: "Replications per test (for ori_demo and reinjection)"
         required: false
-        default: "50"
+        default: "60"
       seed:
         description: "Master seed"
         required: false
-        default: "42"
+        default: "1234"
+      intervention:
+        description: "Intervention type (for ori_demo)"
+        required: false
+        default: "demand_shock"
+        type: choice
+        options:
+          - demand_shock
+          - capacity_hit
+          - symbolic_cut
+          - symbolic_injection
+          - symbolic_cut_then_inject
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -41,61 +60,84 @@ jobs:
       - name: Install dependencies
         run: |
           set -e
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f 04_Code/requirements.txt ]; then pip install -r 04_Code/requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e .; fi
-          pip install "numpy>=1.26" "pandas>=2.0" "matplotlib>=3.8" "scipy>=1.11" "pytest>=8.0" "statsmodels>=0.14"
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install \
+            "numpy>=1.26" \
+            "pandas>=2.0" \
+            "matplotlib>=3.8" \
+            "scipy>=1.11" \
+            "statsmodels>=0.14" \
+            "pytest>=8.0"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
       - name: Run selected suite
         env:
           SUITE: ${{ inputs.suite }}
           N_RUNS: ${{ inputs.n_runs }}
           SEED: ${{ inputs.seed }}
+          INTERVENTION: ${{ inputs.intervention }}
         run: |
           set -e
           mkdir -p _ci_out
-          echo "suite=$SUITE n_runs=$N_RUNS seed=$SEED" | tee _ci_out/selected_suite.txt
+          echo "suite=$SUITE n_runs=$N_RUNS seed=$SEED intervention=$INTERVENTION" | tee _ci_out/selected_suite.txt
 
           if [ "$SUITE" = "all" ]; then
-            if [ -f run_all_tests.py ]; then
-              python run_all_tests.py 2>&1 | tee _ci_out/run.log
-            else
-              python 04_Code/pipeline/run_all_tests.py 2>&1 | tee _ci_out/run.log
-            fi
+            # full_statistical: n=60 >= N_min=50, triplet enforced
+            PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
+              --outdir _ci_out/canonical \
+              --seed "$SEED" \
+              2>&1 | tee _ci_out/run.log
+
+          elif [ "$SUITE" = "all_fast" ]; then
+            # smoke_ci: n=20 < N_min=50, pipeline check only
+            PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
+              --outdir _ci_out/canonical_fast \
+              --seed "$SEED" \
+              --fast \
+              2>&1 | tee _ci_out/run.log
+
           elif [ "$SUITE" = "ori_demo" ]; then
-            python 04_Code/pipeline/run_ori_c_demo.py --outdir _ci_out/ori_demo --n-runs "$N_RUNS" --seed-base "$SEED" 2>&1 | tee _ci_out/run.log
-          elif [ "$SUITE" = "synthetic_demo" ]; then
-            INPUT="03_Data/synthetic/synthetic_with_threshold.csv"
+            PYTHONPATH=src python 04_Code/pipeline/run_ori_c_demo.py \
+              --outdir _ci_out/ori_demo \
+              --n-runs "$N_RUNS" \
+              --seed-base "$SEED" \
+              --intervention "$INTERVENTION" \
+              2>&1 | tee _ci_out/run.log
+
+          elif [ "$SUITE" = "synthetic" ]; then
+            INPUT="03_Data/synthetic/synthetic_with_transition.csv"
             if [ ! -f "$INPUT" ]; then INPUT="03_Data/synthetic/synthetic_minimal.csv"; fi
-            python 04_Code/pipeline/run_synthetic_demo.py --input "$INPUT" --outdir _ci_out/synthetic_demo --k 2.0 --m 3 2>&1 | tee _ci_out/run.log
+            PYTHONPATH=src python 04_Code/pipeline/run_synthetic_demo.py \
+              --input "$INPUT" \
+              --outdir _ci_out/synthetic_demo \
+              --seed "$SEED" \
+              2>&1 | tee _ci_out/run.log
+
           elif [ "$SUITE" = "robustness" ]; then
-            INPUT="03_Data/synthetic/synthetic_with_threshold.csv"
+            INPUT="03_Data/synthetic/synthetic_with_transition.csv"
             if [ ! -f "$INPUT" ]; then INPUT="03_Data/synthetic/synthetic_minimal.csv"; fi
-            python 04_Code/pipeline/run_robustness.py --input "$INPUT" --outdir _ci_out/robustness 2>&1 | tee _ci_out/run.log
+            PYTHONPATH=src python 04_Code/pipeline/run_robustness.py \
+              --input "$INPUT" \
+              --outdir _ci_out/robustness \
+              --seed "$SEED" \
+              2>&1 | tee _ci_out/run.log
+
           elif [ "$SUITE" = "reinjection" ]; then
-            python 04_Code/pipeline/run_reinjection_demo.py --outdir _ci_out/reinjection --seed "$SEED" 2>&1 | tee _ci_out/run.log
-          elif [ "$SUITE" = "neuro" ]; then
-            if [ -f 04_Code/pipeline/run_bump_attractor.py ]; then
-              python 04_Code/pipeline/run_bump_attractor.py --outdir _ci_out/neuro_test9a --n-runs "$N_RUNS" --master-seed "$SEED" 2>&1 | tee _ci_out/run.log
-            else
-              echo "run_bump_attractor.py not found, skipping Test9A." | tee _ci_out/run.log
-            fi
-            if [ -f 04_Code/pipeline/run_bcm_test.py ]; then
-              python 04_Code/pipeline/run_bcm_test.py --outdir _ci_out/neuro_test9b --master-seed "$SEED" 2>&1 | tee -a _ci_out/run.log
-            else
-              echo "run_bcm_test.py not found, skipping Test9B." | tee -a _ci_out/run.log
-            fi
+            PYTHONPATH=src python 04_Code/pipeline/run_reinjection_demo.py \
+              --outdir _ci_out/reinjection \
+              --seed "$SEED" \
+              --n-runs "$N_RUNS" \
+              2>&1 | tee _ci_out/run.log
           fi
 
-          if [ -d 05_Results ]; then
-            cp -R 05_Results _ci_out/05_Results
-          fi
+          if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: manual_run_${{ inputs.suite }}_${{ github.run_id }}
+          name: manual_${{ inputs.suite }}_${{ github.run_id }}
           path: _ci_out
           if-no-files-found: warn
