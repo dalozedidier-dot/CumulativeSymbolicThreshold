@@ -1,0 +1,87 @@
+{
+  "dataset_id": "fred_monthly_US",
+  "sector": "fred_monthly",
+  "calendar_version": "1.0",
+  "notes": "Ground-truth exogenous events for US FRED monthly panel. Index t=0 corresponds to 1986-01-01. Event dates expressed as approximate row index and calendar date. Windows in row-index units (1 unit = 1 month).",
+  "events": [
+    {
+      "event_id": "dotcom_bust_2001",
+      "label": "Dot-com bust and 9/11 recession 2001",
+      "event_date": "2001-03",
+      "event_date_t_approx": 182,
+      "event_type": "capacity_hit",
+      "source": "NBER recession March 2001 – November 2001; INDPRO fell 6%",
+      "pre_window": {"t_start": 150, "t_end": 181, "calendar": "1998-06 to 2001-02"},
+      "post_window": {"t_start": 182, "t_end": 220, "calendar": "2001-03 to 2004-04"},
+      "expected": {
+        "O": "decrease 2001 (INDPRO contraction)",
+        "R": "decrease (TCU capacity utilisation drop)",
+        "Sigma": "increase — mismatch spike",
+        "S": "possible decrease (M2 growth may slow)",
+        "C": "decrease or stagnate"
+      },
+      "negative_control_window": {"t_start": 100, "t_end": 150, "calendar": "1994-04 to 1998-06"},
+      "placebo_shifts_months": [-36, 36, 60],
+      "falsification_prediction": "O/R drop absent in 1994-1998 negative control"
+    },
+    {
+      "event_id": "gfc_2007_2009",
+      "label": "Global Financial Crisis 2007-2009",
+      "event_date": "2007-12",
+      "event_date_t_approx": 263,
+      "event_type": "capacity_hit",
+      "source": "NBER recession December 2007 – June 2009; INDPRO -17% peak-to-trough",
+      "pre_window": {"t_start": 230, "t_end": 262, "calendar": "2005-02 to 2007-11"},
+      "post_window": {"t_start": 263, "t_end": 300, "calendar": "2007-12 to 2011-01"},
+      "expected": {
+        "O": "severe decrease 2008-2009",
+        "R": "severe decrease (TCU bottomed at 66%)",
+        "I": "T10YFF spread widened — I proxy may show drop (higher spread = lower integration)",
+        "Sigma": "extreme spike 2008-2009",
+        "S": "M2 surge (QE) — S may paradoxically increase",
+        "C": "decrease during crisis; ambiguous QE-driven recovery"
+      },
+      "negative_control_window": {"t_start": 180, "t_end": 230, "calendar": "2001-01 to 2005-02"},
+      "placebo_shifts_months": [-48, 48],
+      "falsification_prediction": "Σ extreme spike absent in 2001-2005 control"
+    },
+    {
+      "event_id": "m2_structural_break_2020",
+      "label": "M2 definition change May 2020",
+      "event_date": "2020-05",
+      "event_date_t_approx": 412,
+      "event_type": "symbolic_injection",
+      "source": "Fed reclassified savings accounts into M2; M2 jumped ~$1.5T overnight",
+      "pre_window": {"t_start": 400, "t_end": 411, "calendar": "2019-04 to 2020-04"},
+      "post_window": {"t_start": 412, "t_end": 440, "calendar": "2020-05 to 2022-09"},
+      "expected": {
+        "S": "structural break — M2-derived S jumps discontinuously. NOT a real symbolic injection.",
+        "C": "spurious increase in C post-2020 if S drives it — this is a known artefact"
+      },
+      "negative_control_window": {"t_start": 380, "t_end": 400, "calendar": "2017-08 to 2019-04"},
+      "placebo_shifts_months": [-12, 12],
+      "falsification_prediction": "C signal post-2020 is artefact if it disappears when S is de-trended for M2 break",
+      "artefact_warning": "This event is a MEASUREMENT ARTEFACT in S. Any C increase post-2020-05 driven by S must be flagged as potentially spurious. Use for falsification only — not as evidence of symbolic threshold."
+    },
+    {
+      "event_id": "covid_shock_2020",
+      "label": "COVID-19 economic shock",
+      "event_date": "2020-02",
+      "event_date_t_approx": 409,
+      "event_type": "demand_shock",
+      "source": "NBER recession February 2020; INDPRO -16.5% in two months",
+      "pre_window": {"t_start": 385, "t_end": 408, "calendar": "2018-01 to 2020-01"},
+      "post_window": {"t_start": 409, "t_end": 440, "calendar": "2020-02 to 2022-09"},
+      "expected": {
+        "O": "extreme rapid decrease Feb-Apr 2020",
+        "R": "extreme decrease (TCU bottomed at 64% in April 2020)",
+        "Sigma": "extreme spike",
+        "demand": "CPI spike 2021-22 (post-COVID inflation)",
+        "C": "disruption then ambiguous recovery; confounded by M2 artefact"
+      },
+      "negative_control_window": {"t_start": 355, "t_end": 385, "calendar": "2015-07 to 2018-01"},
+      "placebo_shifts_months": [-24, 24],
+      "falsification_prediction": "O extreme spike absent in 2015-2018 control"
+    }
+  ]
+}

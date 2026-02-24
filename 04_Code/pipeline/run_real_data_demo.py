@@ -46,6 +46,11 @@ _CODE_DIR = Path(__file__).resolve().parents[1]
 if str(_CODE_DIR) not in sys.path:
     sys.path.insert(0, str(_CODE_DIR))
 
+# Ensure src/ is on sys.path for `import oric`
+_SRC_DIR = Path(__file__).resolve().parents[3] / "src"
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
 from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
 
 
@@ -178,10 +183,35 @@ def main() -> int:
     ap.add_argument("--m", type=int, default=3)
     ap.add_argument("--baseline-n", type=int, default=50)
     ap.add_argument("--control-mode", default="same", choices=["same", "no_symbolic"])
+    ap.add_argument(
+        "--proxy-spec",
+        default=None,
+        help="Path to proxy_spec.json for this dataset. Hash will be logged in summary.json.",
+    )
+    ap.add_argument(
+        "--split-frac",
+        type=float,
+        default=None,
+        help="If set (e.g. 0.7), use first split_frac of rows for calibration and the rest as "
+             "out-of-sample test. Both halves are processed and labelled in summary.",
+    )
     args = ap.parse_args()
 
     outdir = Path(args.outdir)
     tabdir, figdir = _mkdirs(outdir)
+
+    # ── proxy_spec: load and hash if provided ──────────────────────────────────
+    proxy_spec_hash: str | None = None
+    proxy_spec_path: str | None = None
+    if args.proxy_spec:
+        try:
+            from oric.proxy_spec import ProxySpec  # noqa: PLC0415
+            ps = ProxySpec.from_json_file(args.proxy_spec)
+            proxy_spec_hash = ps.sha256()
+            proxy_spec_path = str(Path(args.proxy_spec).resolve())
+            print(f"proxy_spec loaded: {args.proxy_spec}  sha256={proxy_spec_hash[:16]}…")
+        except Exception as exc:
+            print(f"WARNING: could not load proxy_spec ({exc}) — continuing without hash", file=sys.stderr)
 
     input_path = Path(args.input)
     if not input_path.exists():
@@ -208,6 +238,17 @@ def main() -> int:
     # Create the internal time index used everywhere else in the pipeline.
     df["t"] = _to_t_column(df, col_time, time_mode)
     df = df.reset_index(drop=True)
+
+    # ── Out-of-sample split ────────────────────────────────────────────────────
+    split_frac = float(args.split_frac) if args.split_frac is not None else None
+    split_idx: int | None = None
+    if split_frac is not None:
+        if not (0.1 < split_frac < 0.99):
+            print(f"WARNING: --split-frac {split_frac} out of range [0.1, 0.99]; ignoring", file=sys.stderr)
+            split_frac = None
+        else:
+            split_idx = int(len(df) * split_frac)
+            print(f"Out-of-sample split: calibration rows 0..{split_idx-1}, test rows {split_idx}..{len(df)-1}")
 
     # Proxies
     for col, name in [(args.col_O, "O"), (args.col_R, "R"), (args.col_I, "I")]:
@@ -303,6 +344,8 @@ def main() -> int:
     thr_hit = int(df_test.index[df_test["threshold_hit"] > 0][0]) if bool((df_test["threshold_hit"] > 0).any()) else None
     thr_t = None if thr_hit is None else int(df_test.loc[int(thr_hit), "t"])
 
+    verdict_token = "ACCEPT" if thr_hit is not None else "INDETERMINATE"
+
     summary = {
         "input_csv": str(Path(args.input)),
         "n_steps": int(len(df_test)),
@@ -318,8 +361,16 @@ def main() -> int:
         "time_mode": time_mode,
         "col_time": col_time,
         "c_offset": c_offset,
+        "verdict": verdict_token,
+        "run_mode": "real_data_canonical",
+        "proxy_spec_path": proxy_spec_path,
+        "proxy_spec_sha256": proxy_spec_hash,
+        "split_frac": split_frac,
+        "split_calibration_n": split_idx,
+        "split_test_n": (len(df) - split_idx) if split_idx is not None else None,
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    (outdir / "verdict.txt").write_text(verdict_token + "\n", encoding="utf-8")
 
     # Figures
     _plot_overlay(df_control, df_test, "S", figdir / "s_t.png", "S(t): control vs test")

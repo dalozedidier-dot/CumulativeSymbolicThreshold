@@ -1,0 +1,80 @@
+{
+  "dataset_id": "pilot_cpi_FR",
+  "sector": "economie",
+  "calendar_version": "1.0",
+  "notes": "Ground-truth exogenous events for FR economie pilot. Windows and expected levels fixed ex ante. Do NOT adjust post-observation.",
+  "events": [
+    {
+      "event_id": "oil_shock_1973",
+      "label": "1973 oil embargo and price shock",
+      "event_date": "1973",
+      "event_type": "demand_shock",
+      "source": "OPEC embargo October 1973, price quadrupled by January 1974",
+      "pre_window": {"start": "1970", "end": "1972"},
+      "post_window": {"start": "1974", "end": "1976"},
+      "expected": {
+        "Sigma": "increase — demand surge relative to industrial capacity",
+        "O": "decrease — industrial production contraction",
+        "C": "decrease or stagnate — symbolic accumulation disrupted",
+        "recovery_signal": "R elevation if adaptation occurs (energy substitution)"
+      },
+      "negative_control_window": {"start": "1965", "end": "1969"},
+      "placebo_shifts_years": [-5, 5, 10],
+      "falsification_prediction": "Σ signal disappears when event date shifted ±5 years"
+    },
+    {
+      "event_id": "eu_single_market_1993",
+      "label": "EU Single Market completion",
+      "event_date": "1993",
+      "event_type": "symbolic_injection",
+      "source": "Maastricht Treaty 1992, Single Market operative January 1993",
+      "pre_window": {"start": "1990", "end": "1992"},
+      "post_window": {"start": "1993", "end": "1997"},
+      "expected": {
+        "I": "increase — integration of EU-wide coordination",
+        "S": "increase — diffusion of European economic norms",
+        "C": "increase post-1993 — cumulative symbolic gain from market integration"
+      },
+      "negative_control_window": {"start": "1985", "end": "1989"},
+      "placebo_shifts_years": [-4, 4, 8],
+      "falsification_prediction": "C signal absent in placebo window 1985-89"
+    },
+    {
+      "event_id": "gfc_2008",
+      "label": "Global Financial Crisis 2007-2009",
+      "event_date": "2008",
+      "event_type": "capacity_hit",
+      "source": "Lehman Brothers collapse September 2008; FR GDP -3.1% in 2009",
+      "pre_window": {"start": "2005", "end": "2007"},
+      "post_window": {"start": "2009", "end": "2011"},
+      "expected": {
+        "O": "sharp decrease 2008-2009",
+        "R": "decrease — reduced R&D investment during crisis",
+        "Sigma": "increase — mismatch between demand and reduced capacity",
+        "C": "decrease or negative ΔC during crisis; recovery if R rebounds"
+      },
+      "negative_control_window": {"start": "2002", "end": "2006"},
+      "placebo_shifts_years": [-4, 4],
+      "falsification_prediction": "O/R/Sigma pattern absent in negative control 2002-2006"
+    },
+    {
+      "event_id": "covid_2020",
+      "label": "COVID-19 pandemic shock",
+      "event_date": "2020",
+      "event_type": "demand_shock",
+      "source": "French lockdown March 2020; GDP -8.0% in 2020",
+      "pre_window": {"start": "2017", "end": "2019"},
+      "post_window": {"start": "2020", "end": "2022"},
+      "expected": {
+        "O": "sharp decrease 2020",
+        "demand": "collapse then surge (supply chain disruptions)",
+        "Sigma": "spike 2020 — massive demand-capacity mismatch",
+        "S": "may increase if digital/remote-work symbolic diffusion occurred",
+        "C": "ambiguous: disruption then recovery if S rebounds"
+      },
+      "negative_control_window": {"start": "2014", "end": "2018"},
+      "placebo_shifts_years": [-5, 5],
+      "falsification_prediction": "Σ spike absent in placebo 2015; present in 2020"
+    }
+  ]
+}

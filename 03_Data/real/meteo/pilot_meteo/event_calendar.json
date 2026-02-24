@@ -1,0 +1,78 @@
+{
+  "dataset_id": "pilot_meteo_EE",
+  "sector": "meteo",
+  "calendar_version": "1.0",
+  "notes": "Ground-truth exogenous events for EE meteo pilot. Soviet collapse creates extreme outliers pre-1995; event windows respect this structural break.",
+  "events": [
+    {
+      "event_id": "soviet_collapse_1991",
+      "label": "Soviet Union collapse — Estonian independence restored",
+      "event_date": "1991",
+      "event_type": "capacity_hit",
+      "source": "EE declared independence August 1991; industrial collapse 1991-1993",
+      "pre_window": {"start": "1989", "end": "1990"},
+      "post_window": {"start": "1992", "end": "1995"},
+      "expected": {
+        "O": "extreme decrease 1991-1993 (industrial collapse)",
+        "R": "near-zero (R&D system destroyed)",
+        "Sigma": "extreme spike — massive demand-capacity mismatch",
+        "C": "negative or zero — symbolic disruption, no accumulation"
+      },
+      "negative_control_window": null,
+      "placebo_shifts_years": [5, 10],
+      "falsification_prediction": "O collapse not reproduced by placebo shift to 1996 or 2001"
+    },
+    {
+      "event_id": "eu_accession_2004",
+      "label": "Estonia EU accession",
+      "event_date": "2004",
+      "event_type": "symbolic_injection",
+      "source": "EE joined EU May 2004; adoption of EU regulatory framework",
+      "pre_window": {"start": "2001", "end": "2003"},
+      "post_window": {"start": "2004", "end": "2008"},
+      "expected": {
+        "I": "increase — ICT specialists available post-accession",
+        "R": "increase — R&D framework harmonised with EU",
+        "S": "increase — EU symbolic norms diffusing",
+        "C": "increase post-2004"
+      },
+      "negative_control_window": {"start": "1997", "end": "2001"},
+      "placebo_shifts_years": [-4, 4],
+      "falsification_prediction": "I/S increase not observed in placebo 1997-2001"
+    },
+    {
+      "event_id": "heat_wave_2010",
+      "label": "Extreme heat wave summer 2010",
+      "event_date": "2010",
+      "event_type": "demand_shock",
+      "source": "Eastern European heat wave 2010; energy demand spike",
+      "pre_window": {"start": "2008", "end": "2009"},
+      "post_window": {"start": "2010", "end": "2011"},
+      "expected": {
+        "demand": "spike 2010",
+        "Sigma": "increase — short-term mismatch",
+        "O": "no change expected (infrastructure intact)"
+      },
+      "negative_control_window": {"start": "2005", "end": "2008"},
+      "placebo_shifts_years": [-3, 3],
+      "falsification_prediction": "Σ spike absent in negative control 2005-2008"
+    },
+    {
+      "event_id": "covid_2020",
+      "label": "COVID-19 pandemic",
+      "event_date": "2020",
+      "event_type": "demand_shock",
+      "source": "EE GDP -2.9% 2020; smaller impact than EU average due to digital economy",
+      "pre_window": {"start": "2017", "end": "2019"},
+      "post_window": {"start": "2020", "end": "2022"},
+      "expected": {
+        "O": "moderate decrease",
+        "Sigma": "spike",
+        "C": "minor disruption; fast recovery expected given EE digital resilience"
+      },
+      "negative_control_window": {"start": "2014", "end": "2018"},
+      "placebo_shifts_years": [-5, 5],
+      "falsification_prediction": "Σ spike absent in 2014-2018 control"
+    }
+  ]
+}

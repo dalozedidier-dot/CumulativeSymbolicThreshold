@@ -1,0 +1,66 @@
+{
+  "dataset_id": "pilot_meteo_EE",
+  "sector": "meteo",
+  "spec_version": "1.0",
+  "time_column": "year",
+  "time_mode": "value",
+  "normalization_global": "robust_minmax",
+  "columns": [
+    {
+      "source_column": "industrial_production_i15",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "EE post-Soviet collapse creates extreme outliers pre-1995. Series nearly zero 1991-93.",
+      "manipulability_note": "Soviet vs. EU statistical standards discontinuity at 1991."
+    },
+    {
+      "source_column": "berd_pc_gdp",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Very sparse pre-2000. EE R&D data has structural break at EU accession 2004.",
+      "manipulability_note": "R&D expenditure classification changed after Frascati Manual 2015 revision."
+    },
+    {
+      "source_column": "ict_spec_pc_ent_ge10",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "forward_fill",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Available only post-EU accession (2004). Requires forward-fill for pre-accession period.",
+      "manipulability_note": "EE is a digital leader; ICT specialist rate is an outlier relative to EU average."
+    },
+    {
+      "source_column": "env_tax_env_mio_eur",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Small absolute values; unit EUR millions. Currency conversion pre-Euro introduction.",
+      "manipulability_note": "Tax base reclassification coincides with EU accession harmonisation."
+    },
+    {
+      "source_column": "solar_collector_ths_m2",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Very small absolute values for EE. Series near-zero throughout; low symbolic diffusion signal.",
+      "manipulability_note": "Small-country effect: single large installation can dominate the series."
+    }
+  ],
+  "notes": "EE meteo pilot (Estonia). Adapts the same Eurostat columns as other sectors to an EE context. Key structural breaks: Soviet collapse 1991, EU accession 2004, 2010 heat wave. O=industrial production (post-transition recovery proxy), R=R&D (adaptability post-accession), I=ICT integration, demand=env taxation, S=solar collector area. Robust_minmax normalisation clips the Soviet-era extreme dip."
+}

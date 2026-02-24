@@ -1,0 +1,66 @@
+{
+  "dataset_id": "pilot_energie_EU27",
+  "sector": "energie",
+  "spec_version": "1.0",
+  "time_column": "year",
+  "time_mode": "value",
+  "normalization_global": "robust_minmax",
+  "columns": [
+    {
+      "source_column": "industrial_production_i15",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "EU27 aggregate masks large cross-country variance. Post-2009 crisis dip is structural.",
+      "manipulability_note": "Composition of EU27 changed; new member states added in 2004 and 2007."
+    },
+    {
+      "source_column": "solar_collector_ths_m2",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Rapid growth post-2000 makes normalization sensitive to endpoint. Near-zero pre-1995.",
+      "manipulability_note": "Collector vs. panel classification inconsistencies across national reports."
+    },
+    {
+      "source_column": "heat_pump_cap_ath_mw",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Data quality low pre-2005. Many zero entries that may be missing rather than absent.",
+      "manipulability_note": "Capacity vs. production conflation possible."
+    },
+    {
+      "source_column": "sdg_13_50_mio_eur",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Climate finance flows are lumpy and policy-driven. Not a continuous demand signal.",
+      "manipulability_note": "Definition of climate finance expenditure varies across budget cycles."
+    },
+    {
+      "source_column": "road_elec_ktoe",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Near-zero until ~2010; exponential growth post-2015 dominates the series.",
+      "manipulability_note": "KTOE conversion from EV fleet estimates; methodology changes across IEA editions."
+    }
+  ],
+  "notes": "EU27 energie pilot. O=industrial production, R=solar collector installed base (renewable adaptability), I=heat pump capacity (thermal integration), demand=climate finance (SDG 13.5), S=road transport electrification (symbolic green transition diffusion). Time range: 1990 onwards; sparse coverage before 2000 for several proxies."
+}

@@ -1,0 +1,66 @@
+{
+  "dataset_id": "pilot_trafic_DE",
+  "sector": "trafic",
+  "spec_version": "1.0",
+  "time_column": "year",
+  "time_mode": "value",
+  "normalization_global": "robust_minmax",
+  "columns": [
+    {
+      "source_column": "industrial_production_i15",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "DE series structurally shifted by reunification 1990. Pre-1991 = West Germany only.",
+      "manipulability_note": "Rebasing cycles of industrial production index across Destatis editions."
+    },
+    {
+      "source_column": "berd_pc_gdp",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "DE R&D is high and stable; low variance reduces discriminative power of this proxy.",
+      "manipulability_note": "Industry-funded vs. public R&D split changes across BMBF reports."
+    },
+    {
+      "source_column": "ict_spec_pc_ent_ge10",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "forward_fill",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Available from late 1990s. DE digital transition was slower than EE.",
+      "manipulability_note": "Enterprise size threshold (ge10) creates cliff effect; border firms misclassified."
+    },
+    {
+      "source_column": "road_elec_ktoe",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Near-zero pre-2015; sharp growth post-EV adoption curve. Non-linear scaling.",
+      "manipulability_note": "KTOE conversion depends on EV fleet efficiency assumptions."
+    },
+    {
+      "source_column": "solar_collector_ths_m2",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "DE solar collector area peaked around 2012 then stagnated. Non-monotonic.",
+      "manipulability_note": "Area vs. thermal output conflation; reported values depend on subsidy programme tracking."
+    }
+  ],
+  "notes": "DE trafic pilot (Germany). O=industrial production (reunification break at 1990), R=R&D intensity, I=ICT labour share, demand=road electrification energy (proxy for EV-driven traffic demand), S=solar collector area (symbolic green mobility diffusion). Robust_minmax used throughout; reunification outlier handled by 2-98 percentile clip."
+}
