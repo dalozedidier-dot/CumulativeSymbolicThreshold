@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Didier Daloze — À propos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        a { color: var(--accent-flow); text-decoration: none; transition: color 0.3s ease; }
+        a:hover { color: var(--text-primary); }
+
+        .back-nav {
+            position: fixed;
+            top: 2rem; left: 2rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .back-nav:hover { color: var(--text-primary); }
+        .back-nav svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+        .back-nav:hover svg { transform: translateX(-5px); }
+
+        .hero {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .author-name {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 300;
+            letter-spacing: 0.08em;
+            margin-bottom: 1rem;
+        }
+
+        .author-tagline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--accent-flow);
+            margin-bottom: 2rem;
+        }
+
+        .author-intro {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 650px;
+        }
+
+        .main-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--accent-pulse);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section p {
+            font-size: 1.15rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .quote-block {
+            background: var(--bg-surface);
+            border-left: 3px solid var(--accent-flow);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            font-style: italic;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        /* Links grid */
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .link-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .link-card:hover {
+            border-color: var(--accent-flow);
+            transform: translateY(-3px);
+        }
+
+        .link-card svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-flow);
+            flex-shrink: 0;
+        }
+
+        .link-card-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .link-card-title {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .link-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Contact form style */
+        .contact-info {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .contact-row:last-child {
+            border-bottom: none;
+        }
+
+        .contact-row svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-flow);
+            flex-shrink: 0;
+        }
+
+        .contact-row a {
+            font-size: 1.05rem;
+        }
+
+        /* Works list */
+        .works-list {
+            margin-top: 1.5rem;
+        }
+
+        .work-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            align-items: flex-start;
+        }
+
+        .work-year {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+            min-width: 50px;
+        }
+
+        .work-title {
+            font-size: 1.05rem;
+        }
+
+        .work-type {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .main-content { padding: 3rem 1.5rem; }
+            .links-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <a href="ori-c-presentation.html" class="back-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Retour à ORI-C
+    </a>
+
+    <section class="hero">
+        <div class="author-tagline">Auteur & Chercheur indépendant</div>
+        <h1 class="author-name">Didier Daloze</h1>
+        <p class="author-intro">
+            Analyseur systémique · Pensée critique · Cohérence psychique et structurelle.<br>
+            Je ne suis pas fait pour convaincre. Je suis fait pour révéler.
+        </p>
+    </section>
+
+    <main class="main-content">
+
+        <!-- Démarche -->
+        <section class="section">
+            <h2 class="section-title">Démarche</h2>
+            <p>
+                Mon travail porte sur la viabilité des systèmes vivants — au sens large : biologiques, 
+                psychiques, sociaux, économiques. Ce qui m'intéresse, c'est la grammaire commune qui 
+                traverse ces échelles : comment un système se maintient, se reconfigure, absorbe les 
+                chocs, déplace ses coûts, et parfois bascule vers un autre régime.
+            </p>
+            <p>
+                Je développe le cadre <strong>ORI-C</strong> (Observation, Régulation, Intégration — Cohérence) 
+                et le cadre d'observation <strong>PALM</strong> (Plasticité, Adaptation, Logiques de mètis) 
+                comme outils minimalistes et non métaphysiques pour décrire ces dynamiques.
+            </p>
+            <div class="quote-block">
+                Le vivant ne résout pas. Il déplace, convertit, temporise, hybridise.
+            </div>
+        </section>
+
+        <!-- Travaux -->
+        <section class="section">
+            <h2 class="section-title">Travaux</h2>
+            <div class="works-list">
+                <div class="work-item">
+                    <span class="work-year">2026</span>
+                    <div>
+                        <div class="work-title">Cumulative Symbolic Threshold</div>
+                        <div class="work-type">Recherche — Pipeline reproductible, OSF</div>
+                    </div>
+                </div>
+                <div class="work-item">
+                    <span class="work-year">2026</span>
+                    <div>
+                        <div class="work-title">Le principe fonctionnel de viabilité systémique</div>
+                        <div class="work-type">Essai théorique</div>
+                    </div>
+                </div>
+                <div class="work-item">
+                    <span class="work-year">2026</span>
+                    <div>
+                        <div class="work-title">Les schémas psychiques comme structures dissipatives</div>
+                        <div class="work-type">Article</div>
+                    </div>
+                </div>
+                <div class="work-item">
+                    <span class="work-year">2026</span>
+                    <div>
+                        <div class="work-title">PALM — Cadre d'observation du vivant</div>
+                        <div class="work-type">Cadre méthodologique</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Liens -->
+        <section class="section">
+            <h2 class="section-title">Liens</h2>
+            <div class="links-grid">
+                <a href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold" target="_blank" class="link-card">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <div class="link-card-content">
+                        <span class="link-card-title">GitHub</span>
+                        <span class="link-card-desc">Code & données</span>
+                    </div>
+                </a>
+
+                <a href="https://osf.io/g62pz/" target="_blank" class="link-card">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <div class="link-card-content">
+                        <span class="link-card-title">OSF</span>
+                        <span class="link-card-desc">Projet de recherche</span>
+                    </div>
+                </a>
+
+                <a href="https://x.com/DDGraphisme" target="_blank" class="link-card">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <div class="link-card-content">
+                        <span class="link-card-title">X / Twitter</span>
+                        <span class="link-card-desc">@DDGraphisme</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="section">
+            <h2 class="section-title">Contact</h2>
+            <p>
+                Pour toute question sur les cadres ORI-C et PALM, collaboration de recherche, 
+                ou échange sur les thématiques de viabilité systémique.
+            </p>
+            <div class="contact-info">
+                <div class="contact-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231z"/>
+                    </svg>
+                    <a href="https://x.com/DDGraphisme" target="_blank">@DDGraphisme</a>
+                </div>
+                <div class="contact-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <a href="https://github.com/dalozedidier-dot" target="_blank">github.com/dalozedidier-dot</a>
+                </div>
+                <div class="contact-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <a href="https://osf.io/g62pz/" target="_blank">osf.io/g62pz</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p class="footer-meta">Didier Daloze · ORI-C · 2026</p>
+    </footer>
+</body>
+</html>
