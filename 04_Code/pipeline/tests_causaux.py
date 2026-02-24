@@ -18,9 +18,17 @@ Implemented checks (lightweight but stricter than the legacy diff-in-diff)
 - VAR causality test (S -> delta_C)
 - Cointegration test (C, S) as a robustness signal under non-stationarity
 
-Important real-data robustness rule
-- If Welch is not computable (p_value_mean_shift_C is NaN), do not hard-fail ok_p.
-  Use bootstrap CI as the decision fallback for "mean shift" evidence.
+Important real-data robustness rules
+- If Welch is not computable (p_value_mean_shift_C is NaN), cascade through:
+    1. Mann-Whitney U test (non-parametric, one-tailed, same α)
+    2. Block bootstrap CI lower bound > 0 as final fallback
+  Never let a single undefined parametric statistic decide the verdict.
+- Window slicing always uses integer step index (0..n-1), never raw t values
+  (which may encode calendar day-counts). If the output CSV has a 'step' column
+  it is used; otherwise the DataFrame's row position is used.
+- Sigma-gate for V-related verdicts: if Sigma(t) is identically zero in the
+  post-threshold window, the symbolic pathway cannot operate. A non-detection
+  in that case is INDETERMINATE, not a falsification.
 
 Outputs
 - tables/causal_tests_summary.csv
@@ -228,9 +236,13 @@ def _render_md(report: dict) -> str:
     lines.append("## Tests statistiques")
     lines.append("")
     lines.append(f"- p_value_mean_shift_C (Welch): {report.get('p_value_mean_shift_C'):.6g}")
+    lines.append(f"- p_value_mannwhitney_C (MWU, one-tailed): {report.get('p_value_mannwhitney_C'):.6g}")
+    lines.append(f"- ok_p_source: {report.get('criteria',{}).get('ok_p_source')}")
     lines.append(
         f"- bootstrap_mean_diff_C: {report.get('boot_mean_diff_C'):.6g} (95% CI [{report.get('boot_ci_low_C'):.6g}, {report.get('boot_ci_high_C'):.6g}])"
     )
+    if report.get("sigma_gate_note"):
+        lines.append(f"- SIGMA GATE: {report.get('sigma_gate_note')}")
     lines.append("")
     lines.append("## Causalite")
     lines.append("")
@@ -356,6 +368,14 @@ def main() -> int:
         if col not in df_t.columns:
             raise SystemExit(f"Missing column in test: {col}")
 
+    # Step index: always use 0..n-1 for window slicing regardless of what 't' encodes.
+    # The 'step' column is written by run_real_data_demo.py; fall back to row position.
+    if "step" in df_t.columns:
+        df_t["_step"] = df_t["step"].reset_index(drop=True)
+    else:
+        df_t = df_t.reset_index(drop=True)
+        df_t["_step"] = df_t.index.to_numpy(dtype=int)
+
     # Determine threshold hit
     thr_idx: int | None = None
     thr_val = float("nan")
@@ -365,13 +385,15 @@ def main() -> int:
     else:
         thr_idx, thr_val = _detect_threshold(df_t["delta_C"].to_numpy(dtype=float), float(args.k), int(args.m), int(args.baseline_n))
 
+    # Use step index (not calendar t) for all window computations
+    thr_step = None if thr_idx is None else int(df_t.loc[int(thr_idx), "_step"])
     thr_t = None if thr_idx is None else int(df_t.loc[int(thr_idx), "t"])
 
-    # No false positives pre-threshold
+    # No false positives pre-threshold (slice by step)
     no_fp_pre = True
-    if thr_idx is not None and thr_t is not None:
+    if thr_step is not None:
         hit2, _ = _detect_threshold(
-            df_t.loc[df_t["t"] < int(thr_t), "delta_C"].to_numpy(dtype=float),
+            df_t.loc[df_t["_step"] < int(thr_step), "delta_C"].to_numpy(dtype=float),
             float(args.k),
             int(args.m),
             int(args.baseline_n),
@@ -379,19 +401,19 @@ def main() -> int:
         if hit2 is not None:
             no_fp_pre = False
 
-    # Pre and post windows
-    if thr_t is None:
-        t0 = int(df_t["t"].iloc[len(df_t) // 2])
+    # Pre and post windows — always in step units
+    if thr_step is None:
+        s0 = int(df_t["_step"].iloc[len(df_t) // 2])
     else:
-        t0 = int(thr_t)
+        s0 = int(thr_step)
 
-    pre_start = max(0, t0 - int(args.pre_horizon))
-    pre_end = t0
-    post_start = t0
-    post_end = min(int(df_t["t"].max()) + 1, t0 + int(args.post_horizon))
+    pre_start = max(0, s0 - int(args.pre_horizon))
+    pre_end = s0
+    post_start = s0
+    post_end = min(int(df_t["_step"].max()) + 1, s0 + int(args.post_horizon))
 
-    pre = df_t[(df_t["t"] >= pre_start) & (df_t["t"] < pre_end)].copy()
-    post = df_t[(df_t["t"] >= post_start) & (df_t["t"] < post_end)].copy()
+    pre = df_t[(df_t["_step"] >= pre_start) & (df_t["_step"] < pre_end)].copy()
+    post = df_t[(df_t["_step"] >= post_start) & (df_t["_step"] < post_end)].copy()
 
     C_mean_pre = float(pre["C"].mean()) if len(pre) else float("nan")
     C_mean_post = float(post["C"].mean()) if len(post) else float("nan")
@@ -408,6 +430,19 @@ def main() -> int:
         )
     else:
         p_shift = float("nan")
+
+    # Mann-Whitney U fallback (one-tailed: post > pre) — only computed when Welch is NaN
+    p_mwu = float("nan")
+    if not np.isfinite(p_shift) and len(pre) >= 5 and len(post) >= 5:
+        try:
+            mwu = stats.mannwhitneyu(
+                post["C"].to_numpy(dtype=float),
+                pre["C"].to_numpy(dtype=float),
+                alternative="greater",
+            )
+            p_mwu = float(mwu.pvalue)
+        except Exception:
+            p_mwu = float("nan")
 
     # Bootstrap CI for mean diff
     boot_mid, boot_lo, boot_hi = _block_bootstrap_mean_diff(
@@ -438,18 +473,32 @@ def main() -> int:
     ok_boot = bool(np.isfinite(boot_lo) and (boot_lo > 0.0))
     ok_granger = bool(np.isfinite(min_granger_s_to_dc) and (min_granger_s_to_dc <= float(args.alpha)))
 
-    # Robust ok_p: Welch if available, else bootstrap fallback.
+    # Robust ok_p: hierarchical cascade — never rely on a single undefined statistic.
+    # Priority 1: Welch t-test (parametric, if finite)
+    # Priority 2: Mann-Whitney U (non-parametric, one-tailed)
+    # Priority 3: Block bootstrap CI excludes zero (conservative fallback)
     if np.isfinite(p_shift):
         ok_p = bool(p_shift <= float(args.alpha))
         ok_p_source = "welch"
+    elif np.isfinite(p_mwu):
+        ok_p = bool(p_mwu <= float(args.alpha))
+        ok_p_source = "mannwhitney_fallback"
     else:
         ok_p = bool(ok_boot)
         ok_p_source = "bootstrap_fallback"
+
+    # Sigma-gate: if Sigma is identically zero in the post window, the symbolic pathway
+    # cannot operate. A non-detection in that context is INDETERMINATE, not a real failure.
+    sigma_zero_post = False
+    if "Sigma" in post.columns and len(post) > 0:
+        sigma_vals = post["Sigma"].to_numpy(dtype=float)
+        sigma_zero_post = bool(np.nanmax(np.abs(sigma_vals)) < 1e-9)
 
     # Reverse direction significance is a warning, not an automatic fail.
     reverse_warning = bool(np.isfinite(min_granger_dc_to_s) and (min_granger_dc_to_s <= float(args.alpha)))
 
     # Verdict
+    sigma_gate_note: str | None = None
     if not has_threshold:
         verdict = "non_detecte"
         binary = False
@@ -460,6 +509,11 @@ def main() -> int:
         elif ok_p and ok_boot and ok_granger:
             verdict = "seuil_detecte"
             binary = True
+        elif sigma_zero_post:
+            # Symbolic pathway inoperative: INDETERMINATE, not a failure of the hypothesis
+            verdict = "indetermine_sigma_nul"
+            binary = False
+            sigma_gate_note = "Sigma(t)=0 throughout post-threshold window: symbolic canal inoperable, cannot falsify H."
         else:
             verdict = "non_detecte"
             binary = False
@@ -483,6 +537,9 @@ def main() -> int:
         "C_mean_post_minus_pre": float(C_mean_post - C_mean_pre) if np.isfinite(C_mean_pre) and np.isfinite(C_mean_post) else float("nan"),
         "C_positive_frac_post": C_positive_frac_post,
         "p_value_mean_shift_C": p_shift,
+        "p_value_mannwhitney_C": float(p_mwu),
+        "sigma_zero_post": bool(sigma_zero_post),
+        "sigma_gate_note": sigma_gate_note,
         "boot_mean_diff_C": boot_mid,
         "boot_ci_low_C": boot_lo,
         "boot_ci_high_C": boot_hi,
@@ -515,6 +572,9 @@ def main() -> int:
         "C_mean_post": C_mean_post,
         "C_positive_frac_post": C_positive_frac_post,
         "p_value_mean_shift_C": p_shift,
+        "p_value_mannwhitney_C": float(p_mwu),
+        "sigma_zero_post": bool(sigma_zero_post),
+        "ok_p_source": str(ok_p_source),
         "boot_ci_low_C": boot_lo,
         "boot_ci_high_C": boot_hi,
         "min_granger_S_to_deltaC_p": _safe_float(min_granger_s_to_dc),

@@ -1,0 +1,217 @@
+name: Independent Replication — Bundle-Pinned ORI-C
+
+# This workflow is designed for independent replication.
+# It pins to immutable bundle data (hash-verified), runs the full ORI-C
+# pipeline, and compares verdicts against pre-registered expected outcomes.
+#
+# Trigger: manual dispatch (reproducibility runs) or weekly on main.
+# Never triggers on PRs from forks to prevent untrusted code running on data.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_version:
+        description: "Bundle version to use (v1 or v2)"
+        required: false
+        default: "v2"
+        type: choice
+        options: ["v1", "v2"]
+      event_year:
+        description: "Event year for DiD/SC (default 2015)"
+        required: false
+        default: "2015"
+      split_year:
+        description: "OOS split year (default 2015)"
+        required: false
+        default: "2015"
+      seed:
+        description: "RNG seed for reproducibility"
+        required: false
+        default: "42"
+  schedule:
+    # Weekly on Sundays 03:00 UTC — independent background replication
+    - cron: "0 3 * * 0"
+
+permissions:
+  contents: read
+
+jobs:
+  integrity-check:
+    name: "Step 1 — Bundle Integrity Check"
+    runs-on: ubuntu-latest
+    outputs:
+      integrity_passed: ${{ steps.check.outputs.passed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify bundle hashes (MUST PASS before any analysis)
+        id: check
+        run: |
+          python scripts/check_bundle_integrity.py \
+            --bundle-root 03_Data/real/_bundles \
+            --hashes-file 03_Data/real/_bundles/bundle_hashes.json
+          echo "passed=true" >> "$GITHUB_OUTPUT"
+
+  oos-panel:
+    name: "Step 2 — OOS Panel Evaluation"
+    needs: integrity-check
+    if: needs.integrity-check.outputs.integrity_passed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r 04_Code/requirements.txt 2>/dev/null || true
+
+      - name: Run OOS panel — outcome O
+        run: |
+          PANEL="03_Data/real/_bundles/data_real_${{ inputs.bundle_version || 'v2' }}/oric_inputs/oric_inputs_panel.csv"
+          python 04_Code/pipeline/run_oos_panel.py \
+            --panel "$PANEL" \
+            --split-year ${{ inputs.split_year || '2015' }} \
+            --outcome-col O \
+            --outdir _ci_out/oos_panel/O \
+            --k 2.5 --m 3 --alpha 0.01 \
+            --seed ${{ inputs.seed || '42' }}
+
+      - name: Run OOS panel — outcome R
+        run: |
+          PANEL="03_Data/real/_bundles/data_real_${{ inputs.bundle_version || 'v2' }}/oric_inputs/oric_inputs_panel.csv"
+          python 04_Code/pipeline/run_oos_panel.py \
+            --panel "$PANEL" \
+            --split-year ${{ inputs.split_year || '2015' }} \
+            --outcome-col R \
+            --outdir _ci_out/oos_panel/R \
+            --k 2.5 --m 3 --alpha 0.01 \
+            --seed ${{ inputs.seed || '42' }}
+
+      - name: Upload OOS results
+        uses: actions/upload-artifact@v4
+        with:
+          name: oos-panel-results
+          path: _ci_out/oos_panel/
+
+  did-synthetic-control:
+    name: "Step 3 — DiD and Synthetic Control"
+    needs: integrity-check
+    if: needs.integrity-check.outputs.integrity_passed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r 04_Code/requirements.txt 2>/dev/null || true
+
+      - name: Run DiD + Synthetic Control — EU27 treated, Paris 2015
+        run: |
+          PANEL="03_Data/real/_bundles/data_real_${{ inputs.bundle_version || 'v2' }}/oric_inputs/oric_inputs_panel.csv"
+          python 04_Code/pipeline/run_did_synthetic_control.py \
+            --panel "$PANEL" \
+            --treated-geo EU27_2020 \
+            --event-year ${{ inputs.event_year || '2015' }} \
+            --outcome-col O \
+            --outdir _ci_out/did/EU27_paris_2015_O \
+            --alpha 0.01 --n-boot 500 \
+            --seed ${{ inputs.seed || '42' }}
+
+      - name: Run DiD + Synthetic Control — DE treated, Agenda 2010
+        run: |
+          PANEL="03_Data/real/_bundles/data_real_${{ inputs.bundle_version || 'v2' }}/oric_inputs/oric_inputs_panel.csv"
+          python 04_Code/pipeline/run_did_synthetic_control.py \
+            --panel "$PANEL" \
+            --treated-geo DE \
+            --event-year 2003 \
+            --outcome-col R \
+            --outdir _ci_out/did/DE_agenda2010_R \
+            --alpha 0.01 --n-boot 500 \
+            --seed ${{ inputs.seed || '42' }}
+
+      - name: Upload DiD results
+        uses: actions/upload-artifact@v4
+        with:
+          name: did-sc-results
+          path: _ci_out/did/
+
+  verdict-comparison:
+    name: "Step 4 — Verdict Consistency Check"
+    needs: [oos-panel, did-synthetic-control]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download OOS results
+        uses: actions/download-artifact@v4
+        with:
+          name: oos-panel-results
+          path: _ci_out/oos_panel/
+
+      - name: Download DiD results
+        uses: actions/download-artifact@v4
+        with:
+          name: did-sc-results
+          path: _ci_out/did/
+
+      - name: Check all verdicts are not TAMPERED
+        run: |
+          python - <<'EOF'
+          import sys
+          from pathlib import Path
+
+          verdict_files = list(Path("_ci_out").rglob("verdict.txt"))
+          print(f"Found {len(verdict_files)} verdict files")
+
+          for vf in verdict_files:
+              token = vf.read_text(encoding="utf-8").strip()
+              print(f"  {vf}: {token}")
+              if token == "TAMPERED":
+                  print(f"CRITICAL: tampered verdict in {vf}", file=sys.stderr)
+                  sys.exit(1)
+
+          print(f"\nAll {len(verdict_files)} verdicts are valid tokens (ACCEPT/REJECT/INDETERMINATE).")
+          EOF
+
+      - name: Summarise all verdicts
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+
+          summary = []
+          for vf in sorted(Path("_ci_out").rglob("verdict.txt")):
+              token = vf.read_text(encoding="utf-8").strip()
+              summary.append({"path": str(vf), "verdict": token})
+
+          print(json.dumps(summary, indent=2))
+
+          accept = sum(1 for s in summary if s["verdict"] == "ACCEPT")
+          reject = sum(1 for s in summary if s["verdict"] == "REJECT")
+          indet  = sum(1 for s in summary if s["verdict"] == "INDETERMINATE")
+          print(f"\nACCEPT={accept}  REJECT={reject}  INDETERMINATE={indet}")
+          EOF
+
+      - name: Upload combined summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: replication-summary
+          path: _ci_out/

@@ -1,0 +1,66 @@
+{
+  "dataset_id": "fred_monthly_US",
+  "sector": "fred_monthly",
+  "spec_version": "1.0",
+  "time_column": "date",
+  "time_mode": "value",
+  "normalization_global": "none",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Already normalised to [0,1] by upstream processing. Underlying source: INDPRO (Fed industrial production index).",
+      "manipulability_note": "INDPRO base year revisions; seasonal adjustment methodology."
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Already normalised. Underlying source: TCU (total capacity utilisation, Fed).",
+      "manipulability_note": "TCU survey coverage changes across industries over time."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Already normalised. Underlying source: T10YFF (10Y-FF spread, macro integration proxy).",
+      "manipulability_note": "Financial spread is market-determined; reflects risk sentiment, not only structural integration."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Already normalised. Underlying source: CPIAUCSL (CPI all urban consumers, monthly).",
+      "manipulability_note": "CPI methodology changes (housing imputation, substitution bias) create level shifts."
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Already normalised. Underlying source: M2SL (M2 money supply, Fed) — monetary symbolic stock proxy.",
+      "manipulability_note": "M2 definition changed in May 2020 (savings accounts reclassification). Structural break."
+    }
+  ],
+  "notes": "US macro monthly panel (FRED). All five ORI-C columns (O, R, I, demand, S) are pre-normalised to [0,1] by the upstream resolve_real_datasets.py pipeline. No re-normalisation needed. Raw sources: INDPRO (O), TCU (R), T10YFF (I), CPIAUCSL (demand), M2SL (S). Monthly frequency 1986-present. M2 structural break May 2020 flagged in event_calendar."
+}

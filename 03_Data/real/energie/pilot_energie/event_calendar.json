@@ -1,0 +1,77 @@
+{
+  "dataset_id": "pilot_energie_EU27",
+  "sector": "energie",
+  "calendar_version": "1.0",
+  "notes": "Ground-truth exogenous events for EU27 energie pilot. Windows and expected levels fixed ex ante.",
+  "events": [
+    {
+      "event_id": "eu_enlargement_2004",
+      "label": "EU enlargement — 10 new member states",
+      "event_date": "2004",
+      "event_type": "symbolic_injection",
+      "source": "10 countries joined EU May 2004; energy market integration accelerated",
+      "pre_window": {"start": "2001", "end": "2003"},
+      "post_window": {"start": "2004", "end": "2007"},
+      "expected": {
+        "I": "increase — wider heat pump / solar integration network",
+        "S": "increase — diffusion of EU renewable norms to new members",
+        "C": "increase post-2004"
+      },
+      "negative_control_window": {"start": "1997", "end": "2001"},
+      "placebo_shifts_years": [-4, 4],
+      "falsification_prediction": "C increase not observed in placebo 1997-2001 pre-enlargement"
+    },
+    {
+      "event_id": "eu_ets_2005",
+      "label": "EU Emissions Trading System launch",
+      "event_date": "2005",
+      "event_type": "demand_shock",
+      "source": "EU ETS Phase I started January 2005; carbon price signal introduced",
+      "pre_window": {"start": "2002", "end": "2004"},
+      "post_window": {"start": "2005", "end": "2008"},
+      "expected": {
+        "demand": "increase — climate finance flows increase post-ETS",
+        "R": "increase — renewable capacity accelerates (solar collectors)",
+        "Sigma": "may spike in transition year 2005"
+      },
+      "negative_control_window": {"start": "1998", "end": "2002"},
+      "placebo_shifts_years": [-4, 4, 8],
+      "falsification_prediction": "demand/R acceleration not present in 1998-2002"
+    },
+    {
+      "event_id": "paris_agreement_2015",
+      "label": "Paris Agreement COP21",
+      "event_date": "2015",
+      "event_type": "symbolic_injection",
+      "source": "Paris Agreement signed December 2015; NDC commitments",
+      "pre_window": {"start": "2012", "end": "2014"},
+      "post_window": {"start": "2016", "end": "2020"},
+      "expected": {
+        "S": "acceleration — EV electrification (road_elec) and solar adoption",
+        "C": "increase post-2015 — cumulative symbolic commitment regime",
+        "demand": "increase — climate finance (SDG 13.5) mobilisation"
+      },
+      "negative_control_window": {"start": "2007", "end": "2012"},
+      "placebo_shifts_years": [-5, 5],
+      "falsification_prediction": "S/C acceleration not present in 2007-2012 negative control"
+    },
+    {
+      "event_id": "covid_energy_2020",
+      "label": "COVID-19 energy demand collapse",
+      "event_date": "2020",
+      "event_type": "capacity_hit",
+      "source": "EU industrial activity -15% in 2020 Q2; energy demand collapsed",
+      "pre_window": {"start": "2017", "end": "2019"},
+      "post_window": {"start": "2020", "end": "2022"},
+      "expected": {
+        "O": "decrease 2020",
+        "demand": "drop then rebound 2021-22",
+        "S": "possible acceleration (green recovery plans)",
+        "C": "disruption 2020 then recovery if green recovery is symbolically cumulative"
+      },
+      "negative_control_window": {"start": "2013", "end": "2018"},
+      "placebo_shifts_years": [-5, 5],
+      "falsification_prediction": "O collapse absent in negative control 2013-2018"
+    }
+  ]
+}
