@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PALM | Plasticité, Adaptation, Logiques de mètis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-palm: #4a6b5a;
+            --accent-metis: #6b5a4a;
+            --accent-adapt: #5a4a6b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        .back-nav {
+            position: fixed;
+            top: 2rem; left: 2rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .back-nav:hover { color: var(--text-primary); }
+        .back-nav svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+        .back-nav:hover svg { transform: translateX(-5px); }
+
+        .hero {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--accent-palm);
+            margin-bottom: 2rem;
+            padding: 0.5rem 1.5rem;
+            border: 1px solid var(--accent-palm);
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 10vw, 7rem);
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 700px;
+        }
+
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 6rem;
+        }
+
+        .section-header {
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-palm);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        .content-text p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            max-width: 800px;
+        }
+
+        .axiom-block {
+            background: linear-gradient(135deg, var(--bg-surface), var(--bg-elevated));
+            border-left: 3px solid var(--accent-palm);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .axiom-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-palm);
+            margin-bottom: 0.5rem;
+        }
+
+        .axiom-text {
+            font-size: 1.4rem;
+            font-style: italic;
+        }
+
+        .layers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .layers-table th,
+        .layers-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .layers-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            font-weight: 400;
+        }
+
+        .layers-table td:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-metis);
+            white-space: nowrap;
+        }
+
+        .layers-table td { font-size: 0.95rem; color: var(--text-muted); }
+        .layers-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .layer-forbidden { color: #8b5a5a !important; }
+
+        .operator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .operator-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .operator-card:hover {
+            border-color: var(--accent-palm);
+            transform: translateY(-3px);
+        }
+
+        .operator-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--accent-palm);
+            margin-bottom: 0.5rem;
+        }
+
+        .operator-name {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .operator-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .metis-catalog {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .metis-item {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metis-item:hover {
+            border-color: var(--accent-metis);
+            background: var(--bg-elevated);
+        }
+
+        .metis-name {
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .metis-desc {
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+            font-style: italic;
+        }
+
+        .scale-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.9rem;
+        }
+
+        .scale-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            font-weight: 400;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .scale-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            color: var(--text-muted);
+        }
+
+        .scale-table td:first-child {
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .scale-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .protocol-steps {
+            counter-reset: step;
+            margin: 2rem 0;
+        }
+
+        .protocol-step {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            counter-increment: step;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--accent-palm);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-palm);
+            flex-shrink: 0;
+        }
+
+        .step-num::before { content: counter(step); }
+        .step-text { padding-top: 0.5rem; font-size: 1rem; }
+
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-text {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .main-content { padding: 3rem 1.5rem; }
+            .operator-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <a href="ori-c-presentation.html" class="back-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Retour à ORI-C
+    </a>
+
+    <section class="hero">
+        <div class="hero-badge">Cadre d'observation</div>
+        <h1>PALM</h1>
+        <p class="hero-subtitle">
+            Plasticité, Adaptation, Logiques de mètis — Un cadre d'observation minimaliste, 
+            rigoureux et non métaphysique pour décrire les systèmes vivants au sens dynamique.
+        </p>
+    </section>
+
+    <main class="main-content">
+
+        <!-- Fondements -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">Partie I</div>
+                <h2 class="section-title">Fondements</h2>
+            </div>
+
+            <div class="content-text">
+                <p>Un cadre d'observation sert à trois choses : stabiliser l'attention sur ce qu'on regarde, à quelle échelle et pendant combien de temps ; rendre l'observation transmissible ; et éviter les illusions que produisent nos biais narratifs.</p>
+                
+                <p>Le vivant — biologique, social, géopolitique — est non linéaire, contextuel, historique, multi-causal, partiellement opaque, et orienté par la relation. Or la science institutionnelle privilégie souvent ce qui est isolable, répétable, simplifiable.</p>
+            </div>
+
+            <div class="axiom-block">
+                <div class="axiom-label">Premier axiome</div>
+                <p class="axiom-text">Le vivant ne résout pas. Il déplace, convertit, temporise, hybridise.</p>
+            </div>
+
+            <div class="axiom-block">
+                <div class="axiom-label">Second axiome</div>
+                <p class="axiom-text">L'observateur est dans la boucle. Toute mesure modifie l'objet.</p>
+            </div>
+        </section>
+
+        <!-- Les quatre couches -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">Discipline absolue</div>
+                <h2 class="section-title">Les quatre couches</h2>
+            </div>
+
+            <div class="content-text">
+                <p>Règle absolue : ne jamais mélanger les couches. PALM reste strictement dans les couches 1 à 3. Le module anti-idéologie empêche tout glissement en couche 4.</p>
+            </div>
+
+            <table class="layers-table">
+                <thead>
+                    <tr>
+                        <th>Couche</th>
+                        <th>Contenu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1 — Observations</td>
+                        <td>Traces filmables, enregistrables, données brutes. Contraintes décrites de façon neutre.</td>
+                    </tr>
+                    <tr>
+                        <td>2 — Patterns</td>
+                        <td>Invariants dynamiques repérables. Motifs concurrents, non exclusifs, sans verdict.</td>
+                    </tr>
+                    <tr>
+                        <td>3 — Hypothèses</td>
+                        <td>Réfutables, avec indicateur, seuil, horizon, condition de falsification.</td>
+                    </tr>
+                    <tr>
+                        <td class="layer-forbidden">4 — Récit</td>
+                        <td class="layer-forbidden">Sens, intention, moralité, téléologie. INTERDIT dans PALM.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Les cinq opérateurs -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">Partie II</div>
+                <h2 class="section-title">Les cinq opérateurs PALM</h2>
+            </div>
+
+            <div class="operator-grid">
+                <div class="operator-card">
+                    <div class="operator-number">Module 1</div>
+                    <h3 class="operator-name">Pression</h3>
+                    <p class="operator-desc">Contrainte structurelle actuelle qui empêche ou limite une stabilisation simple. Sorties : nature, intensité, échelle, temporalité, fragmentation, direction.</p>
+                </div>
+
+                <div class="operator-card">
+                    <div class="operator-number">Module 2</div>
+                    <h3 class="operator-name">Affordances</h3>
+                    <p class="operator-desc">Marges exploitables du système sous pression. Familles : matérielles, relationnelles, juridiques, symboliques, architecturales.</p>
+                </div>
+
+                <div class="operator-card">
+                    <div class="operator-number">Module 3</div>
+                    <h3 class="operator-name">Mètis</h3>
+                    <p class="operator-desc">Contournements émergents observables. Sans intention requise. Pour chaque mètis : une trace directe ou deux traces indirectes.</p>
+                </div>
+
+                <div class="operator-card">
+                    <div class="operator-number">Module 4</div>
+                    <h3 class="operator-name">Déplacement de coût</h3>
+                    <p class="operator-desc">Localiser où va la facture. Axes : temporel, spatial, social, structurel, symbolique, sécuritaire.</p>
+                </div>
+
+                <div class="operator-card">
+                    <div class="operator-number">Module 5</div>
+                    <h3 class="operator-name">Stabilisation</h3>
+                    <p class="operator-desc">Identifier le nouvel attracteur. Marqueurs : répétition, institutionnalisation, sélection, standardisation, verrouillage.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Catalogue Mètis -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">Catalogue</div>
+                <h2 class="section-title">Types de mètis</h2>
+            </div>
+
+            <div class="metis-catalog">
+                <div class="metis-item">
+                    <div class="metis-name">Substitution</div>
+                    <div class="metis-desc">Équivalent fonctionnel</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Reroutage</div>
+                    <div class="metis-desc">Nouveau chemin</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Dissimulation</div>
+                    <div class="metis-desc">Réduction traçabilité</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Conversion</div>
+                    <div class="metis-desc">Contrainte → ressource</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Capture</div>
+                    <div class="metis-desc">Outil adverse retourné</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Hybridation</div>
+                    <div class="metis-desc">Régimes combinés</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Temporalisation</div>
+                    <div class="metis-desc">Report du coût</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Déplacement d'échelle</div>
+                    <div class="metis-desc">Transfert niveau</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Saturation</div>
+                    <div class="metis-desc">Pression coûteuse</div>
+                </div>
+                <div class="metis-item">
+                    <div class="metis-name">Symbiose asymétrique</div>
+                    <div class="metis-desc">Dépendance mutuelle</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Échelles -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">Partie IV</div>
+                <h2 class="section-title">Application aux échelles</h2>
+            </div>
+
+            <table class="scale-table">
+                <thead>
+                    <tr>
+                        <th>Échelle</th>
+                        <th>Pression</th>
+                        <th>Mètis typique</th>
+                        <th>Coût déplacé</th>
+                        <th>Attracteur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cosmos</td>
+                        <td>Indétermination quantique</td>
+                        <td>Décohérence, dissipation</td>
+                        <td>Entropie globale</td>
+                        <td>Corrélations macro robustes</td>
+                    </tr>
+                    <tr>
+                        <td>Vivant biologique</td>
+                        <td>Indétermination physico-chimique</td>
+                        <td>Compartimentation, cycles</td>
+                        <td>Irréversibilités biochimiques</td>
+                        <td>Auto-réplication, évolution</td>
+                    </tr>
+                    <tr>
+                        <td>Psychisme</td>
+                        <td>Incertitude affective</td>
+                        <td>Schémas défensifs</td>
+                        <td>Fatigue, rigidification</td>
+                        <td>Attracteurs mentaux</td>
+                    </tr>
+                    <tr>
+                        <td>Systèmes sociaux</td>
+                        <td>Indétermination collective</td>
+                        <td>Hiérarchies, normes</td>
+                        <td>Inégalités, frictions</td>
+                        <td>Institutions durables</td>
+                    </tr>
+                    <tr>
+                        <td>Écosystèmes</td>
+                        <td>Perturbations écologiques</td>
+                        <td>Réseaux trophiques</td>
+                        <td>Perte biodiversité</td>
+                        <td>États résilients</td>
+                    </tr>
+                    <tr>
+                        <td>Économies</td>
+                        <td>Chocs économiques</td>
+                        <td>Contrats, innovations</td>
+                        <td>Dette, externalités</td>
+                        <td>Régimes de croissance</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Protocole -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-number">Usage</div>
+                <h2 class="section-title">Protocole en 8 étapes</h2>
+            </div>
+
+            <div class="protocol-steps">
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Écrire 5 observations (couche 1).</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Écrire 2 patterns (couche 2).</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Écrire 2 hypothèses (couche 3) avec falsification.</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Remplir Pression, Affordances, Mètis, Déplacement de coût, Stabilisation.</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Choisir 1 à 3 vitals. Vérifier si la mètis les protège.</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Noter les trois indices vivant.</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Faire le module Observateur et écrire le double inconfort.</p>
+                </div>
+                <div class="protocol-step">
+                    <div class="step-num"></div>
+                    <p class="step-text">Si besoin, écrire un récit — mais hors diagnostic.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p class="footer-text">
+            PALM décrit comment, à toutes les échelles, le vivant au sens dynamique stabilise localement 
+            de l'ordre et de l'information sous contrainte d'indétermination, par des mécanismes émergents 
+            dissipatifs et coûteux, sans postuler de but ni de créateur.
+        </p>
+        <p class="footer-meta">PALM · Cadre d'observation du vivant · 2026</p>
+    </footer>
+</body>
+</html>

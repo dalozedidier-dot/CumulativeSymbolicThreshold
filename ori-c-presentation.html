@@ -654,7 +654,37 @@
             font-style: italic;
             color: var(--text-muted);
             max-width: 600px;
-            margin: 0 auto 3rem;
+            margin: 0 auto 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--text-primary);
+            border-color: var(--accent-flow);
+        }
+
+        .footer-sep {
+            color: var(--text-subtle);
         }
 
         .footer-meta {
@@ -733,7 +763,8 @@
             <li><a href="#fondement">Fondement</a></li>
             <li><a href="#principes">Principes</a></li>
             <li><a href="#cadre">Cadre</a></li>
-            <li><a href="#echelles">Échelles</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-recherche.html">Recherche</a></li>
         </ul>
     </nav>
 
@@ -906,7 +937,18 @@
             Le principe fonctionnel de viabilité systémique ne dit pas quoi bâtir. 
             Il indique ce qui ne peut pas durer.
         </p>
-        <p class="footer-meta">ORI-C · Cadre d'observation du vivant · 2026</p>
+        <div class="footer-links">
+            <a href="palm-cadre.html" class="footer-link">PALM</a>
+            <span class="footer-sep">·</span>
+            <a href="ori-c-cadre-complet.html" class="footer-link">Cadre complet</a>
+            <span class="footer-sep">·</span>
+            <a href="ori-c-recherche.html" class="footer-link">Recherche</a>
+            <span class="footer-sep">·</span>
+            <a href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold" target="_blank" class="footer-link">GitHub</a>
+            <span class="footer-sep">·</span>
+            <a href="https://osf.io/g62pz/" target="_blank" class="footer-link">OSF</a>
+        </div>
+        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
     </footer>
 
     <script>
