@@ -195,6 +195,7 @@ def main() -> int:
         help="If set (e.g. 0.7), use first split_frac of rows for calibration and the rest as "
              "out-of-sample test. Both halves are processed and labelled in summary.",
     )
+    ap.add_argument("--seed", type=int, default=123, help="RNG seed for reproducibility (used in ORICConfig)")
     args = ap.parse_args()
 
     outdir = Path(args.outdir)
@@ -277,7 +278,7 @@ def main() -> int:
         S_decay = 1.0 / float(args.tau)
 
     cfg = ORICConfig(
-        seed=123,
+        seed=int(args.seed),
         n_steps=int(len(df)),
         S0=float(args.S0),
         cap_scale=float(args.cap_scale),
@@ -337,6 +338,11 @@ def main() -> int:
         else:
             c_offset = 0.0
 
+    # Add a 'step' column (0..n-1) as the canonical integer step index for
+    # window slicing in tests_causaux.py — independent of what 't' encodes.
+    df_test["step"] = np.arange(len(df_test), dtype=int)
+    df_control["step"] = np.arange(len(df_control), dtype=int)
+
     # Write outputs
     df_test.to_csv(tabdir / "test_timeseries.csv", index=False)
     df_control.to_csv(tabdir / "control_timeseries.csv", index=False)
@@ -371,6 +377,11 @@ def main() -> int:
     }
     (tabdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     (outdir / "verdict.txt").write_text(verdict_token + "\n", encoding="utf-8")
+
+    # params.txt — human-readable audit dump of all run parameters
+    params_lines = [f"{k}={v}" for k, v in vars(args).items()]
+    params_lines.insert(0, f"# run_real_data_demo params — seed={args.seed}")
+    (outdir / "params.txt").write_text("\n".join(params_lines) + "\n", encoding="utf-8")
 
     # Figures
     _plot_overlay(df_control, df_test, "S", figdir / "s_t.png", "S(t): control vs test")
