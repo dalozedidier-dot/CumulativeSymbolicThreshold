@@ -60,11 +60,13 @@ jobs:
           set -eo pipefail
           mkdir -p _ci_out/synthetic
 
-          # No --fast → full_statistical: n=60 per statistical test (>= N_min=50).
+          # No --fast + --n-runs-min 50: full_statistical with hard enforcement.
+          # Aborts immediately if any statistical test would run with n < 50.
           # Triplet enforced: p + CI 99% + SESOI + power gate.
           # Gate: support_level = "full_statistical_support" iff all triplet gates pass.
           PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
             --outdir _ci_out/synthetic/canonical_tests \
+            --n-runs-min 50 \
             2>&1 | tee _ci_out/synthetic/run_all_tests.log
 
           # Extract support_level from the nested timestamped run dir
@@ -182,10 +184,87 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-  # ── JOB 3: Dual proof summary — combined artifact ───────────────────────────
+  # ── JOB 3: Real data validation protocol (3-dataset × window × subsampling) ──
+  real_data_validation_protocol:
+    name: "Real Data Validation Protocol — FRED fast"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: real_data_fred   # runs in parallel with real_data_fred dependency only for ordering
+    if: always()
+
+    outputs:
+      protocol_verdict: ${{ steps.protocol_run.outputs.protocol_verdict }}
+      protocol_test_det_rate: ${{ steps.protocol_run.outputs.protocol_test_det_rate }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt
+          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+
+      - name: Verify FRED data present
+        run: |
+          if [ ! -f "03_Data/real/fred_monthly/real.csv" ]; then
+            echo "ERROR: FRED data not found — skipping protocol"
+            exit 0
+          fi
+          echo "FRED monthly: $(wc -l < 03_Data/real/fred_monthly/real.csv) rows"
+
+      - name: Run real data validation protocol (fast mode — 3 windows × 10 subsamples)
+        id: protocol_run
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/validation_protocol
+
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_validation_protocol.py \
+            --input 03_Data/real/fred_monthly/real.csv \
+            --outdir _ci_out/real/validation_protocol \
+            --col-time date --time-mode index \
+            --col-O O --col-R R --col-I I \
+            --col-demand demand --col-S S \
+            --normalize robust \
+            --baseline-n 30 \
+            --lags 1-3 \
+            --seed 42 \
+            --fast \
+            2>&1 | tee _ci_out/real/validation_protocol/protocol.log
+
+          VERDICT=$(cat _ci_out/real/validation_protocol/verdict.txt 2>/dev/null || echo "UNKNOWN")
+          DET_RATE=$(python -c "
+          import json
+          d = json.loads(open('_ci_out/real/validation_protocol/tables/validation_summary.json').read())
+          m = d.get('test_metrics', {})
+          print(f\"{m.get('detection_rate', 'NaN'):.3f}\")
+          " 2>/dev/null || echo "NaN")
+
+          echo "protocol_verdict=${VERDICT}" >> "$GITHUB_OUTPUT"
+          echo "protocol_test_det_rate=${DET_RATE}" >> "$GITHUB_OUTPUT"
+          echo "Validation protocol verdict: ${VERDICT}  test_det_rate=${DET_RATE}"
+
+      - name: Upload protocol artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly_validation_protocol_${{ github.run_id }}
+          path: _ci_out/real/validation_protocol
+          retention-days: 30
+          if-no-files-found: warn
+
+  # ── JOB 4: Dual proof summary — combined artifact ───────────────────────────
   dual_proof_summary:
     name: "Dual Canonical Proof — Combined Artifact"
-    needs: [synthetic_full, real_data_fred]
+    needs: [synthetic_full, real_data_fred, real_data_validation_protocol]
     runs-on: ubuntu-latest
     if: always()
 
@@ -206,10 +285,12 @@ jobs:
 
       - name: Create dual_proof_manifest.json
         env:
-          SYNTH_SUPPORT: ${{ needs.synthetic_full.outputs.synthetic_support_level }}
-          SYNTH_VERDICT: ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
-          REAL_SUPPORT:  ${{ needs.real_data_fred.outputs.real_support_level }}
-          REAL_VERDICT:  ${{ needs.real_data_fred.outputs.real_global_verdict }}
+          SYNTH_SUPPORT:    ${{ needs.synthetic_full.outputs.synthetic_support_level }}
+          SYNTH_VERDICT:    ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
+          REAL_SUPPORT:     ${{ needs.real_data_fred.outputs.real_support_level }}
+          REAL_VERDICT:     ${{ needs.real_data_fred.outputs.real_global_verdict }}
+          PROTO_VERDICT:    ${{ needs.real_data_validation_protocol.outputs.protocol_verdict }}
+          PROTO_DET_RATE:   ${{ needs.real_data_validation_protocol.outputs.protocol_test_det_rate }}
         run: |
           python - <<'PYEOF'
           import json, glob, os
@@ -219,6 +300,8 @@ jobs:
           synth_verdict = os.environ.get("SYNTH_VERDICT", "UNKNOWN")
           real_support  = os.environ.get("REAL_SUPPORT",  "NOT_FOUND")
           real_verdict  = os.environ.get("REAL_VERDICT",  "UNKNOWN")
+          proto_verdict = os.environ.get("PROTO_VERDICT", "UNKNOWN")
+          proto_det_rate = os.environ.get("PROTO_DET_RATE", "NaN")
 
           # Pull gate details from the downloaded synthetic artifact
           synth_gate = {}
@@ -255,6 +338,7 @@ jobs:
                   "synthetic": {
                       "run_mode": "full_statistical",
                       "n_per_statistical_test": 60,
+                      "n_runs_min_enforced": 50,
                       "global_verdict": synth_verdict,
                       "support_level": synth_support,
                       "gate_passed": synth_gate.get("gate_passed", None),
@@ -265,6 +349,13 @@ jobs:
                       "dataset": "FRED monthly (n=480, 1986-2025)",
                       "global_verdict": real_verdict,
                       "support_level": real_support,
+                  },
+                  "real_data_validation_protocol": {
+                      "run_mode": "validation_protocol_fast",
+                      "protocol": "3-dataset (test/stable/placebo) × window_sensitivity × subsample_stability",
+                      "verdict": proto_verdict,
+                      "test_detection_rate": proto_det_rate,
+                      "note": "fast mode: 3 window variants × 10 subsamples",
                   },
               },
               "forbidden_report_labels": [
@@ -286,10 +377,12 @@ jobs:
 
       - name: Write GitHub step summary
         env:
-          SYNTH_SUPPORT: ${{ needs.synthetic_full.outputs.synthetic_support_level }}
-          SYNTH_VERDICT: ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
-          REAL_SUPPORT:  ${{ needs.real_data_fred.outputs.real_support_level }}
-          REAL_VERDICT:  ${{ needs.real_data_fred.outputs.real_global_verdict }}
+          SYNTH_SUPPORT:    ${{ needs.synthetic_full.outputs.synthetic_support_level }}
+          SYNTH_VERDICT:    ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
+          REAL_SUPPORT:     ${{ needs.real_data_fred.outputs.real_support_level }}
+          REAL_VERDICT:     ${{ needs.real_data_fred.outputs.real_global_verdict }}
+          PROTO_VERDICT:    ${{ needs.real_data_validation_protocol.outputs.protocol_verdict }}
+          PROTO_DET_RATE:   ${{ needs.real_data_validation_protocol.outputs.protocol_test_det_rate }}
         run: |
           python - <<'PYEOF'
           import os
@@ -298,23 +391,32 @@ jobs:
           synth_verdict = os.environ.get("SYNTH_VERDICT", "UNKNOWN")
           real_support  = os.environ.get("REAL_SUPPORT",  "NOT_FOUND")
           real_verdict  = os.environ.get("REAL_VERDICT",  "UNKNOWN")
+          proto_verdict = os.environ.get("PROTO_VERDICT", "UNKNOWN")
+          proto_det_rate = os.environ.get("PROTO_DET_RATE", "NaN")
 
           def icon(s):
               return "✅" if s in ("full_statistical_support", "real_data_canonical_support") else "❌"
+
+          def icon_v(v):
+              return "✅" if v == "ACCEPT" else ("❌" if v == "REJECT" else "⚠️")
 
           dual_ok = (
               synth_support == "full_statistical_support"
               and real_support == "real_data_canonical_support"
           )
 
-          md = f"""## ORI-C Nightly — Dual Canonical Proof
+          md = f"""## ORI-C Nightly — Dual Canonical Proof + Validation Protocol
 
           {"✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"}
 
           | Dimension | run_mode | verdict | support_level | |
           |-----------|----------|---------|---------------|---|
-          | Synthetic simulation | `full_statistical` (n=60) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
+          | Synthetic simulation | `full_statistical` (n=60, min=50 enforced) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
           | Real data FRED (1986–2025) | `real_data_canonical` | `{real_verdict}` | `{real_support}` | {icon(real_support)} |
+          | Validation protocol (FRED fast) | `3-dataset × window × subsample` | `{proto_verdict}` (det_rate={proto_det_rate}) | — | {icon_v(proto_verdict)} |
+
+          **Validation protocol**: 3 datasets (test / stable / placebo) × 3 window variants × 10 subsamples (80%).
+          Transition stability, stable specificity, placebo non-detection are evaluated jointly.
 
           ### Labels FORBIDDEN in any report derived from any run
           - `full support`
