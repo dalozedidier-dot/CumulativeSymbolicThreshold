@@ -1,0 +1,38 @@
+{
+  "title": "Cumulative Symbolic Threshold: Architecture, threshold, and test protocol for O-R-I dynamics (ORI-C)",
+  "description": "A pre-registered, falsifiable scientific framework for testing the ORI-C hypothesis: beyond a critical threshold of symbolic accumulation, the symbolic transmission channel becomes self-reinforcing — a measurable phase transition from a pre-threshold regime to a cumulative symbolic regime. Includes a full test suite (T1–T8), causal test pipeline, real-data integration for multiple sectors, and canonical CI/CD workflows.",
+  "version": "v1.3",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "language": "eng",
+  "creators": [
+    {
+      "name": "Daloze, Didier",
+      "affiliation": ""
+    }
+  ],
+  "keywords": [
+    "falsifiability",
+    "preregistration",
+    "cultural evolution",
+    "phase transition",
+    "order parameter",
+    "symbolic transmission",
+    "exogenous intervention",
+    "causal testing",
+    "reproducibility",
+    "open science"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.17605/OSF.IO/G62PZ",
+      "relation": "isSupplementTo",
+      "scheme": "doi"
+    }
+  ],
+  "communities": [
+    {"identifier": "zenodo"}
+  ],
+  "notes": "Pre-registration: https://osf.io/g62pz/ (DOI: 10.17605/OSF.IO/G62PZ). All parameters are fixed ex ante. Null results are reported at equal status to positive results."
+}
