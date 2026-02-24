@@ -1,0 +1,66 @@
+{
+  "dataset_id": "pilot_cpi_FR",
+  "sector": "economie",
+  "spec_version": "1.0",
+  "time_column": "year",
+  "time_mode": "value",
+  "normalization_global": "robust_minmax",
+  "columns": [
+    {
+      "source_column": "industrial_production_i15",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Annual index; insensitive to intra-year shocks. Large revisions possible.",
+      "manipulability_note": "National accounts revision cycle; low short-term manipulability."
+    },
+    {
+      "source_column": "berd_pc_gdp",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Sparse pre-1995; many NaN. Interpolation introduces smoothing bias.",
+      "manipulability_note": "R&D classification can shift across survey waves."
+    },
+    {
+      "source_column": "ict_spec_pc_ent_ge10",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "forward_fill",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Available only from mid-1990s. Forward-fill over gaps introduces autocorrelation.",
+      "manipulability_note": "Definition of ICT specialist changed across LFS waves."
+    },
+    {
+      "source_column": "env_tax_env_mio_eur",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Nominal EUR; not deflated. Inflation inflates demand signal post-2010.",
+      "manipulability_note": "Tax reclassification between environmental and non-environmental."
+    },
+    {
+      "source_column": "solar_collector_ths_m2",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "zero",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Near-zero pre-1995; dominated by post-2000 growth. Distribution very skewed.",
+      "manipulability_note": "Capacity additions vs. installed stock conflation across sources."
+    }
+  ],
+  "notes": "FR economie pilot. Data: Eurostat annual series. O=industrial production, R=R&D intensity, I=ICT labour share, demand=env tax revenue, S=solar collector area (symbolic diffusion proxy). Normalisation applied per-column with robust_minmax (2-98th percentile). Missing values interpolated linearly except S (zero-fill before first non-NaN)."
+}

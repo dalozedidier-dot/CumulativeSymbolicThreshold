@@ -1,0 +1,76 @@
+{
+  "dataset_id": "pilot_trafic_DE",
+  "sector": "trafic",
+  "calendar_version": "1.0",
+  "notes": "Ground-truth exogenous events for DE trafic pilot. Pre-1991 = West Germany; reunification creates a structural break in all series.",
+  "events": [
+    {
+      "event_id": "reunification_1990",
+      "label": "German reunification",
+      "event_date": "1990",
+      "event_type": "symbolic_injection",
+      "source": "German reunification October 1990; statistical base enlarged to include East Germany",
+      "pre_window": {"start": "1988", "end": "1989"},
+      "post_window": {"start": "1991", "end": "1994"},
+      "expected": {
+        "O": "level shift upward (base enlarged); then integration dip 1991-92",
+        "R": "possible dip (East DE had low R&D)",
+        "S": "possible increase post-unification — symbolic diffusion of West DE norms East"
+      },
+      "negative_control_window": null,
+      "placebo_shifts_years": [5, 10],
+      "falsification_prediction": "Level shift not reproduced by placebo at 1995 or 2000"
+    },
+    {
+      "event_id": "agenda_2010",
+      "label": "Hartz IV / Agenda 2010 labour reform",
+      "event_date": "2003",
+      "event_type": "symbolic_injection",
+      "source": "Agenda 2010 announced March 2003; Hartz IV effective January 2005",
+      "pre_window": {"start": "2000", "end": "2002"},
+      "post_window": {"start": "2004", "end": "2007"},
+      "expected": {
+        "R": "increase post-reform (labour flexibility → adaptability)",
+        "I": "increase (ICT adoption accelerated post-reform)",
+        "C": "increase post-2003 — labour market reform as symbolic institutional shift"
+      },
+      "negative_control_window": {"start": "1996", "end": "2000"},
+      "placebo_shifts_years": [-4, 4],
+      "falsification_prediction": "R/I acceleration not observed in placebo 1996-2000"
+    },
+    {
+      "event_id": "gfc_2008",
+      "label": "Global Financial Crisis",
+      "event_date": "2008",
+      "event_type": "capacity_hit",
+      "source": "German GDP -5.6% 2009; export-driven collapse",
+      "pre_window": {"start": "2005", "end": "2007"},
+      "post_window": {"start": "2009", "end": "2011"},
+      "expected": {
+        "O": "sharp decrease 2009",
+        "Sigma": "spike 2008-2009",
+        "C": "decrease or stagnate 2009; recovery 2010-11 if R rebounds"
+      },
+      "negative_control_window": {"start": "2002", "end": "2006"},
+      "placebo_shifts_years": [-4, 4],
+      "falsification_prediction": "O shock absent in negative control 2002-2006"
+    },
+    {
+      "event_id": "ev_inflection_2020",
+      "label": "EV demand inflection + COVID",
+      "event_date": "2020",
+      "event_type": "demand_shock",
+      "source": "DE EV registrations tripled 2020 (subsidy increase + COVID incentives)",
+      "pre_window": {"start": "2017", "end": "2019"},
+      "post_window": {"start": "2020", "end": "2022"},
+      "expected": {
+        "demand": "EV road electrification spike",
+        "S": "acceleration — EV as symbolic green transport",
+        "C": "increase post-2020 if S diffusion is cumulative"
+      },
+      "negative_control_window": {"start": "2013", "end": "2018"},
+      "placebo_shifts_years": [-5, 5],
+      "falsification_prediction": "S/C acceleration absent in 2013-2018 negative control"
+    }
+  ]
+}
