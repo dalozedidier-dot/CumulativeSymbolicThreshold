@@ -63,6 +63,10 @@ on:
         description: "Graine RNG pour reproductibilité"
         required: false
         default: "123"
+      proxy_spec:
+        description: "Chemin vers proxy_spec.json (optionnel — validation ex ante de la spec)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -85,6 +89,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+
+      - name: Validate proxy spec (ex ante)
+        if: inputs.proxy_spec != ''
+        shell: bash
+        run: |
+          # Gate: validate the proxy_spec.json before any run.
+          # A broken spec (missing columns, invalid values) must fail CI here,
+          # not silently produce garbage outputs downstream.
+          python 04_Code/pipeline/validate_proxy_spec.py \
+            --spec "${{ inputs.proxy_spec }}" \
+            --csv  "${{ inputs.dataset_csv }}"
 
       - name: Run ORI-C real data smoke
         shell: bash
@@ -114,6 +129,12 @@ jobs:
           RUN_DIR="${ROOT}/run"
           mkdir -p "${RUN_DIR}"
 
+          # ── Append-only global log: every command's output is captured both
+          # in its own log file AND in run.log so no execution is ever lost.
+          GLOBAL_LOG="${ROOT}/run.log"
+          echo "=== run started at $(date -u +%Y-%m-%dT%H:%M:%SZ) ===" >> "${GLOBAL_LOG}"
+
+          echo "--- run_real_data_demo ---" >> "${GLOBAL_LOG}"
           python 04_Code/pipeline/run_real_data_demo.py \
             --input "${{ inputs.dataset_csv }}" \
             --outdir "${RUN_DIR}" \
@@ -128,9 +149,10 @@ jobs:
             --control-mode "${{ inputs.control_mode }}" \
             --baseline-n "${{ inputs.baseline_n }}" \
             --seed "${{ inputs.seed || '123' }}" \
-            > "${ROOT}/run_real_data_demo.log" 2>&1
-          echo $? > "${ROOT}/rc_demo.txt"
+            2>&1 | tee "${ROOT}/run_real_data_demo.log" >> "${GLOBAL_LOG}"
+          echo "${PIPESTATUS[0]}" > "${ROOT}/rc_demo.txt"
 
+          echo "--- tests_causaux ---" >> "${GLOBAL_LOG}"
           # Run tests_causaux once with all params + PDF in a single pass.
           # Previously two separate calls overwrote the same log file.
           python 04_Code/pipeline/tests_causaux.py \
@@ -141,17 +163,47 @@ jobs:
             --lags "${{ inputs.lags }}" \
             --seed "${{ inputs.seed || '123' }}" \
             --pdf \
-            > "${ROOT}/tests_causaux.log" 2>&1
-
-          echo $? > "${ROOT}/rc_causal.txt"
+            2>&1 | tee "${ROOT}/tests_causaux.log" >> "${GLOBAL_LOG}"
+          echo "${PIPESTATUS[0]}" > "${ROOT}/rc_causal.txt"
 
           if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then
-            python 04_Code/pipeline/make_sha256_manifest.py               --root "${ROOT}"               --out "${ROOT}/manifest.json"               > "${ROOT}/manifest.log" 2>&1 || true
+            echo "--- make_sha256_manifest ---" >> "${GLOBAL_LOG}"
+            python 04_Code/pipeline/make_sha256_manifest.py \
+              --root "${ROOT}" \
+              --out  "${ROOT}/manifest.json" \
+              2>&1 | tee "${ROOT}/manifest.log" >> "${GLOBAL_LOG}" || true
           fi
 
-          if [ ! -f "${ROOT}/status.txt" ]; then
-            echo "done" > "${ROOT}/status.txt"
+          echo "=== run finished at $(date -u +%Y-%m-%dT%H:%M:%SZ) ===" >> "${GLOBAL_LOG}"
+          echo "done" > "${ROOT}/status.txt"
+
+      - name: Check exit codes (fail CI on any pipeline error)
+        shell: bash
+        run: |
+          # Normative gate: CI must not silently pass when a pipeline command fails.
+          # rc files are written by the previous step; missing = treat as failure.
+          ROOT="_ci_out/real_data_smoke/custom/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rc_demo=$(cat "${ROOT}/rc_demo.txt" 2>/dev/null || echo 99)
+          rc_causal=$(cat "${ROOT}/rc_causal.txt" 2>/dev/null || echo 99)
+
+          failed=0
+          if [ "${rc_demo}" != "0" ]; then
+            echo "ERROR: run_real_data_demo.py exited with rc=${rc_demo}" >&2
+            failed=1
           fi
+          if [ "${rc_causal}" != "0" ]; then
+            echo "ERROR: tests_causaux.py exited with rc=${rc_causal}" >&2
+            failed=1
+          fi
+
+          if [ "${failed}" = "1" ]; then
+            echo "" >&2
+            echo "=== run.log (last 60 lines) ===" >&2
+            tail -n 60 "${ROOT}/run.log" >&2 || true
+            exit 1
+          fi
+
+          echo "All pipeline commands exited successfully (rc_demo=${rc_demo}, rc_causal=${rc_causal})."
 
       - name: Upload artifact
         if: always()

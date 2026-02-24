@@ -1,1 +1,0 @@
-CMD: /opt/pyvenv/bin/python /mnt/data/CumulativeSymbolicThreshold-main/04_Code/pipeline/run_synthetic_demo.py --outdir /mnt/data/CumulativeSymbolicThreshold-main/_tmp_results_ci2/20260218_185537/T2_threshold_demo_on_dataset --input /mnt/data/CumulativeSymbolicThreshold-main/03_Data/synthetic/synthetic_with_transition.csv --seed 11
