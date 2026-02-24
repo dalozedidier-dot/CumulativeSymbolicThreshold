@@ -88,6 +88,32 @@
         .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
         .nav-links a.active { opacity: 1; color: var(--accent-flow); }
 
+        /* Language switcher */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+            padding-left: 2rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
         @media (max-width: 900px) {
             nav { padding: 1rem 1.5rem; }
             .nav-links { gap: 1rem; }
@@ -366,6 +392,10 @@
             <li><a href="ori-c-recherche.html">Recherches</a></li>
             <li><a href="ori-c-contact.html">Contact</a></li>
         </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active" onclick="window.location.href='ori-c-articles.html'">FR</button>
+            <button class="lang-btn" onclick="window.location.href='ori-c-articles-en.html'">EN</button>
+        </div>
     </nav>
 
     <section class="hero">
