@@ -1,0 +1,33 @@
+{
+  "_comment": "SHA-256 hashes of immutable bundle files, pinned at creation date. CI must verify these before running any analysis on bundle data. Hashes were computed from the files as committed. Any mismatch signals data tampering or unintended modification.",
+  "pinned_utc": "2026-02-24",
+  "bundle_root": "03_Data/real/_bundles",
+  "files": {
+    "data_real_v2/oric_inputs/oric_inputs_panel.csv": {
+      "sha256": "0980ff4e704e21081d8c88e7a7486a255184347ea340a8d04e71ea5f15e318cc",
+      "size_bytes": 15159,
+      "role": "primary_panel",
+      "description": "5-country (BE, DE, EE, EU27_2020, FR) annual panel, O/R/I/S normalised to [0,1], 1981-2024"
+    },
+    "data_real_v2/manifest.json": {
+      "sha256": "245e484f225b36b3954545477085ef006416efdfcad1d120a632d2715f616344",
+      "size_bytes": 2979,
+      "role": "data_provenance",
+      "description": "Manifest describing raw Eurostat sources and processing pipeline for v2"
+    },
+    "data_real_v1/oric_inputs/oric_inputs_panel.csv": {
+      "sha256": "0980ff4e704e21081d8c88e7a7486a255184347ea340a8d04e71ea5f15e318cc",
+      "size_bytes": 15159,
+      "role": "primary_panel_v1",
+      "description": "Identical to v2 panel (v1 and v2 share the same oric_inputs extraction)"
+    },
+    "data_real_v1/manifest.json": {
+      "sha256": "7d31aeba3fec08ad586aa4d2eef7027d7d30663556fc46b697546efaeb10e24c",
+      "size_bytes": 2281,
+      "role": "data_provenance_v1",
+      "description": "Manifest for v1 bundle"
+    }
+  },
+  "verification_command": "python scripts/check_bundle_integrity.py --bundle-root 03_Data/real/_bundles --hashes-file 03_Data/real/_bundles/bundle_hashes.json",
+  "policy": "Any CI run using bundle data MUST pass integrity check before proceeding. Failure = abort run, flag as TAMPERED."
+}
