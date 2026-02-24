@@ -17,6 +17,44 @@ Triplet logic (α = 0.01, fixed):
 
 This module is pure Python + math, no external dependencies.
 """
+# ── Normative Welch-NaN fallback policy ──────────────────────────────────────
+# Locked ex ante. Must NOT be changed post-observation.
+#
+# When the Welch t-test p-value is NaN (series too short, zero variance, or
+# other numerical failure) the decision procedure MUST fall back in this order:
+#
+#   1. Block bootstrap CI (non-parametric, direction-sensitive):
+#        If the 95% CI lower bound > 0, the effect is positive with high
+#        confidence. p_source = "bootstrap_fallback", p_effective = alpha/2
+#        (conservative sentinel — the real decision gate is ci_excludes_zero).
+#
+#   2. Mann-Whitney U (non-parametric, rank-based, one-tailed post > pre):
+#        Used only when bootstrap CI is also unavailable (NaN bounds).
+#        p_source = "mannwhitney_fallback".
+#
+#   3. INDETERMINATE:
+#        Only reached when ALL of Welch, bootstrap CI, and MWU are unavailable.
+#        p_source = "unavailable", indeterminate = True.
+#        The run is preserved in the audit log but contributes no verdict signal.
+#
+# Rationale for bootstrap-before-MWU:
+#   - The bootstrap CI is direction-sensitive (tests positive shift), which is
+#     the causal claim. MWU tests rank ordering without directionality.
+#   - Both are valid; bootstrap is the preferred non-parametric fallback because
+#     it directly answers the question asked by the triplet criterion.
+#
+# This constant documents the canonical order. All callers (tests_causaux.py,
+# future pipeline scripts) must implement the same cascade.
+WELCH_NAN_FALLBACK_POLICY: tuple[str, ...] = (
+    "welch",               # Priority 1 — parametric, if finite
+    "bootstrap_fallback",  # Priority 2 — CI excludes zero (direction-sensitive)
+    "mannwhitney_fallback",# Priority 3 — rank-based non-parametric
+    "unavailable",         # Priority 4 — INDETERMINATE, never a hard failure
+)
+#
+# The tuple above is the single source of truth for p_source values across the
+# codebase. Do not introduce new p_source strings without updating this constant.
+# ─────────────────────────────────────────────────────────────────────────────
 
 from __future__ import annotations
 

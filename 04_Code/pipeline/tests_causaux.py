@@ -473,19 +473,31 @@ def main() -> int:
     ok_boot = bool(np.isfinite(boot_lo) and (boot_lo > 0.0))
     ok_granger = bool(np.isfinite(min_granger_s_to_dc) and (min_granger_s_to_dc <= float(args.alpha)))
 
-    # Robust ok_p: hierarchical cascade — never rely on a single undefined statistic.
-    # Priority 1: Welch t-test (parametric, if finite)
-    # Priority 2: Mann-Whitney U (non-parametric, one-tailed)
-    # Priority 3: Block bootstrap CI excludes zero (conservative fallback)
+    # Robust ok_p: canonical nan-safe hierarchical cascade (fixed ex ante).
+    # Matches WELCH_NAN_FALLBACK_POLICY in src/oric/decision.py — single source of truth.
+    #
+    # Priority 1: Welch t-test          (parametric, if finite)
+    # Priority 2: Block bootstrap CI    (non-parametric, direction-sensitive)
+    # Priority 3: Mann-Whitney U        (non-parametric, rank-based)
+    # Priority 4: INDETERMINATE         (all unavailable — never a hard default failure)
+    #
+    # Bootstrap comes before MWU because the CI directly tests positive direction
+    # shift, which is the causal claim of the triplet criterion. MWU tests rank
+    # ordering without directionality.
     if np.isfinite(p_shift):
         ok_p = bool(p_shift <= float(args.alpha))
         ok_p_source = "welch"
+    elif ok_boot:
+        # Bootstrap CI excludes zero: strong non-parametric evidence of positive shift.
+        ok_p = True
+        ok_p_source = "bootstrap_fallback"
     elif np.isfinite(p_mwu):
         ok_p = bool(p_mwu <= float(args.alpha))
         ok_p_source = "mannwhitney_fallback"
     else:
-        ok_p = bool(ok_boot)
-        ok_p_source = "bootstrap_fallback"
+        # All statistics unavailable → INDETERMINATE, not a default falsification.
+        ok_p = False
+        ok_p_source = "unavailable"
 
     # Sigma-gate: if Sigma is identically zero in the post window, the symbolic pathway
     # cannot operate. A non-detection in that context is INDETERMINATE, not a real failure.
@@ -509,6 +521,11 @@ def main() -> int:
         elif ok_p and ok_boot and ok_granger:
             verdict = "seuil_detecte"
             binary = True
+        elif ok_p_source == "unavailable":
+            # All statistical tests returned NaN — cannot decide, not a falsification.
+            verdict = "indetermine_stats_indisponibles"
+            binary = False
+            sigma_gate_note = "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): INDETERMINATE per WELCH_NAN_FALLBACK_POLICY."
         elif sigma_zero_post:
             # Symbolic pathway inoperative: INDETERMINATE, not a failure of the hypothesis
             verdict = "indetermine_sigma_nul"
