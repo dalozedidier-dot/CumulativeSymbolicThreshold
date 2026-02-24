@@ -63,52 +63,455 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
+            background: 
+                radial-gradient(ellipse at 15% 85%, rgba(61, 90, 76, 0.15) 0%, transparent 45%),
+                radial-gradient(ellipse at 85% 15%, rgba(74, 90, 107, 0.15) 0%, transparent 45%),
+                radial-gradient(ellipse at 50% 50%, rgba(139, 107, 74, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 80%, rgba(107, 74, 90, 0.1) 0%, transparent 40%);
         }
 
+        /* Holographic grid with glow */
+        .holo-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(61, 90, 76, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(61, 90, 76, 0.06) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridPulse 15s ease-in-out infinite;
+        }
+
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Flow lines */
         .flow-line {
             position: absolute;
-            width: 1px;
+            width: 2px;
             height: 100vh;
             background: linear-gradient(
                 to bottom,
                 transparent 0%,
-                var(--accent-flow) 20%,
-                var(--accent-pulse) 50%,
-                var(--accent-emergence) 80%,
+                rgba(61, 90, 76, 0.6) 20%,
+                rgba(139, 107, 74, 0.8) 50%,
+                rgba(74, 90, 107, 0.6) 80%,
                 transparent 100%
             );
-            opacity: 0.15;
+            opacity: 0.2;
+            filter: blur(1px);
             animation: flowPulse 8s ease-in-out infinite;
         }
 
-        .flow-line:nth-child(1) { left: 10%; animation-delay: 0s; }
-        .flow-line:nth-child(2) { left: 25%; animation-delay: 1.5s; }
-        .flow-line:nth-child(3) { left: 40%; animation-delay: 3s; }
-        .flow-line:nth-child(4) { left: 55%; animation-delay: 4.5s; }
-        .flow-line:nth-child(5) { left: 70%; animation-delay: 2s; }
-        .flow-line:nth-child(6) { left: 85%; animation-delay: 5.5s; }
+        .flow-line:nth-child(2) { left: 10%; animation-delay: 0s; }
+        .flow-line:nth-child(3) { left: 25%; animation-delay: 1.5s; }
+        .flow-line:nth-child(4) { left: 40%; animation-delay: 3s; }
+        .flow-line:nth-child(5) { left: 55%; animation-delay: 4.5s; }
+        .flow-line:nth-child(6) { left: 70%; animation-delay: 2s; }
+        .flow-line:nth-child(7) { left: 85%; animation-delay: 5.5s; }
 
         @keyframes flowPulse {
             0%, 100% { 
-                opacity: 0.08;
+                opacity: 0.1;
                 transform: scaleY(0.8) translateY(-10%);
             }
             50% { 
-                opacity: 0.2;
+                opacity: 0.3;
                 transform: scaleY(1.1) translateY(5%);
             }
         }
 
-        /* Floating particles */
+        /* Holographic scientific elements */
+        .holo-element {
+            position: absolute;
+            pointer-events: none;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        /* DNA Helix - Double helix structure */
+        .holo-dna {
+            width: 80px;
+            height: 280px;
+            animation: floatDNA 45s linear infinite;
+        }
+
+        .holo-dna svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 8px rgba(61, 90, 76, 0.6));
+        }
+
+        .holo-dna .strand1 {
+            stroke: rgba(61, 200, 120, 0.7);
+            stroke-width: 2;
+            fill: none;
+            filter: drop-shadow(0 0 4px rgba(61, 200, 120, 0.8));
+        }
+
+        .holo-dna .strand2 {
+            stroke: rgba(100, 180, 255, 0.6);
+            stroke-width: 2;
+            fill: none;
+            filter: drop-shadow(0 0 4px rgba(100, 180, 255, 0.8));
+        }
+
+        .holo-dna .base-pair {
+            stroke: rgba(255, 255, 255, 0.3);
+            stroke-width: 1;
+            stroke-dasharray: 3 2;
+        }
+
+        @keyframes floatDNA {
+            0% {
+                transform: translateY(110vh) rotate(0deg);
+                opacity: 0;
+            }
+            5% { opacity: 0.8; }
+            50% { transform: translateY(50vh) rotate(180deg); }
+            95% { opacity: 0.8; }
+            100% {
+                transform: translateY(-20vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Atom with orbiting electrons */
+        .holo-atom {
+            width: 160px;
+            height: 160px;
+            animation: floatAtom 50s linear infinite;
+        }
+
+        .holo-atom svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .holo-atom .nucleus {
+            fill: rgba(255, 180, 100, 0.9);
+            filter: drop-shadow(0 0 15px rgba(255, 180, 100, 0.8));
+        }
+
+        .holo-atom .orbit {
+            stroke: rgba(100, 200, 255, 0.5);
+            stroke-width: 1.5;
+            fill: none;
+            filter: drop-shadow(0 0 3px rgba(100, 200, 255, 0.6));
+        }
+
+        .holo-atom .electron {
+            fill: rgba(150, 220, 255, 0.95);
+            filter: drop-shadow(0 0 8px rgba(150, 220, 255, 1));
+        }
+
+        .holo-atom .orbit-group {
+            animation: orbitSpin 4s linear infinite;
+            transform-origin: center;
+        }
+
+        .holo-atom .orbit-group:nth-child(2) {
+            animation-duration: 6s;
+            animation-direction: reverse;
+        }
+
+        .holo-atom .orbit-group:nth-child(3) {
+            animation-duration: 5s;
+        }
+
+        @keyframes orbitSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes floatAtom {
+            0% {
+                transform: translate(0, 110vh) scale(0.7);
+                opacity: 0;
+            }
+            5% { opacity: 0.9; }
+            25% { transform: translate(80px, 75vh) scale(0.9); }
+            50% { transform: translate(-60px, 50vh) scale(1.1); }
+            75% { transform: translate(100px, 25vh) scale(0.95); }
+            95% { opacity: 0.9; }
+            100% {
+                transform: translate(-40px, -20vh) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        /* Molecule structure */
+        .holo-molecule {
+            width: 140px;
+            height: 120px;
+            animation: floatMolecule 55s linear infinite;
+        }
+
+        .holo-molecule svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .holo-molecule .bond {
+            stroke: rgba(180, 180, 255, 0.6);
+            stroke-width: 3;
+            filter: drop-shadow(0 0 4px rgba(180, 180, 255, 0.7));
+        }
+
+        .holo-molecule .bond-double {
+            stroke: rgba(180, 180, 255, 0.4);
+            stroke-width: 1.5;
+            stroke-dasharray: none;
+        }
+
+        .holo-molecule .atom-c {
+            fill: rgba(100, 100, 100, 0.9);
+            filter: drop-shadow(0 0 6px rgba(150, 150, 150, 0.8));
+        }
+
+        .holo-molecule .atom-o {
+            fill: rgba(255, 80, 80, 0.9);
+            filter: drop-shadow(0 0 8px rgba(255, 100, 100, 0.9));
+        }
+
+        .holo-molecule .atom-h {
+            fill: rgba(220, 220, 255, 0.9);
+            filter: drop-shadow(0 0 4px rgba(200, 200, 255, 0.8));
+        }
+
+        .holo-molecule .atom-n {
+            fill: rgba(80, 80, 255, 0.9);
+            filter: drop-shadow(0 0 8px rgba(100, 100, 255, 0.9));
+        }
+
+        @keyframes floatMolecule {
+            0% {
+                transform: translate(0, 110vh) rotate(0deg) scale(0.8);
+                opacity: 0;
+            }
+            5% { opacity: 0.85; }
+            33% { transform: translate(-100px, 70vh) rotate(120deg) scale(1); }
+            66% { transform: translate(80px, 35vh) rotate(240deg) scale(1.1); }
+            95% { opacity: 0.85; }
+            100% {
+                transform: translate(-50px, -20vh) rotate(360deg) scale(0.9);
+                opacity: 0;
+            }
+        }
+
+        /* Wave function / Quantum wave */
+        .holo-wave {
+            width: 350px;
+            height: 80px;
+            animation: floatWave 40s linear infinite;
+        }
+
+        .holo-wave svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .holo-wave .wave-main {
+            stroke: rgba(100, 255, 200, 0.7);
+            stroke-width: 2.5;
+            fill: none;
+            filter: drop-shadow(0 0 6px rgba(100, 255, 200, 0.8));
+            animation: waveOscillate 2s ease-in-out infinite;
+        }
+
+        .holo-wave .wave-secondary {
+            stroke: rgba(200, 100, 255, 0.5);
+            stroke-width: 1.5;
+            fill: none;
+            filter: drop-shadow(0 0 4px rgba(200, 100, 255, 0.6));
+            animation: waveOscillate 2s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes waveOscillate {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(3px); }
+        }
+
+        @keyframes floatWave {
+            0% {
+                transform: translateX(-120%) translateY(40vh) scaleX(0.8);
+                opacity: 0;
+            }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% {
+                transform: translateX(110vw) translateY(60vh) scaleX(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Neural network */
+        .holo-neural {
+            width: 200px;
+            height: 200px;
+            animation: floatNeural 60s linear infinite;
+        }
+
+        .holo-neural svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .holo-neural .connection {
+            stroke: rgba(150, 200, 255, 0.4);
+            stroke-width: 1;
+            filter: drop-shadow(0 0 2px rgba(150, 200, 255, 0.5));
+        }
+
+        .holo-neural .node {
+            fill: rgba(100, 180, 255, 0.9);
+            filter: drop-shadow(0 0 10px rgba(100, 180, 255, 0.9));
+            animation: nodePulse 2s ease-in-out infinite;
+        }
+
+        .holo-neural .node:nth-child(odd) {
+            animation-delay: 0.5s;
+        }
+
+        .holo-neural .node:nth-child(3n) {
+            animation-delay: 1s;
+        }
+
+        .holo-neural .node-active {
+            fill: rgba(255, 200, 100, 0.95);
+            filter: drop-shadow(0 0 12px rgba(255, 200, 100, 1));
+        }
+
+        @keyframes nodePulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @keyframes floatNeural {
+            0% {
+                transform: translate(0, 110vh) scale(0.6) rotate(0deg);
+                opacity: 0;
+            }
+            5% { opacity: 0.8; }
+            50% { transform: translate(120px, 50vh) scale(1) rotate(15deg); }
+            95% { opacity: 0.8; }
+            100% {
+                transform: translate(-80px, -20vh) scale(0.7) rotate(-10deg);
+                opacity: 0;
+            }
+        }
+
+        /* Benzene ring / Hexagonal structure */
+        .holo-hex {
+            width: 100px;
+            height: 115px;
+            animation: floatHex 48s linear infinite;
+        }
+
+        .holo-hex svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .holo-hex .ring {
+            stroke: rgba(255, 180, 100, 0.7);
+            stroke-width: 2.5;
+            fill: none;
+            filter: drop-shadow(0 0 8px rgba(255, 180, 100, 0.8));
+        }
+
+        .holo-hex .inner-ring {
+            stroke: rgba(255, 220, 150, 0.5);
+            stroke-width: 1.5;
+            fill: none;
+            stroke-dasharray: 8 4;
+            animation: ringRotate 8s linear infinite;
+            transform-origin: center;
+        }
+
+        .holo-hex .vertex {
+            fill: rgba(255, 200, 120, 0.9);
+            filter: drop-shadow(0 0 6px rgba(255, 200, 120, 0.9));
+        }
+
+        @keyframes ringRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes floatHex {
+            0% {
+                transform: translateY(110vh) rotate(0deg) scale(0.7);
+                opacity: 0;
+            }
+            5% { opacity: 0.85; }
+            50% { transform: translateY(50vh) rotate(90deg) scale(1.2); }
+            95% { opacity: 0.85; }
+            100% {
+                transform: translateY(-20vh) rotate(180deg) scale(0.9);
+                opacity: 0;
+            }
+        }
+
+        /* Fibonacci spiral / Golden ratio */
+        .holo-spiral {
+            width: 180px;
+            height: 180px;
+            animation: floatSpiral 52s linear infinite;
+        }
+
+        .holo-spiral svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .holo-spiral .spiral-path {
+            stroke: rgba(180, 140, 255, 0.6);
+            stroke-width: 2;
+            fill: none;
+            filter: drop-shadow(0 0 6px rgba(180, 140, 255, 0.7));
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawSpiral 8s ease-in-out infinite;
+        }
+
+        @keyframes drawSpiral {
+            0% { stroke-dashoffset: 1000; }
+            50% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -1000; }
+        }
+
+        @keyframes floatSpiral {
+            0% {
+                transform: translate(0, 110vh) rotate(0deg) scale(0.6);
+                opacity: 0;
+            }
+            5% { opacity: 0.75; }
+            50% { transform: translate(-100px, 50vh) rotate(180deg) scale(1); }
+            95% { opacity: 0.75; }
+            100% {
+                transform: translate(80px, -20vh) rotate(360deg) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        /* Floating particles - enhanced */
         .particle {
             position: absolute;
-            width: 3px;
-            height: 3px;
-            background: var(--text-muted);
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(150,200,255,0.4) 50%, transparent 70%);
             border-radius: 50%;
             opacity: 0;
-            animation: particleFloat 15s ease-in-out infinite;
+            animation: particleFloat 20s ease-in-out infinite;
         }
+
+        .particle.small { width: 4px; height: 4px; }
+        .particle.medium { width: 6px; height: 6px; }
+        .particle.large { width: 8px; height: 8px; filter: blur(1px); }
 
         @keyframes particleFloat {
             0% { 
@@ -748,12 +1151,16 @@
 <body>
     <!-- Living Background -->
     <div class="living-bg">
+        <div class="holo-grid"></div>
         <div class="flow-line"></div>
         <div class="flow-line"></div>
         <div class="flow-line"></div>
         <div class="flow-line"></div>
         <div class="flow-line"></div>
         <div class="flow-line"></div>
+        
+        <!-- Holographic Elements Container -->
+        <div class="holo-elements" id="holoElements"></div>
     </div>
 
     <!-- Navigation -->
@@ -961,14 +1368,140 @@
     </footer>
 
     <script>
-        // Create floating particles
+        // Sophisticated holographic scientific elements
+        const holoSVGs = {
+            dna: `<svg viewBox="0 0 80 280">
+                <path class="strand1" d="M15,10 Q40,35 65,10 M15,50 Q40,25 65,50 M15,90 Q40,115 65,90 M15,130 Q40,105 65,130 M15,170 Q40,195 65,170 M15,210 Q40,185 65,210 M15,250 Q40,275 65,250"/>
+                <path class="strand2" d="M15,10 Q40,35 65,10 M15,50 Q40,25 65,50 M15,90 Q40,115 65,90 M15,130 Q40,105 65,130 M15,170 Q40,195 65,170 M15,210 Q40,185 65,210 M15,250 Q40,275 65,250" transform="translate(0, 20)"/>
+                <g class="base-pair">
+                    <line x1="20" y1="30" x2="60" y2="30"/>
+                    <line x1="20" y1="70" x2="60" y2="70"/>
+                    <line x1="20" y1="110" x2="60" y2="110"/>
+                    <line x1="20" y1="150" x2="60" y2="150"/>
+                    <line x1="20" y1="190" x2="60" y2="190"/>
+                    <line x1="20" y1="230" x2="60" y2="230"/>
+                </g>
+            </svg>`,
+            
+            atom: `<svg viewBox="0 0 160 160">
+                <g class="orbit-group">
+                    <ellipse class="orbit" cx="80" cy="80" rx="70" ry="25"/>
+                    <circle class="electron" cx="150" cy="80" r="6"/>
+                </g>
+                <g class="orbit-group" transform="rotate(60 80 80)">
+                    <ellipse class="orbit" cx="80" cy="80" rx="70" ry="25"/>
+                    <circle class="electron" cx="150" cy="80" r="6"/>
+                </g>
+                <g class="orbit-group" transform="rotate(120 80 80)">
+                    <ellipse class="orbit" cx="80" cy="80" rx="70" ry="25"/>
+                    <circle class="electron" cx="150" cy="80" r="6"/>
+                </g>
+                <circle class="nucleus" cx="80" cy="80" r="12"/>
+            </svg>`,
+            
+            molecule: `<svg viewBox="0 0 140 120">
+                <line class="bond" x1="30" y1="60" x2="70" y2="35"/>
+                <line class="bond" x1="70" y1="35" x2="110" y2="60"/>
+                <line class="bond" x1="70" y1="35" x2="70" y2="85"/>
+                <line class="bond-double" x1="30" y1="60" x2="30" y2="100"/>
+                <line class="bond-double" x1="34" y1="60" x2="34" y2="100"/>
+                <circle class="atom-c" cx="30" cy="60" r="12"/>
+                <circle class="atom-n" cx="70" cy="35" r="10"/>
+                <circle class="atom-o" cx="110" cy="60" r="11"/>
+                <circle class="atom-h" cx="70" cy="85" r="7"/>
+                <circle class="atom-o" cx="30" cy="100" r="11"/>
+            </svg>`,
+            
+            wave: `<svg viewBox="0 0 350 80">
+                <path class="wave-main" d="M0,40 Q20,10 40,40 T80,40 T120,40 T160,40 T200,40 T240,40 T280,40 T320,40 T360,40"/>
+                <path class="wave-secondary" d="M0,45 Q20,15 40,45 T80,45 T120,45 T160,45 T200,45 T240,45 T280,45 T320,45 T360,45"/>
+            </svg>`,
+            
+            neural: `<svg viewBox="0 0 200 200">
+                <line class="connection" x1="40" y1="40" x2="100" y2="70"/>
+                <line class="connection" x1="40" y1="100" x2="100" y2="70"/>
+                <line class="connection" x1="40" y1="160" x2="100" y2="130"/>
+                <line class="connection" x1="100" y1="70" x2="100" y2="130"/>
+                <line class="connection" x1="100" y1="70" x2="160" y2="50"/>
+                <line class="connection" x1="100" y1="70" x2="160" y2="100"/>
+                <line class="connection" x1="100" y1="130" x2="160" y2="100"/>
+                <line class="connection" x1="100" y1="130" x2="160" y2="150"/>
+                <circle class="node" cx="40" cy="40" r="8"/>
+                <circle class="node" cx="40" cy="100" r="8"/>
+                <circle class="node" cx="40" cy="160" r="8"/>
+                <circle class="node node-active" cx="100" cy="70" r="10"/>
+                <circle class="node node-active" cx="100" cy="130" r="10"/>
+                <circle class="node" cx="160" cy="50" r="8"/>
+                <circle class="node" cx="160" cy="100" r="8"/>
+                <circle class="node" cx="160" cy="150" r="8"/>
+            </svg>`,
+            
+            hex: `<svg viewBox="0 0 100 115">
+                <polygon class="ring" points="50,5 95,30 95,80 50,105 5,80 5,30"/>
+                <polygon class="inner-ring" points="50,20 80,37 80,73 50,90 20,73 20,37"/>
+                <circle class="vertex" cx="50" cy="5" r="5"/>
+                <circle class="vertex" cx="95" cy="30" r="5"/>
+                <circle class="vertex" cx="95" cy="80" r="5"/>
+                <circle class="vertex" cx="50" cy="105" r="5"/>
+                <circle class="vertex" cx="5" cy="80" r="5"/>
+                <circle class="vertex" cx="5" cy="30" r="5"/>
+            </svg>`,
+
+            spiral: `<svg viewBox="0 0 180 180">
+                <path class="spiral-path" d="M90,90 
+                    Q90,80 100,80 Q110,80 110,90 Q110,100 100,100 
+                    Q85,100 85,85 Q85,70 100,70 Q120,70 120,90 
+                    Q120,110 100,110 Q75,110 75,85 Q75,60 100,60 
+                    Q130,60 130,90 Q130,120 100,120 Q65,120 65,85 
+                    Q65,50 100,50 Q140,50 140,90 Q140,130 100,130"/>
+            </svg>`
+        };
+
+        const holoTypes = ['dna', 'atom', 'molecule', 'wave', 'neural', 'hex', 'spiral'];
+        const holoContainer = document.getElementById('holoElements');
+
+        function createHoloElement() {
+            const type = holoTypes[Math.floor(Math.random() * holoTypes.length)];
+            const element = document.createElement('div');
+            element.className = `holo-element holo-${type}`;
+            element.innerHTML = holoSVGs[type];
+            element.style.left = Math.random() * 85 + 5 + '%';
+            element.style.animationDelay = Math.random() * 5 + 's';
+            
+            // Vary the duration
+            const baseDuration = {
+                dna: 45, atom: 50, molecule: 55, wave: 40, neural: 60, hex: 48, spiral: 52
+            };
+            element.style.animationDuration = (baseDuration[type] + Math.random() * 20 - 10) + 's';
+            
+            holoContainer.appendChild(element);
+            
+            // Remove element after animation
+            const duration = parseFloat(element.style.animationDuration) * 1000;
+            setTimeout(() => {
+                element.remove();
+            }, duration);
+        }
+
+        // Create initial elements staggered
+        for (let i = 0; i < 10; i++) {
+            setTimeout(() => createHoloElement(), i * 1500);
+        }
+
+        // Continuously create new elements
+        setInterval(createHoloElement, 4000);
+
+        // Create floating particles with variety
         const livingBg = document.querySelector('.living-bg');
-        for (let i = 0; i < 20; i++) {
+        const particleSizes = ['small', 'medium', 'large'];
+        
+        for (let i = 0; i < 35; i++) {
             const particle = document.createElement('div');
-            particle.className = 'particle';
+            const size = particleSizes[Math.floor(Math.random() * particleSizes.length)];
+            particle.className = `particle ${size}`;
             particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 15 + 's';
-            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (15 + Math.random() * 15) + 's';
             livingBg.appendChild(particle);
         }
 
@@ -998,7 +1531,7 @@
         window.addEventListener('scroll', () => {
             const scrolled = window.pageYOffset;
             document.querySelectorAll('.flow-line').forEach((line, i) => {
-                line.style.transform = `translateY(${scrolled * (0.1 + i * 0.02)}px)`;
+                line.style.transform = `translateY(${scrolled * (0.05 + i * 0.015)}px)`;
             });
         });
 
