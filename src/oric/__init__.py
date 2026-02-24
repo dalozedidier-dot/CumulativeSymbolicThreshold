@@ -14,7 +14,7 @@ from .logger import ExperimentLogger
 from .ori_core import compute_cap_projection, compute_sigma, compute_viability, summarize_run
 from .symbolic import compute_stock_S, compute_order_C, detect_s_star_piecewise
 from .proxy_spec import ProxySpec, ColumnSpec
-from .decision import DecisionResult, hierarchical_verdict
+from .decision import DecisionResult, hierarchical_verdict, WELCH_NAN_FALLBACK_POLICY
 
 __all__ = [
     "PreregSpec",
@@ -31,4 +31,5 @@ __all__ = [
     "ColumnSpec",
     "DecisionResult",
     "hierarchical_verdict",
+    "WELCH_NAN_FALLBACK_POLICY",
 ]
