@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Livres & Essais longs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-book: #6b5a7a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .back-nav {
+            position: fixed;
+            top: 2rem; left: 2rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .back-nav:hover { color: var(--text-primary); }
+        .back-nav svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+        .back-nav:hover svg { transform: translateX(-5px); }
+
+        .hero {
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 650px;
+        }
+
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Book cards */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .book-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .book-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-book), var(--accent-flow));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .book-card:hover {
+            border-color: var(--accent-book);
+            transform: translateY(-5px);
+        }
+
+        .book-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .book-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-book);
+            margin-bottom: 1rem;
+        }
+
+        .book-title {
+            font-size: 1.6rem;
+            font-weight: 400;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+
+        .book-subtitle {
+            font-size: 1rem;
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .book-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+        }
+
+        .book-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .book-toc {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 1.5rem;
+            margin-top: auto;
+        }
+
+        .book-toc-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: var(--text-subtle);
+            margin-bottom: 0.75rem;
+        }
+
+        .book-toc ul {
+            list-style: none;
+        }
+
+        .book-toc li {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0;
+            padding-left: 1rem;
+            border-left: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .book-toc li:hover {
+            border-color: var(--accent-flow);
+            color: var(--text-primary);
+        }
+
+        .book-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--accent-book);
+            color: var(--accent-book);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .book-link:hover {
+            background: var(--accent-book);
+            color: var(--bg-deep);
+        }
+
+        .book-link svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Quote section */
+        .quote-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin: 2rem 0;
+            background: linear-gradient(135deg, var(--bg-surface), var(--bg-deep));
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .quote-section blockquote {
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .quote-section blockquote::before {
+            content: '"';
+            position: absolute;
+            top: -1.5rem;
+            left: -1.5rem;
+            font-size: 5rem;
+            color: var(--accent-book);
+            opacity: 0.2;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .main-content { padding: 3rem 1.5rem; }
+            .books-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <a href="ori-c-presentation.html" class="back-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Retour à ORI-C
+    </a>
+
+    <section class="hero">
+        <h1>Livres & Essais</h1>
+        <p class="hero-subtitle">
+            Explorations longues du cadre ORI-C — De la viabilité systémique 
+            à la cohérence psychique, en passant par les structures dissipatives.
+        </p>
+    </section>
+
+    <main class="main-content">
+
+        <div class="books-grid">
+
+            <!-- Livre 1 : À compléter -->
+            <div class="book-card">
+                <div class="book-number">Essai I</div>
+                <h2 class="book-title">Le principe fonctionnel de viabilité systémique</h2>
+                <p class="book-subtitle">
+                    Ce que le vivant nous enseigne sur la cohérence, l'instabilité et les conditions de durabilité.
+                </p>
+                <div class="book-meta">
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        2026
+                    </span>
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        ~25 pages
+                    </span>
+                </div>
+                <div class="book-toc">
+                    <div class="book-toc-title">Table des matières</div>
+                    <ul>
+                        <li>Introduction : Pourquoi la stabilité est une illusion</li>
+                        <li>Le vivant comme système hors équilibre</li>
+                        <li>Cohérence vs stabilité</li>
+                        <li>Les coûts déplacés et les attracteurs</li>
+                        <li>Implications pour les systèmes sociaux</li>
+                    </ul>
+                </div>
+                <a href="#" class="book-link" onclick="alert('Contenu à venir — partagez le texte pour l\'intégrer'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    Lire l'essai
+                </a>
+            </div>
+
+            <!-- Livre 2 : À compléter -->
+            <div class="book-card">
+                <div class="book-number">Essai II</div>
+                <h2 class="book-title">Structures dissipatives et psychisme</h2>
+                <p class="book-subtitle">
+                    Une lecture thermodynamique de la souffrance chronique, de la répétition et des transitions psychiques.
+                </p>
+                <div class="book-meta">
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        2026
+                    </span>
+                    <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        ~20 pages
+                    </span>
+                </div>
+                <div class="book-toc">
+                    <div class="book-toc-title">Table des matières</div>
+                    <ul>
+                        <li>Le schéma comme attracteur</li>
+                        <li>Le coût dissipatif de la stabilité psychique</li>
+                        <li>La répétition : mécanisme de maintien</li>
+                        <li>Seuils de transition et crises</li>
+                        <li>L'observation comme méta-régulation</li>
+                    </ul>
+                </div>
+                <a href="#" class="book-link" onclick="alert('Contenu à venir — partagez le texte pour l\'intégrer'); return false;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    Lire l'essai
+                </a>
+            </div>
+
+        </div>
+
+        <section class="quote-section">
+            <blockquote>
+                Le vivant ne résout pas. Il déplace, convertit, temporise, hybridise. 
+                Comprendre cette grammaire, c'est cesser de chercher des solutions définitives 
+                et commencer à construire des régimes viables.
+            </blockquote>
+        </section>
+
+    </main>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Didier Daloze · Livres & Essais · 2026</p>
+    </footer>
+</body>
+</html>
