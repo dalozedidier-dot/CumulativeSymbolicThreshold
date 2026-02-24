@@ -113,10 +113,17 @@ def _to_t_column(df: pd.DataFrame, col_time: str, time_mode: str = "index") -> p
     """Create internal integer time index column used by the pipeline.
 
     - time_mode="index": use 0..n-1, does not require col_time to exist.
-    - time_mode="value": parse col_time as numeric or datetime and convert to int steps.
+    - time_mode in {"value","numeric","date","datetime"}: parse col_time as numeric or datetime and convert to int steps.
     """
-    if str(time_mode).lower() == "index":
+    m = str(time_mode).strip().lower()
+    if m == "index":
         return pd.Series(np.arange(len(df), dtype=int))
+
+    # Accept common aliases for "value" mode.
+    # - "date"/"datetime": parse as datetime if possible.
+    # - "value"/"numeric": treat as numeric or datetime.
+    if m in ("value", "numeric", "date", "datetime"):
+        pass
 
     if col_time not in df.columns:
         raise SystemExit(f"Missing time column: {col_time}")

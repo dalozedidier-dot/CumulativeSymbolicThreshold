@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Observation, Régulation, Intégration — Cohérence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-tension: #6b4a5a;
+            --accent-emergence: #4a5a6b;
+            --grain-opacity: 0.03;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Grain texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: var(--grain-opacity);
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Living background animation */
+        .living-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .flow-line {
+            position: absolute;
+            width: 1px;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                transparent 0%,
+                var(--accent-flow) 20%,
+                var(--accent-pulse) 50%,
+                var(--accent-emergence) 80%,
+                transparent 100%
+            );
+            opacity: 0.15;
+            animation: flowPulse 8s ease-in-out infinite;
+        }
+
+        .flow-line:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .flow-line:nth-child(2) { left: 25%; animation-delay: 1.5s; }
+        .flow-line:nth-child(3) { left: 40%; animation-delay: 3s; }
+        .flow-line:nth-child(4) { left: 55%; animation-delay: 4.5s; }
+        .flow-line:nth-child(5) { left: 70%; animation-delay: 2s; }
+        .flow-line:nth-child(6) { left: 85%; animation-delay: 5.5s; }
+
+        @keyframes flowPulse {
+            0%, 100% { 
+                opacity: 0.08;
+                transform: scaleY(0.8) translateY(-10%);
+            }
+            50% { 
+                opacity: 0.2;
+                transform: scaleY(1.1) translateY(5%);
+            }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 15s ease-in-out infinite;
+        }
+
+        @keyframes particleFloat {
+            0% { 
+                opacity: 0;
+                transform: translateY(100vh) scale(0);
+            }
+            10% { 
+                opacity: 0.4;
+                transform: translateY(80vh) scale(1);
+            }
+            90% { 
+                opacity: 0.4;
+                transform: translateY(10vh) scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: translateY(-10vh) scale(0);
+            }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+
+        .nav-logo {
+            font-size: 1.2rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 2rem;
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeSlideUp 1.2s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        .hero-title {
+            font-size: clamp(4rem, 12vw, 10rem);
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            line-height: 0.9;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeSlideUp 1.2s ease forwards;
+            animation-delay: 0.6s;
+        }
+
+        .hero-title span {
+            display: block;
+            font-size: 0.25em;
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            margin-top: 1rem;
+            color: var(--text-muted);
+        }
+
+        .hero-meaning {
+            max-width: 600px;
+            margin-top: 3rem;
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--text-muted);
+            opacity: 0;
+            animation: fadeSlideUp 1.2s ease forwards;
+            animation-delay: 0.9s;
+        }
+
+        .hero-scroll {
+            position: absolute;
+            bottom: 4rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0;
+            animation: fadeSlideUp 1.2s ease forwards;
+            animation-delay: 1.5s;
+        }
+
+        .scroll-line {
+            width: 1px;
+            height: 60px;
+            background: linear-gradient(to bottom, var(--text-muted), transparent);
+            animation: scrollPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollPulse {
+            0%, 100% { transform: scaleY(1); opacity: 1; }
+            50% { transform: scaleY(0.6); opacity: 0.5; }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Content Sections */
+        section {
+            padding: 10rem 4rem;
+            position: relative;
+        }
+
+        .section-marker {
+            position: absolute;
+            left: 4rem;
+            top: 10rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+        }
+
+        .content-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 6rem;
+            align-items: start;
+        }
+
+        .section-header {
+            position: sticky;
+            top: 30vh;
+        }
+
+        .section-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-flow);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 300;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-lead {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .section-content p {
+            font-size: 1.15rem;
+            margin-bottom: 2rem;
+            max-width: 680px;
+        }
+
+        .section-content p:first-of-type::first-letter {
+            font-size: 4rem;
+            float: left;
+            line-height: 0.8;
+            padding-right: 0.5rem;
+            color: var(--accent-pulse);
+        }
+
+        /* Principle Cards */
+        .principles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .principle-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .principle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--accent-flow), var(--accent-tension));
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.5s ease;
+        }
+
+        .principle-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .principle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .principle-icon {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 1.5rem;
+            opacity: 0.6;
+        }
+
+        .principle-title {
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        .principle-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        /* Quote Section */
+        .quote-section {
+            background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-deep) 100%);
+            text-align: center;
+            padding: 12rem 4rem;
+        }
+
+        blockquote {
+            max-width: 900px;
+            margin: 0 auto;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 300;
+            font-style: italic;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        blockquote::before {
+            content: '"';
+            position: absolute;
+            top: -2rem;
+            left: -2rem;
+            font-size: 8rem;
+            color: var(--accent-flow);
+            opacity: 0.2;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .quote-author {
+            margin-top: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        /* Framework Visualization */
+        .framework-visual {
+            padding: 8rem 4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            position: relative;
+        }
+
+        .orbit-container {
+            position: relative;
+            width: min(600px, 80vw);
+            height: min(600px, 80vw);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .orbit-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-flow) 0%, var(--bg-deep) 70%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 80px rgba(61, 90, 76, 0.4);
+            animation: centerPulse 4s ease-in-out infinite;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .orbit-center .center-text {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            transition: all 0.4s ease;
+        }
+
+        .orbit-center .center-hint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .orbit-center .center-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 1px solid var(--accent-flow);
+            opacity: 0;
+            animation: none;
+        }
+
+        .orbit-center:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 0 120px rgba(61, 90, 76, 0.6), 
+                        0 0 60px rgba(61, 90, 76, 0.4) inset;
+            background: radial-gradient(circle, var(--accent-pulse) 0%, var(--bg-deep) 70%);
+        }
+
+        .orbit-center:hover .center-text {
+            transform: translateY(-5px);
+        }
+
+        .orbit-center:hover .center-hint {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .orbit-center:hover .center-pulse {
+            animation: expandPulse 1.5s ease-out infinite;
+        }
+
+        @keyframes expandPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes centerPulse {
+            0%, 100% { box-shadow: 0 0 60px rgba(61, 90, 76, 0.3); }
+            50% { box-shadow: 0 0 100px rgba(61, 90, 76, 0.5); }
+        }
+
+        .orbit-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .orbit-ring:nth-child(2) {
+            width: 250px;
+            height: 250px;
+            animation: orbitRotate 30s linear infinite;
+        }
+
+        .orbit-ring:nth-child(3) {
+            width: 380px;
+            height: 380px;
+            animation: orbitRotate 45s linear infinite reverse;
+        }
+
+        .orbit-ring:nth-child(4) {
+            width: 520px;
+            height: 520px;
+            animation: orbitRotate 60s linear infinite;
+        }
+
+        @keyframes orbitRotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .orbit-node {
+            position: absolute;
+            padding: 1rem 1.5rem;
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .orbit-node:hover {
+            background: var(--accent-flow);
+            border-color: var(--accent-flow);
+            transform: scale(1.1);
+        }
+
+        .orbit-node.n1 { top: 5%; left: 50%; transform: translateX(-50%); }
+        .orbit-node.n2 { top: 25%; right: 5%; }
+        .orbit-node.n3 { bottom: 25%; right: 5%; }
+        .orbit-node.n4 { bottom: 5%; left: 50%; transform: translateX(-50%); }
+        .orbit-node.n5 { bottom: 25%; left: 5%; }
+        .orbit-node.n6 { top: 25%; left: 5%; }
+
+        /* Scales Section */
+        .scales-section {
+            background: var(--bg-surface);
+        }
+
+        .scales-visual {
+            display: flex;
+            justify-content: center;
+            gap: 1px;
+            margin-top: 4rem;
+            height: 400px;
+        }
+
+        .scale-bar {
+            flex: 1;
+            max-width: 150px;
+            background: linear-gradient(
+                to top,
+                var(--bg-deep) 0%,
+                var(--accent-flow) 50%,
+                var(--bg-deep) 100%
+            );
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 2rem 1rem;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .scale-bar:hover {
+            flex: 2;
+            background: linear-gradient(
+                to top,
+                var(--bg-deep) 0%,
+                var(--accent-pulse) 50%,
+                var(--bg-deep) 100%
+            );
+        }
+
+        .scale-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            opacity: 0.7;
+        }
+
+        /* Footer */
+        footer {
+            padding: 6rem 4rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-tagline {
+            font-size: 1.8rem;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--text-primary);
+            border-color: var(--accent-flow);
+        }
+
+        .footer-sep {
+            color: var(--text-subtle);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .section-header {
+                position: relative;
+                top: 0;
+            }
+
+            .principles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                padding: 1.5rem 2rem;
+            }
+
+            section {
+                padding: 6rem 2rem;
+            }
+
+            .section-marker {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .orbit-container {
+                transform: scale(0.7);
+            }
+
+            .scales-visual {
+                flex-wrap: wrap;
+                height: auto;
+            }
+
+            .scale-bar {
+                min-height: 200px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Living Background -->
+    <div class="living-bg">
+        <div class="flow-line"></div>
+        <div class="flow-line"></div>
+        <div class="flow-line"></div>
+        <div class="flow-line"></div>
+        <div class="flow-line"></div>
+        <div class="flow-line"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">ORI-C</div>
+        <ul class="nav-links">
+            <li><a href="#fondement">Fondement</a></li>
+            <li><a href="#principes">Principes</a></li>
+            <li><a href="#cadre">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherche</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <p class="hero-subtitle">Un cadre d'observation du vivant par <a href="ori-c-contact.html" style="color: var(--accent-flow); text-decoration: none; border-bottom: 1px solid var(--accent-flow);">Didier Daloze</a></p>
+        <h1 class="hero-title">
+            ORI-C
+            <span>Observation · Régulation · Intégration — Cohérence</span>
+        </h1>
+        <p class="hero-meaning">
+            Un système vivant ne s'effondre pas par attaque extérieure, 
+            mais par accumulation d'incohérences non intégrées.
+        </p>
+        <div class="hero-scroll">
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- Fondement -->
+    <section id="fondement">
+        <span class="section-marker">Fondement</span>
+        <div class="content-grid">
+            <div class="section-header">
+                <div class="section-number">01</div>
+                <h2 class="section-title">Le déplacement fondamental</h2>
+                <p class="section-lead">De la stabilité vers la cohérence</p>
+            </div>
+            <div class="section-content">
+                <p>Tout système vivant, quelle que soit l'échelle considérée, tend vers la cohérence plutôt que vers la stabilité. La cohérence désigne la compatibilité dynamique entre les éléments d'un système, leurs interactions et les informations qu'ils échangent. Elle n'implique ni harmonie permanente, ni absence de conflit, ni équilibre figé.</p>
+                
+                <p>Un système peut être stable tout en étant incohérent. Un système cohérent n'est jamais figé. Il demeure métastable, c'est-à-dire capable de se reconfigurer sans perdre sa continuité fonctionnelle.</p>
+
+                <p>Ce point rejoint un acquis central des sciences des systèmes complexes : dans les systèmes loin de l'équilibre, l'ordre n'est pas le contraire de l'instabilité — il peut émerger à partir d'elle, via des boucles de rétroaction et des transitions de régime.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quote -->
+    <section class="quote-section">
+        <blockquote>
+            Le vivant ne résout pas. Il déplace, convertit, temporise, hybridise.
+        </blockquote>
+        <p class="quote-author">Axiome premier — PALM</p>
+    </section>
+
+    <!-- Principes -->
+    <section id="principes">
+        <span class="section-marker">Principes</span>
+        <div class="content-grid">
+            <div class="section-header">
+                <div class="section-number">02</div>
+                <h2 class="section-title">Principes fondamentaux</h2>
+                <p class="section-lead">Ce qu'ORI-C révèle</p>
+            </div>
+            <div class="section-content">
+                <p>Dans tout système vivant, l'instabilité est une condition fonctionnelle et non un dysfonctionnement. Le désaccord est une information et non une anomalie. La tension est un signal d'ajustement et non un échec.</p>
+                
+                <div class="principles-grid">
+                    <div class="principle-card">
+                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                            <circle cx="20" cy="20" r="15"/>
+                            <path d="M20 5v30M5 20h30"/>
+                        </svg>
+                        <h3 class="principle-title">L'instabilité créatrice</h3>
+                        <p class="principle-text">L'ordre n'est pas imposé, il émerge. Le chaos créatif désigne une phase transitoire d'indétermination au cours de laquelle un nouveau niveau de cohérence peut apparaître.</p>
+                    </div>
+                    
+                    <div class="principle-card">
+                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M5 20c0-8.3 6.7-15 15-15s15 6.7 15 15"/>
+                            <path d="M35 20c0 8.3-6.7 15-15 15s-15-6.7-15-15"/>
+                        </svg>
+                        <h3 class="principle-title">Le désaccord comme signal</h3>
+                        <p class="principle-text">Le désaccord constitue une fonction vitale de circulation de l'information. Il signale qu'un élément n'est plus intégré dans la cohérence globale.</p>
+                    </div>
+                    
+                    <div class="principle-card">
+                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M8 32L20 8l12 24"/>
+                            <circle cx="20" cy="25" r="5"/>
+                        </svg>
+                        <h3 class="principle-title">La saturation adaptative</h3>
+                        <p class="principle-text">Un système peut continuer à fonctionner tout en perdant progressivement sa capacité d'évolution. La rupture survient par saturation de la capacité d'intégration.</p>
+                    </div>
+                    
+                    <div class="principle-card">
+                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
+                            <rect x="5" y="5" width="30" height="30" rx="2"/>
+                            <path d="M12 20h16M20 12v16"/>
+                        </svg>
+                        <h3 class="principle-title">Comprendre ≠ Intégrer</h3>
+                        <p class="principle-text">Une cohérence peut être comprise, acceptée et défendue consciemment sans être intégrée fonctionnellement. C'est le verrou final.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Framework Visual -->
+    <section id="cadre" class="framework-visual">
+        <div class="orbit-container">
+            <div class="orbit-center" onclick="window.location.href='ori-c-cadre-complet.html'" role="button" tabindex="0">
+                <span class="center-text">ORI-C</span>
+                <span class="center-hint">Explorer le cadre</span>
+                <div class="center-pulse"></div>
+            </div>
+            <div class="orbit-ring"></div>
+            <div class="orbit-ring"></div>
+            <div class="orbit-ring"></div>
+            <div class="orbit-node n1">Observation</div>
+            <div class="orbit-node n2">Pression</div>
+            <div class="orbit-node n3">Mètis</div>
+            <div class="orbit-node n4">Régulation</div>
+            <div class="orbit-node n5">Affordances</div>
+            <div class="orbit-node n6">Cohérence</div>
+        </div>
+    </section>
+
+    <!-- Échelles -->
+    <section id="echelles" class="scales-section">
+        <span class="section-marker">Échelles</span>
+        <div class="content-grid">
+            <div class="section-header">
+                <div class="section-number">03</div>
+                <h2 class="section-title">Transversalité des échelles</h2>
+                <p class="section-lead">Du cosmos au psychisme</p>
+            </div>
+            <div class="section-content">
+                <p>Le fil directeur n'est pas une finalité. C'est une dynamique : sous contrainte, des systèmes hors équilibre exploitent des affordances pour stabiliser localement des corrélations et des traces, au prix de coûts déplacés et d'irréversibilités.</p>
+                
+                <p>La même grammaire dynamique se retrouve à toutes les échelles : on ne "maîtrise" pas l'instabilité, on l'habite et on la convertit.</p>
+            </div>
+        </div>
+        
+        <div class="scales-visual">
+            <div class="scale-bar">
+                <span class="scale-label">Cosmos</span>
+            </div>
+            <div class="scale-bar">
+                <span class="scale-label">Vivant biologique</span>
+            </div>
+            <div class="scale-bar">
+                <span class="scale-label">Psychisme</span>
+            </div>
+            <div class="scale-bar">
+                <span class="scale-label">Systèmes sociaux</span>
+            </div>
+            <div class="scale-bar">
+                <span class="scale-label">Écosystèmes</span>
+            </div>
+            <div class="scale-bar">
+                <span class="scale-label">Économies</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final Quote -->
+    <section class="quote-section">
+        <blockquote>
+            La cohérence du vivant n'est ni un idéal ni une croyance. 
+            C'est un principe fonctionnel de viabilité.
+        </blockquote>
+        <p class="quote-author">Principe de viabilité systémique</p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p class="footer-tagline">
+            Le principe fonctionnel de viabilité systémique ne dit pas quoi bâtir. 
+            Il indique ce qui ne peut pas durer.
+        </p>
+        <div class="footer-links">
+            <a href="ori-c-contact.html" class="footer-link">Didier Daloze</a>
+            <span class="footer-sep">·</span>
+            <a href="palm-cadre.html" class="footer-link">PALM</a>
+            <span class="footer-sep">·</span>
+            <a href="ori-c-cadre-complet.html" class="footer-link">Cadre complet</a>
+            <span class="footer-sep">·</span>
+            <a href="ori-c-articles.html" class="footer-link">Articles</a>
+            <span class="footer-sep">·</span>
+            <a href="ori-c-livres.html" class="footer-link">Livres</a>
+            <span class="footer-sep">·</span>
+            <a href="ori-c-recherche.html" class="footer-link">Recherche</a>
+            <span class="footer-sep">·</span>
+            <a href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold" target="_blank" class="footer-link">GitHub</a>
+            <span class="footer-sep">·</span>
+            <a href="https://osf.io/g62pz/" target="_blank" class="footer-link">OSF</a>
+        </div>
+        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
+    </footer>
+
+    <script>
+        // Create floating particles
+        const livingBg = document.querySelector('.living-bg');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            livingBg.appendChild(particle);
+        }
+
+        // Smooth reveal on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.content-grid, .principle-card, blockquote').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            observer.observe(el);
+        });
+
+        // Parallax effect on scroll
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            document.querySelectorAll('.flow-line').forEach((line, i) => {
+                line.style.transform = `translateY(${scrolled * (0.1 + i * 0.02)}px)`;
+            });
+        });
+
+        // Keyboard support for ORI-C center button
+        const orbitCenter = document.querySelector('.orbit-center');
+        if (orbitCenter) {
+            orbitCenter.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    window.location.href = 'ori-c-cadre-complet.html';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

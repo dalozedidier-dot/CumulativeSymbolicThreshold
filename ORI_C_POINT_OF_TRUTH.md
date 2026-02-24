@@ -13,7 +13,7 @@ This repository is the canonical implementation of the ORI-C normative framework
 ## Non negotiable constraints
 - All functional forms, weights, windows, SESOI, alpha, and decision rules are fixed before observing the results.
 - Results can be positive, null, or negative. All must be reported.
-- One run equals one independent observation. Independence is enforced by seeds and by full episode resets.
+- One run equals one separate observation. Separation is enforced by distinct seeds and by full episode resets.
 
 ## Outputs and artifacts
 - Raw run-level outputs: `05_Results/raw/`

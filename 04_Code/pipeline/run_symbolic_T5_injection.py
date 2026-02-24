@@ -66,16 +66,16 @@ def main() -> int:
     outdir = Path(args.outdir)
     figdir, tabdir = _make_dirs(outdir)
 
-    # Unpaired design: independent seeds for control vs injection.
+    # Unpaired design: distinct seeds for control vs injection.
     # A paired design (same seed for both) makes diff_injection_minus_control constant
     # across all pairs when sigma_star is high (S decays deterministically from S0,
-    # and V paths cancel). Using independent seeds gives genuine variance in C_end,
+    # and V paths cancel). Using distinct seeds gives genuine variance in C_end,
     # enabling a valid two-sample test.
     n = int(args.n)
     rows = []
     for i in range(n):
         seed_ctrl = int(args.seed) + i
-        seed_inj = int(args.seed) + n + i  # independent seeds → genuine replication
+        seed_inj = int(args.seed) + n + i  # distinct seeds → genuine replication
 
         cfg_ctrl = ORICConfig(
             seed=seed_ctrl,

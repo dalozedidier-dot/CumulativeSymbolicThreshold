@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Recherche & Résultats</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-github: #238636;
+            --accent-osf: #2d6987;
+            --accent-pass: #3d8b4a;
+            --accent-fail: #8b3d3d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        a { color: var(--text-primary); }
+
+        .back-nav {
+            position: fixed;
+            top: 2rem; left: 2rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .back-nav:hover { color: var(--text-primary); }
+        .back-nav svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+        .back-nav:hover svg { transform: translateX(-5px); }
+
+        .hero {
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            border: 1px solid;
+            transition: all 0.3s ease;
+        }
+
+        .badge-github {
+            border-color: var(--accent-github);
+            color: var(--accent-github);
+        }
+
+        .badge-github:hover {
+            background: var(--accent-github);
+            color: var(--bg-deep);
+        }
+
+        .badge-osf {
+            border-color: var(--accent-osf);
+            color: var(--accent-osf);
+        }
+
+        .badge-osf:hover {
+            background: var(--accent-osf);
+            color: var(--text-primary);
+        }
+
+        .badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 5rem;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-flow);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        /* Repository structure */
+        .repo-structure {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .repo-folder {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .repo-folder:hover {
+            border-color: var(--accent-flow);
+        }
+
+        .folder-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-pulse);
+            margin-bottom: 0.5rem;
+        }
+
+        .folder-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Test results */
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .test-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .test-card.pass::before { background: var(--accent-pass); }
+        .test-card.fail::before { background: var(--accent-fail); }
+
+        .test-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+            margin-bottom: 0.5rem;
+        }
+
+        .test-name {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .test-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .test-verdict {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2px;
+        }
+
+        .test-verdict.pass {
+            background: rgba(61, 139, 74, 0.2);
+            color: var(--accent-pass);
+        }
+
+        .test-verdict.fail {
+            background: rgba(139, 61, 61, 0.2);
+            color: var(--accent-fail);
+        }
+
+        /* Variables table */
+        .variables-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.9rem;
+        }
+
+        .variables-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            font-weight: 400;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .variables-table td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .variables-table td:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-pulse);
+        }
+
+        .variables-table td:nth-child(2) {
+            color: var(--text-muted);
+        }
+
+        /* DOI block */
+        .doi-block {
+            background: linear-gradient(135deg, rgba(45, 105, 135, 0.1), rgba(45, 105, 135, 0.05));
+            border: 1px solid var(--accent-osf);
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .doi-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-osf);
+            margin-bottom: 1rem;
+        }
+
+        .doi-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .doi-link {
+            font-size: 0.9rem;
+            color: var(--accent-osf);
+        }
+
+        /* Installation */
+        .code-block {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+        }
+
+        .code-block code {
+            color: var(--accent-flow);
+        }
+
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .main-content { padding: 3rem 1.5rem; }
+            .badges { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <a href="ori-c-presentation.html" class="back-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Retour à ORI-C
+    </a>
+
+    <section class="hero">
+        <h1>Recherche & Résultats</h1>
+        <p class="hero-subtitle">
+            Cumulative Symbolic Threshold par <a href="ori-c-contact.html" style="color: var(--accent-flow); text-decoration: none; border-bottom: 1px solid var(--accent-flow);">Didier Daloze</a> — 
+            Cadre méthodique reproductible pour tester l'hypothèse d'un basculement vers un régime symbolique cumulatif.
+        </p>
+
+        <div class="badges">
+            <a href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold" target="_blank" class="badge badge-github">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                GitHub Repository
+            </a>
+            <a href="https://osf.io/g62pz/" target="_blank" class="badge badge-osf">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                OSF Project
+            </a>
+        </div>
+    </section>
+
+    <main class="main-content">
+
+        <!-- DOI -->
+        <section class="section">
+            <div class="doi-block">
+                <div class="doi-label">Project DOI</div>
+                <div class="doi-value">10.17605/OSF.IO/G62PZ</div>
+                <a href="https://doi.org/10.17605/OSF.IO/G62PZ" target="_blank" class="doi-link">https://doi.org/10.17605/OSF.IO/G62PZ</a>
+            </div>
+        </section>
+
+        <!-- Noyau théorique -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Noyau</div>
+                <h2 class="section-title">Variables du modèle ORI-C</h2>
+            </div>
+
+            <table class="variables-table">
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>O(t)</td>
+                        <td>Organisation — Structure interne du système</td>
+                    </tr>
+                    <tr>
+                        <td>R(t)</td>
+                        <td>Résilience — Capacité d'absorption des perturbations</td>
+                    </tr>
+                    <tr>
+                        <td>I(t)</td>
+                        <td>Intégration — Cohérence des composants du système</td>
+                    </tr>
+                    <tr>
+                        <td>V(t)</td>
+                        <td>Viabilité — Agrégation sur [t-Δ, t], fixée ex ante</td>
+                    </tr>
+                    <tr>
+                        <td>Cap(O,R,I)</td>
+                        <td>Capacité — Forme fixée ex ante</td>
+                    </tr>
+                    <tr>
+                        <td>Σ(t)</td>
+                        <td>Mismatch — max(0, D(E(t)) - Cap(t))</td>
+                    </tr>
+                    <tr>
+                        <td>S(t)</td>
+                        <td>Stock symbolique — Proxies de transmission</td>
+                    </tr>
+                    <tr>
+                        <td>C(t)</td>
+                        <td>Variable d'ordre — Gain intergénérationnel</td>
+                    </tr>
+                    <tr>
+                        <td>S₀*</td>
+                        <td>Seuil critique — Estimé à 0.41 (T7)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Structure du dépôt -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Repository</div>
+                <h2 class="section-title">Structure du dépôt</h2>
+            </div>
+
+            <div class="repo-structure">
+                <div class="repo-folder">
+                    <div class="folder-name">01_Theory/</div>
+                    <div class="folder-desc">Fondements théoriques, glossaire, rationale du seuil</div>
+                </div>
+                <div class="repo-folder">
+                    <div class="folder-name">02_Protocol/</div>
+                    <div class="folder-desc">Protocoles de décision, templates pre-registration</div>
+                </div>
+                <div class="repo-folder">
+                    <div class="folder-name">03_Data/</div>
+                    <div class="folder-desc">Données synthétiques et réelles (Eurostat, FRED)</div>
+                </div>
+                <div class="repo-folder">
+                    <div class="folder-name">04_Code/</div>
+                    <div class="folder-desc">Pipeline Python, tests, configurations</div>
+                </div>
+                <div class="repo-folder">
+                    <div class="folder-name">05_Results/</div>
+                    <div class="folder-desc">Résultats des tests canoniques T1-T8</div>
+                </div>
+                <div class="repo-folder">
+                    <div class="folder-name">06_Manuscript/</div>
+                    <div class="folder-desc">Article et appendices méthodologiques</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tests canoniques -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Validation</div>
+                <h2 class="section-title">Tests canoniques T1-T8</h2>
+            </div>
+
+            <div class="tests-grid">
+                <div class="test-card pass">
+                    <div class="test-id">T1</div>
+                    <div class="test-name">Noyau demand shock</div>
+                    <div class="test-desc">Test du mécanisme causal de base sous choc de demande.</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T2</div>
+                    <div class="test-name">Threshold demo on dataset</div>
+                    <div class="test-desc">Démonstration de détection du seuil sur données synthétiques.</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T3</div>
+                    <div class="test-name">Robustness on dataset</div>
+                    <div class="test-desc">Tests de robustesse multi-paramètres.</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T4</div>
+                    <div class="test-name">S rich vs poor on C</div>
+                    <div class="test-desc">Comparaison de l'effet de S riche vs pauvre sur C.</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T5</div>
+                    <div class="test-name">Injection effect on C</div>
+                    <div class="test-desc">Test de l'effet d'injection symbolique sur C.</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T6</div>
+                    <div class="test-name">Symbolic cut on C</div>
+                    <div class="test-desc">Test de coupure du canal symbolique.</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T7</div>
+                    <div class="test-name">Progressive sweep S₀*</div>
+                    <div class="test-desc">Estimation du seuil critique S₀* = 0.41</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+
+                <div class="test-card pass">
+                    <div class="test-id">T8</div>
+                    <div class="test-name">Real data validation</div>
+                    <div class="test-desc">Validation sur données réelles (FRED, Eurostat).</div>
+                    <span class="test-verdict pass">✓ PASS</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Installation</div>
+                <h2 class="section-title">Exécuter le pipeline</h2>
+            </div>
+
+            <div class="code-block">
+                <pre><code># Cloner le dépôt</code>
+git clone https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold.git
+cd CumulativeSymbolicThreshold
+
+<code># Installation conda (recommandé)</code>
+conda env create -f environment.yml
+conda activate cumulative_symbolic
+
+<code># Ou pip</code>
+pip install -r 04_Code/requirements.txt</pre>
+            </div>
+
+            <div class="code-block">
+                <pre><code># Démo synthétique (transition)</code>
+python 04_Code/pipeline/run_synthetic_demo.py \
+  --input 03_Data/synthetic/synthetic_with_transition.csv \
+  --outdir 05_Results/demo_transition
+
+<code># Démo ORI-C complet</code>
+python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/ori_c_demo
+python 04_Code/pipeline/tests_causaux.py --outdir 05_Results/ori_c_demo
+
+<code># Données réelles (pilote CPI)</code>
+python 04_Code/pipeline/run_real_data_demo.py \
+  --input 03_Data/real/pilot_cpi/real.csv \
+  --outdir 05_Results/real/pilot_cpi/run_0001 \
+  --col-time date --auto-scale --control-mode no_symbolic</pre>
+            </div>
+        </section>
+
+        <!-- Citation -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Citation</div>
+                <h2 class="section-title">Citer ce travail</h2>
+            </div>
+
+            <div class="code-block">
+                <pre>@software{daloze_2026_oric,
+  author       = {Daloze, Didier},
+  title        = {Cumulative Symbolic Threshold},
+  year         = 2026,
+  publisher    = {OSF},
+  doi          = {10.17605/OSF.IO/G62PZ},
+  url          = {https://osf.io/g62pz/}
+}</pre>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p class="footer-meta">ORI-C Research · Didier Daloze · 2026 · MIT License</p>
+    </footer>
+</body>
+</html>

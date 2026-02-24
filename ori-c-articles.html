@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Articles & Essais</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-psyche: #5a4a6b;
+            --accent-climate: #4a5a6b;
+            --accent-control: #6b4a4a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        a { color: inherit; }
+
+        .back-nav {
+            position: fixed;
+            top: 2rem; left: 2rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .back-nav:hover { color: var(--text-primary); }
+        .back-nav svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+        .back-nav:hover svg { transform: translateX(-5px); }
+
+        .hero {
+            min-height: 40vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Article card in list */
+        .articles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .article-preview {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+
+        .article-preview:hover {
+            border-color: var(--accent-flow);
+            transform: translateX(10px);
+        }
+
+        .article-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            color: var(--text-subtle);
+            margin-bottom: 0.5rem;
+        }
+
+        .article-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .article-excerpt {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .article-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.8rem;
+            margin-top: 1rem;
+            border: 1px solid;
+        }
+
+        .tag-psyche { border-color: var(--accent-psyche); color: var(--accent-psyche); }
+        .tag-climate { border-color: var(--accent-climate); color: var(--accent-climate); }
+        .tag-control { border-color: var(--accent-control); color: var(--accent-control); }
+        .tag-system { border-color: var(--accent-flow); color: var(--accent-flow); }
+
+        /* Full article */
+        .article-full {
+            margin-bottom: 6rem;
+            padding-bottom: 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .article-header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .article-header .article-date {
+            margin-bottom: 1rem;
+        }
+
+        .article-header h2 {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 300;
+            line-height: 1.3;
+            margin-bottom: 1rem;
+        }
+
+        .article-header .article-lead {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .article-body p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .article-body h3 {
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        .article-body ul {
+            margin: 1rem 0 1.5rem 1.5rem;
+        }
+
+        .article-body li {
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .article-body blockquote {
+            border-left: 3px solid var(--accent-flow);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .key-point {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+
+        .key-point-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-pulse);
+            margin-bottom: 0.5rem;
+        }
+
+        .key-point p {
+            font-size: 1.15rem;
+            margin: 0;
+            font-style: italic;
+        }
+
+        /* Formulation compacte */
+        .compact-box {
+            background: linear-gradient(135deg, var(--bg-surface), var(--bg-elevated));
+            border-left: 4px solid var(--accent-psyche);
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .compact-box h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-psyche);
+            margin-bottom: 1rem;
+        }
+
+        .compact-box p {
+            font-size: 1.1rem;
+            margin: 0;
+            line-height: 1.9;
+        }
+
+        /* Phases list */
+        .phases-list {
+            margin: 2rem 0;
+        }
+
+        .phase-item {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .phase-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            border: 1px solid var(--accent-flow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-flow);
+            flex-shrink: 0;
+        }
+
+        .phase-content h4 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: 0.3rem;
+        }
+
+        .phase-content p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .main-content { padding: 3rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <a href="ori-c-presentation.html" class="back-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Retour à ORI-C
+    </a>
+
+    <section class="hero">
+        <h1>Articles & Essais</h1>
+        <p class="hero-subtitle">
+            Explorations du cadre ORI-C par <a href="ori-c-contact.html" style="color: var(--accent-flow); text-decoration: none; border-bottom: 1px solid var(--accent-flow);">Didier Daloze</a> — 
+            appliqué au psychisme, au climat, aux systèmes de contrôle et à la viabilité des sociétés.
+        </p>
+    </section>
+
+    <main class="main-content">
+
+        <!-- Article 1 : Schémas psychiques -->
+        <article class="article-full" id="schemas-psychiques">
+            <header class="article-header">
+                <div class="article-date">21 février 2026</div>
+                <h2>Les schémas psychiques comme structures dissipatives</h2>
+                <p class="article-lead">
+                    Une lecture thermodynamique de la répétition, de la souffrance chronique 
+                    et des conditions de transition psychique.
+                </p>
+                <span class="article-tag tag-psyche">Psychisme</span>
+            </header>
+
+            <div class="article-body">
+                <h3>1) Le vivant biologique : ordre local, dissipation, entropie globale</h3>
+                
+                <p>Dans le cadre de la thermodynamique hors équilibre, le vivant n'est pas une exception au second principe.</p>
+                
+                <ul>
+                    <li>Un organisme maintient une organisation interne élevée (ordre local, gradients, différenciation).</li>
+                    <li>Il ne le fait qu'au prix d'un flux continu d'énergie et de matière.</li>
+                    <li>Ce flux implique une dissipation vers l'environnement (chaleur, sous-produits, déchets métaboliques).</li>
+                    <li>Au bilan, l'entropie totale du système élargi (organisme + environnement) augmente.</li>
+                    <li>Quand le flux s'interrompt durablement, l'organisation se défait.</li>
+                </ul>
+
+                <div class="key-point">
+                    <div class="key-point-label">Principe</div>
+                    <p>La vie se tient par des régimes stationnaires loin de l'équilibre, rendus possibles par la dissipation.</p>
+                </div>
+
+                <h3>2) Le psychisme : une structure dissipative informationnelle et affective</h3>
+
+                <p>La transposition fonctionne si on conserve l'invariant dynamique et qu'on change le support. Un schéma psychique (attachement insécure, contrôle compulsif, évitement, hypervigilance, rumination) peut être compris comme une structure de stabilité.</p>
+
+                <ul>
+                    <li>Il produit un ordre interne familier : continuité du soi, prévisibilité, cohérence narrative minimale, réduction de l'inconnu.</li>
+                    <li>Cet ordre a un coût : tension, vigilance, rumination, stratégies de contrôle, conflits relationnels, épuisement.</li>
+                    <li>Le schéma se maintient par un flux affectif et attentionnel continu. Il convertit l'incertitude en réponses déjà connues.</li>
+                    <li>Il exporte du "désordre" sous forme de perturbations : frictions relationnelles, instabilité émotionnelle, rigidification.</li>
+                </ul>
+
+                <p><em>Point de méthode important :</em> "entropie psychique" n'est pas une entropie thermodynamique. C'est un analogue utile pour désigner la dispersion, la désorganisation fonctionnelle, la perte de degrés de liberté exploitables et l'augmentation du coût de régulation.</p>
+
+                <h3>3) La répétition : non pas faute, mais mécanisme de stabilisation</h3>
+
+                <p>La répétition n'est pas d'abord punitive. C'est un mécanisme de maintien.</p>
+
+                <ul>
+                    <li>Le schéma recrée des configurations qu'il sait gérer.</li>
+                    <li>Il préfère un ordre douloureux mais lisible à un chaos incertain.</li>
+                    <li>Il protège une identité et une continuité, même au prix d'un surcoût chronique.</li>
+                </ul>
+
+                <div class="key-point">
+                    <div class="key-point-label">Attracteur</div>
+                    <p>C'est la logique d'un attracteur : un bassin de stabilité où le système retombe spontanément.</p>
+                </div>
+
+                <h3>4) La friction : signal d'instabilité et seuil de transition</h3>
+
+                <p>Tant que le coût est soutenable, le régime tient. Quand la dissipation devient trop chère, la stabilité se dégrade :</p>
+
+                <ul>
+                    <li>Escalade des symptômes ou des conflits</li>
+                    <li>Rendements décroissants des stratégies habituelles</li>
+                    <li>Fatigue, saturation, contradictions insolubles</li>
+                    <li>Sentiment que "ce qui marchait" ne marche plus</li>
+                </ul>
+
+                <p>Cette zone correspond à une perte de stabilité. Une transition devient possible : soit simplification défensive (retrait, anesthésie, fermeture), soit réorganisation vers une structure plus complexe et plus souple.</p>
+
+                <h3>5) L'observation : rediriger le flux, ouvrir un nouvel attracteur</h3>
+
+                <p>Observer sans juger n'est pas un commentaire moral. C'est une opération de régulation.</p>
+
+                <ul>
+                    <li>L'observation crée une distance entre le schéma et le sujet.</li>
+                    <li>Elle introduit de l'information intégrable (différenciation, symbolisation, choix).</li>
+                    <li>Elle détourne une partie de l'énergie auparavant consommée par la compulsion vers une boucle de méta-régulation.</li>
+                    <li>Résultat : moins de dissipation brute, plus de complexité fonctionnelle, et la possibilité qu'un nouvel attracteur devienne viable.</li>
+                </ul>
+
+                <div class="compact-box">
+                    <h4>Formulation compacte</h4>
+                    <p>Un schéma psychique est une structure de stabilité qui maintient un ordre interne familier en consommant un flux affectif et attentionnel continu. La répétition stabilise cet ordre. La souffrance chronique correspond au coût dissipatif de cette stabilité. Quand ce coût dépasse un seuil, le régime devient instable et une transition devient possible. L'observation introduit une méta-régulation qui réduit le gaspillage et rend accessible un attracteur plus souple.</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- Article 2 : Climat -->
+        <article class="article-full" id="climat-instabilite">
+            <header class="article-header">
+                <div class="article-date">22 février 2026</div>
+                <h2>Le climat a toujours été instable</h2>
+                <p class="article-lead">
+                    L'erreur n'est pas le changement, c'est notre incapacité à vivre avec l'instabilité.
+                </p>
+                <span class="article-tag tag-climate">Climat</span>
+            </header>
+
+            <div class="article-body">
+                <p>Le climat de la Terre n'a jamais été stable. Glaciations, réchauffements rapides, sécheresses prolongées, inondations majeures, tempêtes extrêmes, ruptures abruptes. Ce n'est ni polémique ni idéologique. C'est un fait documenté par la paléoclimatologie.</p>
+
+                <p>L'erreur n'est donc pas de découvrir que le climat change. L'erreur est d'avoir construit des sociétés qui supposent implicitement un monde stable, prévisible, maîtrisable.</p>
+
+                <h3>Le mythe de la stabilité climatique</h3>
+
+                <p>Les archives climatiques décrivent un système qui n'évolue pas toujours de façon linéaire. Il peut fonctionner par oscillations, seuils et ruptures. Penser la nature comme un système qui devrait rester stable, et qu'il suffirait de "réparer" pour retrouver une normalité, relève souvent d'une projection culturelle — celle de la maîtrise, du contrôle et de la sécurité totale.</p>
+
+                <h3>Même avec un objectif global, la météo restera chaotique</h3>
+
+                <p>Un point est rarement dit clairement : même dans les scénarios les plus optimistes, la météo restera chaotique. Les tempêtes, les inondations, les sécheresses et les anomalies locales ne disparaîtront pas parce qu'un seuil global serait respecté.</p>
+
+                <div class="key-point">
+                    <div class="key-point-label">Insight</div>
+                    <p>Le sujet n'est pas seulement la science du climat. Le sujet, c'est notre imaginaire de stabilité.</p>
+                </div>
+
+                <h3>Les catastrophes révèlent nos fragilités</h3>
+
+                <p>Les catastrophes ne contredisent pas cette thèse, elles la confirment. L'histoire montre que le monde n'a jamais été "sûr" au sens moderne du terme. Ce qui change, c'est la manière dont nos sociétés se rendent vulnérables :</p>
+
+                <ul>
+                    <li>Concentration des populations dans des zones à risque</li>
+                    <li>Infrastructures rigides et non adaptatives</li>
+                    <li>Dépendance à des chaînes logistiques longues et fragiles</li>
+                    <li>Optimisation pour l'efficacité plutôt que pour la résilience</li>
+                </ul>
+
+                <p>Une catastrophe n'est pas seulement un aléa. C'est un aléa qui rencontre une fragilité structurelle.</p>
+
+                <h3>Habiter l'incertitude</h3>
+
+                <p>Aucun système vivant durable ne se construit sur la stabilité. Il se construit sur la capacité à absorber des chocs, à se reconfigurer, à conserver des marges, à multiplier les redondances, à réduire les dépendances critiques.</p>
+
+                <div class="compact-box">
+                    <h4>Conclusion</h4>
+                    <p>Habiter la Terre, ce n'est pas vivre dans un décor. C'est vivre dans un système vivant, mobile, imprévisible. Notre époque a confondu confort et contrôle, prévision et maîtrise, sécurité et absence de risque. La question n'est pas de revenir à un "avant" imaginaire. La question est d'apprendre à vivre avec l'incertitude, et de bâtir des formes de vie qui ne s'effondrent pas quand le monde bouge.</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- Article 3 : Contrôle -->
+        <article class="article-full" id="logique-controle">
+            <header class="article-header">
+                <div class="article-date">18 février 2026</div>
+                <h2>Quand la logique de contrôle casse le vivant</h2>
+                <p class="article-lead">
+                    Pour une culture de la co-évolution plutôt que de la maîtrise.
+                </p>
+                <span class="article-tag tag-control">Contrôle</span>
+            </header>
+
+            <div class="article-body">
+                <p>Nous vivons dans des sociétés qui ont empilé, couche après couche, une logique de maîtrise sur un monde qui fonctionne par adaptation, relation, rétroaction et émergence. Cette dissonance n'est pas un détail. Elle éclaire une part majeure des crises écologiques, sanitaires, économiques et institutionnelles.</p>
+
+                <div class="key-point">
+                    <div class="key-point-label">Constat</div>
+                    <p>Quand on applique la commande là où il faudrait de la co-évolution, le système se rigidifie, se fragilise, puis finit par rompre.</p>
+                </div>
+
+                <h3>Le malentendu sur la science</h3>
+
+                <p>La science, dans son sens le plus exigeant, est une méthode de correction. Le problème apparaît lorsque la société convertit la science en outil de pilotage, de prédiction et de légitimation. Ce glissement fabrique plusieurs illusions :</p>
+
+                <ul>
+                    <li>L'illusion que des indicateurs peuvent contenir la réalité</li>
+                    <li>L'illusion que des modèles fermés décrivent correctement des systèmes ouverts</li>
+                    <li>L'illusion que la réduction de la complexité n'a pas de coût</li>
+                    <li>L'illusion que la maîtrise technique peut remplacer l'adaptation</li>
+                </ul>
+
+                <h3>Contrôler n'est pas réguler</h3>
+
+                <p><strong>Contrôler</strong>, c'est rigidifier, fixer, imposer une trajectoire, réduire la variance, stabiliser coûte que coûte.</p>
+                
+                <p><strong>Réguler</strong>, c'est maintenir une viabilité, ajuster en temps réel, absorber les fluctuations, apprendre en continu.</p>
+
+                <p>Le vivant ne se contrôle pas comme une machine. Il se régule en permanence. Quand on force la stabilité, on supprime souvent exactement ce qui permet de survivre aux chocs. La stabilité imposée produit la fragilité.</p>
+
+                <h3>Vers une culture de la co-évolution</h3>
+
+                <p>Cela change la manière de définir un problème, de décider, de mesurer, d'apprendre, de gouverner. La maîtrise n'est plus un pilotage direct. Elle devient une capacité à maintenir des conditions favorables à l'adaptation.</p>
+
+                <div class="compact-box">
+                    <h4>Question finale</h4>
+                    <p>La question n'est pas "comment tout contrôler". La question devient : quelles structures, quelles règles, quelles limites, quels espaces de liberté rendent l'évolution soutenable, au lieu de la casser ?</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- Article 4 : Refus structurel -->
+        <article class="article-full" id="refus-structurel">
+            <header class="article-header">
+                <div class="article-date">22 février 2026</div>
+                <h2>Constat d'un refus structurel d'intégrer l'instabilité du réel</h2>
+                <p class="article-lead">
+                    Il n'y a pas un manque de preuves. Il y a un défaut de capacité collective à intégrer ce que les preuves disent du réel.
+                </p>
+                <span class="article-tag tag-system">Systémique</span>
+            </header>
+
+            <div class="article-body">
+                <p>De quoi parle-t-on ici ? De l'aveuglisme comme refus structurel d'admettre une propriété simple : le réel n'est pas stable par défaut. Il est instable, non linéaire, historique, multi-échelles. Il produit des attracteurs locaux, des coûts déplacés, des transitions, des ruptures. Et il ne garantit pas le retour à l'équilibre.</p>
+
+                <p>Ce constat n'appartient pas à une discipline. Il émerge par convergence de corpus :</p>
+
+                <ul>
+                    <li><strong>En climat :</strong> oscillations, seuils, ruptures abruptes, variabilité géologique normale.</li>
+                    <li><strong>En psychisme :</strong> schémas comme attracteurs, stabilité coûteuse, dissipation chronique, bascules quand le coût dépasse un seuil.</li>
+                    <li><strong>En biologie :</strong> ordre local maintenu par flux, organisation conditionnelle, fragilité des régimes stationnaires.</li>
+                    <li><strong>En cosmos :</strong> structures qui émergent d'instabilités, organisation locale via dissipation globale.</li>
+                </ul>
+
+                <div class="key-point">
+                    <div class="key-point-label">Invariant</div>
+                    <p>Vivant = flux + attracteurs + coûts + transitions. À toutes les échelles, on retrouve la même grammaire dynamique : on ne "maîtrise" pas l'instabilité, on l'habite et on la convertit.</p>
+                </div>
+
+                <h3>L'aveuglisme n'est pas une ignorance. C'est une architecture.</h3>
+
+                <p>Une architecture qui permet à un système de fonctionner sans modifier ses hypothèses de base, même lorsque les signaux les invalident. Elle produit une stabilité apparente en neutralisant la portée des faits.</p>
+
+                <p>Elle repose sur des dispositifs simples, répétés, stabilisateurs :</p>
+
+                <ul>
+                    <li>Réduire le réel à ce qui rentre dans les tableaux</li>
+                    <li>Déplacer la charge de preuve : exiger du monde qu'il se démontre sans fin</li>
+                    <li>Confondre incertitude locale et incertitude globale</li>
+                    <li>Transformer la critique en procédure : on ne réfute pas, on ajourne</li>
+                    <li>Appeler "prudence" ce qui est un maintien de structure</li>
+                </ul>
+
+                <p>Dans ce cadre, demander "encore des preuves" n'est pas une demande scientifique. C'est un geste de stabilisation.</p>
+
+                <div class="compact-box">
+                    <h4>Diagnostic</h4>
+                    <p>L'obstacle principal n'est pas la preuve, mais la compatibilité entre les preuves et les structures qui devraient en tenir compte. Les preuves, il y en a "dix mille". Et pourtant on continue d'agir comme si une seule manquait encore — la preuve magique qui autoriserait une transition sans perte, sans conflit, sans reconfiguration. Cette preuve-là n'existera pas.</p>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Didier Daloze · Articles & Essais · 2026</p>
+    </footer>
+</body>
+</html>
