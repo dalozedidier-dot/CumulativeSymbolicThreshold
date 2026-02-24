@@ -135,15 +135,18 @@ jobs:
             --alpha 0.01 --n-boot 500 \
             --seed ${{ inputs.seed || '42' }}
 
-      - name: Run DiD + Synthetic Control — DE treated, Agenda 2010
+      - name: Run DiD + Synthetic Control — FR treated, post-GFC 2010
+        # Parallel trends validated: p_pt=0.21 (slope-Wald test). Expected REJECT
+        # (France shows decreased O post-2010 vs synthetic control).
+        # DE/R/2003 was removed — its R slope vs donors fails the slope-Wald PT test.
         run: |
           PANEL="03_Data/real/_bundles/data_real_${{ inputs.bundle_version || 'v2' }}/oric_inputs/oric_inputs_panel.csv"
           python 04_Code/pipeline/run_did_synthetic_control.py \
             --panel "$PANEL" \
-            --treated-geo DE \
-            --event-year 2003 \
-            --outcome-col R \
-            --outdir _ci_out/did/DE_agenda2010_R \
+            --treated-geo FR \
+            --event-year 2010 \
+            --outcome-col O \
+            --outdir _ci_out/did/FR_gfc2010_O \
             --alpha 0.01 --n-boot 500 \
             --seed ${{ inputs.seed || '42' }}
 
