@@ -109,7 +109,27 @@ def main() -> int:
     ap.add_argument("--outdir", type=str, default="05_Results/canonical_tests")
     ap.add_argument("--seed", type=int, default=1234)
     ap.add_argument("--fast", action="store_true", help="smaller n for CI quick runs")
+    ap.add_argument(
+        "--n-runs-min",
+        type=int,
+        default=None,
+        help=(
+            "Minimum n_runs for all statistical tests. "
+            "If any test would use fewer runs than this value, abort with an error. "
+            "Use --n-runs-min 50 to enforce full_statistical mode unconditionally. "
+            "Incompatible with --fast (which intentionally uses n=20)."
+        ),
+    )
     args = ap.parse_args()
+
+    if args.fast and args.n_runs_min is not None:
+        print(
+            "ERROR: --fast and --n-runs-min are mutually exclusive. "
+            "--fast intentionally runs with n=20 (smoke_ci). "
+            "Remove --fast to enforce full_statistical mode.",
+            file=sys.stderr,
+        )
+        return 1
 
     root = Path(__file__).resolve().parents[2]
     out_root = root / args.outdir
@@ -292,6 +312,28 @@ def main() -> int:
     statistical_tests = [t for t in tests if t.get("test_type") == "statistical"]
     stat_n_runs = [t.get("n_runs_used", 1) for t in statistical_tests]
     run_mode = "smoke_ci" if any(n < N_MIN for n in stat_n_runs) else "full_statistical"
+
+    # --n-runs-min guard: abort immediately if enforcement is requested and violated.
+    # This prevents a misconfigured nightly from silently producing smoke_ci results.
+    if args.n_runs_min is not None:
+        violators = [
+            (t["id"], t["n_runs_used"])
+            for t in statistical_tests
+            if t["n_runs_used"] < int(args.n_runs_min)
+        ]
+        if violators:
+            print(
+                f"ERROR: --n-runs-min={args.n_runs_min} violated by {len(violators)} statistical test(s):",
+                file=sys.stderr,
+            )
+            for tid, n in violators:
+                print(f"  {tid}: n_runs_used={n} < {args.n_runs_min}", file=sys.stderr)
+            print(
+                "Aborting. Remove --n-runs-min or increase n to satisfy the constraint.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"n-runs-min guard satisfied: all {len(statistical_tests)} statistical tests use n >= {args.n_runs_min}")
 
     # Seed table (auto-derived — exhaustive, not manually declared)
     seed_table = [
