@@ -1,0 +1,86 @@
+{
+  "dataset_id": "cosmo_solar_real",
+  "sector": "cosmo",
+  "pilot": "solar",
+  "spec_version": "1.0",
+  "data_type": "real",
+  "time_column": "date",
+  "time_mode": "value",
+  "normalization": "robust_minmax",
+  "data_source": "NOAA Space Weather Prediction Center (public)",
+  "data_url": "https://www.swpc.noaa.gov/products/solar-cycle-progression",
+  "minimum_rows": 100,
+  "perturbation_column": "instrument_gap",
+  "perturbation_type": "symbolic_cut",
+  "perturbation_note": "instrument_gap=1 marks GOES/ACE data gaps or sensor calibration periods. Standard Cosmo stress test for T6.",
+  "fragility_global_note": "Solar data is highly reliable but instrument changes between GOES/SDO generations create step-changes. Use homogenised series where available. Annotate all instrument transitions as U(t) perturbation events.",
+  "columns": [
+    {
+      "oric_role": "O",
+      "source_column": "sunspot_number_smooth",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.20,
+      "fragility_note": "International sunspot number v2 is well-calibrated. Legacy v1 records need conversion.",
+      "manipulability_note": "Not manipulable. Physical measurement.",
+      "description": "Smoothed monthly international sunspot number (solar organisational activity)."
+    },
+    {
+      "oric_role": "R",
+      "source_column": "kp_max_monthly",
+      "direction": "negative",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.25,
+      "fragility_note": "Kp is a global average; local geomagnetic effects differ significantly.",
+      "manipulability_note": "Not manipulable.",
+      "description": "Monthly maximum Kp geomagnetic index (inverted: low Kp = high magnetic resilience). Invert: R = 1 − Kp_norm.",
+      "invert": true
+    },
+    {
+      "oric_role": "I",
+      "source_column": "f107_flux",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.22,
+      "fragility_note": "F10.7 is measured daily at Penticton; highly consistent since 1947.",
+      "manipulability_note": "Not manipulable.",
+      "description": "Solar radio flux F10.7 (proxy for multi-wavelength emission coherence / integration)."
+    },
+    {
+      "oric_role": "S",
+      "source_column": "cumulative_flare_index",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.30,
+      "fragility_note": "Flare index definition varies; use GOES X-ray background flux for consistency.",
+      "manipulability_note": "Not manipulable.",
+      "description": "Cumulative solar flare energy index above background (symbolic stock: persistent structured signal)."
+    },
+    {
+      "oric_role": "demand",
+      "source_column": "geomagnetic_activity_ap",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.20,
+      "fragility_note": "ap index is the linear-scale version of Kp; consistent since 1932.",
+      "manipulability_note": "Not manipulable.",
+      "description": "Monthly mean ap geomagnetic activity index (environmental demand on Earth's magnetosphere)."
+    },
+    {
+      "oric_role": "time",
+      "source_column": "date",
+      "direction": "positive",
+      "fragility_score": 0.0,
+      "fragility_note": "",
+      "manipulability_note": "",
+      "description": "Monthly date column (YYYY-MM format)."
+    }
+  ],
+  "data_preparation_notes": [
+    "Recommended source: NOAA SWPC monthly values (ftp://ftp.swpc.noaa.gov/pub/indices/old_indices/)",
+    "cumulative_flare_index: compute as rolling sum of GOES X-ray class-weighted events over 6 months.",
+    "Annotate instrument transitions (GOES-15 → GOES-16, Jan 2017) as instrument_gap=1.",
+    "Minimum 1 full solar cycle (~11 years = 132 monthly rows). Recommended: 2+ cycles.",
+    "F10.7: use adjusted values (not observed) for long-term trend analyses."
+  ]
+}
