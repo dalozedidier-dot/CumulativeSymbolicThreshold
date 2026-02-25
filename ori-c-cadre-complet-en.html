@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Cadre Complet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #e8e6e1;
+            --text-muted: #7a7872;
+            --text-subtle: #4a4842;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-tension: #6b4a5a;
+            --accent-emergence: #4a5a6b;
+            --accent-observation: #5a6b4a;
+            --accent-pression: #6b5a4a;
+            --accent-affordances: #4a6b5a;
+            --accent-metis: #5a4a6b;
+            --accent-regulation: #4a5a5a;
+            --accent-coherence: #6b6b4a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Grain overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0));
+        }
+
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+
+        /* Language switcher */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+            padding-left: 2rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
+        @media (max-width: 900px) {
+            nav { padding: 1rem 1.5rem; }
+            .nav-links { gap: 1rem; }
+            .nav-links a { font-size: 0.6rem; }
+        }
+
+        @media (max-width: 700px) {
+            .nav-links { display: none; }
+        }
+
+        /* Hero compact */
+        .hero-compact {
+            padding: 8rem 4rem 4rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero-compact h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-compact .subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .hero-compact .intro {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        /* Module Navigation */
+        .module-nav {
+            position: sticky;
+            top: 0;
+            background: var(--bg-deep);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            z-index: 50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .module-nav a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-bottom: none;
+            padding: 0.6rem 1.2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .module-nav a:hover,
+        .module-nav a.active {
+            color: var(--text-primary);
+            border-color: var(--accent-flow);
+            background: rgba(61, 90, 76, 0.1);
+        }
+
+        /* Main content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Module Section */
+        .module-section {
+            margin-bottom: 8rem;
+            scroll-margin-top: 6rem;
+        }
+
+        .module-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .module-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .module-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .module-icon.observation { background: linear-gradient(135deg, var(--accent-observation), var(--bg-deep)); }
+        .module-icon.pression { background: linear-gradient(135deg, var(--accent-pression), var(--bg-deep)); }
+        .module-icon.affordances { background: linear-gradient(135deg, var(--accent-affordances), var(--bg-deep)); }
+        .module-icon.metis { background: linear-gradient(135deg, var(--accent-metis), var(--bg-deep)); }
+        .module-icon.regulation { background: linear-gradient(135deg, var(--accent-regulation), var(--bg-deep)); }
+        .module-icon.coherence { background: linear-gradient(135deg, var(--accent-coherence), var(--bg-deep)); }
+
+        .module-title-group h2 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            color: var(--text-subtle);
+            text-transform: uppercase;
+        }
+
+        .module-description {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        /* Content blocks */
+        .content-block {
+            margin-bottom: 3rem;
+        }
+
+        .content-block h3 {
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .content-block p {
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
+            max-width: 750px;
+        }
+
+        /* Definition list */
+        .definition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .definition-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .definition-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 0;
+            background: var(--accent-flow);
+            transition: height 0.3s ease;
+        }
+
+        .definition-card:hover::before {
+            height: 100%;
+        }
+
+        .definition-card:hover {
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-3px);
+        }
+
+        .definition-term {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-pulse);
+            margin-bottom: 0.75rem;
+        }
+
+        .definition-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Mètis catalog */
+        .metis-catalog {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .metis-item {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .metis-item:hover {
+            background: var(--bg-elevated);
+            border-color: var(--accent-metis);
+        }
+
+        .metis-name {
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+
+        .metis-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Scales visualization */
+        .scales-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .scale-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scale-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-flow), var(--accent-emergence));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .scale-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .scale-name {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        .scale-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.85rem;
+        }
+
+        .scale-label {
+            color: var(--text-subtle);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .scale-value {
+            color: var(--text-muted);
+            text-align: right;
+            max-width: 60%;
+        }
+
+        /* Axioms block */
+        .axioms-block {
+            background: linear-gradient(135deg, var(--bg-surface), var(--bg-elevated));
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 3rem;
+            margin: 4rem 0;
+            position: relative;
+        }
+
+        .axioms-block::before {
+            content: 'AXIOMS';
+            position: absolute;
+            top: -0.7rem;
+            left: 2rem;
+            background: var(--bg-deep);
+            padding: 0 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            color: var(--accent-flow);
+        }
+
+        .axiom {
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+            border-left: 2px solid var(--accent-flow);
+        }
+
+        .axiom:last-child {
+            margin-bottom: 0;
+        }
+
+        .axiom-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+            margin-bottom: 0.5rem;
+        }
+
+        .axiom-text {
+            font-size: 1.3rem;
+            font-style: italic;
+        }
+
+        /* Protocol steps */
+        .protocol-steps {
+            counter-reset: step;
+            margin-top: 2rem;
+        }
+
+        .protocol-step {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            counter-increment: step;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--accent-flow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-flow);
+            flex-shrink: 0;
+        }
+
+        .step-number::before {
+            content: counter(step);
+        }
+
+        .step-content {
+            padding-top: 0.5rem;
+        }
+
+        .step-content p {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        /* Layers table */
+        .layers-table {
+            width: 100%;
+            margin-top: 2rem;
+            border-collapse: collapse;
+        }
+
+        .layers-table th,
+        .layers-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .layers-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            font-weight: 400;
+        }
+
+        .layers-table td:first-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-pulse);
+            white-space: nowrap;
+        }
+
+        .layers-table td {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .layers-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .layer-forbidden {
+            color: var(--accent-tension) !important;
+        }
+
+        /* Warning block */
+        .warning-block {
+            background: rgba(107, 74, 90, 0.1);
+            border: 1px solid var(--accent-tension);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .warning-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-tension);
+            flex-shrink: 0;
+        }
+
+        .warning-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            padding: 6rem 4rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 4rem;
+        }
+
+        .footer-phrase {
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .scales-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-compact {
+                padding: 6rem 2rem 3rem;
+            }
+
+            .module-header {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .scales-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .module-nav {
+                gap: 0.3rem;
+            }
+
+            .module-nav a {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="ori-c-presentation-en.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation-en.html#foundation">Foundation</a></li>
+            <li><a href="ori-c-presentation-en.html#principles">Principles</a></li>
+            <li><a href="ori-c-cadre-complet-en.html" class="active">Framework</a></li>
+            <li><a href="palm-cadre-en.html">PALM</a></li>
+            <li><a href="ori-c-articles-en.html">Articles</a></li>
+            <li><a href="ori-c-livres-en.html">Books</a></li>
+            <li><a href="ori-c-recherche-en.html">Research</a></li>
+            <li><a href="ori-c-contact-en.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="window.location.href='ori-c-cadre-complet.html'">FR</button>
+            <button class="lang-btn active" onclick="window.location.href='ori-c-cadre-complet-en.html'">EN</button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero-compact">
+        <div class="subtitle">Complete observation framework</div>
+        <h1>ORI-C</h1>
+        <p class="intro">
+            Plasticity, Adaptation, Mètis Logic — A minimalist, rigorous, and non-metaphysical 
+            observation framework for describing living systems in the dynamic sense.
+        </p>
+    </section>
+
+    <!-- Module navigation -->
+    <nav class="module-nav">
+        <a href="#foundations">Foundations</a>
+        <a href="#observation">Observation</a>
+        <a href="#pressure">Pressure</a>
+        <a href="#affordances">Affordances</a>
+        <a href="#metis">Mètis</a>
+        <a href="#regulation">Regulation</a>
+        <a href="#coherence">Coherence</a>
+        <a href="#scales">Scales</a>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main-content">
+
+        <!-- Foundations -->
+        <section id="foundations" class="module-section">
+            <div class="module-header">
+                <div class="module-icon observation">
+                    <svg viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="15"/>
+                        <circle cx="20" cy="20" r="8"/>
+                        <circle cx="20" cy="20" r="2"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 00</div>
+                    <h2>Framework foundations</h2>
+                    <p class="module-description">
+                        The epistemic principles and absolute discipline that structure ORI-C.
+                    </p>
+                </div>
+            </div>
+
+            <div class="axioms-block">
+                <div class="axiom">
+                    <div class="axiom-number">First axiom</div>
+                    <p class="axiom-text">Life does not solve. It displaces, converts, temporizes, hybridizes.</p>
+                </div>
+                <div class="axiom">
+                    <div class="axiom-number">Second axiom</div>
+                    <p class="axiom-text">The observer is in the loop. Every measurement modifies the object.</p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>The four layers — Absolute discipline</h3>
+                <p>Absolute rule: never mix layers. ORI-C stays strictly in layers 1 to 3. The anti-ideology module prevents any slippage into layer 4.</p>
+                
+                <table class="layers-table">
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Content</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1 — Observations</td>
+                            <td>Filmable, recordable traces, raw data. Constraints described neutrally.</td>
+                        </tr>
+                        <tr>
+                            <td>2 — Patterns</td>
+                            <td>Identifiable dynamic invariants. Competing, non-exclusive patterns, no verdict.</td>
+                        </tr>
+                        <tr>
+                            <td>3 — Hypotheses</td>
+                            <td>Refutable, with indicator, threshold, horizon, falsification condition. Expected traces.</td>
+                        </tr>
+                        <tr>
+                            <td class="layer-forbidden">4 — Narrative</td>
+                            <td class="layer-forbidden">Meaning, intention, morality, teleology. External to diagnosis. FORBIDDEN in ORI-C.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="warning-block">
+                <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                <p class="warning-text">
+                    <strong>Anti-ideology module:</strong> Any cosmic intention, any teleology, any inevitable progress, any strong metaphysics, any human projection not labeled as layer 4 are made invisible and forbidden in the diagnosis.
+                </p>
+            </div>
+        </section>
+
+        <!-- Observation -->
+        <section id="observation" class="module-section">
+            <div class="module-header">
+                <div class="module-icon observation">
+                    <svg viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="12"/>
+                        <path d="M20 8v4M20 28v4M8 20h4M28 20h4"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 01</div>
+                    <h2>Observation</h2>
+                    <p class="module-description">
+                        Stabilize attention, make observation transmissible, avoid illusions from narrative biases.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>What education omits</h3>
+                <p>We teach content, laws, methods. But much less:</p>
+                
+                <div class="definition-grid">
+                    <div class="definition-card">
+                        <div class="definition-term">Learning to observe</div>
+                        <div class="definition-text">Seeing without immediately imposing an explanation.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Ecology of scales</div>
+                        <div class="definition-text">Micro, meso, macro, short time and long time.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Regime dynamics</div>
+                        <div class="definition-text">Transitions, thresholds, irreversibilities.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Weak signals</div>
+                        <div class="definition-text">What changes before it "shows" in the indicators.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Epistemic humility</div>
+                        <div class="definition-text">What we don't know, what we cannot decide.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Module B — Observer in the loop</h3>
+                <p>Mandatory questions to ask yourself:</p>
+                <div class="protocol-steps">
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>What my framework makes invisible.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>What I overvalue because it's measurable.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>The narrative I want to see win.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>How my observation modifies the mètis.</p></div>
+                    </div>
+                </div>
+                <p style="margin-top: 1.5rem; font-style: italic; color: var(--text-subtle);">Rule: double discomfort mandatory.</p>
+            </div>
+        </section>
+
+        <!-- Pression -->
+        <section id="pressure" class="module-section">
+            <div class="module-header">
+                <div class="module-icon pression">
+                    <svg viewBox="0 0 40 40">
+                        <path d="M20 5v30"/>
+                        <path d="M10 15l10-10 10 10"/>
+                        <path d="M10 25l10 10 10-10"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 02</div>
+                    <h2>Pressure</h2>
+                    <p class="module-description">
+                        Current structural constraint that prevents or limits simple stabilization.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Output parameters</h3>
+                <div class="definition-grid">
+                    <div class="definition-card">
+                        <div class="definition-term">Nature</div>
+                        <div class="definition-text">Type of constraint: material, relational, informational, normative.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Intensity</div>
+                        <div class="definition-text">Degree of constraint exerted on the system.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Scale</div>
+                        <div class="definition-text">Local, regional, global, multi-level.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Temporality</div>
+                        <div class="definition-text">Punctual, cyclical, permanent, growing.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Fragmentation</div>
+                        <div class="definition-text">Distributed or concentrated, uniform or heterogeneous.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Direction</div>
+                        <div class="definition-text">What the pressure pushes toward or prevents.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-block">
+                <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4M12 16h.01"/>
+                </svg>
+                <p class="warning-text">
+                    <strong>Pitfalls to avoid:</strong> Confusing rule and applied pressure. Confusing intention and effect.
+                </p>
+            </div>
+        </section>
+
+        <!-- Affordances -->
+        <section id="affordances" class="module-section">
+            <div class="module-header">
+                <div class="module-icon affordances">
+                    <svg viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="15" stroke-dasharray="4 2"/>
+                        <circle cx="12" cy="15" r="3"/>
+                        <circle cx="28" cy="18" r="2"/>
+                        <circle cx="18" cy="28" r="2.5"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 03</div>
+                    <h2>Affordances</h2>
+                    <p class="module-description">
+                        Exploitable margins of the system under pressure. Gradients, instabilities, flows, interactions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Affordance families</h3>
+                <div class="definition-grid">
+                    <div class="definition-card">
+                        <div class="definition-term">Material</div>
+                        <div class="definition-text">Physical, energy, spatial resources available or mobilizable.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Relational</div>
+                        <div class="definition-text">Links, networks, alliances, exploitable dependencies.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Legal</div>
+                        <div class="definition-text">Normative gaps, gray zones, regulatory interstices.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Symbolic</div>
+                        <div class="definition-text">Narratives, legitimacies, values mobilizable or contestable.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Architectural</div>
+                        <div class="definition-text">Structures, channels, interfaces enabling circulation.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Completeness test</h3>
+                <p>For each diagnosis, verify three levels:</p>
+                <div class="protocol-steps">
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p><strong>Visibles</strong> — Explicit and recognized affordances.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p><strong>Plausible invisibles</strong> — Undocumented but context-coherent affordances.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p><strong>Brokers and gray zones</strong> — Intermediaries, brokers, spaces of functional ambiguity.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mètis -->
+        <section id="metis" class="module-section">
+            <div class="module-header">
+                <div class="module-icon metis">
+                    <svg viewBox="0 0 40 40">
+                        <path d="M5 20c5-10 10 10 15 0s10 10 15 0"/>
+                        <path d="M5 25c5-10 10 10 15 0s10 10 15 0" opacity="0.5"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 04</div>
+                    <h2>Mètis</h2>
+                    <p class="module-description">
+                        Observable emergent workarounds. No intention required. 
+                        For each mètis: one direct trace or two coherent indirect traces.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Canonical catalog</h3>
+                <div class="metis-catalog">
+                    <div class="metis-item">
+                        <div class="metis-name">Substitution</div>
+                        <div class="metis-desc">Replacement by functional equivalent</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Rerouting</div>
+                        <div class="metis-desc">Same function, new path</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Concealment</div>
+                        <div class="metis-desc">Reduced traceability</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Conversion</div>
+                        <div class="metis-desc">Contrainte → ressource</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Capture</div>
+                        <div class="metis-desc">Adversary tool turned</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Hybridization</div>
+                        <div class="metis-desc">Stable combination of regimes</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Temporalization</div>
+                        <div class="metis-desc">Cost deferral, buying time</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Scale shift</div>
+                        <div class="metis-desc">Transfer to another level</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Saturation</div>
+                        <div class="metis-desc">Pressure made costly through noise</div>
+                    </div>
+                    <div class="metis-item">
+                        <div class="metis-name">Asymmetric symbiosis</div>
+                        <div class="metis-desc">Unbalanced mutual dependence</div>
+                    </div>
+                </div>
+                <p style="margin-top: 2rem; font-style: italic; color: var(--text-subtle);">
+                    + Micro mètis: local adjustments, tinkering, case-by-case negotiations.
+                </p>
+            </div>
+        </section>
+
+        <!-- Régulation -->
+        <section id="regulation" class="module-section">
+            <div class="module-header">
+                <div class="module-icon regulation">
+                    <svg viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="15"/>
+                        <path d="M12 20h16"/>
+                        <path d="M20 12v16"/>
+                        <circle cx="20" cy="20" r="5"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 05</div>
+                    <h2>Regulation</h2>
+                    <p class="module-description">
+                        Cost displacement and stabilization. Locate where the bill goes, identify the new attractor.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Cost displacement — Analysis axes</h3>
+                <div class="definition-grid">
+                    <div class="definition-card">
+                        <div class="definition-term">Temporal</div>
+                        <div class="definition-text">Deferral to the future, accumulated debt, mortgage on possibilities.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Spatial</div>
+                        <div class="definition-text">Geographic externalization, transfer to peripheries.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Social</div>
+                        <div class="definition-text">Transfer to vulnerable groups, invisibilization of losers.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Structural</div>
+                        <div class="definition-text">Architecture weakening, technical debt, rigidification.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Symbolic</div>
+                        <div class="definition-text">Loss of meaning, erosion of legitimacy, cognitive dissonance.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Security</div>
+                        <div class="definition-text">Vulnerabilities created, breaking points displaced.</div>
+                    </div>
+                </div>
+                <p style="margin-top: 2rem;"><strong>Hard core criterion:</strong> What cost is absolutely refused? This is where the system's real priority hierarchy is revealed.</p>
+            </div>
+
+            <div class="content-block">
+                <h3>Stabilization — Markers</h3>
+                <div class="definition-grid">
+                    <div class="definition-card">
+                        <div class="definition-term">Repetition</div>
+                        <div class="definition-text">The pattern reproduces predictably.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Institutionalization</div>
+                        <div class="definition-text">Rules, norms, structures formalize it.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Selection</div>
+                        <div class="definition-text">Alternatives are eliminated or marginalized.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Standardization</div>
+                        <div class="definition-text">Variations decrease, formats converge.</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Lock-in</div>
+                        <div class="definition-text">Going back becomes costly or impossible.</div>
+                    </div>
+                </div>
+                <p style="margin-top: 2rem;"><strong>Critical test:</strong> Reversibility versus regime transition. Can the system still change trajectory?</p>
+            </div>
+        </section>
+
+        <!-- Cohérence -->
+        <section id="coherence" class="module-section">
+            <div class="module-header">
+                <div class="module-icon coherence">
+                    <svg viewBox="0 0 40 40">
+                        <circle cx="20" cy="10" r="5"/>
+                        <circle cx="10" cy="28" r="5"/>
+                        <circle cx="30" cy="28" r="5"/>
+                        <path d="M20 15v8M14 25l-2-2M26 25l2-2"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Module 06</div>
+                    <h2>Coherence</h2>
+                    <p class="module-description">
+                        Living indices, vitals to protect, and systemic viability diagnosis.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-block">
+                <h3>Living indices — Three vitality markers</h3>
+                <div class="definition-grid">
+                    <div class="definition-card">
+                        <div class="definition-term">Tactical diversity</div>
+                        <div class="definition-text">Does the system produce varied responses to pressures?</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Learning speed</div>
+                        <div class="definition-text">Does it integrate new information quickly?</div>
+                    </div>
+                    <div class="definition-card">
+                        <div class="definition-term">Adaptive opacity</div>
+                        <div class="definition-text">Does it make itself harder to read by external pressures?</div>
+                    </div>
+                </div>
+                <p style="margin-top: 2rem;"><strong>Operator:</strong> Joint rise of all three = adaptive living. Joint fall = system in decoherence.</p>
+            </div>
+
+            <div class="content-block">
+                <h3>Module A — Vitals</h3>
+                <p>Define protected vital functions (1 to 3 maximum). For each vital:</p>
+                <div class="protocol-steps">
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Observable and measurable indicator.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Identified rupture threshold.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Relevant time horizon.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Tolerable adversity before degradation.</p></div>
+                    </div>
+                </div>
+                <p style="margin-top: 1.5rem;"><strong>Test:</strong> A mètis is alive if it protects at least one vital.</p>
+            </div>
+        </section>
+
+        <!-- Échelles -->
+        <section id="scales" class="module-section">
+            <div class="module-header">
+                <div class="module-icon observation">
+                    <svg viewBox="0 0 40 40">
+                        <rect x="5" y="25" width="6" height="10"/>
+                        <rect x="13" y="18" width="6" height="17"/>
+                        <rect x="21" y="10" width="6" height="25"/>
+                        <rect x="29" y="5" width="6" height="30"/>
+                    </svg>
+                </div>
+                <div class="module-title-group">
+                    <div class="module-number">Application</div>
+                    <h2>Scale transversality</h2>
+                    <p class="module-description">
+                        From cosmos to psyche, the same dynamic invariant.
+                    </p>
+                </div>
+            </div>
+
+            <div class="scales-grid">
+                <div class="scale-card">
+                    <h4 class="scale-name">Cosmos</h4>
+                    <div class="scale-row">
+                        <span class="scale-label">Pressure</span>
+                        <span class="scale-value">Quantum indeterminacy, contextuality</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Mètis</span>
+                        <span class="scale-value">Decoherence, dissipation</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Cost</span>
+                        <span class="scale-value">Global entropy, coarse graining</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Attractor</span>
+                        <span class="scale-value">Robust macro correlations</span>
+                    </div>
+                </div>
+
+                <div class="scale-card">
+                    <h4 class="scale-name">Biological life</h4>
+                    <div class="scale-row">
+                        <span class="scale-label">Pressure</span>
+                        <span class="scale-value">Physico-chemical indeterminacy</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Mètis</span>
+                        <span class="scale-value">Compartmentalization, cycles, replication</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Cost</span>
+                        <span class="scale-value">Entropy, biochemical irreversibilities</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Attractor</span>
+                        <span class="scale-value">Self-replication, evolution</span>
+                    </div>
+                </div>
+
+                <div class="scale-card">
+                    <h4 class="scale-name">Psyche</h4>
+                    <div class="scale-row">
+                        <span class="scale-label">Pressure</span>
+                        <span class="scale-value">Affective and relational uncertainty</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Mètis</span>
+                        <span class="scale-value">Defensive patterns, routines</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Cost</span>
+                        <span class="scale-value">Fatigue, rigidification, conflicts</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Attractor</span>
+                        <span class="scale-value">Mental attractors, scripts</span>
+                    </div>
+                </div>
+
+                <div class="scale-card">
+                    <h4 class="scale-name">Social systems</h4>
+                    <div class="scale-row">
+                        <span class="scale-label">Pressure</span>
+                        <span class="scale-value">Interaction indeterminacy</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Mètis</span>
+                        <span class="scale-value">Hierarchies, norms, routines</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Cost</span>
+                        <span class="scale-value">Inequalities, frictions, path-dependence</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Attractor</span>
+                        <span class="scale-value">Lasting institutions</span>
+                    </div>
+                </div>
+
+                <div class="scale-card">
+                    <h4 class="scale-name">Ecosystems</h4>
+                    <div class="scale-row">
+                        <span class="scale-label">Pressure</span>
+                        <span class="scale-value">Ecological indeterminacy</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Mètis</span>
+                        <span class="scale-value">Assemblages, trophic networks</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Cost</span>
+                        <span class="scale-value">Biodiversity loss, hysteresis</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Attractor</span>
+                        <span class="scale-value">Resilient community states</span>
+                    </div>
+                </div>
+
+                <div class="scale-card">
+                    <h4 class="scale-name">Economies</h4>
+                    <div class="scale-row">
+                        <span class="scale-label">Pressure</span>
+                        <span class="scale-value">Economic indeterminacy, shocks</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Mètis</span>
+                        <span class="scale-value">Contracts, specialization, innovations</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Cost</span>
+                        <span class="scale-value">Inequalities, debt, externalities</span>
+                    </div>
+                    <div class="scale-row">
+                        <span class="scale-label">Attractor</span>
+                        <span class="scale-value">Growth regimes, institutions</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Protocole -->
+        <section class="module-section">
+            <div class="axioms-block" style="margin-top: 0;">
+                <h3 style="margin-bottom: 2rem; font-size: 1.5rem;">Usage protocol — 8 steps (90 seconds)</h3>
+                <div class="protocol-steps">
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Write 5 observations (layer 1).</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Write 2 patterns (layer 2).</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Write 2 hypotheses (layer 3) with falsification.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Fill in Pressure, Affordances, Mètis, Cost displacement, Stabilization.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Choose 1 to 3 vitals. Check if the mètis protects them.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Note the three living indices.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>Do the Observer module and write the double discomfort.</p></div>
+                    </div>
+                    <div class="protocol-step">
+                        <div class="step-number"></div>
+                        <div class="step-content"><p>If needed, write a narrative — but outside diagnosis.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p class="footer-phrase">
+            ORI-C describes how, at all scales, life in the dynamic sense locally stabilizes 
+            order and information under indeterminacy constraints, through emergent 
+            dissipative and costly mechanisms, without positing purpose or creator.
+        </p>
+        <p class="footer-meta">ORI-C · Living systems observation framework · 2026</p>
+    </footer>
+
+    <script>
+        // Highlight active section in nav
+        const sections = document.querySelectorAll('.module-section');
+        const navLinks = document.querySelectorAll('.module-nav a');
+
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '-100px 0px -50% 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            if (section.id) observer.observe(section);
+        });
+
+        // Smooth reveal animations
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.definition-card, .scale-card, .metis-item, .axiom').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            revealObserver.observe(el);
+        });
+    </script>
+</body>
+</html>
