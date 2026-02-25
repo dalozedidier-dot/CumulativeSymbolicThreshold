@@ -1,0 +1,78 @@
+{
+  "dataset_id": "infra_grid_real",
+  "sector": "infra",
+  "pilot": "grid",
+  "spec_version": "1.0",
+  "data_type": "real",
+  "time_column": "datetime",
+  "time_mode": "value",
+  "normalization": "robust_minmax",
+  "data_source": "ENTSO-E Transparency Platform (public) / EIA (US)",
+  "data_url": "https://transparency.entsoe.eu/",
+  "minimum_rows": 168,
+  "perturbation_column": "U",
+  "perturbation_type": "demand_shock",
+  "perturbation_note": "U=1 marks documented load shock events (heat waves, cold snaps, N-1 contingency events).",
+  "fragility_global_note": "Grid data quality is generally high. Main fragility sources: (1) cross-border flow data is post-hoc reconciled and can be revised; (2) reserve margin definition varies by TSO; (3) reported vs realised reserve can differ. All three issues require version-locked data downloads with SHA-256 verification.",
+  "columns": [
+    {
+      "oric_role": "O",
+      "source_column": "frequency_deviation_norm",
+      "direction": "negative",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.25,
+      "fragility_note": "Frequency deviation requires sub-hourly resolution (15-min or better). Hourly averaging masks fast transients.",
+      "manipulability_note": "TSOs can provide frequency support through FACTS devices; apparent deviation may be suppressed.",
+      "description": "Normalised frequency deviation from nominal (50/60 Hz). Invert: O = 1 − deviation_norm. Low deviation = high organisational stability.",
+      "invert": true
+    },
+    {
+      "oric_role": "R",
+      "source_column": "reserve_margin",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.35,
+      "fragility_note": "Reserve margin definition: (installed_capacity − peak_demand) / peak_demand. TSO-specific capacity counting rules vary.",
+      "manipulability_note": "Availability declarations are TSO-controlled; forced outages undermine reported reserve.",
+      "description": "Available reserve margin (fraction of peak demand). Higher = more resilient."
+    },
+    {
+      "oric_role": "I",
+      "source_column": "crossborder_coherence",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.45,
+      "fragility_note": "Cross-border flows require multi-TSO data synchronisation. Congestion management creates artefacts.",
+      "manipulability_note": "Market coupling prices and curtailment orders affect apparent flow coherence.",
+      "description": "Rolling correlation between interconnected zone flows (cross-border integration index)."
+    },
+    {
+      "oric_role": "S",
+      "source_column": "demand_response_index",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.55,
+      "fragility_note": "DR participation data is partially confidential. Proxy: ratio of actual vs forecast demand during peak events.",
+      "manipulability_note": "TSOs and aggregators control DR activation; data may not be publicly available at required granularity.",
+      "description": "Cumulative demand response participation index (symbolic stock: accumulated smart-grid response memory)."
+    },
+    {
+      "oric_role": "demand",
+      "source_column": "total_load_norm",
+      "direction": "positive",
+      "normalization_override": "robust_minmax",
+      "fragility_score": 0.15,
+      "fragility_note": "Total load is the most reliable ENTSO-E series. 15-min resolution available.",
+      "manipulability_note": "Large industrial consumers can shift load; does not affect aggregate materially.",
+      "description": "Total electricity consumption (normalised). Environmental demand on the grid system."
+    }
+  ],
+  "data_preparation_notes": [
+    "Recommended resolution: 15-minute or hourly. Use UTC timestamps.",
+    "Download from ENTSO-E Transparency Platform via SFTP or REST API.",
+    "crossborder_coherence: compute as rolling 24h Pearson correlation between two border-zone net positions.",
+    "Annotate N-1 events, extreme weather days, and planned maintenance in U column.",
+    "Minimum 168 hourly rows (1 week). Recommended: 8760 (1 year) for seasonal coverage.",
+    "Verify SHA-256 of downloaded files and record in manifest.json."
+  ]
+}

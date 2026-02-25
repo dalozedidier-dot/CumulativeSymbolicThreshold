@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORI-C | Livres & Essais longs</title>
+    <title>ORI-C | Books & Long Essays</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
@@ -42,15 +42,8 @@
         }
 
         /* Cyberspace Background */
-        .cyber-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden;
-            background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%);
-        }
-        .cyber-grid-floor {
-            position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%;
-            background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px);
-            background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; animation: gridFloorPulse 8s ease-in-out infinite;
-        }
+        .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%); }
+        .cyber-grid-floor { position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%; background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px); background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; animation: gridFloorPulse 8s ease-in-out infinite; }
         .cyber-grid-floor::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, transparent 0px, transparent 39px, rgba(30, 80, 120, 0.04) 40px); background-size: 100% 40px; animation: gridLinesMove 4s linear infinite; }
         @keyframes gridFloorPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.9; } }
         @keyframes gridLinesMove { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
@@ -65,9 +58,7 @@
         .data-block { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(60, 140, 180, 0.3); white-space: nowrap; animation: floatDataBlock 20s linear infinite; pointer-events: none; }
         @keyframes floatDataBlock { 0% { transform: translateY(100vh) translateX(0); opacity: 0; } 5% { opacity: 0.4; } 95% { opacity: 0.4; } 100% { transform: translateY(-10vh) translateX(-50px); opacity: 0; } }
         .hex-node { position: absolute; width: 30px; height: 35px; animation: hexFloat 25s linear infinite; pointer-events: none; }
-        .hex-node svg { width: 100%; height: 100%; }
-        .hex-node polygon { fill: none; stroke: rgba(40, 120, 160, 0.2); stroke-width: 1; }
-        .hex-node circle { fill: rgba(60, 160, 200, 0.3); }
+        .hex-node svg { width: 100%; height: 100%; } .hex-node polygon { fill: none; stroke: rgba(40, 120, 160, 0.2); stroke-width: 1; } .hex-node circle { fill: rgba(60, 160, 200, 0.3); }
         @keyframes hexFloat { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0; } 5% { opacity: 0.5; } 95% { opacity: 0.5; } 100% { transform: translateY(-10vh) rotate(180deg); opacity: 0; } }
         .scan-line { position: absolute; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(40, 120, 180, 0.1) 20%, rgba(60, 160, 220, 0.2) 50%, rgba(40, 120, 180, 0.1) 80%, transparent 100%); animation: scanMove 8s linear infinite; }
         @keyframes scanMove { 0% { top: -2px; opacity: 0; } 5% { opacity: 0.6; } 95% { opacity: 0.6; } 100% { top: 100%; opacity: 0; } }
@@ -392,28 +383,28 @@
 
     <!-- Navigation -->
     <nav>
-        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <a href="ori-c-presentation-en.html" class="nav-logo">ORI-C</a>
         <ul class="nav-links">
-            <li><a href="ori-c-presentation.html#fondement">Fondement</a></li>
-            <li><a href="ori-c-presentation.html#principes">Principes</a></li>
-            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
-            <li><a href="palm-cadre.html">PALM</a></li>
-            <li><a href="ori-c-articles.html">Articles</a></li>
-            <li><a href="ori-c-livres.html" class="active">Livres</a></li>
-            <li><a href="ori-c-recherche.html">Recherches</a></li>
-            <li><a href="ori-c-contact.html">Contact</a></li>
+            <li><a href="ori-c-presentation-en.html#foundation">Foundation</a></li>
+            <li><a href="ori-c-presentation-en.html#principles">Principles</a></li>
+            <li><a href="ori-c-cadre-complet-en.html">Framework</a></li>
+            <li><a href="palm-cadre-en.html">PALM</a></li>
+            <li><a href="ori-c-articles-en.html">Articles</a></li>
+            <li><a href="ori-c-livres-en.html" class="active">Books</a></li>
+            <li><a href="ori-c-recherche-en.html">Research</a></li>
+            <li><a href="ori-c-contact-en.html">Contact</a></li>
         </ul>
         <div class="lang-switcher">
-            <button class="lang-btn active" onclick="window.location.href='ori-c-livres.html'">FR</button>
-            <button class="lang-btn" onclick="window.location.href='ori-c-livres-en.html'">EN</button>
+            <button class="lang-btn" onclick="window.location.href='ori-c-livres-en.html'">FR</button>
+            <button class="lang-btn active" onclick="window.location.href='ori-c-livres-en.html'">EN</button>
         </div>
     </nav>
 
     <section class="hero">
-        <h1>Livres & Essais</h1>
+        <h1>Books & Essays</h1>
         <p class="hero-subtitle">
-            Explorations longues du cadre ORI-C par <a href="ori-c-contact.html" style="color: var(--accent-book); text-decoration: none; border-bottom: 1px solid var(--accent-book);">Didier Daloze</a> — 
-            De la viabilité systémique à la cohérence psychique.
+            Long explorations of the ORI-C framework by <a href="ori-c-contact-en.html" style="color: var(--accent-book); text-decoration: none; border-bottom: 1px solid var(--accent-book);">Didier Daloze</a> — 
+            From systemic viability to psychic coherence.
         </p>
     </section>
 
@@ -421,12 +412,12 @@
 
         <div class="books-grid">
 
-            <!-- Livre 1 : À compléter -->
+            <!-- Book 1 -->
             <div class="book-card">
-                <div class="book-number">Essai I</div>
-                <h2 class="book-title">Le principe fonctionnel de viabilité systémique</h2>
+                <div class="book-number">Essay I</div>
+                <h2 class="book-title">The Functional Principle of Systemic Viability</h2>
                 <p class="book-subtitle">
-                    Ce que le vivant nous enseigne sur la cohérence, l'instabilité et les conditions de durabilité.
+                    What living systems teach us about coherence, instability, and the conditions for sustainability.
                 </p>
                 <div class="book-meta">
                     <span>
@@ -447,31 +438,31 @@
                     </span>
                 </div>
                 <div class="book-toc">
-                    <div class="book-toc-title">Table des matières</div>
+                    <div class="book-toc-title">Table of contents</div>
                     <ul>
-                        <li>Introduction : Pourquoi la stabilité est une illusion</li>
-                        <li>Le vivant comme système hors équilibre</li>
-                        <li>Cohérence vs stabilité</li>
-                        <li>Les coûts déplacés et les attracteurs</li>
-                        <li>Implications pour les systèmes sociaux</li>
+                        <li>Introduction: Why stability is an illusion</li>
+                        <li>Life as a far-from-equilibrium system</li>
+                        <li>Coherence vs stability</li>
+                        <li>Displaced costs and attractors</li>
+                        <li>Implications for social systems</li>
                     </ul>
                 </div>
-                <a href="#" class="book-link" onclick="alert('Contenu à venir — partagez le texte pour l\'intégrer'); return false;">
+                <a href="#" class="book-link" onclick="alert('Content coming soon'); return false;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                         <polyline points="15 3 21 3 21 9"/>
                         <line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
-                    Lire l'essai
+                    Read essay
                 </a>
             </div>
 
-            <!-- Livre 2 : À compléter -->
+            <!-- Book 2 -->
             <div class="book-card">
-                <div class="book-number">Essai II</div>
-                <h2 class="book-title">Structures dissipatives et psychisme</h2>
+                <div class="book-number">Essay II</div>
+                <h2 class="book-title">Dissipative Structures and the Psyche</h2>
                 <p class="book-subtitle">
-                    Une lecture thermodynamique de la souffrance chronique, de la répétition et des transitions psychiques.
+                    A thermodynamic reading of chronic suffering, repetition, and psychic transitions.
                 </p>
                 <div class="book-meta">
                     <span>
@@ -492,22 +483,22 @@
                     </span>
                 </div>
                 <div class="book-toc">
-                    <div class="book-toc-title">Table des matières</div>
+                    <div class="book-toc-title">Table of contents</div>
                     <ul>
-                        <li>Le schéma comme attracteur</li>
-                        <li>Le coût dissipatif de la stabilité psychique</li>
-                        <li>La répétition : mécanisme de maintien</li>
-                        <li>Seuils de transition et crises</li>
-                        <li>L'observation comme méta-régulation</li>
+                        <li>The pattern as attractor</li>
+                        <li>The dissipative cost of psychic stability</li>
+                        <li>Repetition: maintenance mechanism</li>
+                        <li>Transition thresholds and crises</li>
+                        <li>Observation as meta-regulation</li>
                     </ul>
                 </div>
-                <a href="#" class="book-link" onclick="alert('Contenu à venir — partagez le texte pour l\'intégrer'); return false;">
+                <a href="#" class="book-link" onclick="alert('Content coming soon'); return false;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                         <polyline points="15 3 21 3 21 9"/>
                         <line x1="10" y1="14" x2="21" y2="3"/>
                     </svg>
-                    Lire l'essai
+                    Read essay
                 </a>
             </div>
 
@@ -515,16 +506,16 @@
 
         <section class="quote-section">
             <blockquote>
-                Le vivant ne résout pas. Il déplace, convertit, temporise, hybridise. 
-                Comprendre cette grammaire, c'est cesser de chercher des solutions définitives 
-                et commencer à construire des régimes viables.
+                Life does not solve. It displaces, converts, temporizes, hybridizes. 
+                Understanding this grammar means ceasing to seek definitive solutions 
+                and starting to build viable regimes.
             </blockquote>
         </section>
 
     </main>
 
     <footer>
-        <p class="footer-meta">ORI-C · Didier Daloze · Livres & Essais · 2026</p>
+        <p class="footer-meta">ORI-C · Didier Daloze · Books & Essays · 2026</p>
     </footer>
 </body>
 </html>
