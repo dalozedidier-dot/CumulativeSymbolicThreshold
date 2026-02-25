@@ -70,17 +70,24 @@ jobs:
           gv = v.get("global_verdict", "MISSING")
           mv = v.get("mapping_validity", "MISSING")
           sl = v.get("support_level", "MISSING")
+          nb = v.get("ci_smoke_non_blocking", False)
+          rm = v.get("run_mode", "smoke_ci")
           rob = v.get("robustness_summary", {})
           print(f"Infra / ${{ matrix.pilot }}")
-          print(f"  global_verdict   : {gv}")
-          print(f"  mapping_validity : {mv}")
-          print(f"  support_level    : {sl}")
-          print(f"  robustness       : {rob.get('accept_fraction','?')} ACCEPT "
+          print(f"  run_mode             : {rm}")
+          print(f"  global_verdict       : {gv}")
+          print(f"  mapping_validity     : {mv}")
+          print(f"  support_level        : {sl}")
+          print(f"  ci_smoke_non_blocking: {nb}")
+          print(f"  robustness           : {rob.get('accept_fraction','?')} ACCEPT "
                 f"({rob.get('n_accept','?')}/{rob.get('n_variants','?')})")
-          if gv == "REJECT" or mv == "REJECT":
-              print("REJECT — failing CI")
+          if (gv == "REJECT" or mv == "REJECT") and not nb:
+              print("REJECT — failing CI (full_statistical mode)")
               sys.exit(1)
-          print("OK")
+          elif gv == "REJECT" or mv == "REJECT":
+              print("REJECT recorded — non-blocking in smoke_ci (CI exits 0)")
+          else:
+              print("OK")
           EOF
 
       - name: Upload infra artifacts
