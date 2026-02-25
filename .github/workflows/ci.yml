@@ -11,6 +11,38 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Syntax gate: catch Python errors before running anything else ──────────
+  compileall:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax (compileall)
+        run: python -m compileall 04_Code -q
+
+  # ── Unit / e2e tests ───────────────────────────────────────────────────────
+  unit_tests:
+    needs: compileall
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" \
+            "statsmodels>=0.14" "matplotlib>=3.8" "pytest>=8.0"
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Run pytest
+        run: pytest -q 04_Code/tests 2>&1
+
   canonical_suite:
     runs-on: ubuntu-latest
     timeout-minutes: 30

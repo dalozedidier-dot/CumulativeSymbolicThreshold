@@ -1,4 +1,0 @@
-intervention,V_pre,V_post,V_post_control,delta_post_vs_control,causal_ok
-symbolic_cut,0.8641415847371192,1.0,1.0,0.0,False
-demand_shock,0.8641415847371192,1.0,1.0,0.0,False
-capacity_hit,0.8641415847371192,1.0,1.0,0.0,False
