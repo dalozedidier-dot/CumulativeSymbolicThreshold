@@ -75,22 +75,20 @@ SECTOR_CONFIG = SectorConfig(
 )
 
 
-def main() -> None:
+def main() -> int:
     parser = make_parser(SECTOR_CONFIG.sector_id, SECTOR_CONFIG.default_pilot)
     args   = parser.parse_args()
 
     def synth_generator(outdir: Path, seed: int, pilot_id: str) -> None:
         cosmo_generate(outdir, seed, pilot_id, n=300)
 
-    rc = run_sector_panel(
+    return run_sector_panel(
         config          = SECTOR_CONFIG,
         args            = args,
         repo_root       = _REPO_ROOT,
         synth_generator = synth_generator,
     )
-    sys.exit(rc)
 
 
 if __name__ == "__main__":
-    main()
-main
+    raise SystemExit(main())

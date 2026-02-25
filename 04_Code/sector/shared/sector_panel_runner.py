@@ -439,4 +439,3 @@ def make_parser(sector_id: str, default_pilot: str) -> argparse.ArgumentParser:
                         default="smoke_ci",
                         help="Run mode: smoke_ci (fast CI check) or full_statistical")
     return parser
-main
