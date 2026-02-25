@@ -1,70 +1,98 @@
-#!/usr/bin/env python3
-"""04_Code/sector/infra/run_sector_suite.py
+"""run_sector_suite.py — Infra sector panel suite runner.
 
-Entry point for the infrastructure sector suite.
+Pilots:
+  grid    : Electrical grid (frequency, reserve margin, cross-border flows)
+  traffic : Urban traffic network (speed ratio, congestion, routing memory)
+  finance : Macro-financial regime (volatility, credit spread, liquidity)
 
-Usage
------
-    python 04_Code/sector/infra/run_sector_suite.py \
-        --pilot-id grid \
-        --outdir _sector_infra_out/grid \
-        --seed 1234 \
-        --mode smoke_ci
+Note: the finance pilot is methodologically equivalent to the FRED monthly
+canonical pilot but uses ORI-C mapped proxies with explicit U(t) annotation.
+It demonstrates ORI-C in its "natural domain" with a controlled policy shock.
+
+Usage:
+  python 04_Code/sector/infra/run_sector_suite.py \\
+      --pilot-id grid \\
+      --outdir 05_Results/sector_infra/run_001 \\
+      --seed 1234 --mode smoke_ci
+
+  # Finance pilot with real FRED data (if available):
+  python 04_Code/sector/infra/run_sector_suite.py \\
+      --pilot-id finance \\
+      --real-csv 03_Data/real/fred_monthly/real.csv \\
+      --outdir 05_Results/sector_infra/finance_real_001
+
+Output mirrors other sectors: pilot_<id>/real/, robustness/, sector_global_verdict.json
 """
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 
-_HERE = Path(__file__).resolve()
-_SECTOR_INFRA = _HERE.parent
-_SECTOR_ROOT = _SECTOR_INFRA.parent
-_CODE_DIR = _SECTOR_ROOT.parent
-_REPO_DIR = _CODE_DIR.parent
+_HERE      = Path(__file__).resolve().parent
+_REPO_ROOT = _HERE.parent.parent.parent
+sys.path.insert(0, str(_REPO_ROOT / "04_Code" / "sector" / "shared"))
 
-for _p in [str(_CODE_DIR), str(_REPO_DIR), str(_SECTOR_ROOT / "shared")]:
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
-import generate_synth as _gen              # noqa: E402
-from sector_panel_runner import run_sector_pilot  # noqa: E402
-
-_N_STEPS_BY_MODE = {"smoke_ci": 200, "full_statistical": 350}
-_VALID_PILOTS = {"grid", "traffic", "finance"}
+from sector_panel_runner import SectorConfig, make_parser, run_sector_panel
+from generate_synth import generate as infra_generate
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description="Infra sector ORI-C suite")
-    ap.add_argument("--pilot-id", required=True, choices=sorted(_VALID_PILOTS))
-    ap.add_argument("--outdir", required=True)
-    ap.add_argument("--seed", type=int, default=1234)
-    ap.add_argument("--mode", default="smoke_ci", choices=["smoke_ci", "full_statistical"])
-    args = ap.parse_args()
+SECTOR_CONFIG = SectorConfig(
+    sector_id     = "infra",
+    pilot_ids     = ["grid", "traffic", "finance"],
+    default_pilot = "grid",
+    data_root     = "03_Data/sector_infra",
+    code_root     = "04_Code/sector/infra",
+    default_seed      = 1234,
+    default_alpha     = "0.01",
+    default_lags      = "1-5",
+    default_normalize = "robust_minmax",
+    robustness_variants = [
+        {
+            "name":         "window_short",
+            "pre_horizon":  40,
+            "post_horizon": 40,
+            "normalize":    "robust_minmax",
+        },
+        {
+            "name":         "window_medium",
+            "pre_horizon":  80,
+            "post_horizon": 80,
+            "normalize":    "robust_minmax",
+        },
+        {
+            "name":         "norm_minmax",
+            "pre_horizon":  80,
+            "post_horizon": 80,
+            "normalize":    "minmax",
+        },
+        {
+            "name":         "resample_80",
+            "pre_horizon":  80,
+            "post_horizon": 80,
+            "normalize":    "robust_minmax",
+        },
+    ],
+)
 
-    n_steps = _N_STEPS_BY_MODE[args.mode]
-    df = _gen.generate(pilot_id=args.pilot_id, seed=args.seed, n_steps=n_steps)
 
-    pilot_id = f"infra-{args.pilot_id}-{args.seed % 100:02d}"
-    outdir = Path(args.outdir)
-    outdir.mkdir(parents=True, exist_ok=True)
+def main() -> None:
+    parser = make_parser(SECTOR_CONFIG.sector_id, SECTOR_CONFIG.default_pilot)
+    args   = parser.parse_args()
 
-    result = run_sector_pilot(
-        df_raw=df,
-        pilot_id=pilot_id,
-        outdir=outdir,
-        seed=args.seed,
-        mode=args.mode,
+    def synth_generator(outdir: Path, seed: int, pilot_id: str) -> None:
+        infra_generate(outdir, seed, pilot_id, n=300)
+
+    rc = run_sector_panel(
+        config          = SECTOR_CONFIG,
+        args            = args,
+        repo_root       = _REPO_ROOT,
+        synth_generator = synth_generator,
     )
-
-    print(f"[infra/{args.pilot_id}] global_verdict={result['global_verdict']}", flush=True)
-    if result.get("not_robust_reason"):
-        print(f"  reason: {result['not_robust_reason']}", flush=True)
-
-    return 0 if result["global_verdict"] in ("ACCEPT", "INDETERMINATE") else 1
+    sys.exit(rc)
 
 
 if __name__ == "__main__":
+
     raise SystemExit(main())
 """run_sector_suite.py — Infra sector panel suite runner.
 
@@ -160,5 +188,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+main
     main()
 main
