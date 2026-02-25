@@ -111,9 +111,9 @@ jobs:
           python - <<'EOF'
           import json
           from pathlib import Path
-          print("\n{'='*50}")
+          print("\n" + "="*50)
           print("BIO SECTOR PANEL SUMMARY")
-          print('='*50)
+          print("="*50)
           for vf in sorted(Path("_bio_artifacts").rglob("sector_global_verdict.json")):
               try:
                   v = json.loads(vf.read_text())
