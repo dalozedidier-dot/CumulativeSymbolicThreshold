@@ -204,8 +204,16 @@ def run_sector_panel(
         try:
             synth_generator(synth_dir, seed, pilot_id)
             csv_path = synth_dir / "real.csv"
-            if not spec_path.exists() and (synth_dir / "proxy_spec.json").exists():
-                spec_path = synth_dir / "proxy_spec.json"
+            # In synthetic mode: always prefer the synth proxy_spec (its source_column
+            # values are the generic ORI roles "O","R","I","S","demand" that match the
+            # generated CSV).  The real proxy_spec from 03_Data/ uses domain-specific
+            # column names (e.g. "case_fatality_proxy") that only exist in real CSVs.
+            synth_spec = synth_dir / "proxy_spec.json"
+            if synth_spec.exists():
+                spec_path = synth_spec
+            elif not spec_path.exists():
+                print("[FATAL] No proxy_spec.json found in synth dir or real data dir")
+                return 1
             print(f"         → {csv_path}  (rows: {sum(1 for _ in open(csv_path))-1})")
         except Exception as exc:
             print(f"[step 0] FAILED: {exc}")
