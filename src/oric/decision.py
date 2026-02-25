@@ -17,6 +17,12 @@ Triplet logic (α = 0.01, fixed):
 
 This module is pure Python + math, no external dependencies.
 """
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass
+from typing import Literal
+
 # ── Normative Welch-NaN fallback policy ──────────────────────────────────────
 # Locked ex ante. Must NOT be changed post-observation.
 #
@@ -55,12 +61,6 @@ WELCH_NAN_FALLBACK_POLICY: tuple[str, ...] = (
 # The tuple above is the single source of truth for p_source values across the
 # codebase. Do not introduce new p_source strings without updating this constant.
 # ─────────────────────────────────────────────────────────────────────────────
-
-from __future__ import annotations
-
-import math
-from dataclasses import dataclass
-from typing import Literal
 
 PSource = Literal["welch", "bootstrap_fallback", "mannwhitney_fallback", "unavailable"]
 
