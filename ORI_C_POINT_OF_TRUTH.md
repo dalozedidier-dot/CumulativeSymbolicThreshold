@@ -20,5 +20,19 @@ This repository is the canonical implementation of the ORI-C normative framework
 - Derived summaries and verdicts: `05_Results/derived/`
 - Registered report placeholders: `05_Results/registered_reports/`
 
+## Decision commitments (ex ante)
+- Significance level: alpha = 0.01 (decision level).
+- Decision basis: triplet {p-value, confidence interval, SESOI}.
+- SESOI (fixed conventions, can be overridden only in prereg):
+  - Cap*: +10% relative vs baseline (or +0.5 robust SD via MAD).
+  - V (low-quantile): -10% relative vs baseline (or -0.5 robust SD via MAD).
+  - C (inter-generational): +0.3 robust SD via MAD.
+- Minimum runs per condition: N_min = 50 valid runs (default). Prefer N=100 for stable power.
+- Power gate: if estimated power < 0.70 at SESOI, local verdict is forced to INDETERMINATE.
+- Quality gate (global):
+  - Technical failure rate < 5%.
+  - At least N_min valid runs per condition.
+  - Diagnostics OK (no obvious divergence patterns, no data leakage).
+
 ## DOI
 OSF project DOI: 10.17605/OSF.IO/G62PZ

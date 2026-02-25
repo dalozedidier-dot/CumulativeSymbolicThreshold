@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-_REPO = Path(__file__).resolve().parents[3]  # CumulativeSymbolicThreshold/
+_REPO = Path(__file__).resolve().parents[2]  # CumulativeSymbolicThreshold/
 _CODE = _REPO / "04_Code"
 _PIPELINE = _CODE / "pipeline"
 _SYNTHETIC = _REPO / "03_Data" / "synthetic" / "synthetic_minimal.csv"
