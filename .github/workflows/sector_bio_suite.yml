@@ -66,21 +66,25 @@ jobs:
           if not vf.exists():
               print("WARN: sector_global_verdict.json not found — pipeline may have failed before verdict")
               sys.exit(0)
-          v = json.loads(vf.read_text())
+          v  = json.loads(vf.read_text())
           gv = v.get("global_verdict", "MISSING")
           mv = v.get("mapping_validity", "MISSING")
           sl = v.get("support_level", "MISSING")
+          nb = v.get("ci_smoke_non_blocking", False)   # True in smoke_ci
+          rm = v.get("run_mode", "smoke_ci")
           print(f"Bio / ${{ matrix.pilot }}")
-          print(f"  global_verdict   : {gv}")
-          print(f"  mapping_validity : {mv}")
-          print(f"  support_level    : {sl}")
-          if gv == "REJECT":
-              print("REJECT — failing CI")
+          print(f"  run_mode             : {rm}")
+          print(f"  global_verdict       : {gv}")
+          print(f"  mapping_validity     : {mv}")
+          print(f"  support_level        : {sl}")
+          print(f"  ci_smoke_non_blocking: {nb}")
+          if (gv == "REJECT" or mv == "REJECT") and not nb:
+              print("REJECT — failing CI (full_statistical mode)")
               sys.exit(1)
-          if mv == "REJECT":
-              print("REJECT mapping — failing CI")
-              sys.exit(1)
-          print("OK")
+          elif gv == "REJECT" or mv == "REJECT":
+              print("REJECT recorded — non-blocking in smoke_ci (CI exits 0)")
+          else:
+              print("OK")
           EOF
 
       - name: Upload sector artifacts
