@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # 04_Code/pipeline/run_all_tests.py
-"""Canonical suite runner for ORI-C (T1–T8).
+"""Canonical suite runner for ORI-C (T1–T9).
 
 Design rule (minimal, cadre intact)
 - Noyau ORI: when asserting an effect on V, force a regime with Sigma>0 (demand_shock).
@@ -13,7 +13,7 @@ This runner
 - calls analyse_verdicts_canonical.py to produce a run_mode-aware global verdict
 
 SEED STRATEGY (accurate, non-negotiable)
-- Each test receives a DISTINCT seed = base_seed + unique_offset (offsets 0–7, ex ante fixed).
+- Each test receives a DISTINCT seed = base_seed + unique_offset (offsets 0–8, ex ante fixed).
 - "distinct" = no two tests share the same seed numeric value.
 - "independent" is NOT asserted: seeds share the same PRNG lineage (offsets of one base).
   Statistical independence of RNG streams is NOT claimed.
@@ -29,11 +29,12 @@ SEED STRATEGY (accurate, non-negotiable)
     T6  seed = base + 5   (default 1239)
     T7  seed = base + 6   (default 1240)
     T8  seed = base + 7   (default 1241)
+    T9  seed = base + 8   (default 1242)
 
-  Invariant: len(unique(offsets)) == 8.  Verified by CI test.
+  Invariant: len(unique(offsets)) == 9.  Verified by CI test.
 
 RUN MODE
-- Statistical tests (T1,T4,T5,T6,T7,T8): require N >= N_min=50 for "full_statistical".
+- Statistical tests (T1,T4,T5,T6,T7,T8,T9): require N >= N_min=50 for "full_statistical".
 - Fixed-data tests (T2,T3): operate on a fixed CSV; n_runs=1 is inherent, not smoke.
 - run_mode="full_statistical" when all statistical tests have n_runs >= 50 (non-fast).
 - run_mode="smoke_ci"         when any statistical test has n_runs < 50 (--fast).
@@ -50,6 +51,7 @@ Expected scripts
 - 04_Code/pipeline/run_symbolic_T4_s_rich_poor.py
 - 04_Code/pipeline/run_symbolic_T5_injection.py
 - 04_Code/pipeline/run_symbolic_T7_progressive_sweep.py
+- 04_Code/pipeline/run_T9_cross_domain.py
 """
 
 from __future__ import annotations
@@ -79,6 +81,7 @@ def _seed_offsets() -> list[dict]:
         {"test_id": "T6_symbolic_cut_on_C",             "offset": 5, "test_type": "statistical"},
         {"test_id": "T7_progressive_S_to_C_threshold",  "offset": 6, "test_type": "statistical"},
         {"test_id": "T8_reinjection_recovery_on_C",     "offset": 7, "test_type": "statistical"},
+        {"test_id": "T9_cross_domain",                   "offset": 8, "test_type": "statistical"},
     ]
 
 
@@ -296,6 +299,22 @@ def main() -> int:
             "--intervention-point", str(int(t_steps * 0.35)),
             "--reinjection-point", str(int(t_steps * 0.65)),
         ],
+    })
+
+    # T9 — Cross-domain vivant-like discrimination (real data + synthetic controls)
+    # test_type=statistical: single-shot discrimination run; --fast skips slow stress tests.
+    tests.append({
+        "id": "T9_cross_domain",
+        "script": scripts_dir / "run_T9_cross_domain.py",
+        "seed_used": _seed("T9_cross_domain"),
+        "seed_formula": _sfmt("T9_cross_domain"),
+        "n_runs_used": 1,
+        "test_type": "statistical",
+        "args": (
+            ["--seed", str(_seed("T9_cross_domain")), "--fast"]
+            if args.fast
+            else ["--seed", str(_seed("T9_cross_domain"))]
+        ),
     })
 
     # Determine run_mode before execution.

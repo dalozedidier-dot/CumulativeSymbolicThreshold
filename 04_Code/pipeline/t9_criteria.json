@@ -1,0 +1,39 @@
+{
+  "_note": "T9 verdict criteria — FROZEN at protocol registration. Do not modify post-observation.",
+  "_version": "1.0",
+  "balanced_accuracy_min": 0.80,
+  "fpr_negatives_max": 0.10,
+  "spearman_stability_min": 0.80,
+  "jaccard_topk_min": 0.60,
+  "verdict_flip_rate_max": 0.10,
+  "oric_beats_baseline_fraction": 0.50,
+  "sub_blocks": {
+    "discrimination": {
+      "criteria": ["balanced_accuracy_min", "fpr_negatives_max"],
+      "all_must_pass": true
+    },
+    "robustness": {
+      "criteria": ["spearman_stability_min", "jaccard_topk_min", "verdict_flip_rate_max"],
+      "all_must_pass": true
+    },
+    "anti_gaming": {
+      "criteria": ["fpr_negatives_max"],
+      "all_must_pass": true
+    }
+  },
+  "stress_configs": [
+    {"name": "window_short",   "window": 20, "normalize": "robust_minmax", "noise_frac": 0.0, "subsample": 1},
+    {"name": "window_medium",  "window": 40, "normalize": "robust_minmax", "noise_frac": 0.0, "subsample": 1},
+    {"name": "norm_zscore",    "window": 40, "normalize": "zscore",        "noise_frac": 0.0, "subsample": 1},
+    {"name": "noise_5pct",     "window": 40, "normalize": "robust_minmax", "noise_frac": 0.05, "subsample": 1},
+    {"name": "subsample_2x",   "window": 40, "normalize": "robust_minmax", "noise_frac": 0.0, "subsample": 2}
+  ],
+  "ablation_features": [
+    "recovery_score",
+    "feedback_score",
+    "regime_score",
+    "oric_verdict_score"
+  ],
+  "topk": 3,
+  "baselines": ["variance_autocorr", "welch_shift", "cusum", "simple_stats"]
+}
