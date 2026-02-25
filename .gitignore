@@ -3,10 +3,13 @@ _ci_out/
 
 # Scratch / temp directories (never committed)
 _demo_out/
+_demo_oric_out*/
+_demo_robust_out*/
 _tmp_results_ci/
 _tmp*/
 _cache/
 _scratch*/
+_sector_*/
 
 # Python caches
 __pycache__/
