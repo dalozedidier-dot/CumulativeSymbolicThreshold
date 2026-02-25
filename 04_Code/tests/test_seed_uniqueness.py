@@ -1,13 +1,13 @@
 """CI check: per-test seeds must be distinct (no two tests share the same seed value).
 
 Invariant (non-negotiable, ex ante fixed):
-- _seed_offsets() defines a unique offset per test (0–7 sequential).
+- _seed_offsets() defines a unique offset per test (0–8 sequential).
 - No two tests may share the same base+offset value for the default base_seed.
 - "distinct" ≠ "statistically independent" — independence is NOT claimed.
 
 This test fails the CI if:
   1. Two tests share the same offset (collision in the offset table).
-  2. The offset table does not cover exactly 8 tests.
+  2. The offset table does not cover exactly 9 tests.
   3. Any computed seed (base=1234) is duplicated.
 """
 
@@ -28,11 +28,11 @@ from pipeline.run_all_tests import _seed_offsets
 # Tests
 # ---------------------------------------------------------------------------
 
-def test_exactly_8_tests_defined() -> None:
-    """The canonical suite has exactly 8 tests (T1–T8)."""
+def test_exactly_9_tests_defined() -> None:
+    """The canonical suite has exactly 9 tests (T1–T9)."""
     offsets = _seed_offsets()
-    assert len(offsets) == 8, (
-        f"Expected 8 tests in _seed_offsets(), got {len(offsets)}. "
+    assert len(offsets) == 9, (
+        f"Expected 9 tests in _seed_offsets(), got {len(offsets)}. "
         f"Test IDs: {[d['test_id'] for d in offsets]}"
     )
 
@@ -71,6 +71,7 @@ def test_all_test_ids_present() -> None:
         "T6_symbolic_cut_on_C",
         "T7_progressive_S_to_C_threshold",
         "T8_reinjection_recovery_on_C",
+        "T9_cross_domain",
     }
     actual = {d["test_id"] for d in _seed_offsets()}
     missing = expected - actual
