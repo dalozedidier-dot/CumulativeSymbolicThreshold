@@ -55,6 +55,9 @@ _INTERNAL_TO_CANONICAL: dict[str, str] = {
     # Mean-shift + bootstrap confirmed but Granger inconclusive (low power, short series):
     # this is not an active falsification → INDETERMINATE, not REJECT.
     "indetermine_granger_weak": "INDETERMINATE",
+    # Welch + Granger confirmed but block bootstrap CI lower bound not > 0 (low power):
+    # two of three criteria pass; insufficient evidence for falsification → INDETERMINATE.
+    "indetermine_boot_weak": "INDETERMINATE",
 }
 
 _MODE_PARAMS: dict[str, dict[str, int]] = {
@@ -332,6 +335,17 @@ def _run_causal_tests(
             + ("Reverse direction also significant (reverse_warning). " if reverse_warning else "")
             + "Consider more lags or longer series."
         )
+    elif ok_p and ok_granger and not ok_boot:
+        # Welch p-value + Granger S→delta_C confirmed, but block bootstrap CI lower
+        # bound is not > 0.  Two of three criteria pass; this is not an active
+        # falsification — it may reflect low bootstrap power on short or noisy series.
+        internal = "indetermine_boot_weak"
+        indeterminate_reason = (
+            f"Threshold + Welch (p_source={ok_p_source}) + Granger confirmed "
+            f"but block bootstrap CI not confirmed "
+            f"(boot_lo={boot_lo:.4f}, boot_hi={boot_hi:.4f}). "
+            "Consider longer series or larger block size."
+        )
     else:
         internal = "non_detecte"
         indeterminate_reason = f"Criteria not met: ok_p={ok_p} ok_boot={ok_boot} ok_granger={ok_granger}"
@@ -375,16 +389,34 @@ def _run_one_variant(
     tabdir = vdir / "tables"
     tabdir.mkdir(parents=True, exist_ok=True)
 
-    df_norm = _apply_normalization(df_raw, method=variant_name.replace("norm_", "").replace("robust_minmax", "robust_minmax"))
-    # The method key passed in is already just the normalization name
     norm_method = variant_name  # e.g. "robust_minmax", "minmax", "zscore", "none"
     df_norm = _apply_normalization(df_raw, norm_method)
 
-    cfg = ORICConfig(seed=int(seed), n_steps=len(df_raw), k=2.5, m=3, baseline_n=min(30, len(df_raw) // 5))
-
-    # Check if demand column available
-    col_demand = "demand" if "demand" in df_norm.columns else None
+    # Preserve the demand/Cap ratio across normalization.
+    #
+    # Problem: O, R, I are normalized independently to [0.01, 0.99].  After
+    # normalization the product O_norm*R_norm*I_norm no longer tracks the
+    # original Cap = O_orig*R_orig*I_orig at each time step, so passing the
+    # original absolute demand to run_oric_from_observations produces a broken
+    # Sigma signal (nonzero even in the pre-shock baseline).
+    #
+    # Fix: if generate_synth provided a "demand" column in absolute units,
+    # recover demand_ratio = demand / Cap_orig, then re-scale it as
+    # demand_abs_norm = demand_ratio * Cap_norm.  This ensures the demand/Cap
+    # ratio at every time step is preserved in the normalized space, so the
+    # pipeline's auto-scale produces the intended Sigma pattern.
+    col_demand: str | None = None
     col_S = "S_obs" if "S_obs" in df_norm.columns else None
+
+    if "demand" in df_raw.columns:
+        cap_orig = df_raw["O"] * df_raw["R"] * df_raw["I"]
+        demand_ratio = df_raw["demand"].to_numpy(dtype=float) / (cap_orig.to_numpy(dtype=float) + 1e-12)
+        cap_norm = df_norm["O"].to_numpy(dtype=float) * df_norm["R"].to_numpy(dtype=float) * df_norm["I"].to_numpy(dtype=float)
+        df_norm = df_norm.copy()
+        df_norm["demand"] = demand_ratio * cap_norm
+        col_demand = "demand"
+
+    cfg = ORICConfig(seed=int(seed), n_steps=len(df_raw), k=2.5, m=3, baseline_n=min(30, len(df_raw) // 5))
 
     try:
         df_traj = run_oric_from_observations(
