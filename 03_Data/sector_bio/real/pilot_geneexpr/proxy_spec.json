@@ -1,9 +1,9 @@
 {
-  "dataset_id": "bio_epidemic_BE_daily_v2",
+  "dataset_id": "bio_geneexpr_airway_v2",
   "sector": "bio",
   "spec_version": "2.0",
   "time_column": "t",
-  "time_mode": "value",
+  "time_mode": "index",
   "normalization_global": "robust_minmax",
   "columns": [
     {
@@ -62,5 +62,5 @@
       "manipulability_note": ""
     }
   ],
-  "notes": "Belgium daily cases/deaths. O=log1p(rolling14 cases per 100k) smoothed. R=-dO. I=rolling MAD of dO. demand=S=rolling14 cases per 100k."
+  "notes": "Airway gene expression samples ordered by provided t index. O=robust zMAD(pc1) smoothed. R=-diff(O). I=rolling MAD of dO. demand=S=linspace 0..1 as run index (non-inferential)."
 }

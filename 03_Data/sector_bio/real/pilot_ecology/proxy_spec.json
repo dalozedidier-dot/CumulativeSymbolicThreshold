@@ -1,9 +1,9 @@
 {
-  "dataset_id": "bio_epidemic_BE_daily_v2",
+  "dataset_id": "bio_ecology_pelt_v2",
   "sector": "bio",
   "spec_version": "2.0",
   "time_column": "t",
-  "time_mode": "value",
+  "time_mode": "index",
   "normalization_global": "robust_minmax",
   "columns": [
     {
@@ -62,5 +62,5 @@
       "manipulability_note": ""
     }
   ],
-  "notes": "Belgium daily cases/deaths. O=log1p(rolling14 cases per 100k) smoothed. R=-dO. I=rolling MAD of dO. demand=S=rolling14 cases per 100k."
+  "notes": "Hudson Bay Company pelt series (Hare, Lynx). O=log1p(Hare). R=log1p(Lynx). I=rolling corr(diff(O),diff(R)) window 10. demand=S=O+R."
 }

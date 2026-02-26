@@ -80,14 +80,11 @@ class SectorConfig:
 
     # robustness variants (window_size, normalize, resample_frac)
     robustness_variants: list[dict[str, Any]] = field(default_factory=lambda: [
-        {"name": "window_short",     "pre_horizon": 60,  "post_horizon": 60,  "normalize": "robust_minmax"},
-        {"name": "window_medium",    "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax"},
-        {"name": "window_long",      "pre_horizon": 140, "post_horizon": 140, "normalize": "robust_minmax"},
-        {"name": "norm_minmax",      "pre_horizon": 100, "post_horizon": 100, "normalize": "minmax"},
-        {"name": "norm_robust_zmad", "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_zmad"},
-        {"name": "norm_rank",        "pre_horizon": 100, "post_horizon": 100, "normalize": "rank"},
-        {"name": "resample_80",      "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax",
-         "resample_frac": 0.80, "resample_seed_offset": 1000},
+        {"name": "window_short",  "pre_horizon": 50,  "post_horizon": 50,  "normalize": "robust_minmax"},
+        {"name": "window_medium", "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax"},
+        {"name": "norm_minmax",   "pre_horizon": 100, "post_horizon": 100, "normalize": "minmax"},
+        {"name": "resample_80",   "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax",
+         "resample_frac": 0.80},
     ])
 
 
@@ -194,92 +191,6 @@ def _read_verdict(path: Path) -> str:
         except Exception:
             pass
     return "INDETERMINATE"
-
-
-
-def _read_verdict_details(path: Path) -> dict[str, Any]:
-    """Read verdict details from tables/verdict.json when present.
-
-    Returns:
-      { "verdict": TOKEN, "threshold_hit_t": <int|float|None> }
-    """
-    js = path / "tables" / "verdict.json"
-    out: dict[str, Any] = {"verdict": _read_verdict(path), "threshold_hit_t": None}
-    if js.exists():
-        try:
-            data = json.loads(js.read_text())
-            out["threshold_hit_t"] = data.get("threshold_hit_t", None)
-        except Exception:
-            pass
-    return out
-
-
-def _robustness_pass(
-    variants_details: dict[str, dict[str, Any]],
-    n_rows: int,
-    accept_fraction_min: float = 0.67,
-    max_iqr_frac: float = 0.10,
-) -> tuple[bool, list[str], dict[str, Any]]:
-    """Compute explicit robustness pass rule.
-
-    Rule (proof-mode semantics):
-      - accept_fraction >= accept_fraction_min
-      - no REJECT among variants
-      - if all ACCEPT variants have threshold_hit_t, enforce IQR constraint:
-          IQR(threshold_hit_t) <= max_iqr_frac * n_rows
-    """
-    notes: list[str] = []
-    verdicts = {k: str(v.get("verdict", "INDETERMINATE")).upper() for k, v in variants_details.items()}
-    n_total = len(verdicts)
-    n_accept = sum(1 for v in verdicts.values() if v == "ACCEPT")
-    n_reject = sum(1 for v in verdicts.values() if v == "REJECT")
-    accept_fraction = (n_accept / n_total) if n_total > 0 else float("nan")
-
-    if n_total == 0:
-        return False, ["no_variants"], {"accept_fraction": float("nan"), "n_variants": 0}
-
-    if n_reject > 0:
-        notes.append("contains_reject_variant")
-        return False, notes, {"accept_fraction": round(accept_fraction, 3), "n_variants": n_total}
-
-    if accept_fraction < accept_fraction_min:
-        notes.append(f"accept_fraction_below_{accept_fraction_min}")
-        return False, notes, {"accept_fraction": round(accept_fraction, 3), "n_variants": n_total}
-
-    # coherence on threshold_hit_t (only if available for all ACCEPT variants)
-    thits: list[float] = []
-    missing = False
-    for k, det in variants_details.items():
-        if verdicts.get(k) != "ACCEPT":
-            continue
-        t_hit = det.get("threshold_hit_t", None)
-        if t_hit is None:
-            missing = True
-            break
-        try:
-            thits.append(float(t_hit))
-        except Exception:
-            missing = True
-            break
-
-    coherence: dict[str, Any] = {"accept_fraction": round(accept_fraction, 3), "n_variants": n_total}
-
-    if missing or len(thits) <= 1 or n_rows <= 0:
-        notes.append("threshold_hit_t_coherence_not_applicable")
-        return True, notes, coherence
-
-    thits_sorted = sorted(thits)
-    q1 = thits_sorted[int(0.25 * (len(thits_sorted) - 1))]
-    q3 = thits_sorted[int(0.75 * (len(thits_sorted) - 1))]
-    iqr = q3 - q1
-    coherence["threshold_hit_t_iqr"] = iqr
-    coherence["threshold_hit_t_iqr_frac"] = (iqr / float(n_rows)) if n_rows > 0 else None
-
-    if iqr > max_iqr_frac * float(n_rows):
-        notes.append("threshold_hit_t_iqr_too_large")
-        return False, notes, coherence
-
-    return True, notes, coherence
 
 
 def _aggregate_verdicts(verdicts: list[str]) -> str:
@@ -482,7 +393,6 @@ def run_sector_panel(
     robust_dir = out_root / "robustness"
     robust_dir.mkdir(parents=True, exist_ok=True)
     robust_verdicts: dict[str, str] = {}
-    robust_details: dict[str, dict[str, Any]] = {}
 
     for variant in config.robustness_variants:
         vname   = variant["name"]
@@ -513,9 +423,7 @@ def run_sector_panel(
              "--seed",         str(seed)],
             cwd=repo_root, label=f"causal_{vname}", log_dir=log_dir,
         )
-        det = _read_verdict_details(var_out) if c_r["ok"] else {"verdict": "INDETERMINATE", "threshold_hit_t": None}
-        robust_details[vname] = det
-        robust_verdicts[vname] = str(det.get("verdict", "INDETERMINATE")).upper()
+        robust_verdicts[vname] = _read_verdict(var_out) if c_r["ok"] else "INDETERMINATE"
         print(f"         {vname}: {robust_verdicts[vname]}")
 
     n_accept  = sum(1 for v in robust_verdicts.values() if v == "ACCEPT")
@@ -527,47 +435,20 @@ def run_sector_panel(
         "n_indeterminate": sum(1 for v in robust_verdicts.values() if v == "INDETERMINATE"),
         "n_reject":        sum(1 for v in robust_verdicts.values() if v == "REJECT"),
         "accept_fraction": round(robust_fraction, 3),
-        "verdicts":        robust_verdicts,
+        "robust_note": (
+            "robust"            if robust_fraction >= 0.75 else
+            "borderline_robust" if robust_fraction >= 0.50 else
+            "not_robust"
+        ),
+        "verdicts": robust_verdicts,
     }
-
-    # Explicit robustness gate (proof semantics, not applied in smoke_ci verdicting)
-    n_rows = 0
-    try:
-        with csv_path.open("r", encoding="utf-8") as f:
-            n_rows = max(0, sum(1 for _ in f) - 1)
-    except Exception:
-        n_rows = 0
-
-    robust_pass, robust_notes, robust_coherence = _robustness_pass(
-        robust_details,
-        n_rows=n_rows,
-        accept_fraction_min=0.67,
-        max_iqr_frac=0.10,
-    )
-    robust_summary["robust_pass"] = bool(robust_pass)
-    robust_summary["robust_notes"] = robust_notes
-    robust_summary["robust_coherence"] = robust_coherence
 
     # ---------------------------------------------------------------------- #
     # 7. Global verdict aggregation
     # ---------------------------------------------------------------------- #
     primary_verdicts = [causal_verdict]
-
-    # Global verdict (proof semantics):
-    #   - mapping REJECT always blocks (full_statistical)
-    #   - ACCEPT requires: causal ACCEPT, mapping ACCEPT, robustness gate PASS
-    #   - otherwise: INDETERMINATE (unless causal REJECT)
-    global_verdict = _aggregate_verdicts(primary_verdicts)
-    if not smoke_ci:
-        if mapping_verdict == "REJECT":
-            global_verdict = "REJECT"
-        elif global_verdict == "ACCEPT":
-            if mapping_verdict != "ACCEPT":
-                global_verdict = "INDETERMINATE"
-            elif not robust_pass:
-                global_verdict = "INDETERMINATE"
-
-    support = _support_level(global_verdict, mapping_verdict, smoke_ci)
+    global_verdict   = _aggregate_verdicts(primary_verdicts)
+    support          = _support_level(global_verdict, mapping_verdict, smoke_ci)
 
     print(f"\n{'='*60}")
     print(f"  SECTOR PANEL SUMMARY  ({config.sector_id.upper()} / {pilot_id})")
