@@ -48,6 +48,82 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
+# --------------------------------------------------------------------------- #
+# Manifest helper — audit hashes for inputs/outputs
+# --------------------------------------------------------------------------- #
+
+def _sha256_path(p: Path) -> str:
+    h = __import__("hashlib").sha256()
+    with open(p, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _collect_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for p in root.rglob("*"):
+        if p.is_file():
+            # Skip subprocess logs: they can be very large and are not part of the scientific report
+            if "_logs" in p.parts:
+                continue
+            files.append(p)
+    return sorted(files, key=lambda x: str(x))
+
+
+def _write_manifest(
+    outdir: Path,
+    *,
+    inputs: dict[str, str],
+    params: dict[str, Any],
+    include_tree: bool = True,
+) -> Path:
+    """Write a manifest.json with sha256 for inputs and (optionally) all outputs in outdir.
+
+    This is intentionally simple and dependency-free to keep CI stable.
+    """
+    outdir.mkdir(parents=True, exist_ok=True)
+    manifest_path = outdir / "manifest.json"
+
+    payload: dict[str, Any] = {
+        "schema": "ori-c-manifest-v1",
+        "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "python": sys.version.split()[0],
+        "platform": {
+            "system": os.name,
+        },
+        "inputs": {},
+        "params": params,
+        "outputs": [],
+    }
+
+    # Inputs
+    for k, v in inputs.items():
+        try:
+            p = Path(v)
+            payload["inputs"][k] = {
+                "path": str(p),
+                "sha256": _sha256_path(p) if p.exists() and p.is_file() else None,
+                "exists": p.exists(),
+            }
+        except Exception:
+            payload["inputs"][k] = {"path": str(v), "sha256": None, "exists": False}
+
+    # Outputs
+    if include_tree:
+        for fp in _collect_files(outdir):
+            if fp.name == "manifest.json":
+                continue
+            rel = fp.relative_to(outdir)
+            payload["outputs"].append(
+                {"path": str(rel), "sha256": _sha256_path(fp), "bytes": fp.stat().st_size}
+            )
+
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+    return manifest_path
+
 
 
 # --------------------------------------------------------------------------- #
@@ -386,6 +462,26 @@ def run_sector_panel(
     )
     causal_verdict = _read_verdict(real_out) if causal_r["ok"] else "INDETERMINATE"
 
+    # Audit manifest for the primary real-data run (inputs + produced report files)
+    _write_manifest(
+        real_out,
+        inputs={"real_csv": str(csv_path), "proxy_spec": str(spec_path)},
+        params={
+            "sector": config.sector_id,
+            "pilot_id": pilot_id,
+            "mode": mode,
+            "seed": seed,
+            "normalize": config.default_normalize,
+            "time_mode": "index",
+            "control_mode": "no_symbolic",
+            "alpha": config.default_alpha,
+            "lags": config.default_lags,
+            "pre_horizon": 100,
+            "post_horizon": 100,
+        },
+        include_tree=True,
+    )
+
     # ---------------------------------------------------------------------- #
     # 6. Robustness variants
     # ---------------------------------------------------------------------- #
@@ -425,6 +521,28 @@ def run_sector_panel(
         )
         robust_verdicts[vname] = _read_verdict(var_out) if c_r["ok"] else "INDETERMINATE"
         print(f"         {vname}: {robust_verdicts[vname]}")
+
+        # Audit manifest for this robustness variant (includes full report files)
+        _write_manifest(
+            var_out,
+            inputs={"real_csv": str(csv_path), "proxy_spec": str(spec_path)},
+            params={
+                "sector": config.sector_id,
+                "pilot_id": pilot_id,
+                "mode": mode,
+                "seed": seed,
+                "variant": vname,
+                "normalize": variant.get("normalize", config.default_normalize),
+                "time_mode": "index",
+                "control_mode": "no_symbolic",
+                "alpha": config.default_alpha,
+                "lags": config.default_lags,
+                "pre_horizon": int(variant.get("pre_horizon", 100)),
+                "post_horizon": int(variant.get("post_horizon", 100)),
+                "resample_frac": variant.get("resample_frac"),
+            },
+            include_tree=True,
+        )
 
     n_accept  = sum(1 for v in robust_verdicts.values() if v == "ACCEPT")
     n_total   = len(robust_verdicts)
@@ -468,6 +586,24 @@ def run_sector_panel(
         global_verdict, mapping_verdict, robust_summary,
         {"pipeline": causal_verdict, "mapping": mapping_verdict},
         smoke_ci=smoke_ci,
+    )
+
+    # Audit manifest for the full pilot panel (includes real + robustness + sector_global_verdict.json)
+    _write_manifest(
+        out_root,
+        inputs={"real_csv": str(csv_path), "proxy_spec": str(spec_path)},
+        params={
+            "sector": config.sector_id,
+            "pilot_id": pilot_id,
+            "mode": mode,
+            "seed": seed,
+            "primary_normalize": config.default_normalize,
+            "robustness_variants": [v.get("name") for v in config.robustness_variants],
+            "global_verdict": global_verdict,
+            "mapping_validity": mapping_verdict,
+            "support_level": support,
+        },
+        include_tree=True,
     )
 
     # Exit code: smoke_ci always 0 (verdict informational); full_statistical strict
