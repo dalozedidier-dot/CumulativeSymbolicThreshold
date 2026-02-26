@@ -1,66 +1,47 @@
 {
-  "dataset_id": "bio_ecology_pelt_v2",
-  "sector": "bio",
+  "dataset_id": "sector_bio.pilot_ecology.real.v2",
   "spec_version": "2.0",
+  "sector": "bio",
   "time_column": "t",
-  "time_mode": "index",
-  "normalization_global": "robust_minmax",
+  "time_mode": "value",
   "columns": [
     {
       "source_column": "O",
       "oric_variable": "O",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "O = log1p(Hare)."
     },
     {
       "source_column": "R",
       "oric_variable": "R",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "R = -diff(deviation of log1p(Lynx) from rolling median), dynamic proxy."
     },
     {
       "source_column": "I",
       "oric_variable": "I",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "I = rolling MAD of diff(O), structure proxy."
     },
     {
       "source_column": "demand",
       "oric_variable": "demand",
       "direction": "positive",
-      "normalization": "inherit",
-      "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
     },
     {
       "source_column": "S",
       "oric_variable": "S",
       "direction": "positive",
-      "normalization": "inherit",
-      "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
     }
-  ],
-  "notes": "Hudson Bay Company pelt series (Hare, Lynx). O=log1p(Hare). R=log1p(Lynx). I=rolling corr(diff(O),diff(R)) window 10. demand=S=O+R."
+  ]
 }

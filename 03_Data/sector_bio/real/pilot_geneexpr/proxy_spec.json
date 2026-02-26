@@ -1,66 +1,47 @@
 {
-  "dataset_id": "bio_geneexpr_airway_v2",
-  "sector": "bio",
+  "dataset_id": "sector_bio.pilot_geneexpr.real.v2",
   "spec_version": "2.0",
+  "sector": "bio",
   "time_column": "t",
-  "time_mode": "index",
-  "normalization_global": "robust_minmax",
+  "time_mode": "value",
   "columns": [
     {
       "source_column": "O",
       "oric_variable": "O",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "O from robust-z PC1, smoothed."
     },
     {
       "source_column": "R",
       "oric_variable": "R",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "R from -diff(deviation), recovery proxy."
     },
     {
       "source_column": "I",
       "oric_variable": "I",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "I rolling MAD of dev diff, avoids sigma_nul from constant I."
     },
     {
       "source_column": "demand",
       "oric_variable": "demand",
       "direction": "positive",
-      "normalization": "inherit",
-      "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
     },
     {
       "source_column": "S",
       "oric_variable": "S",
       "direction": "positive",
-      "normalization": "inherit",
-      "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
     }
-  ],
-  "notes": "Airway gene expression samples ordered by provided t index. O=robust zMAD(pc1) smoothed. R=-diff(O). I=rolling MAD of dO. demand=S=linspace 0..1 as run index (non-inferential)."
+  ]
 }

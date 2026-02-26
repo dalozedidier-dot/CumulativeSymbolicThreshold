@@ -1,66 +1,48 @@
 {
-  "dataset_id": "bio_epidemic_BE_daily_v2",
-  "sector": "bio",
+  "dataset_id": "sector_bio.pilot_epidemic.real.v2",
   "spec_version": "2.0",
+  "sector": "bio",
   "time_column": "t",
   "time_mode": "value",
-  "normalization_global": "robust_minmax",
   "columns": [
     {
       "source_column": "O",
       "oric_variable": "O",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "O = smooth(log1p(demand)) level proxy."
     },
     {
       "source_column": "R",
       "oric_variable": "R",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "R = -diff(deviation from rolling median), recovery proxy."
     },
     {
       "source_column": "I",
       "oric_variable": "I",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "I = rolling MAD of diff(deviation), instability proxy."
     },
     {
       "source_column": "demand",
       "oric_variable": "demand",
       "direction": "positive",
-      "normalization": "inherit",
-      "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
     },
     {
       "source_column": "S",
       "oric_variable": "S",
       "direction": "positive",
-      "normalization": "inherit",
+      "normalization": "none",
       "missing_strategy": "linear_interp",
-      "scale_lo": null,
-      "scale_hi": null,
-      "fragility_note": "",
-      "manipulability_note": ""
+      "fragility_note": "S mirrors demand for Granger direction checks."
     }
-  ],
-  "notes": "Belgium daily cases/deaths. O=log1p(rolling14 cases per 100k) smoothed. R=-dO. I=rolling MAD of dO. demand=S=rolling14 cases per 100k."
+  ]
 }
