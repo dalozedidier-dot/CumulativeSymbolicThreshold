@@ -485,7 +485,15 @@ def _auc_score(features: np.ndarray, labels: np.ndarray) -> float:
         fpr_list.append(fp / (fp + tn + 1e-9))
     tpr_list.append(1.0)
     fpr_list.append(1.0)
-    auc = float(np.trapz(tpr_list, fpr_list))
+    # NumPy 2.0+ removed np.trapz; use np.trapezoid when available.
+    if hasattr(np, "trapezoid"):
+        auc = float(np.trapezoid(tpr_list, fpr_list))
+    else:
+        # Manual trapezoidal integration fallback (should be rare).
+        auc = 0.0
+        for i in range(1, len(tpr_list)):
+            auc += 0.5 * (tpr_list[i] + tpr_list[i - 1]) * (fpr_list[i] - fpr_list[i - 1])
+        auc = float(auc)
     return abs(auc)
 
 
