@@ -100,12 +100,54 @@ def _minmax(x: np.ndarray) -> np.ndarray:
     return np.clip(y, 0.0, 1.0)
 
 
+def _robust_zmad(x: np.ndarray) -> np.ndarray:
+    """Robust z-score using MAD. Output is unbounded."""
+    x = np.asarray(x, dtype=float)
+    med = np.nanmedian(x)
+    mad = np.nanmedian(np.abs(x - med))
+    if not np.isfinite(mad) or mad < 1e-12:
+        return np.zeros_like(x, dtype=float)
+    z = (x - med) / (1.4826 * mad)
+    z[~np.isfinite(z)] = 0.0
+    return z
+
+
+def _rank01(x: np.ndarray) -> np.ndarray:
+    """Rank transform to [0,1] with average ranks for ties."""
+    x = np.asarray(x, dtype=float)
+    n = len(x)
+    if n == 0:
+        return x
+    # stable rank with ties
+    order = np.argsort(x, kind="mergesort")
+    ranks = np.empty(n, dtype=float)
+    ranks[order] = np.arange(n, dtype=float)
+    # tie handling
+    sorted_x = x[order]
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and sorted_x[j + 1] == sorted_x[i]:
+            j += 1
+        if j > i:
+            avg = 0.5 * (i + j)
+            ranks[order[i : j + 1]] = avg
+        i = j + 1
+    if n == 1:
+        return np.zeros_like(ranks)
+    return ranks / float(n - 1)
+
+
 def _normalize_proxy(x: np.ndarray, method: str) -> np.ndarray:
     m = str(method).strip().lower()
     if m in ("none", "off", ""):
         return np.asarray(x, dtype=float)
     if m in ("minmax", "mm"):
         return _minmax(x)
+    if m in ("robust_zmad", "zmad", "mad_z"):
+        return _robust_zmad(x)
+    if m in ("rank", "rank01"):
+        return _rank01(x)
     return _robust_minmax(x)
 
 
