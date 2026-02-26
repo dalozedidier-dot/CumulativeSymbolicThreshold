@@ -1,0 +1,26 @@
+{
+  "dataset": "ecology_pelt",
+  "source": "Rdatasets tsibbledata::pelt (Hudson Bay Company trading records, 1845-1935)",
+  "columns": {
+    "O": {
+      "from": "Hare",
+      "meaning": "Output proxy (hare pelts)",
+      "direction_risk": "low"
+    },
+    "R": {
+      "from": "Lynx",
+      "meaning": "Resource/pressure proxy (lynx pelts)",
+      "direction_risk": "high"
+    },
+    "I": {
+      "from": "log1p((O+1)/(R+1))",
+      "meaning": "Intensity/imbalance proxy",
+      "direction_risk": "low"
+    },
+    "demand": {
+      "from": "O+R",
+      "meaning": "Demand proxy (total pelts)",
+      "direction_risk": "high"
+    }
+  }
+}
