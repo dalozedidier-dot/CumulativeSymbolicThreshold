@@ -1,0 +1,258 @@
+{
+  "_registry_version": "1.0",
+  "_note": "Registry of real datasets for ORI-C. Each entry specifies path, frequency, columns, proxy_spec, and minimum length. Datasets with fewer rows than n_min are excluded from statistical inference runs.",
+  "_quality_rules": {
+    "n_min_monthly": 120,
+    "n_min_quarterly": 40,
+    "n_min_annual": 60,
+    "no_synthetic_in_real_workflows": true,
+    "all_transformations_declared_in_proxy_spec": true,
+    "proxy_spec_validated_before_run": true
+  },
+  "datasets": [
+    {
+      "dataset_id": "fred_monthly_US",
+      "label": "FRED Monthly US",
+      "path": "03_Data/real/fred_monthly/real.csv",
+      "proxy_spec": "03_Data/real/fred_monthly/proxy_spec.json",
+      "event_calendar": "03_Data/real/fred_monthly/event_calendar.json",
+      "frequency": "monthly",
+      "n_rows": 480,
+      "n_min": 120,
+      "time_column": "date",
+      "time_mode": "value",
+      "oric_columns": {
+        "O": "O",
+        "R": "R",
+        "I": "I",
+        "demand": "demand",
+        "S": "S"
+      },
+      "pre_normalised": true,
+      "geo_scope": "US",
+      "date_range": ["1986-01-01", "2025-12-01"],
+      "raw_sources": {
+        "O": "FRED:INDPRO (Industrial Production Index)",
+        "R": "FRED:TCU (Total Capacity Utilization)",
+        "I": "FRED:T10YFF (10Y-FF spread)",
+        "demand": "FRED:CPIAUCSL (CPI all urban consumers)",
+        "S": "FRED:M2SL (M2 money supply)"
+      },
+      "known_breaks": [
+        {
+          "date": "2020-05",
+          "variable": "S",
+          "description": "M2 definition change: savings accounts reclassified into M2"
+        }
+      ],
+      "tags": ["monthly", "macro", "us", "positive_control", "T9"],
+      "eligible_for": ["T9_cross_domain", "smoke_ci", "proof_run"]
+    },
+    {
+      "dataset_id": "eurostat_economie_FR",
+      "label": "Eurostat Economie — France",
+      "path": "03_Data/real/economie/pilot_cpi/real.csv",
+      "proxy_spec": "03_Data/real/economie/pilot_cpi/proxy_spec.json",
+      "event_calendar": "03_Data/real/economie/pilot_cpi/event_calendar.json",
+      "frequency": "annual",
+      "n_rows": 44,
+      "n_min": 60,
+      "time_column": "year",
+      "time_mode": "index",
+      "oric_columns": {
+        "O": "industrial_production_i15",
+        "R": "berd_pc_gdp",
+        "I": "solar_collector_ths_m2",
+        "demand": "heat_pump_cap_ath_mw"
+      },
+      "pre_normalised": false,
+      "geo_scope": "FR",
+      "date_range": ["1981", "2024"],
+      "raw_sources": {
+        "O": "Eurostat:estat_sts_inpr_a (industrial production)",
+        "R": "Eurostat:estat_rd_e_gerdtot (R&D expenditure % GDP)",
+        "I": "Eurostat:estat_nrg_ind_fecf (solar collector surface)",
+        "demand": "Eurostat:estat_nrg_ind_fecf (heat pump capacity)"
+      },
+      "known_breaks": [],
+      "tags": ["annual", "eurostat", "FR", "sector_economie"],
+      "eligible_for": ["smoke_ci"],
+      "_warning": "n_rows=44 < n_min_annual=60 — insufficient for full_statistical inference"
+    },
+    {
+      "dataset_id": "eurostat_energie_EU27",
+      "label": "Eurostat Energie — EU27",
+      "path": "03_Data/real/energie/pilot_energie/real.csv",
+      "proxy_spec": "03_Data/real/energie/pilot_energie/proxy_spec.json",
+      "event_calendar": "03_Data/real/energie/pilot_energie/event_calendar.json",
+      "frequency": "annual",
+      "n_rows": 35,
+      "n_min": 60,
+      "time_column": "year",
+      "time_mode": "index",
+      "oric_columns": {
+        "O": "industrial_production_i15",
+        "R": "solar_collector_ths_m2",
+        "I": "heat_pump_cap_ath_mw",
+        "demand": "env_tax_env_mio_eur"
+      },
+      "pre_normalised": false,
+      "geo_scope": "EU27_2020",
+      "date_range": ["1990", "2024"],
+      "raw_sources": {
+        "O": "Eurostat:estat_sts_inpr_a",
+        "R": "Eurostat:estat_nrg_ind_fecf (solar)",
+        "I": "Eurostat:estat_nrg_ind_fecf (heat pump)",
+        "demand": "Eurostat:estat_ten00129 (environmental taxes)"
+      },
+      "known_breaks": [],
+      "tags": ["annual", "eurostat", "EU27", "sector_energie"],
+      "eligible_for": ["smoke_ci"],
+      "_warning": "n_rows=35 < n_min_annual=60 — insufficient for full_statistical inference"
+    },
+    {
+      "dataset_id": "eurostat_meteo_EE",
+      "label": "Eurostat Meteo — Estonie",
+      "path": "03_Data/real/meteo/pilot_meteo/real.csv",
+      "proxy_spec": "03_Data/real/meteo/pilot_meteo/proxy_spec.json",
+      "event_calendar": "03_Data/real/meteo/pilot_meteo/event_calendar.json",
+      "frequency": "annual",
+      "n_rows": 35,
+      "n_min": 60,
+      "time_column": "year",
+      "time_mode": "index",
+      "oric_columns": {
+        "O": "industrial_production_i15",
+        "R": "berd_pc_gdp",
+        "I": "heat_pump_cap_ath_mw",
+        "demand": "env_tax_env_mio_eur"
+      },
+      "pre_normalised": false,
+      "geo_scope": "EE",
+      "date_range": ["1990", "2024"],
+      "raw_sources": {
+        "O": "Eurostat:estat_sts_inpr_a",
+        "R": "Eurostat:estat_rd_e_gerdtot",
+        "I": "Eurostat:estat_nrg_ind_fecf (heat pump)",
+        "demand": "Eurostat:estat_ten00129"
+      },
+      "known_breaks": [],
+      "tags": ["annual", "eurostat", "EE", "sector_meteo"],
+      "eligible_for": ["smoke_ci"],
+      "_warning": "n_rows=35 < n_min_annual=60 — insufficient for full_statistical inference"
+    },
+    {
+      "dataset_id": "eurostat_trafic_DE",
+      "label": "Eurostat Trafic — Allemagne",
+      "path": "03_Data/real/trafic/pilot_trafic/real.csv",
+      "proxy_spec": "03_Data/real/trafic/pilot_trafic/proxy_spec.json",
+      "event_calendar": "03_Data/real/trafic/pilot_trafic/event_calendar.json",
+      "frequency": "annual",
+      "n_rows": 35,
+      "n_min": 60,
+      "time_column": "year",
+      "time_mode": "index",
+      "oric_columns": {
+        "O": "industrial_production_i15",
+        "R": "berd_pc_gdp",
+        "I": "solar_collector_ths_m2",
+        "demand": "heat_pump_cap_ath_mw"
+      },
+      "pre_normalised": false,
+      "geo_scope": "DE",
+      "date_range": ["1990", "2024"],
+      "raw_sources": {
+        "O": "Eurostat:estat_sts_inpr_a",
+        "R": "Eurostat:estat_rd_e_gerdtot",
+        "I": "Eurostat:estat_nrg_ind_fecf (solar)",
+        "demand": "Eurostat:estat_nrg_ind_fecf (heat pump)"
+      },
+      "known_breaks": [],
+      "tags": ["annual", "eurostat", "DE", "sector_trafic"],
+      "eligible_for": ["smoke_ci"],
+      "_warning": "n_rows=35 < n_min_annual=60 — insufficient for full_statistical inference"
+    },
+    {
+      "dataset_id": "bundle_v1_panel",
+      "label": "ORI-C Bundle v1 — Panel multi-pays (BE/DE/EE/EU27/FR)",
+      "path": "03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_panel.csv",
+      "proxy_spec": null,
+      "event_calendar": null,
+      "frequency": "annual",
+      "n_rows": 193,
+      "n_min": 60,
+      "time_column": "year",
+      "time_mode": "index",
+      "oric_columns": {
+        "O": "O",
+        "R": "R",
+        "I": "I"
+      },
+      "pre_normalised": true,
+      "geo_scope": "BE,DE,EE,EU27_2020,FR",
+      "date_range": ["1990", "2023"],
+      "raw_sources": {
+        "see": "03_Data/real/_bundles/data_real_v1/manifest.json"
+      },
+      "known_breaks": [],
+      "tags": ["annual", "eurostat", "panel", "multi_country", "v1"],
+      "eligible_for": ["smoke_ci", "proof_run"]
+    },
+    {
+      "dataset_id": "bundle_v2_panel",
+      "label": "ORI-C Bundle v2 — Panel multi-pays (BE/DE/EE/EU27/FR)",
+      "path": "03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_panel.csv",
+      "proxy_spec": null,
+      "event_calendar": null,
+      "frequency": "annual",
+      "n_rows": 193,
+      "n_min": 60,
+      "time_column": "year",
+      "time_mode": "index",
+      "oric_columns": {
+        "O": "O",
+        "R": "R",
+        "I": "I"
+      },
+      "pre_normalised": true,
+      "geo_scope": "BE,DE,EE,EU27_2020,FR",
+      "date_range": ["1990", "2023"],
+      "raw_sources": {
+        "see": "03_Data/real/_bundles/data_real_v2/manifest.json"
+      },
+      "known_breaks": [],
+      "tags": ["annual", "eurostat", "panel", "multi_country", "v2"],
+      "eligible_for": ["smoke_ci", "proof_run"]
+    }
+  ],
+  "_planned_extensions": {
+    "quarterly": [
+      {
+        "candidate": "ECB/OECD quarterly macro",
+        "variables": ["GDP", "employment", "credit"],
+        "n_min": 40,
+        "status": "planned"
+      }
+    ],
+    "annual_long": [
+      {
+        "candidate": "Ecology Lynx-Hare (annual, ~90 years)",
+        "variables": ["predator_pop", "prey_pop"],
+        "n_min": 60,
+        "status": "planned"
+      },
+      {
+        "candidate": "Varve series (annual sediment layers)",
+        "variables": ["thickness"],
+        "n_min": 60,
+        "status": "planned"
+      },
+      {
+        "candidate": "FAO food security indicators (annual, ~60 years)",
+        "variables": ["food_production_index", "undernourishment_pct"],
+        "n_min": 60,
+        "status": "planned"
+      }
+    ]
+  }
+}

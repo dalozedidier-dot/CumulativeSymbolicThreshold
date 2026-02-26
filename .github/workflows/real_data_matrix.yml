@@ -1,0 +1,432 @@
+name: Real Data Matrix (ORI-C)
+
+# Registry-driven matrix over real datasets.
+# Only datasets with n_rows >= n_min AND tag "proof_run" are eligible for full_statistical.
+# Datasets tagged "smoke_ci" only produce artefacts — never statistical conclusions.
+#
+# Governance rule (from manuscript §2.3):
+#   smoke_ci  → non-blocking, artefacts only, run_mode=smoke_ci in manifest
+#   proof_run → blocking on REJECT, run_mode=full_statistical in manifest
+#
+# This workflow does NOT mix synthetic data with real data. No synthetic paths.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke_ci (fast, non-blocking) or proof_run (full_statistical, blocking)"
+        required: true
+        default: "smoke_ci"
+        type: choice
+        options:
+          - smoke_ci
+          - proof_run
+      seed:
+        description: "Base seed for reproducibility"
+        required: false
+        default: "1234"
+  push:
+    branches:
+      - main
+    paths:
+      - "03_Data/real/**"
+      - "03_Data/real/registry/**"
+      - "04_Code/pipeline/run_real_data_canonical_suite.py"
+      - "04_Code/pipeline/run_T9_cross_domain.py"
+      - "04_Code/pipeline/validate_proxy_spec.py"
+      - "04_Code/pipeline/t9_criteria.json"
+  schedule:
+    # Nightly at 02:15 UTC — smoke_ci mode
+    - cron: "15 2 * * *"
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_SEED: "1234"
+
+jobs:
+  # ── Job 1: Datasets with full proxy_spec (smoke_ci OR proof_run) ─────────
+  real_with_proxy_spec:
+    name: "${{ matrix.label }} [${{ inputs.mode || 'smoke_ci' }}]"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── FRED Monthly US (480 rows — eligible for proof_run) ──────────
+          - label: fred_monthly_US
+            input: 03_Data/real/fred_monthly/real.csv
+            proxy_spec: 03_Data/real/fred_monthly/proxy_spec.json
+            col_time: date
+            time_mode: value
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+            pre_normalised: "true"
+            frequency: monthly
+            n_rows: 480
+            baseline_n: 60
+            pre_horizon: 120
+            post_horizon: 120
+            lags: "1-6"
+            eligible_proof_run: "true"
+
+          # ── Eurostat Economie FR (44 rows — smoke_ci only) ───────────────
+          - label: eurostat_economie_FR
+            input: 03_Data/real/economie/pilot_cpi/real.csv
+            proxy_spec: 03_Data/real/economie/pilot_cpi/proxy_spec.json
+            col_time: year
+            time_mode: index
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
+            col_demand: heat_pump_cap_ath_mw
+            pre_normalised: "false"
+            frequency: annual
+            n_rows: 44
+            baseline_n: 15
+            pre_horizon: 20
+            post_horizon: 20
+            lags: "1-3"
+            eligible_proof_run: "false"
+
+          # ── Eurostat Energie EU27 (35 rows — smoke_ci only) ──────────────
+          - label: eurostat_energie_EU27
+            input: 03_Data/real/energie/pilot_energie/real.csv
+            proxy_spec: 03_Data/real/energie/pilot_energie/proxy_spec.json
+            col_time: year
+            time_mode: index
+            col_O: industrial_production_i15
+            col_R: solar_collector_ths_m2
+            col_I: heat_pump_cap_ath_mw
+            col_demand: env_tax_env_mio_eur
+            pre_normalised: "false"
+            frequency: annual
+            n_rows: 35
+            baseline_n: 12
+            pre_horizon: 15
+            post_horizon: 15
+            lags: "1-3"
+            eligible_proof_run: "false"
+
+          # ── Eurostat Meteo EE (35 rows — smoke_ci only) ──────────────────
+          - label: eurostat_meteo_EE
+            input: 03_Data/real/meteo/pilot_meteo/real.csv
+            proxy_spec: 03_Data/real/meteo/pilot_meteo/proxy_spec.json
+            col_time: year
+            time_mode: index
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: heat_pump_cap_ath_mw
+            col_demand: env_tax_env_mio_eur
+            pre_normalised: "false"
+            frequency: annual
+            n_rows: 35
+            baseline_n: 12
+            pre_horizon: 15
+            post_horizon: 15
+            lags: "1-3"
+            eligible_proof_run: "false"
+
+          # ── Eurostat Trafic DE (35 rows — smoke_ci only) ─────────────────
+          - label: eurostat_trafic_DE
+            input: 03_Data/real/trafic/pilot_trafic/real.csv
+            proxy_spec: 03_Data/real/trafic/pilot_trafic/proxy_spec.json
+            col_time: year
+            time_mode: index
+            col_O: industrial_production_i15
+            col_R: berd_pc_gdp
+            col_I: solar_collector_ths_m2
+            col_demand: heat_pump_cap_ath_mw
+            pre_normalised: "false"
+            frequency: annual
+            n_rows: 35
+            baseline_n: 12
+            pre_horizon: 15
+            post_horizon: 15
+            lags: "1-3"
+            eligible_proof_run: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Validate proxy_spec (ex ante gate)
+        shell: bash
+        run: |
+          python 04_Code/pipeline/validate_proxy_spec.py \
+            --spec "${{ matrix.proxy_spec }}" \
+            --csv  "${{ matrix.input }}"
+
+      - name: Guard — proof_run on smoke_ci-only dataset
+        if: inputs.mode == 'proof_run' && matrix.eligible_proof_run == 'false'
+        shell: bash
+        run: |
+          echo "[WARN] Dataset ${{ matrix.label }} has n_rows=${{ matrix.n_rows }} < n_min."
+          echo "[WARN] Running in smoke_ci mode regardless of requested mode (proof_run)."
+          echo "[WARN] Add more data or lower n_min in registry to enable proof_run."
+
+      - name: Run ORI-C canonical suite (${{ matrix.label }})
+        shell: bash
+        run: |
+          set -u
+
+          MODE="${{ inputs.mode || 'smoke_ci' }}"
+          ELIGIBLE="${{ matrix.eligible_proof_run }}"
+          EFFECTIVE_MODE="${MODE}"
+          if [ "${MODE}" = "proof_run" ] && [ "${ELIGIBLE}" != "true" ]; then
+            EFFECTIVE_MODE="smoke_ci"
+          fi
+
+          SEED="${{ inputs.seed || env.DEFAULT_SEED }}"
+          LABEL="${{ matrix.label }}"
+          RUN_ID="${GITHUB_RUN_ID}"
+          ROOT="_ci_out/real_matrix/${LABEL}/run_${RUN_ID}"
+          mkdir -p "${ROOT}"
+
+          # Record execution context
+          cat > "${ROOT}/run_context.json" <<JSON
+          {
+            "label": "${LABEL}",
+            "mode_requested": "${MODE}",
+            "mode_effective": "${EFFECTIVE_MODE}",
+            "seed": ${SEED},
+            "run_id": "${RUN_ID}",
+            "frequency": "${{ matrix.frequency }}",
+            "n_rows": ${{ matrix.n_rows }},
+            "eligible_proof_run": ${{ matrix.eligible_proof_run }}
+          }
+          JSON
+
+          NORM_FLAG=""
+          if [ "${{ matrix.pre_normalised }}" != "true" ]; then
+            NORM_FLAG="--normalize robust"
+          fi
+
+          python 04_Code/pipeline/run_real_data_canonical_suite.py \
+            --input "${{ matrix.input }}" \
+            --outdir "${ROOT}" \
+            --col-time "${{ matrix.col_time }}" \
+            --time-mode "${{ matrix.time_mode }}" \
+            --col-O "${{ matrix.col_O }}" \
+            --col-R "${{ matrix.col_R }}" \
+            --col-I "${{ matrix.col_I }}" \
+            --col-demand "${{ matrix.col_demand }}" \
+            ${NORM_FLAG} \
+            --alpha 0.01 \
+            --lags "${{ matrix.lags }}" \
+            --pre-horizon "${{ matrix.pre_horizon }}" \
+            --post-horizon "${{ matrix.post_horizon }}" \
+            --c-mean-post-min 0.1 \
+            --k 2.5 \
+            --m 3 \
+            --baseline-n "${{ matrix.baseline_n }}" \
+            2>&1 | tee "${ROOT}/suite.log"
+
+          RC=${PIPESTATUS[0]}
+          echo "${RC}" > "${ROOT}/rc.txt"
+
+          VERDICT=$(cat "${ROOT}/verdict.txt" 2>/dev/null || echo "UNKNOWN")
+          echo "verdict=${VERDICT}" >> "$GITHUB_OUTPUT"
+          echo "effective_mode=${EFFECTIVE_MODE}" >> "$GITHUB_OUTPUT"
+          echo "[${LABEL}] verdict=${VERDICT} mode=${EFFECTIVE_MODE} rc=${RC}"
+
+      - name: Check verdict (proof_run only — smoke_ci is non-blocking)
+        shell: bash
+        run: |
+          MODE="${{ inputs.mode || 'smoke_ci' }}"
+          ELIGIBLE="${{ matrix.eligible_proof_run }}"
+          if [ "${MODE}" != "proof_run" ] || [ "${ELIGIBLE}" != "true" ]; then
+            echo "Non-blocking mode — skipping verdict gate."
+            exit 0
+          fi
+
+          ROOT="_ci_out/real_matrix/${{ matrix.label }}/run_${GITHUB_RUN_ID}"
+          RC=$(cat "${ROOT}/rc.txt" 2>/dev/null || echo 99)
+          VERDICT=$(cat "${ROOT}/verdict.txt" 2>/dev/null || echo "UNKNOWN")
+
+          if [ "${RC}" != "0" ]; then
+            echo "ERROR: pipeline exited rc=${RC} for ${{ matrix.label }}" >&2
+            tail -n 40 "${ROOT}/suite.log" >&2 || true
+            exit 1
+          fi
+
+          if [ "${VERDICT}" = "REJECT" ]; then
+            echo "REJECT verdict in proof_run mode — failing CI for ${{ matrix.label }}" >&2
+            exit 1
+          fi
+
+          echo "Verdict gate passed: verdict=${VERDICT}"
+
+      - name: SHA256 manifest
+        if: always()
+        shell: bash
+        run: |
+          ROOT="_ci_out/real_matrix/${{ matrix.label }}/run_${GITHUB_RUN_ID}"
+          if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then
+            python 04_Code/pipeline/make_sha256_manifest.py \
+              --root "${ROOT}" \
+              --out  "${ROOT}/manifest.json" \
+              2>/dev/null || true
+          fi
+
+      - name: Upload artefact (${{ matrix.label }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_matrix_${{ matrix.label }}_${{ github.run_id }}
+          path: _ci_out/real_matrix/${{ matrix.label }}
+          if-no-files-found: warn
+
+  # ── Job 2: Panel datasets without individual proxy_spec ──────────────────
+  real_panels:
+    name: "panel [${{ matrix.label }}] [${{ inputs.mode || 'smoke_ci' }}]"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: bundle_v1_panel
+            input: 03_Data/real/_bundles/data_real_v1/oric_inputs/oric_inputs_panel.csv
+            frequency: annual
+            n_rows: 193
+            baseline_n: 30
+            pre_horizon: 50
+            post_horizon: 50
+            lags: "1-5"
+
+          - label: bundle_v2_panel
+            input: 03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_panel.csv
+            frequency: annual
+            n_rows: 193
+            baseline_n: 30
+            pre_horizon: 50
+            post_horizon: 50
+            lags: "1-5"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run ORI-C canonical suite (${{ matrix.label }})
+        shell: bash
+        run: |
+          set -u
+          SEED="${{ inputs.seed || env.DEFAULT_SEED }}"
+          ROOT="_ci_out/real_matrix/${{ matrix.label }}/run_${GITHUB_RUN_ID}"
+          mkdir -p "${ROOT}"
+
+          python 04_Code/pipeline/run_real_data_canonical_suite.py \
+            --input "${{ matrix.input }}" \
+            --outdir "${ROOT}" \
+            --col-time year \
+            --time-mode index \
+            --col-O O \
+            --col-R R \
+            --col-I I \
+            --normalize none \
+            --alpha 0.01 \
+            --lags "${{ matrix.lags }}" \
+            --pre-horizon "${{ matrix.pre_horizon }}" \
+            --post-horizon "${{ matrix.post_horizon }}" \
+            --c-mean-post-min 0.1 \
+            --k 2.5 \
+            --m 3 \
+            --baseline-n "${{ matrix.baseline_n }}" \
+            2>&1 | tee "${ROOT}/suite.log" || true
+
+          VERDICT=$(cat "${ROOT}/verdict.txt" 2>/dev/null || echo "UNKNOWN")
+          echo "Verdict for ${{ matrix.label }}: ${VERDICT}"
+
+      - name: Upload artefact (${{ matrix.label }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_matrix_${{ matrix.label }}_${{ github.run_id }}
+          path: _ci_out/real_matrix/${{ matrix.label }}
+          if-no-files-found: warn
+
+  # ── Job 3: T9 cross-domain on FRED (positive control) ───────────────────
+  t9_fred_real:
+    name: "T9 FRED real data [${{ inputs.mode || 'smoke_ci' }}]"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run T9 cross-domain (FRED real as positive control)
+        shell: bash
+        run: |
+          set -u
+          SEED="${{ inputs.seed || env.DEFAULT_SEED }}"
+          MODE="${{ inputs.mode || 'smoke_ci' }}"
+          ROOT="_ci_out/real_matrix/t9_fred_real/run_${GITHUB_RUN_ID}"
+          mkdir -p "${ROOT}"
+
+          FAST_FLAG=""
+          if [ "${MODE}" = "smoke_ci" ]; then FAST_FLAG="--fast"; fi
+
+          python 04_Code/pipeline/run_T9_cross_domain.py \
+            --outdir "${ROOT}" \
+            --seed 1242 \
+            ${FAST_FLAG} \
+            2>&1 | tee "${ROOT}/t9.log"
+
+          RC=${PIPESTATUS[0]}
+          echo "${RC}" > "${ROOT}/rc.txt"
+
+          VERDICT=$(cat "${ROOT}/tables/verdict.json" 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('verdict','UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
+          echo "T9 verdict: ${VERDICT} (rc=${RC})"
+
+          # smoke_ci: non-blocking; proof_run: fail on REJECT
+          if [ "${MODE}" = "proof_run" ] && [ "${RC}" != "0" ]; then
+            echo "ERROR: T9 exited rc=${RC} in proof_run mode" >&2
+            exit 1
+          fi
+
+      - name: Upload T9 artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real_matrix_t9_fred_real_${{ github.run_id }}
+          path: _ci_out/real_matrix/t9_fred_real
+          if-no-files-found: warn
