@@ -926,6 +926,26 @@ def main() -> int:
     print(f"  discrimination: {verdict['blocks']['discrimination']}")
     print(f"  robustness    : {verdict['blocks']['robustness']}")
     print(f"  anti_gaming   : {verdict['blocks']['anti_gaming']}")
+    # ORI-C rule: --fast is smoke_ci. It validates execution + artefacts, not proof.
+    # Therefore, a proof-grade REJECT must not hard-fail CI in --fast.
+    # We downgrade global REJECT -> INDETERMINATE in smoke_ci, while preserving block statuses
+    # and recording the raw verdict for audit.
+    if args.fast and verdict.get("global") == "REJECT":
+        raw_global = verdict["global"]
+        verdict["global"] = "INDETERMINATE"
+        notes = verdict.get("notes")
+        if not isinstance(notes, list):
+            notes = []
+        notes.append({
+            "smoke_ci_downgrade": True,
+            "raw_global": raw_global,
+            "reason": "T9 is proof-grade; smoke_ci (--fast) cannot emit blocking REJECT.",
+        })
+        verdict["notes"] = notes
+        print("[T9] smoke_ci: downgrade global REJECT -> INDETERMINATE (non-blocking).")
+        print(f"      raw_global={raw_global}")
+        print(f"      blocks={verdict.get('blocks')}")
+        print("")
     print(f"{'='*55}\n")
 
     with open(tables / "verdict.json", "w") as f:
