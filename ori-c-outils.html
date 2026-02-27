@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Outils</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #f0eeea;
+            --text-muted: #a0a098;
+            --text-subtle: #6a6862;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-tool: #4a6b8b;
+            --accent-astro: #6b4a8b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Cyberspace Background */
+        .cyber-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%),
+                linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%);
+        }
+
+        .cyber-grid-floor {
+            position: absolute;
+            bottom: 0; left: -50%;
+            width: 200%; height: 60%;
+            background:
+                linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%),
+                repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px);
+            background-size: 100% 100%, 80px 100%;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: center top;
+            animation: gridFloorPulse 8s ease-in-out infinite;
+        }
+
+        .cyber-grid-floor::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, transparent 0px, transparent 39px, rgba(30, 80, 120, 0.04) 40px);
+            background-size: 100% 40px;
+            animation: gridLinesMove 4s linear infinite;
+        }
+
+        @keyframes gridFloorPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.9; } }
+        @keyframes gridLinesMove { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
+
+        .cyber-light-source {
+            position: absolute;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px; height: 400px;
+            background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%);
+            animation: lightPulse 6s ease-in-out infinite;
+        }
+
+        .cyber-light-source::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px; height: 8px;
+            background: rgba(100, 180, 220, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(80, 160, 200, 0.4), 0 0 40px rgba(60, 140, 180, 0.2), 0 0 80px rgba(40, 120, 160, 0.1);
+            animation: corePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes lightPulse { 0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } }
+        @keyframes corePulse { 0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } }
+
+        .data-stream {
+            position: absolute; height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(40, 120, 180, 0.4) 20%, rgba(60, 160, 220, 0.6) 50%, rgba(40, 120, 180, 0.4) 80%, transparent 100%);
+            animation: dataStreamMove 8s linear infinite; opacity: 0;
+        }
+
+        @keyframes dataStreamMove { 0% { transform: translateX(-100%) scaleX(0.3); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translateX(100vw) scaleX(0.3); opacity: 0; } }
+
+        .data-line-vertical {
+            position: absolute; width: 1px;
+            background: linear-gradient(180deg, transparent 0%, rgba(40, 120, 180, 0.2) 30%, rgba(60, 160, 220, 0.4) 50%, rgba(40, 120, 180, 0.2) 70%, transparent 100%);
+            animation: dataLineVertical 12s linear infinite;
+        }
+
+        @keyframes dataLineVertical { 0% { transform: translateY(-100%); opacity: 0; } 5% { opacity: 0.5; } 95% { opacity: 0.5; } 100% { transform: translateY(100vh); opacity: 0; } }
+
+        .data-block {
+            position: absolute;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            color: rgba(60, 140, 180, 0.3);
+            white-space: nowrap;
+            animation: floatDataBlock 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes floatDataBlock { 0% { transform: translateY(100vh) translateX(0); opacity: 0; } 5% { opacity: 0.4; } 95% { opacity: 0.4; } 100% { transform: translateY(-10vh) translateX(-50px); opacity: 0; } }
+
+        .hex-node { position: absolute; width: 30px; height: 35px; animation: hexFloat 25s linear infinite; pointer-events: none; }
+        .hex-node svg { width: 100%; height: 100%; }
+        .hex-node polygon { fill: none; stroke: rgba(40, 120, 160, 0.2); stroke-width: 1; }
+        .hex-node circle { fill: rgba(60, 160, 200, 0.3); }
+
+        @keyframes hexFloat { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0; } 5% { opacity: 0.5; } 95% { opacity: 0.5; } 100% { transform: translateY(-10vh) rotate(180deg); opacity: 0; } }
+
+        .scan-line {
+            position: absolute; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(40, 120, 180, 0.1) 20%, rgba(60, 160, 220, 0.2) 50%, rgba(40, 120, 180, 0.1) 80%, transparent 100%);
+            animation: scanMove 8s linear infinite;
+        }
+
+        @keyframes scanMove { 0% { top: -2px; opacity: 0; } 5% { opacity: 0.6; } 95% { opacity: 0.6; } 100% { top: 100%; opacity: 0; } }
+
+        a { color: inherit; }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0));
+        }
+
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+
+        /* Language switcher */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+            padding-left: 2rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
+        @media (max-width: 900px) {
+            nav { padding: 1rem 1.5rem; }
+            .nav-links { gap: 1rem; }
+            .nav-links a { font-size: 0.6rem; }
+        }
+
+        @media (max-width: 700px) {
+            .nav-links { display: none; }
+        }
+
+        .hero {
+            min-height: 40vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            font-style: italic;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        .main-content {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Tool cards grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .tool-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2.5rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .tool-card:hover {
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        .tool-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.8rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid;
+        }
+
+        .tag-tool { border-color: var(--accent-tool); color: var(--accent-tool); }
+        .tag-astro { border-color: var(--accent-astro); color: var(--accent-astro); }
+        .tag-flow { border-color: var(--accent-flow); color: var(--accent-flow); }
+
+        .tool-card h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.03em;
+        }
+
+        .tool-card .tool-version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: var(--text-subtle);
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-card p {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            line-height: 1.85;
+        }
+
+        .tool-structure {
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--accent-flow);
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.9;
+        }
+
+        .tool-structure.tool-border { border-left-color: var(--accent-tool); }
+        .tool-structure.astro-border { border-left-color: var(--accent-astro); }
+
+        .tool-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.8rem;
+            flex-wrap: wrap;
+        }
+
+        .tool-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.6rem 1.2rem;
+            border: 1px solid;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .tool-link-primary {
+            border-color: var(--accent-tool);
+            color: var(--accent-tool);
+        }
+
+        .tool-link-primary:hover {
+            background: var(--accent-tool);
+            color: var(--bg-deep);
+        }
+
+        .tool-link-secondary {
+            border-color: rgba(255,255,255,0.15);
+            color: var(--text-muted);
+        }
+
+        .tool-link-secondary:hover {
+            border-color: var(--accent-pulse);
+            color: var(--accent-pulse);
+        }
+
+        .tool-link-astro {
+            border-color: var(--accent-astro);
+            color: var(--accent-astro);
+        }
+
+        .tool-link-astro:hover {
+            background: var(--accent-astro);
+            color: var(--bg-deep);
+        }
+
+        /* Sub-tools for AstroOracle suite */
+        .sub-tools {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 700px) {
+            .sub-tools { grid-template-columns: 1fr; }
+        }
+
+        .sub-tool {
+            background: var(--bg-elevated);
+            border: 1px solid rgba(107, 74, 139, 0.2);
+            padding: 1.2rem;
+        }
+
+        .sub-tool-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--accent-astro);
+            margin-bottom: 0.5rem;
+        }
+
+        .sub-tool p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        footer {
+            padding: 4rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .main-content { padding: 3rem 1.5rem; }
+            .tool-card { padding: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cyberspace Background -->
+    <div class="cyber-bg">
+        <div class="cyber-grid-floor"></div>
+        <div class="cyber-light-source"></div>
+        <div class="scan-line"></div>
+        <div class="data-stream" style="top: 20%; width: 200px;"></div>
+        <div class="data-stream" style="top: 45%; width: 150px; animation-delay: 3s;"></div>
+        <div class="data-stream" style="top: 70%; width: 180px; animation-delay: 5s;"></div>
+        <div class="data-line-vertical" style="left: 15%; height: 150px;"></div>
+        <div class="data-line-vertical" style="left: 85%; height: 140px; animation-delay: 4s;"></div>
+        <div class="data-block" style="left: 8%; animation-delay: 0s;">0x7F3A</div>
+        <div class="data-block" style="left: 75%; animation-delay: 6s;">∞ FLOW</div>
+        <div class="hex-node" style="left: 20%; animation-delay: 2s;">
+            <svg viewBox="0 0 30 35"><polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/><circle cx="15" cy="17" r="3"/></svg>
+        </div>
+        <div class="hex-node" style="left: 70%; animation-delay: 12s;">
+            <svg viewBox="0 0 30 35"><polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/><circle cx="15" cy="17" r="3"/></svg>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation.html#fondement">Fondement</a></li>
+            <li><a href="ori-c-presentation.html#principes">Principes</a></li>
+            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherches</a></li>
+            <li><a href="ori-c-outils.html" class="active">Outils</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active">FR</button>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Outils</h1>
+        <p class="hero-subtitle">
+            Instruments analytiques développés dans le cadre ORI-C —
+            épistémologie, amplification symbolique, astronomie computationnelle.
+        </p>
+    </section>
+
+    <main class="main-content">
+        <div class="tools-grid">
+
+            <!-- Outil 1 : Tableau périodique épistémique -->
+            <div class="tool-card">
+                <span class="tool-tag tag-flow">Épistémologie</span>
+                <h2>Tableau périodique épistémique</h2>
+                <div class="tool-version">v1.0 — 118 éléments</div>
+                <p>
+                    Une cartographie structurée de 118 concepts épistémiques, organisés en tableau
+                    périodique par analogie avec la chimie. Chaque élément est défini selon
+                    trois niveaux d'analyse complémentaires.
+                </p>
+                <div class="tool-structure tool-border" style="border-left-color: var(--accent-flow);">
+                    Niveau 1 — Fonction · rôle opérationnel dans un raisonnement ou un système<br>
+                    Niveau 2 — Rôle épistémique · position dans la production de connaissance<br>
+                    Niveau 3 — Secteur · domaine d'application (psychisme, climat, contrôle, société)
+                </div>
+                <p>
+                    L'outil permet de localiser rapidement la nature d'un concept, ses
+                    relations de voisinage épistémique, et les risques de confusion ou
+                    de déplacement sémantique entre secteurs.
+                </p>
+            </div>
+
+            <!-- Outil 2 : NEP-LIMITE 2.0 / Amplification-Barometer -->
+            <div class="tool-card">
+                <span class="tool-tag tag-tool">Analyse symbolique</span>
+                <h2>NEP-LIMITE 2.0</h2>
+                <div class="tool-version">Amplification-Barometer — open source</div>
+                <p>
+                    Baromètre d'amplification symbolique fondé sur le cadre ORI-C.
+                    Mesure la dynamique de la variable d'ordre C(t) à partir de proxies
+                    observables (O, R, I) et d'un stock symbolique S(t), avec détection
+                    automatique de seuil par méthode cumulative.
+                </p>
+                <div class="tool-structure tool-border">
+                    Pipeline · O(t), R(t), I(t) → Cap(t) → Σ(t) → C(t)<br>
+                    Détection · μ + k·σ sur fenêtre glissante (k=2.5, w=20)<br>
+                    Verdict · ACCEPT / INDETERMINATE / REJECT avec CI 99 %<br>
+                    Tests · T1–T8 reproductibles, seed fixe, mode full_statistical
+                </div>
+                <p>
+                    Inclut les tests T1 (noyau demand shock), T4 (S-riche vs S-pauvre),
+                    T7 (progressive sweep S*) et T8 (reinjection recovery).
+                    Documentation complète et artefacts reproductibles.
+                </p>
+                <div class="tool-links">
+                    <a href="https://drive.google.com/file/d/1y8rOC9jQhuvQxccjCGu_5lLg-_zgwvIo/view"
+                       target="_blank" rel="noopener" class="tool-link tool-link-primary">
+                        ↓ Télécharger le PDF
+                    </a>
+                    <a href="https://github.com/dalozedidier-dot/Amplification-Barometer"
+                       target="_blank" rel="noopener" class="tool-link tool-link-secondary">
+                        ⌥ GitHub
+                    </a>
+                </div>
+            </div>
+
+            <!-- Outil 3 : AstroOracle suite -->
+            <div class="tool-card">
+                <span class="tool-tag tag-astro">Astronomie computationnelle</span>
+                <h2>AstroOracle Suite</h2>
+                <div class="tool-version">3 outils — analyse de données astronomiques</div>
+                <p>
+                    Ensemble d'outils d'analyse appliqués aux données astronomiques,
+                    combinant détection d'anomalies, traçabilité chaotique et analyse
+                    de graphes pour l'exploration de séries temporelles célestes.
+                </p>
+                <div class="sub-tools">
+                    <div class="sub-tool">
+                        <div class="sub-tool-name">AstroOracle</div>
+                        <p>Prédiction et classification de phénomènes astronomiques à partir de séries temporelles photométriques.</p>
+                    </div>
+                    <div class="sub-tool">
+                        <div class="sub-tool-name">ChaosTrace</div>
+                        <p>Détection de comportements chaotiques et de transitions dynamiques dans les données orbitales.</p>
+                    </div>
+                    <div class="sub-tool">
+                        <div class="sub-tool-name">AstroGraphAnomaly</div>
+                        <p>Analyse de graphes et détection d'anomalies structurelles dans les catalogues d'objets célestes.</p>
+                    </div>
+                </div>
+                <div class="tool-links">
+                    <a href="https://github.com/dalozedidier-dot/Amplification-Barometer"
+                       target="_blank" rel="noopener" class="tool-link tool-link-astro">
+                        ⌥ GitHub — AstroOracle
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Outils analytiques · Didier Daloze · 2026</p>
+    </footer>
+</body>
+</html>
