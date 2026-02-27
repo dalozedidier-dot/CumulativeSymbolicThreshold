@@ -92,6 +92,16 @@ jobs:
 
           if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
+      - name: Build registered report assets (figures + tables)
+        run: |
+          set -e
+          RUN_DIR=$(ls -1d _ci_out/canonical_tests/* | sort | tail -n 1)
+          echo "Using RUN_DIR=$RUN_DIR"
+          python 04_Code/reporting/build_registered_report_assets.py --run-dir "$RUN_DIR"
+
+          mkdir -p _ci_out/06_Manuscript
+          if [ -d 06_Manuscript ]; then cp -R 06_Manuscript _ci_out/06_Manuscript; fi
+
       - name: Assert support level (hard gate)
         # Reads the machine-computed support_level from global_verdict.json.
         # Writes it to $GITHUB_STEP_SUMMARY so it is visible in the Actions UI.

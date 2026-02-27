@@ -69,6 +69,16 @@ jobs:
             --n-runs-min 50 \
             2>&1 | tee _ci_out/synthetic/run_all_tests.log
 
+      - name: Build registered report assets (figures + tables)
+        run: |
+          set -e
+          RUN_DIR=$(ls -1d _ci_out/synthetic/canonical_tests/* | sort | tail -n 1)
+          echo "Using RUN_DIR=$RUN_DIR"
+          python 04_Code/reporting/build_registered_report_assets.py --run-dir "$RUN_DIR"
+
+          mkdir -p _ci_out/06_Manuscript
+          if [ -d 06_Manuscript ]; then cp -R 06_Manuscript _ci_out/06_Manuscript; fi
+
           # Extract support_level from the nested timestamped run dir
           SYNTHETIC_SUPPORT=$(python -c "
           import json, glob, sys
