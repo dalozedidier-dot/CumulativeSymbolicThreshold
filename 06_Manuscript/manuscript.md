@@ -1,8 +1,8 @@
 # Du vivant autonome au régime symbolique cumulatif
 ## Architecture O-R-I, seuil de mismatch Σ, et protocole falsifiable ORI-C
 
-**Version:** v0.3 — draft soumis au préenregistrement
-**Date:** 2026-02-26
+**Version:** v1.0 — soumissionnable
+**Date:** 2026-02-27
 **DOI (OSF preregistration):** 10.17605/OSF.IO/G62PZ
 **Licence:** CC BY 4.0
 **Code:** https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold
@@ -71,6 +71,54 @@ protocole de test quantitatif. ORI-C propose ce protocole pour des données macr
 - Il ne prétend pas que C(t) capture *tout* le stock symbolique — seulement la part opérable
   par les proxies déclarés.
 - Il ne revendique pas la généralité interdisciplinaire sans réplication dans d'autres domaines.
+
+### 1.4 Travaux connexes
+
+Cette section positionne ORI-C par rapport à six familles de littérature. L'objectif n'est
+pas l'exhaustivité — c'est de montrer que le cadre hérite de ces familles tout en introduisant
+une contribution distincte : la falsifiabilité ex ante opérationnalisée sur données empiriques.
+
+**Seuils et transitions de régime.**
+Scheffer *et al.* (2009) identifient les signatures d'alerte précoce des transitions critiques :
+autocorrélation croissante, variance croissante avant le basculement. ORI-C hérite de cette
+logique de détection mais se distingue en deux points : (1) le critère de seuil (ΔC > μ + k·σ
+pendant m pas consécutifs) est déclaré *avant* l'observation, ce que les méthodes EWS ne font
+pas systématiquement ; (2) le seuil porte sur une variable d'ordre construite, pas directement
+sur les observables bruts. Dakos *et al.* (2012) et Lenton *et al.* (2012) fournissent des
+applications écologiques et climatiques comparables en termes de structure de détection.
+
+**Systèmes complexes et phase transitions socio-économiques.**
+Haldane & May (2011) modélisent la fragilité des réseaux financiers comme un problème de
+robustesse systémique. Brock & Hommes (1997) formalisent les transitions de régime dans les
+marchés. ORI-C ne modélise pas les interactions en réseau, mais partage la logique de *proxy
+de robustesse systémique* via R(t) et la variable Cap(t) — tout en rendant le test falsifiable
+sur données historiques.
+
+**Causalité et inférence causale.**
+Granger (1969) et Sims (1980) fondent les tests de causalité sur les séries temporelles.
+ORI-C utilise des tests de causalité de Granger dans T1 (noyau O-R-I) mais les présente
+explicitement comme détection de *prédictibilité directionnelle*, non de causalité structurelle.
+Peters *et al.* (2017) soulignent la fragilité des tests de causalité sous hétérogénéité
+de distribution — ce qui motive le test OOS (T3) sur panel multi-pays.
+
+**Évolution culturelle et niche construction.**
+Richerson & Boyd (2005) et Henrich (2016) fondent la théorie de la transmission cumulative
+comme mécanisme central de la complexité culturelle. Odling-Smee *et al.* (2003) formalisent
+la construction de niche comme modification du milieu sélectif. ORI-C s'inscrit dans cette
+tradition en proposant un proxy de mesure (S → C) testable sur données macro-structurelles,
+là où ces théories restent généralement qualitatives ou modélisées sur agents.
+
+**Méthodes robustes et tests de stabilité.**
+Andrews (2003) et Hansen (1999) traitent la robustesse comme sensibilité post hoc à des
+changements de spécification. ORI-C l'élève au rang de test distinct (T3) avec verdict propre.
+Imbens & Rubin (2015) fournissent le cadre des contrôles synthétiques (utilisé dans §3.4).
+
+**Falsifiabilité et préenregistrement.**
+Nosek *et al.* (2018) documentent la crise de reproductibilité dans les sciences sociales.
+Chambers (2013) propose les Registered Reports comme antidote. ORI-C implémente l'esprit
+des Registered Reports à travers : (a) preregistrement OSF avant l'observation des données
+finales, (b) critères de verdict déclarés ex ante dans `t9_criteria.json`, (c) distinction
+normative smoke CI / proof run codifiée dans le manifest.
 
 ---
 
@@ -279,24 +327,62 @@ p = 0.21 (plausible). SC : post_gap = −0.125, placebo_p = 1.00. **Verdict : RE
 
 ## 4. Discussion
 
-### 4.1 Ce que le cadre détecte
+### 4.1 Ce que le cadre détecte — et ce qu'il ne prétend pas détecter
 
 ORI-C détecte :
-- Des transitions entre régimes définis par le mismatch Σ(t).
+- Des transitions entre régimes définis par le mismatch Σ(t) — avec critère ΔC déclaré ex ante.
 - L'effet non trivial d'un stock symbolique S sur la variable d'ordre C dans des conditions
   de stress structurel (Σ > 0).
 - Des points de bascule S* stables (T7) avec fenêtre de détection ΔC > μ + k·σ.
 - La discrimination entre systèmes régulés (contrôles positifs) et stochastiques (contrôles
   négatifs) via les 8 features ORI-C (T9).
 
-### 4.2 Ce que le cadre ne doit pas prétendre détecter
+ORI-C **ne prétend pas** détecter :
+- La *cause* interne de la transmission (mécanisme cognitif, neural, institutionnel).
+  C'est un cadre de détection de signature, pas d'identification structurelle.
+- La généralisabilité sans réplication. Les pilotes FRED, bio, cosmo, infra constituent
+  un premier faisceau d'évidence hétérogène — pas une preuve universelle.
+- La robustesse à toute re-spécification de proxy. Chaque changement de `proxy_spec.json`
+  invalide la comparaison avec les runs antérieurs — c'est une *feature* normative, pas un bug.
 
-- La *cause* interne (mécanisme cognitif, neural, institutionnel) de la transmission — ORI-C
-  est un cadre de détection de signature, pas d'identification structurelle.
-- La généralisabilité sans réplication : les pilotes sectoriels (bio, cosmo, infra) et le
-  pilote FRED constituent un *premier* faisceau d'évidence, pas une preuve universelle.
-- La robustesse à toute re-spécification de proxy : chaque changement de proxy_spec invalide
-  la comparaison avec les runs antérieurs.
+### 4.2 Limites formulées comme règles de réfutation
+
+Les limites suivantes ne sont pas des mises en garde rhétoriques. Chacune est une règle de
+réfutation explicite : si la condition est violée, la conclusion correspondante est invalide.
+
+**L4.1 — Proxies imparfaits et colinéarité.**
+O, R, I sont des proxies déclarés — pas des observables directs. La colinéarité entre INDPRO
+(O), TCU (R) et T10YFF (I) est probable sur données FRED : une corrélation élevée entre proxies
+affaiblit le test d'effet *distinct* de chaque composante. *Règle de réfutation* : si
+corr(O, R) > 0.85 sur la fenêtre de calibration, l'estimation de Cap(t) est sous-déterminée
+et le verdict T1 doit être reclassé INDETERMINATE indépendamment du p.
+
+**L4.2 — Stationnarité discutable.**
+Les séries FRED mensuelles (1986–2025) présentent des tendances de long terme (M2, INDPRO).
+La normalisation [0,1] par percentile réduit partiellement ce problème mais ne le supprime pas.
+*Règle de réfutation* : si un test ADF ou KPSS rejette la stationnarité de ΔC(t) sur la
+fenêtre de baseline, la détection de seuil est non interprétable.
+
+**L4.3 — Faux négatifs attendus (α = 0.01 conservateur).**
+Le seuil α = 0.01 génère structurellement plus de faux négatifs (verdicts INDETERMINATE)
+que α = 0.05. Sur des effets faibles (d de Cohen < 0.3), la puissance d'un run N = 60 est
+inférieure à 0.70 — ce qui déclenche automatiquement le verdict INDETERMINATE par règle de
+puissance. *Règle de réfutation* : un résultat INDETERMINATE avec puissance < 0.70 ne falsifie
+pas l'hypothèse — il indique une sous-puissance, non une absence d'effet.
+
+**L4.4 — Dépendance au mapping et verrou `mapping_validity`.**
+Le mapping proxy → variable ORI-C est le point de fragilité central. Une modification du
+mapping — même raisonnable — invalide la comparabilité inter-runs. *Règle de réfutation* :
+tout résultat produit après modification du `proxy_spec.json` ne peut pas être comparé aux
+runs antérieurs. La validation `mapping_validity` dans le manifest est le verrou structurel
+de ce point.
+
+**L4.5 — Portée de généralisation : ce que ce travail refuse d'affirmer.**
+Ce protocole ne conclut pas que : (a) la transmission symbolique cumulative est un mécanisme
+universel, (b) les proxies macro-économiques (FRED) mesurent la même chose que les proxies
+écologiques ou biologiques, (c) un ACCEPT global implique une preuve de causalité.
+Il conclut uniquement que : sur les données et proxies déclarés ex ante, les signatures
+dynamiques attendues sont présentes ou absentes dans les conditions spécifiées.
 
 ### 4.3 Sensibilité aux données
 
@@ -306,12 +392,32 @@ ORI-C détecte :
 - Annuel : 60 points minimum.
 
 Sous ces seuils, les estimations de μ et σ de référence sont trop instables pour des fenêtres
-de baseline de 20–50 pas.
+de baseline de 20–50 pas. Un dataset sous-dimensionné déclenche automatiquement un downgrade
+en mode `smoke_ci` (non conclusif) avec avertissement dans le manifest.
 
 **Transformation.** Toute transformation (normalisation, interpolation, re-échantillonnage)
 doit être déclarée dans `proxy_spec.json` avant le run. Elle est auditée par le manifest SHA256.
 
-### 4.4 Risques d'instrumentalisation et gouvernance de la preuve
+**Contrôles négatifs.** Pour valider le taux de faux positifs, T9 inclut 6 contrôles négatifs
+stochastiques (bruit blanc, bruit rose, marche aléatoire, sinus, Poisson, chaos). Sans ces
+contrôles, toute affirmation d'AUC ≥ 0.80 serait non interprétable.
+
+### 4.4 Statut de T9 — extension planifiée (non bloquante pour v1.0)
+
+T9 (*cross-domain vivant-like*) constitue le test de discrimination le plus exigeant du
+protocole. Sa validation complète (12 contrôles, AUC ≥ 0.80, FPR ≤ 0.10) est en cours
+d'exécution sur données réelles FRED comme contrôle positif.
+
+**Choix de gouvernance pour v1.0 (Option A) :**
+Le tableau de résultats principal (§3.1) rapporte T1–T8. T9 est présenté avec le statut
+`—` (en cours) et sera complété dans une release v1.1 après proof run sur serveur dédié.
+Ce choix est délibéré : T9 n'est pas bloquant pour la falsifiabilité des blocs T1–T3
+(noyau ORI) et T4–T8 (régime symbolique), dont les verdicts sont indépendants de T9.
+
+Un REJECT de T9 falsifierait H5 (capacité de discrimination inter-domaines) sans invalider
+T1–T8. Les deux niveaux de preuve sont logiquement séparés.
+
+### 4.5 Risques d'instrumentalisation et gouvernance de la preuve
 
 Ce cadre peut être instrumentalisé si :
 1. On sélectionne les proxies *post-observation* pour maximiser la probabilité d'ACCEPT.
@@ -320,11 +426,13 @@ Ce cadre peut être instrumentalisé si :
 
 **Garde-fous structurels :**
 - Le `proxy_spec.json` est versionné et hashé (manifest SHA256) — toute modification
-  post-observation est traçable.
+  post-observation est traçable et invalide la comparaison inter-runs.
 - Le champ `run_mode` dans le manifest interdit structurellement de présenter `smoke_ci`
   comme `full_statistical`.
 - Chaque REJECT local est documenté dans `global_summary.csv` et ne peut être supprimé
   sans modifier le code source (versionné).
+- Le preregistrement OSF (DOI 10.17605/OSF.IO/G62PZ) documente les hypothèses et critères
+  *avant* toute observation finale — toute déviation est traçable par diff de version.
 
 ---
 
@@ -461,12 +569,43 @@ Les prochaines étapes sont :
 Andrews, D.W.K. (2003). Tests for parameter instability and structural change with unknown
 change point: A corrigendum. *Econometrica*, 71(1), 395–397.
 
+Brock, W.A. & Hommes, C.H. (1997). A rational route to randomness. *Econometrica*, 65(5),
+1059–1095.
+
+Chambers, C.D. (2013). Registered Reports: A new publishing initiative at Cortex. *Cortex*,
+49(3), 609–610.
+
+Dakos, V., Carpenter, S.R., Brock, W.A., *et al.* (2012). Methods for detecting early warnings
+of critical transitions in time series illustrated using simulated ecological data.
+*PLOS ONE*, 7(7), e41010.
+
+Granger, C.W.J. (1969). Investigating causal relations by econometric models and cross-spectral
+methods. *Econometrica*, 37(3), 424–438.
+
+Haldane, A.G. & May, R.M. (2011). Systemic risk in banking ecosystems. *Nature*, 469, 351–355.
+
 Hansen, B.E. (1999). Threshold effects in non-dynamic panels: Estimation, testing, and
 inference. *Journal of Econometrics*, 93(2), 345–368.
 
 Henrich, J. (2016). *The Secret of Our Success*. Princeton University Press.
 
+Imbens, G.W. & Rubin, D.B. (2015). *Causal Inference for Statistics, Social, and Biomedical
+Sciences*. Cambridge University Press.
+
 Lakatos, I. (1978). *The Methodology of Scientific Research Programmes*. Cambridge University Press.
+
+Lenton, T.M., Livina, V.N., Dakos, V., van Nes, E.H. & Scheffer, M. (2012). Early warning of
+climate tipping points from critical slowing down: comparing methods to improve robustness.
+*Philosophical Transactions of the Royal Society A*, 370, 1185–1204.
+
+Nosek, B.A., Ebersole, C.R., DeHaven, A.C. & Mellor, D.T. (2018). The preregistration
+revolution. *Proceedings of the National Academy of Sciences*, 115(11), 2600–2606.
+
+Odling-Smee, F.J., Laland, K.N. & Feldman, M.W. (2003). *Niche Construction: The Neglected
+Process in Evolution*. Princeton University Press.
+
+Peters, J., Mooij, J.M., Janzing, D. & Schölkopf, B. (2017). *Elements of Causal Inference*.
+MIT Press.
 
 Popper, K. (1959). *The Logic of Scientific Discovery*. Hutchinson.
 
@@ -474,6 +613,8 @@ Richerson, P.J. & Boyd, R. (2005). *Not by Genes Alone*. University of Chicago P
 
 Scheffer, M., Bascompte, J., Brock, W.A., *et al.* (2009). Early-warning signals for critical
 transitions. *Nature*, 461, 53–59.
+
+Sims, C.A. (1980). Macroeconomics and reality. *Econometrica*, 48(1), 1–48.
 
 Strogatz, S.H. (1994). *Nonlinear Dynamics and Chaos*. Addison-Wesley.
 
