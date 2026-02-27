@@ -35,6 +35,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -96,6 +98,7 @@ jobs:
         with:
           name: sector-infra-${{ matrix.pilot }}-${{ github.run_number }}
           path: _sector_infra_out/${{ matrix.pilot }}/
+          if-no-files-found: warn
           retention-days: 14
 
   infra-sector-summary:
@@ -106,6 +109,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Download all infra artifacts
         uses: actions/download-artifact@v4

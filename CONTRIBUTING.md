@@ -48,7 +48,7 @@ Before opening a pull request, verify all items below:
 ### Documentation
 - [ ] `CHANGELOG.md` updated with a meaningful entry under the correct version section
 - [ ] New public functions have a one-line docstring
-- [ ] New pipeline scripts are listed in `CLAUDE.md` and `README.md` if they are primary entry points
+- [ ] New pipeline scripts are listed in `WORKFLOWS_NOTES.md` and `README.md` if they are primary entry points
 
 ### CI
 - [ ] The `ci.yml` smoke test passes locally (or on the PR branch)
