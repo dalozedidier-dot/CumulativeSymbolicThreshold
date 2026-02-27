@@ -802,7 +802,7 @@
 
         .nav-links {
             display: flex;
-            gap: 3rem;
+            gap: 2rem;
             list-style: none;
         }
 
@@ -810,15 +810,17 @@
             color: var(--text-primary);
             text-decoration: none;
             border-bottom: none;
-            font-size: 0.85rem;
-            letter-spacing: 0.15em;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
         }
 
         .nav-links a:hover {
             opacity: 1;
+            color: var(--accent-flow);
         }
 
         /* Language switcher */
@@ -1502,15 +1504,14 @@
 
     <nav>
         <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
-        <ul class="nav-links">
-            <li><a href="#fondement">Fondement</a></li>
-            <li><a href="#principes">Principes</a></li>
+                <ul class="nav-links">
+            <li><a href="ori-c-presentation.html">Présentation</a></li>
             <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
             <li><a href="palm-cadre.html">PALM</a></li>
             <li><a href="ori-c-articles.html">Articles</a></li>
             <li><a href="ori-c-livres.html">Livres</a></li>
             <li><a href="ori-c-recherche.html">Recherches</a></li>
-            <li><a href="outils.html">Outils</a></li>
+            <li><a href="ori-c-outils.html">Outils</a></li>
             <li><a href="ori-c-contact.html">Contact</a></li>
         </ul>
         <div class="lang-switcher">
