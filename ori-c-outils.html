@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Outils</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #f0eeea;
+            --text-muted: #a0a098;
+            --text-subtle: #6a6862;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-tool: #4a6b8b;
+            --accent-astro: #6b4a8b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        /* Cyberspace Background */
+        .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%); }
+        .cyber-grid-floor { position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%; background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px); background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; animation: gridFloorPulse 8s ease-in-out infinite; }
+        @keyframes gridFloorPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.9; } }
+        .cyber-light-source { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%); animation: lightPulse 6s ease-in-out infinite; }
+        @keyframes lightPulse { 0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } }
+
+        a { color: var(--text-primary); }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0));
+        }
+
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+            padding-left: 2rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
+        /* Hero */
+        .hero {
+            min-height: 40vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 700px;
+        }
+
+        /* Main content */
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Tool card */
+        .tool-section {
+            margin-bottom: 4rem;
+        }
+
+        .tool-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .tool-card.tableau::before { background: var(--accent-flow); }
+        .tool-card.barometre::before { background: var(--accent-pulse); }
+        .tool-card.astro::before { background: var(--accent-astro); }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .tool-title {
+            font-size: 1.8rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+        }
+
+        .tool-version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+            background: rgba(255,255,255,0.05);
+            padding: 0.3rem 0.8rem;
+            border-radius: 2px;
+        }
+
+        .tool-subtitle {
+            font-size: 1.1rem;
+            color: var(--accent-flow);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-description {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-description p {
+            margin-bottom: 1rem;
+        }
+
+        .tool-highlight {
+            background: rgba(61, 90, 76, 0.1);
+            border-left: 3px solid var(--accent-flow);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .tool-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .tool-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            border: 1px solid;
+            transition: all 0.3s ease;
+        }
+
+        .tool-link.primary {
+            background: var(--accent-flow);
+            border-color: var(--accent-flow);
+            color: var(--bg-deep);
+        }
+
+        .tool-link.primary:hover {
+            background: transparent;
+            color: var(--accent-flow);
+        }
+
+        .tool-link.secondary {
+            border-color: var(--text-subtle);
+            color: var(--text-muted);
+        }
+
+        .tool-link.secondary:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+
+        /* Sub-tools grid */
+        .sub-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .sub-tool {
+            background: var(--bg-elevated);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+        }
+
+        .sub-tool-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--accent-astro);
+        }
+
+        .sub-tool-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+            letter-spacing: 0.1em;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .nav-links { display: none; }
+            .tool-card { padding: 1.5rem; }
+            .tool-header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg">
+        <div class="cyber-grid-floor"></div>
+        <div class="cyber-light-source"></div>
+    </div>
+
+    <nav>
+        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation.html#fondement">Fondement</a></li>
+            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherches</a></li>
+            <li><a href="ori-c-outils.html" class="active">Outils</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active" onclick="window.location.href='ori-c-outils.html'">FR</button>
+            <button class="lang-btn" onclick="window.location.href='ori-c-outils-en.html'">EN</button>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Outils</h1>
+        <p class="hero-subtitle">Instruments de lecture, de mesure et de détection développés dans le cadre ORI-C</p>
+    </section>
+
+    <main class="main-content">
+
+        <!-- TABLEAU -->
+        <section class="tool-section">
+            <div class="tool-card tableau">
+                <div class="tool-header">
+                    <h2 class="tool-title">Tableau de Cohérence</h2>
+                    <span class="tool-version">Coherence Science Interactive</span>
+                </div>
+                <p class="tool-subtitle">Un format de lecture pour la science expérimentale</p>
+                
+                <div class="tool-description">
+                    <p>On a 118 éléments chimiques. Tout le monde connaît le tableau périodique. Mais si je te demande : « Le silicium, il fait quoi, il prouve quoi, et il impacte quoi ? » tu vas souvent mélanger trois choses différentes dans la même phrase.</p>
+                    
+                    <p>C'est exactement le problème. On confond l'objet, sa fonction, et son rôle dans la connaissance. Partout. Dans les cours, dans les fiches techniques, dans les articles.</p>
+                    
+                    <p>Alors j'ai pris les 118 éléments, et pour chacun j'ai séparé trois niveaux :</p>
+                </div>
+
+                <div class="tool-highlight">
+                    <strong>Ce qu'il fait dans un système</strong> — L'utilisation. Toujours formulée pareil : un verbe, une cible, une finalité.<br><br>
+                    <strong>Ce qu'il permet de connaître</strong> — Son rôle épistémique. Est-ce une sonde ? Un modèle ? Une contrainte ? Un traceur ?<br><br>
+                    <strong>Où il intervient</strong> — Des macro-secteurs. Énergie, santé, défense, numérique. Pas des sous-disciplines.
+                </div>
+
+                <div class="tool-description">
+                    <p>Résultat : chaque élément tient sur une ligne, et deux lignes sont comparables. Tu peux trier, filtrer, croiser. Et surtout, tu vois où ça coince, où le format se casse. C'est là que la description était floue.</p>
+                    
+                    <p>Et le plus intéressant : j'ai appliqué exactement la même grammaire aux symboles mathématiques. Même structure, même logique. Le « ∫ » et le « Fe », traités avec le même gabarit.</p>
+                    
+                    <p><strong>Ce n'est pas une théorie. C'est un format. Un instrument de lecture.</strong> Et quand tu l'ouvres, tu vois la cohérence de la science expérimentale apparaître. Pas comme un récit, mais comme une structure.</p>
+                </div>
+
+                <div class="tool-links">
+                    <a href="https://dalozedidier-dot.github.io/coherence-tables/" target="_blank" class="tool-link primary">Ouvrir le Tableau</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- BAROMÈTRE -->
+        <section class="tool-section">
+            <div class="tool-card barometre">
+                <div class="tool-header">
+                    <h2 class="tool-title">Baromètre d'Amplification</h2>
+                    <span class="tool-version">NEP-LIMITE 2.0 · v0.4.13</span>
+                </div>
+                <p class="tool-subtitle">La Civilisation Amplificatrice — Théorie systémique de la limite</p>
+                
+                <div class="tool-description">
+                    <p>L'étude part d'un constat simple : aujourd'hui, beaucoup de technologies (IA, algorithmes financiers, réseaux sociaux, infrastructures énergétiques…) ne sont plus de simples « outils » que l'on allume ou éteint. Elles sont devenues un <strong>milieu</strong> dans lequel on vit en permanence : tout est connecté, tout va très vite, tout se propage facilement, et tout s'automatise de plus en plus.</p>
+                </div>
+
+                <div class="tool-highlight">
+                    <strong>Problème :</strong> quand la puissance d'action (échelle, vitesse, automatisation) grandit beaucoup plus vite que la capacité de contrôle et d'arrêt, le système devient instable. Des effets secondaires s'accumulent (externalités), les marges de sécurité s'érodent, et on risque des emballements difficiles à arrêter — flash crash, désinformation massive, blackout énergétique, escalade militaire involontaire…
+                </div>
+
+                <div class="tool-description">
+                    <p>L'étude propose donc une méthode pour <strong>mesurer cette tension</strong> et imposer des limites intelligentes avant que ça déraille, sans pour autant bloquer l'innovation.</p>
+                    
+                    <p>Domaines couverts : IA, finance, réseaux sociaux, énergie, défense…</p>
+                </div>
+
+                <div class="tool-links">
+                    <a href="https://drive.google.com/file/d/1y8rOC9jQhuvQxccjCGu_5lLg-_zgwvIo/view" target="_blank" class="tool-link primary">Lire le PDF</a>
+                    <a href="https://github.com/dalozedidier-dot/Amplification-Barometer" target="_blank" class="tool-link secondary">GitHub</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ASTRO ORACLE -->
+        <section class="tool-section">
+            <div class="tool-card astro">
+                <div class="tool-header">
+                    <h2 class="tool-title">AstroOracle Suite</h2>
+                    <span class="tool-version">Open-source</span>
+                </div>
+                <p class="tool-subtitle">Détection d'anomalies astronomiques et analyse de séries temporelles</p>
+                
+                <div class="tool-description">
+                    <p>Une suite de trois outils complémentaires pour l'exploration de données astronomiques et la détection de phénomènes inhabituels.</p>
+                </div>
+
+                <div class="sub-tools">
+                    <div class="sub-tool">
+                        <h3 class="sub-tool-name">AstroOracle</h3>
+                        <p class="sub-tool-desc">Oracle à apprentissage actif pour le triage d'anomalies astronomiques. Récupère des cutouts SkyView, classe les candidats via score d'anomalie, acquisition et diversité. Interface CLI et web UI pour l'annotation, avec ré-entraînement automatique.</p>
+                    </div>
+                    
+                    <div class="sub-tool">
+                        <h3 class="sub-tool-name">ChaosTrace</h3>
+                        <p class="sub-tool-desc">Toolkit Python léger pour la détection de transitions de régime, d'événements de type "foil drop" et d'anomalies cachées dans des séries temporelles multivariées haute fréquence. Utilise la reconstruction d'espace de phase, l'analyse RQA et des métriques inspirées du chaos (Takens, Lyapunov proxy).</p>
+                    </div>
+                    
+                    <div class="sub-tool">
+                        <h3 class="sub-tool-name">AstroGraphAnomaly</h3>
+                        <p class="sub-tool-desc">Outil open-source pour détecter des sources astronomiques inhabituelles dans les données Gaia. Combine le scoring d'anomalies basé sur les features avec une analyse de graphe k-plus-proches-voisins sur la sphère céleste. Explainability LIME et génération de prompts LLM.</p>
+                    </div>
+                </div>
+
+                <div class="tool-links">
+                    <a href="https://dalozedidier-dot.github.io/AstroOracle/" target="_blank" class="tool-link primary">Explorer la Suite</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
+    </footer>
+</body>
+</html>
