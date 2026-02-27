@@ -1,0 +1,47 @@
+{
+  "dataset_id": "sector_bio.pilot_ecology.real.v2",
+  "spec_version": "2.0",
+  "sector": "bio",
+  "time_column": "t",
+  "time_mode": "value",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "O = log1p(Hare)."
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "R = -diff(deviation of log1p(Lynx) from rolling median), dynamic proxy."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "I = rolling MAD of diff(O), structure proxy."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
+    }
+  ]
+}

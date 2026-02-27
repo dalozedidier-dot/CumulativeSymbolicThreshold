@@ -1,0 +1,46 @@
+{
+  "dataset_id": "bio_geneexpr_real_v2",
+  "sector": "bio",
+  "pilot": "geneexpr",
+  "spec_version": "2.0",
+  "data_type": "real",
+  "time_column": "t",
+  "time_mode": "index",
+  "normalization": "robust_minmax",
+  "data_source": "SRP026387_scaledcounts.csv (public RNA-seq counts, samples as sequence index).",
+  "minimum_rows": 10,
+  "fragility_global_note": "This pilot uses samples as an ordered sequence; not a true longitudinal time series. Use as structural cross-sample robustness check, not temporal causality proof.",
+  "data_preparation_notes": [
+    "Compute PCA on log1p(counts): PC1 and PC2.",
+    "O = PC1 (dominant expression axis).",
+    "R = diff(PC1) (local change).",
+    "I = PC2 (orthogonal structure axis).",
+    "These choices reduce colinearity by construction (PC1 ⟂ PC2)."
+  ],
+  "columns": [
+    {
+      "oric_role": "O",
+      "source_column": "O",
+      "direction": "positive",
+      "description": "PC1 on log1p(counts)."
+    },
+    {
+      "oric_role": "R",
+      "source_column": "R",
+      "direction": "positive",
+      "description": "First difference of PC1."
+    },
+    {
+      "oric_role": "I",
+      "source_column": "I",
+      "direction": "positive",
+      "description": "PC2 on log1p(counts)."
+    },
+    {
+      "oric_role": "demand",
+      "source_column": "demand",
+      "direction": "positive",
+      "description": "Index proxy (0..1)."
+    }
+  ]
+}

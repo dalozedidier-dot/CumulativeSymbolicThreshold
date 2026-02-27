@@ -43,6 +43,8 @@ jobs:
       integrity_passed: ${{ steps.check.outputs.passed }}
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -64,6 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -103,6 +107,7 @@ jobs:
         with:
           name: oos-panel-results
           path: _ci_out/oos_panel/
+          if-no-files-found: warn
 
   did-synthetic-control:
     name: "Step 3 — DiD and Synthetic Control"
@@ -111,6 +116,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -162,6 +169,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Download OOS results
         uses: actions/download-artifact@v4

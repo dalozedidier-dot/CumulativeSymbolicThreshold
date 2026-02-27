@@ -301,22 +301,22 @@ def main() -> int:
         ],
     })
 
-    # T9 — Cross-domain vivant-like discrimination (real data + synthetic controls)
-    # test_type=statistical: single-shot discrimination run; --fast skips slow stress tests.
-    tests.append({
-        "id": "T9_cross_domain",
-        "script": scripts_dir / "run_T9_cross_domain.py",
-        "seed_used": _seed("T9_cross_domain"),
-        "seed_formula": _sfmt("T9_cross_domain"),
-        "n_runs_used": 1,
-        "test_type": "statistical",
-        "args": (
-            ["--seed", str(_seed("T9_cross_domain")), "--fast"]
-            if args.fast
-            else ["--seed", str(_seed("T9_cross_domain"))]
-        ),
-    })
-
+    # T9 — Cross-domain vivant-like discrimination (proof-only)
+    # Rule ORI-C: T9 is a proof-grade cross-domain discrimination test.
+    # It is excluded from smoke_ci (--fast) to keep smoke focused on execution + artefacts.
+    # Full / nightly runs may include T9 explicitly.
+    if not args.fast:
+        tests.append({
+            "id": "T9_cross_domain",
+            "script": scripts_dir / "run_T9_cross_domain.py",
+            "seed_used": _seed("T9_cross_domain"),
+            "seed_formula": _sfmt("T9_cross_domain"),
+            "n_runs_used": 1,
+            "test_type": "statistical",
+            "args": ["--seed", str(_seed("T9_cross_domain"))],
+        })
+    else:
+        print("[ORI-C] smoke_ci: skip T9_cross_domain (proof-only).")
     # Determine run_mode before execution.
     # Classification is based on "statistical" tests only (test_type="statistical").
     # Tests with test_type="fixed_data" (T2, T3) operate on a deterministic fixed CSV and

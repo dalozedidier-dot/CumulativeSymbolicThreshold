@@ -1,76 +1,48 @@
 {
-  "dataset_id": "bio_epidemic_real",
+  "dataset_id": "sector_bio.pilot_epidemic.real.v2",
+  "spec_version": "2.0",
   "sector": "bio",
-  "pilot": "epidemic",
-  "spec_version": "1.0",
-  "data_type": "real",
-  "time_column": "date",
+  "time_column": "t",
   "time_mode": "value",
-  "normalization": "robust_minmax",
-  "data_source": "ECDC / OurWorldInData (public)",
-  "data_url": "https://ourworldindata.org/coronavirus",
-  "minimum_rows": 60,
-  "fragility_global_note": "Epidemic proxies depend heavily on testing strategy and reporting consistency. Structural breaks at policy change dates must be annotated in the data. All three ORI proxies use independently reported indicators to minimise co-determination.",
   "columns": [
     {
-      "oric_role": "O",
-      "source_column": "case_fatality_proxy",
-      "direction": "negative",
-      "normalization_override": "robust_minmax",
-      "fragility_score": 0.45,
-      "fragility_note": "CFR is under-reported in early phases; depends on test positivity. Consider 7-day smoothing before computing.",
-      "manipulability_note": "National health systems can reclassify deaths post-hoc. Use corrected series if available.",
-      "description": "Weekly case fatality proxy (higher CFR = lower organisational capacity). Invert before mapping: O = 1 − CFR_norm.",
-      "invert": true
-    },
-    {
-      "oric_role": "R",
-      "source_column": "positivity_rate_proxy",
-      "direction": "negative",
-      "normalization_override": "robust_minmax",
-      "fragility_score": 0.50,
-      "fragility_note": "Positivity rate requires consistent testing denominator. Structural break when mass testing introduced.",
-      "manipulability_note": "Testing strategy changes directly affect this series. Annotate as U(t) if testing protocol changes abruptly.",
-      "description": "Test positivity rate (higher positivity = lower resilience). Invert: R = 1 − positivity_norm.",
-      "invert": true
-    },
-    {
-      "oric_role": "I",
-      "source_column": "effective_Rt_proxy",
-      "direction": "negative",
-      "normalization_override": "robust_minmax",
-      "fragility_score": 0.40,
-      "fragility_note": "Rt estimation requires model assumptions; 7-14 day delay in signal.",
-      "manipulability_note": "Rt can be artificially reduced by reducing test volume.",
-      "description": "Effective Rt (lower Rt = more effective containment integration). Invert: I = 1 / (Rt + ε).",
-      "invert": true,
-      "transform": "reciprocal_plus_eps"
-    },
-    {
-      "oric_role": "S",
-      "source_column": "vaccination_coverage",
+      "source_column": "O",
+      "oric_variable": "O",
       "direction": "positive",
-      "normalization_override": "minmax",
-      "fragility_score": 0.30,
-      "fragility_note": "Coverage assumes homogeneous uptake; waning immunity not reflected.",
-      "manipulability_note": "Reported coverage may not match dose-adjusted immunity.",
-      "description": "Cumulative vaccination coverage (symbolic stock: transmitted immune memory)."
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "O = smooth(log1p(demand)) level proxy."
     },
     {
-      "oric_role": "demand",
-      "source_column": "new_cases_per_100k",
+      "source_column": "R",
+      "oric_variable": "R",
       "direction": "positive",
-      "normalization_override": "robust_minmax",
-      "fragility_score": 0.35,
-      "fragility_note": "Cases per 100k under-reported in high-incidence phases.",
-      "manipulability_note": "Reporting delays create apparent demand dips. Use 7-day rolling mean.",
-      "description": "Weekly new cases per 100k population (environmental demand on health system)."
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "R = -diff(deviation from rolling median), recovery proxy."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "I = rolling MAD of diff(deviation), instability proxy."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "S mirrors demand for Granger direction checks."
     }
-  ],
-  "data_preparation_notes": [
-    "Use 7-day rolling mean for all raw columns before saving to real.csv.",
-    "Mark major policy changes (lockdowns, testing expansions) in a separate 'event_type' column.",
-    "Minimum series length: 60 weeks. Recommended: 100+ weeks for stable statistics.",
-    "Public data: ECDC surveillance, OurWorldInData, or national health ministry APIs."
   ]
 }

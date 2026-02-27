@@ -80,12 +80,13 @@ class SectorConfig:
 
     # robustness variants (window_size, normalize, resample_frac)
     robustness_variants: list[dict[str, Any]] = field(default_factory=lambda: [
-        {"name": "window_short",  "pre_horizon": 50,  "post_horizon": 50,  "normalize": "robust_minmax"},
-        {"name": "window_medium", "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax"},
-        {"name": "norm_minmax",   "pre_horizon": 100, "post_horizon": 100, "normalize": "minmax"},
-        {"name": "resample_80",   "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax",
-         "resample_frac": 0.80},
-    ])
+    {"name": "window_short",  "pre_horizon": 50,  "post_horizon": 50,  "normalize": "robust_minmax"},
+    {"name": "window_medium", "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax"},
+    {"name": "window_long",   "pre_horizon": 150, "post_horizon": 150, "normalize": "robust_minmax"},
+    {"name": "norm_minmax",   "pre_horizon": 100, "post_horizon": 100, "normalize": "minmax"},
+    {"name": "resample_80",   "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax", "resample_frac": 0.80},
+    {"name": "resample_60",   "pre_horizon": 100, "post_horizon": 100, "normalize": "robust_minmax", "resample_frac": 0.60},
+])
 
 
 # --------------------------------------------------------------------------- #
@@ -268,16 +269,31 @@ def run_sector_panel(
         csv_path = Path(args.real_csv)
         print(f"[step 0] Using provided real CSV: {csv_path}")
     else:
-        print("[step 0] No --real-csv provided — generating synthetic pilot data...")
-        try:
-            synth_generator(synth_dir, seed, pilot_id)
-            csv_path = synth_dir / "real.csv"
-            synth_spec = synth_dir / "proxy_spec.json"
-            if synth_spec.exists():
-                spec_path = synth_spec
-            elif not spec_path.exists():
-                print("[FATAL] No proxy_spec.json found (synth dir or real data dir)")
-                return 1
+        real_csv = data_dir / "real.csv"
+        if real_csv.exists():
+            csv_path = real_csv
+            print(f"[step 0] Using real pilot CSV from repo: {csv_path}")
+            # Snapshot inputs into synth_data/ for auditability and CI artifacts
+            try:
+                (synth_dir / "real.csv").write_text(csv_path.read_text(encoding="utf-8"), encoding="utf-8")
+            except Exception as exc:  # noqa: BLE001
+                print(f"[WARN] Could not snapshot real.csv into synth_data: {exc}")
+            if spec_path.exists():
+                try:
+                    (synth_dir / "proxy_spec.json").write_text(spec_path.read_text(encoding="utf-8"), encoding="utf-8")
+                except Exception as exc:  # noqa: BLE001
+                    print(f"[WARN] Could not snapshot proxy_spec.json into synth_data: {exc}")
+        else:
+            print("[step 0] No --real-csv provided and no repo real.csv found — generating synthetic pilot data...")
+            try:
+                synth_generator(synth_dir, seed, pilot_id)
+                csv_path = synth_dir / "real.csv"
+                synth_spec = synth_dir / "proxy_spec.json"
+                if synth_spec.exists():
+                    spec_path = synth_spec
+                elif not spec_path.exists():
+                    print("[FATAL] No proxy_spec.json found (synth dir or real data dir)")
+                    return 1
             print(f"         → {csv_path}  ({sum(1 for _ in open(csv_path)) - 1} rows)")
         except Exception as exc:
             print(f"[step 0] Synth generator FAILED: {exc}")

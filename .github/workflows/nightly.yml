@@ -229,6 +229,7 @@ jobs:
 
           PYTHONPATH=src python 04_Code/pipeline/run_real_data_validation_protocol.py \
             --input 03_Data/real/fred_monthly/real.csv \
+            --inputs 03_Data/real/validation_candidates/epidemic_ecdc_BE_daily_oric.csv 03_Data/real/validation_candidates/excess_deaths_OWID_BE_oric.csv 03_Data/real/validation_candidates/ecology_pelt_oric.csv \
             --outdir _ci_out/real/validation_protocol \
             --col-time date --time-mode index \
             --col-O O --col-R R --col-I I \

@@ -35,6 +35,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -93,6 +95,7 @@ jobs:
         with:
           name: sector-bio-${{ matrix.pilot }}-${{ github.run_number }}
           path: _sector_bio_out/${{ matrix.pilot }}/
+          if-no-files-found: warn
           retention-days: 14
 
   bio-sector-summary:
@@ -103,6 +106,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
 
       - name: Download all bio artifacts
         uses: actions/download-artifact@v4
