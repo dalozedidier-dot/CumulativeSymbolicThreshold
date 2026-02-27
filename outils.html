@@ -1,13 +1,14 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORI-C | Observation, Régulation, Intégration — Cohérence</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Outils | ORI-C</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&amp;family=JetBrains+Mono:wght@300;400&amp;display=swap" rel="stylesheet"/>
+<style>
         :root {
             --bg-deep: #0a0b0d;
             --bg-surface: #111214;
@@ -1430,285 +1431,136 @@
     </style>
 </head>
 <body>
-    <!-- Living Background -->
-    <div class="living-bg">
-        <!-- Cyberspace grid floor -->
-        <div class="cyber-grid-floor"></div>
-        
-        <!-- Central light source -->
-        <div class="cyber-light-source"></div>
-        
-        <!-- Scan line -->
-        <div class="scan-line"></div>
-        
-        <!-- Data streams -->
-        <div class="data-stream" style="top: 20%; width: 200px;"></div>
-        <div class="data-stream" style="top: 35%; width: 150px; animation-delay: 2s;"></div>
-        <div class="data-stream" style="top: 55%; width: 180px; animation-delay: 4s;"></div>
-        <div class="data-stream" style="top: 70%; width: 120px; animation-delay: 6s;"></div>
-        <div class="data-stream" style="top: 85%; width: 160px; animation-delay: 3s;"></div>
-        
-        <!-- Vertical data lines -->
-        <div class="data-line-vertical" style="left: 15%; height: 150px; animation-delay: 0s;"></div>
-        <div class="data-line-vertical" style="left: 30%; height: 200px; animation-delay: 3s;"></div>
-        <div class="data-line-vertical" style="left: 50%; height: 180px; animation-delay: 6s;"></div>
-        <div class="data-line-vertical" style="left: 70%; height: 160px; animation-delay: 2s;"></div>
-        <div class="data-line-vertical" style="left: 85%; height: 140px; animation-delay: 5s;"></div>
-        
-        <!-- Data blocks -->
-        <div class="data-block" style="left: 10%; animation-delay: 0s;">0x7F3A 0x9B2C</div>
-        <div class="data-block" style="left: 25%; animation-delay: 5s;">:: SYNC ::</div>
-        <div class="data-block" style="left: 45%; animation-delay: 8s;">▓▓░░▓▓░▓</div>
-        <div class="data-block" style="left: 65%; animation-delay: 12s;">NODE_OK</div>
-        <div class="data-block" style="left: 80%; animation-delay: 3s;">∞ FLOW</div>
-        
-        <!-- Hex nodes -->
-        <div class="hex-node" style="left: 20%; animation-delay: 0s;">
-            <svg viewBox="0 0 30 35">
-                <polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/>
-                <circle cx="15" cy="17" r="3"/>
-            </svg>
+<!-- Living Background -->
+<div class="living-bg">
+<!-- Cyberspace grid floor -->
+<div class="cyber-grid-floor"></div>
+<!-- Central light source -->
+<div class="cyber-light-source"></div>
+<!-- Scan line -->
+<div class="scan-line"></div>
+<!-- Data streams -->
+<div class="data-stream" style="top: 20%; width: 200px;"></div>
+<div class="data-stream" style="top: 35%; width: 150px; animation-delay: 2s;"></div>
+<div class="data-stream" style="top: 55%; width: 180px; animation-delay: 4s;"></div>
+<div class="data-stream" style="top: 70%; width: 120px; animation-delay: 6s;"></div>
+<div class="data-stream" style="top: 85%; width: 160px; animation-delay: 3s;"></div>
+<!-- Vertical data lines -->
+<div class="data-line-vertical" style="left: 15%; height: 150px; animation-delay: 0s;"></div>
+<div class="data-line-vertical" style="left: 30%; height: 200px; animation-delay: 3s;"></div>
+<div class="data-line-vertical" style="left: 50%; height: 180px; animation-delay: 6s;"></div>
+<div class="data-line-vertical" style="left: 70%; height: 160px; animation-delay: 2s;"></div>
+<div class="data-line-vertical" style="left: 85%; height: 140px; animation-delay: 5s;"></div>
+<!-- Data blocks -->
+<div class="data-block" style="left: 10%; animation-delay: 0s;">0x7F3A 0x9B2C</div>
+<div class="data-block" style="left: 25%; animation-delay: 5s;">:: SYNC ::</div>
+<div class="data-block" style="left: 45%; animation-delay: 8s;">▓▓░░▓▓░▓</div>
+<div class="data-block" style="left: 65%; animation-delay: 12s;">NODE_OK</div>
+<div class="data-block" style="left: 80%; animation-delay: 3s;">∞ FLOW</div>
+<!-- Hex nodes -->
+<div class="hex-node" style="left: 20%; animation-delay: 0s;">
+<svg viewbox="0 0 30 35">
+<polygon points="15,2 28,10 28,25 15,33 2,25 2,10"></polygon>
+<circle cx="15" cy="17" r="3"></circle>
+</svg>
+</div>
+<div class="hex-node" style="left: 40%; animation-delay: 7s;">
+<svg viewbox="0 0 30 35">
+<polygon points="15,2 28,10 28,25 15,33 2,25 2,10"></polygon>
+<circle cx="15" cy="17" r="3"></circle>
+</svg>
+</div>
+<div class="hex-node" style="left: 60%; animation-delay: 14s;">
+<svg viewbox="0 0 30 35">
+<polygon points="15,2 28,10 28,25 15,33 2,25 2,10"></polygon>
+<circle cx="15" cy="17" r="3"></circle>
+</svg>
+</div>
+<div class="hex-node" style="left: 80%; animation-delay: 4s;">
+<svg viewbox="0 0 30 35">
+<polygon points="15,2 28,10 28,25 15,33 2,25 2,10"></polygon>
+<circle cx="15" cy="17" r="3"></circle>
+</svg>
+</div>
+<div class="holo-grid"></div>
+<div class="flow-line"></div>
+<div class="flow-line"></div>
+<div class="flow-line"></div>
+<div class="flow-line"></div>
+<div class="flow-line"></div>
+<div class="flow-line"></div>
+<!-- Holographic Elements Container -->
+<div class="holo-elements" id="holoElements"></div>
+</div>
+<nav>
+<a class="nav-logo" href="ori-c-presentation.html">ORI-C</a>
+<ul class="nav-links">
+<li><a href="#fondement">Fondement</a></li>
+<li><a href="#principes">Principes</a></li>
+<li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+<li><a href="palm-cadre.html">PALM</a></li>
+<li><a href="ori-c-articles.html">Articles</a></li>
+<li><a href="ori-c-livres.html">Livres</a></li>
+<li><a href="ori-c-recherche.html">Recherches</a></li>
+<li><a href="outils.html">Outils</a></li>
+<li><a href="ori-c-contact.html">Contact</a></li>
+</ul>
+<div class="lang-switcher">
+            <button class="lang-btn active" onclick="window.location.href='outils.html'">FR</button>
+            <button class="lang-btn" onclick="window.location.href='outils-en.html'">EN</button>
         </div>
-        <div class="hex-node" style="left: 40%; animation-delay: 7s;">
-            <svg viewBox="0 0 30 35">
-                <polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/>
-                <circle cx="15" cy="17" r="3"/>
-            </svg>
-        </div>
-        <div class="hex-node" style="left: 60%; animation-delay: 14s;">
-            <svg viewBox="0 0 30 35">
-                <polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/>
-                <circle cx="15" cy="17" r="3"/>
-            </svg>
-        </div>
-        <div class="hex-node" style="left: 80%; animation-delay: 4s;">
-            <svg viewBox="0 0 30 35">
-                <polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/>
-                <circle cx="15" cy="17" r="3"/>
-            </svg>
-        </div>
-        
-        <div class="holo-grid"></div>
-        <div class="flow-line"></div>
-        <div class="flow-line"></div>
-        <div class="flow-line"></div>
-        <div class="flow-line"></div>
-        <div class="flow-line"></div>
-        <div class="flow-line"></div>
-        
-        <!-- Holographic Elements Container -->
-        <div class="holo-elements" id="holoElements"></div>
-    </div>
-
-    <nav>
-        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
-        <ul class="nav-links">
-            <li><a href="#fondement">Fondement</a></li>
-            <li><a href="#principes">Principes</a></li>
-            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
-            <li><a href="palm-cadre.html">PALM</a></li>
-            <li><a href="ori-c-articles.html">Articles</a></li>
-            <li><a href="ori-c-livres.html">Livres</a></li>
-            <li><a href="ori-c-recherche.html">Recherches</a></li>
-            <li><a href="outils.html">Outils</a></li>
-            <li><a href="ori-c-contact.html">Contact</a></li>
-        </ul>
-        <div class="lang-switcher">
-            <button class="lang-btn active" onclick="window.location.href='ori-c-presentation.html'">FR</button>
-            <button class="lang-btn" onclick="window.location.href='ori-c-presentation-en.html'">EN</button>
-        </div>
-    </nav>
-
-    <!-- Hero -->
-    <section class="hero">
-        <p class="hero-subtitle">Un cadre d'observation du vivant par <a href="ori-c-contact.html" style="color: var(--accent-flow); text-decoration: none; border-bottom: 1px solid var(--accent-flow);">Didier Daloze</a></p>
-        <h1 class="hero-title">
-            ORI-C
-            <span>Observation · Régulation · Intégration — Cohérence</span>
-        </h1>
-        <p class="hero-meaning">
-            Un système vivant ne s'effondre pas par attaque extérieure, 
-            mais par accumulation d'incohérences non intégrées.
+</nav>
+<!-- Hero -->
+<section class="hero">
+<p class="hero-subtitle">Outils et formats de lecture. Des instruments, pas des récits.</p>
+<h1>Outils</h1>
+<p class="hero-description">
+            Ici, tu trouves des outils concrets. Chaque outil a un cadre de lecture. Ce qu’il fait dans un système, ce qu’il permet de connaître, et où il intervient.
         </p>
-        <div class="hero-scroll">
-            <div class="scroll-line"></div>
-        </div>
-    </section>
+</section>
 
-    <!-- Fondement -->
-    <section id="fondement">
-        <span class="section-marker">Fondement</span>
-        <div class="content-grid">
-            <div class="section-header">
-                <div class="section-number">01</div>
-                <h2 class="section-title">Le déplacement fondamental</h2>
-                <p class="section-lead">De la stabilité vers la cohérence</p>
-            </div>
-            <div class="section-content">
-                <p>Tout système vivant, quelle que soit l'échelle considérée, tend vers la cohérence plutôt que vers la stabilité. La cohérence désigne la compatibilité dynamique entre les éléments d'un système, leurs interactions et les informations qu'ils échangent. Elle n'implique ni harmonie permanente, ni absence de conflit, ni équilibre figé.</p>
-                
-                <p>Un système peut être stable tout en étant incohérent. Un système cohérent n'est jamais figé. Il demeure métastable, c'est-à-dire capable de se reconfigurer sans perdre sa continuité fonctionnelle.</p>
 
-                <p>Ce point rejoint un acquis central des sciences des systèmes complexes : dans les systèmes loin de l'équilibre, l'ordre n'est pas le contraire de l'instabilité — il peut émerger à partir d'elle, via des boucles de rétroaction et des transitions de régime.</p>
-            </div>
-        </div>
-    </section>
 
-    <!-- Quote -->
-    <section class="quote-section">
-        <blockquote>
-            Le vivant ne résout pas. Il déplace, convertit, temporise, hybridise.
-        </blockquote>
-        <p class="quote-author">Axiome premier — PALM</p>
-    </section>
-
-    <!-- Principes -->
-    <section id="principes">
-        <span class="section-marker">Principes</span>
-        <div class="content-grid">
-            <div class="section-header">
-                <div class="section-number">02</div>
-                <h2 class="section-title">Principes fondamentaux</h2>
-                <p class="section-lead">Ce qu'ORI-C révèle</p>
-            </div>
-            <div class="section-content">
-                <p>Dans tout système vivant, l'instabilité est une condition fonctionnelle et non un dysfonctionnement. Le désaccord est une information et non une anomalie. La tension est un signal d'ajustement et non un échec.</p>
-                
-                <div class="principles-grid">
-                    <div class="principle-card">
-                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
-                            <circle cx="20" cy="20" r="15"/>
-                            <path d="M20 5v30M5 20h30"/>
-                        </svg>
-                        <h3 class="principle-title">L'instabilité créatrice</h3>
-                        <p class="principle-text">L'ordre n'est pas imposé, il émerge. Le chaos créatif désigne une phase transitoire d'indétermination au cours de laquelle un nouveau niveau de cohérence peut apparaître.</p>
-                    </div>
-                    
-                    <div class="principle-card">
-                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
-                            <path d="M5 20c0-8.3 6.7-15 15-15s15 6.7 15 15"/>
-                            <path d="M35 20c0 8.3-6.7 15-15 15s-15-6.7-15-15"/>
-                        </svg>
-                        <h3 class="principle-title">Le désaccord comme signal</h3>
-                        <p class="principle-text">Le désaccord constitue une fonction vitale de circulation de l'information. Il signale qu'un élément n'est plus intégré dans la cohérence globale.</p>
-                    </div>
-                    
-                    <div class="principle-card">
-                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
-                            <path d="M8 32L20 8l12 24"/>
-                            <circle cx="20" cy="25" r="5"/>
-                        </svg>
-                        <h3 class="principle-title">La saturation adaptative</h3>
-                        <p class="principle-text">Un système peut continuer à fonctionner tout en perdant progressivement sa capacité d'évolution. La rupture survient par saturation de la capacité d'intégration.</p>
-                    </div>
-                    
-                    <div class="principle-card">
-                        <svg class="principle-icon" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1">
-                            <rect x="5" y="5" width="30" height="30" rx="2"/>
-                            <path d="M12 20h16M20 12v16"/>
-                        </svg>
-                        <h3 class="principle-title">Comprendre ≠ Intégrer</h3>
-                        <p class="principle-text">Une cohérence peut être comprise, acceptée et défendue consciemment sans être intégrée fonctionnellement. C'est le verrou final.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Framework Visual -->
-    <section id="cadre" class="framework-visual">
-        <div class="orbit-container">
-            <div class="orbit-center" onclick="window.location.href='ori-c-cadre-complet.html'" role="button" tabindex="0">
-                <span class="center-text">ORI-C</span>
-                <span class="center-hint">Explorer le cadre</span>
-                <div class="center-pulse"></div>
-            </div>
-            <div class="orbit-ring"></div>
-            <div class="orbit-ring"></div>
-            <div class="orbit-ring"></div>
-            <div class="orbit-node n1">Observation</div>
-            <div class="orbit-node n2">Pression</div>
-            <div class="orbit-node n3">Mètis</div>
-            <div class="orbit-node n4">Régulation</div>
-            <div class="orbit-node n5">Affordances</div>
-            <div class="orbit-node n6">Cohérence</div>
-        </div>
-    </section>
-
-    <!-- Échelles -->
-    <section id="echelles" class="scales-section">
-        <span class="section-marker">Échelles</span>
-        <div class="content-grid">
-            <div class="section-header">
-                <div class="section-number">03</div>
-                <h2 class="section-title">Transversalité des échelles</h2>
-                <p class="section-lead">Du cosmos au psychisme</p>
-            </div>
-            <div class="section-content">
-                <p>Le fil directeur n'est pas une finalité. C'est une dynamique : sous contrainte, des systèmes hors équilibre exploitent des affordances pour stabiliser localement des corrélations et des traces, au prix de coûts déplacés et d'irréversibilités.</p>
-                
-                <p>La même grammaire dynamique se retrouve à toutes les échelles : on ne "maîtrise" pas l'instabilité, on l'habite et on la convertit.</p>
-            </div>
-        </div>
-        
-        <div class="scales-visual">
-            <div class="scale-bar">
-                <span class="scale-label">Cosmos</span>
-            </div>
-            <div class="scale-bar">
-                <span class="scale-label">Vivant biologique</span>
-            </div>
-            <div class="scale-bar">
-                <span class="scale-label">Psychisme</span>
-            </div>
-            <div class="scale-bar">
-                <span class="scale-label">Systèmes sociaux</span>
-            </div>
-            <div class="scale-bar">
-                <span class="scale-label">Écosystèmes</span>
-            </div>
-            <div class="scale-bar">
-                <span class="scale-label">Économies</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Final Quote -->
-    <section class="quote-section">
-        <blockquote>
-            La cohérence du vivant n'est ni un idéal ni une croyance. 
-            C'est un principe fonctionnel de viabilité.
-        </blockquote>
-        <p class="quote-author">Principe de viabilité systémique</p>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <p class="footer-tagline">
+<section id="outils"><span class="section-marker">Outils</span><div class="content-grid"><div class="section-header"><div class="section-number">01</div><h2 class="section-title">Outils et formats</h2><p class="section-lead">Des instruments. Une grammaire unique. Des sorties comparables.</p></div><div class="section-content"><p>On a 118 éléments chimiques. Tout le monde connaît le tableau périodique. Mais si je te demande : « Le silicium, il fait quoi, il prouve quoi, et il impacte quoi ? » tu vas souvent mélanger trois choses différentes dans la même phrase. Ici, on sépare ces niveaux, et on applique la même grammaire à des outils complets.</p><div class="principles-grid"><div class="principle-card"><svg class="principle-icon" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 40 40">
+<circle cx="20" cy="20" r="15"></circle>
+<path d="M20 5v30M5 20h30"></path>
+</svg><h3 class="principle-title">Coherence Tables</h3><p class="principle-text">On confond l’objet, sa fonction, et son rôle dans la connaissance. Partout. Ce format sépare trois niveaux pour chaque élément : utilisation, rôle épistémique, macro-secteurs. Résultat : une ligne par élément, comparable, triable, filtrable. Même gabarit appliqué aux symboles mathématiques.</p><p><a class="btn" href="https://dalozedidier-dot.github.io/coherence-tables/" rel="noopener" target="_blank">Ouvrir</a> </p></div><div class="principle-card"><svg class="principle-icon" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 40 40">
+<path d="M5 20c0-8.3 6.7-15 15-15s15 6.7 15 15"></path>
+<path d="M35 20c0 8.3-6.7 15-15 15s-15-6.7-15-15"></path>
+</svg><h3 class="principle-title">Amplification-Barometer</h3><p class="principle-text">NEP-LIMITE 2.0. La Civilisation Amplificatrice. Méthode pour mesurer la tension entre puissance d’action et capacité de contrôle dans les systèmes ultra-puissants (IA, finance, réseaux sociaux, énergie, défense). Objectif : imposer des limites intelligentes avant les emballements, sans bloquer l’innovation.</p><p><a class="btn" href="https://github.com/dalozedidier-dot/Amplification-Barometer" rel="noopener" target="_blank">GitHub</a> <a class="btn" href="https://drive.google.com/file/d/1y8rOC9jQhuvQxccjCGu_5lLg-_zgwvIo/view" rel="noopener" target="_blank">PDF</a> </p></div><div class="principle-card"><svg class="principle-icon" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 40 40">
+<path d="M8 32L20 8l12 24"></path>
+<circle cx="20" cy="25" r="5"></circle>
+</svg><h3 class="principle-title">AstroOracle</h3><p class="principle-text">Oracle à apprentissage actif pour le triage d’anomalies astronomiques. Récupère des cutouts SkyView, classe les candidats via score d’anomalie, acquisition et diversité. Interface CLI et web UI pour l’annotation, avec ré-entraînement automatique.</p><p><a class="btn" href="https://dalozedidier-dot.github.io/AstroOracle/" rel="noopener" target="_blank">Ouvrir</a> </p></div><div class="principle-card"><svg class="principle-icon" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 40 40">
+<rect height="30" rx="2" width="30" x="5" y="5"></rect>
+<path d="M12 20h16M20 12v16"></path>
+</svg><h3 class="principle-title">ChaosTrace</h3><p class="principle-text">Toolkit Python léger pour détecter des transitions de régime et des anomalies cachées dans des séries temporelles multivariées haute fréquence. Reconstruction d’espace de phase, RQA, métriques inspirées du chaos (Takens, Lyapunov proxy).</p></div><div class="principle-card"><svg class="principle-icon" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 40 40">
+<circle cx="20" cy="20" r="15"></circle>
+<path d="M20 5v30M5 20h30"></path>
+</svg><h3 class="principle-title">AstroGraphAnomaly</h3><p class="principle-text">Outil open-source pour détecter des sources Gaia inhabituelles. Combine scoring d’anomalies basé sur les features et analyse de graphe k-plus-proches-voisins sur la sphère céleste. Explainability LIME et génération de prompts LLM.</p></div></div></div></div></section><footer>
+<p class="footer-tagline">
             Le principe fonctionnel de viabilité systémique ne dit pas quoi bâtir. 
             Il indique ce qui ne peut pas durer.
         </p>
-        <div class="footer-links">
-            <a href="ori-c-contact.html" class="footer-link">Didier Daloze</a>
-            <span class="footer-sep">·</span>
-            <a href="palm-cadre.html" class="footer-link">PALM</a>
-            <span class="footer-sep">·</span>
-            <a href="ori-c-cadre-complet.html" class="footer-link">Cadre complet</a>
-            <span class="footer-sep">·</span>
-            <a href="ori-c-articles.html" class="footer-link">Articles</a>
-            <span class="footer-sep">·</span>
-            <a href="ori-c-livres.html" class="footer-link">Livres</a>
-            <span class="footer-sep">·</span>
-            <a href="ori-c-recherche.html" class="footer-link">Recherches</a>
-            <span class="footer-sep">·</span>
-            <a href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold" target="_blank" class="footer-link">GitHub</a>
-            <span class="footer-sep">·</span>
-            <a href="https://osf.io/g62pz/" target="_blank" class="footer-link">OSF</a>
-        </div>
-        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
-    </footer>
-
-    <script>
+<div class="footer-links">
+<a class="footer-link" href="ori-c-contact.html">Didier Daloze</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="palm-cadre.html">PALM</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="ori-c-cadre-complet.html">Cadre complet</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="ori-c-articles.html">Articles</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="ori-c-livres.html">Livres</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="ori-c-recherche.html">Recherches</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold" target="_blank">GitHub</a>
+<span class="footer-sep">·</span>
+<a class="footer-link" href="https://osf.io/g62pz/" target="_blank">OSF</a>
+</div>
+<p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
+</footer>
+<script>
         // Precise scientific holographic elements
         const holoSVGs = {
             // DNA Double Helix - accurate representation
