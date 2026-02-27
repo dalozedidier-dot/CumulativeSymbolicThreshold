@@ -802,7 +802,7 @@
 
         .nav-links {
             display: flex;
-            gap: 3rem;
+            gap: 2rem;
             list-style: none;
         }
 
@@ -810,15 +810,17 @@
             color: var(--text-primary);
             text-decoration: none;
             border-bottom: none;
-            font-size: 0.85rem;
-            letter-spacing: 0.15em;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
         }
 
         .nav-links a:hover {
             opacity: 1;
+            color: var(--accent-flow);
         }
 
         /* Language switcher */
