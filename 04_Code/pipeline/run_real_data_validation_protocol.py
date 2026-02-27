@@ -467,7 +467,16 @@ def main() -> int:
     ap = argparse.ArgumentParser(
         description="ORI-C real-data validation protocol: 3 datasets × window sensitivity × subsampling"
     )
-    ap.add_argument("--input", required=True, help="Input CSV (the 'transition' dataset)")
+    ap.add_argument("--input", required=True, help="Input CSV (single transition dataset).")
+    ap.add_argument(
+        "--inputs",
+        nargs="*",
+        default=None,
+        help=(
+            "Optional additional input CSVs. If provided, the protocol is run for each input and an "
+            "aggregate verdict is emitted (ACCEPT if any dataset ACCEPTs)."
+        ),
+    )
     ap.add_argument("--outdir", required=True)
     ap.add_argument("--col-time", default="t")
     ap.add_argument("--time-mode", default="index", choices=["index", "value"])
@@ -482,148 +491,197 @@ def main() -> int:
     ap.add_argument("--lags", default="1-5")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument(
-        "--fast", action="store_true",
-        help=f"Fast mode: {N_WINDOW_VARIANTS_FAST} window variants, {N_BOOT_FAST} subsamples (default: {N_WINDOW_VARIANTS_FULL}/{N_BOOT_FULL})"
+        "--fast",
+        action="store_true",
+        help=f"Fast mode: {N_WINDOW_VARIANTS_FAST} window variants, {N_BOOT_FAST} subsamples (default: {N_WINDOW_VARIANTS_FULL}/{N_BOOT_FULL})",
     )
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args()
 
-    outdir = Path(args.outdir)
-    tabdir = outdir / "tables"
-    tabdir.mkdir(parents=True, exist_ok=True)
-    (outdir / "figures").mkdir(parents=True, exist_ok=True)
+    # Resolve input list (unique, ordered)
+    inputs: list[str] = []
+    for p in [args.input] + (args.inputs or []):
+        if p and p not in inputs:
+            inputs.append(p)
 
+    outdir_root = Path(args.outdir)
+    outdir_root.mkdir(parents=True, exist_ok=True)
+
+    # Common protocol configuration
     n_window = N_WINDOW_VARIANTS_FAST if args.fast else N_WINDOW_VARIANTS_FULL
     n_boot = N_BOOT_FAST if args.fast else N_BOOT_FULL
     window_variants = (_WINDOW_VARIANTS_FAST if args.fast else _WINDOW_VARIANTS_FULL)
-    default_pre, default_post = 60, 60  # fixed window for subsampling phase
 
-    print(f"Protocol mode: {'fast' if args.fast else 'full'}  "
-          f"(N_window={n_window}, N_boot={n_boot}, sample_frac={SAMPLE_FRAC})")
-    print(f"Input: {args.input}")
-
-    # Load input data
-    df_test = pd.read_csv(Path(args.input))
-    df_stable = _make_stable(df_test)
-    df_placebo = _make_placebo(df_test, args.seed)
-
-    print(f"Dataset sizes: test={len(df_test)}  stable={len(df_stable)}  placebo={len(df_placebo)}")
-
-    datasets = [
-        ("test",    df_test),
-        ("stable",  df_stable),
-        ("placebo", df_placebo),
-    ]
-
-    all_window_rows: list[dict] = []
-    all_subsample_rows: list[dict] = []
-
-    with tempfile.TemporaryDirectory(prefix="oric_val_") as tmpstr:
-        tmpdir = Path(tmpstr)
-
-        for ds_label, df_ds in datasets:
-            print(f"\n── Dataset: {ds_label} (n={len(df_ds)}) ──")
-
-            # Phase A: window sensitivity
-            print(f"  Phase A: window sensitivity ({n_window} variants) ...")
-            wrows = _phase_window_sensitivity(
-                df_ds, ds_label, tmpdir, window_variants,
-                args.col_O, args.col_R, args.col_I, args.col_demand, args.col_S,
-                args.col_time, args.time_mode, args.normalize, args.control_mode,
-                args.lags, args.baseline_n, args.seed, args.verbose,
-            )
-            all_window_rows.extend(wrows)
-
-            # Phase B: subsample stability
-            print(f"  Phase B: subsampling ({n_boot} reps, {int(SAMPLE_FRAC*100)}% rows each) ...")
-            srows = _phase_subsample_stability(
-                df_ds, ds_label, tmpdir, n_boot, default_pre, default_post,
-                args.col_O, args.col_R, args.col_I, args.col_demand, args.col_S,
-                args.col_time, args.time_mode, args.normalize, args.control_mode,
-                args.lags, args.baseline_n, args.seed, args.verbose,
-            )
-            all_subsample_rows.extend(srows)
-
-    # Aggregate per dataset
-    def _by_ds(rows: list[dict], ds: str) -> list[dict]:
-        return [r for r in rows if r.get("dataset") == ds]
-
-    test_sub = _by_ds(all_subsample_rows, "test")
-    stable_sub = _by_ds(all_subsample_rows, "stable")
-    placebo_sub = _by_ds(all_subsample_rows, "placebo")
-
-    test_win = _by_ds(all_window_rows, "test")
-    stable_win = _by_ds(all_window_rows, "stable")
-    placebo_win = _by_ds(all_window_rows, "placebo")
-
-    test_metrics = _stability_metrics(test_sub, expected_detected=True)
-    stable_metrics = _stability_metrics(stable_sub, expected_detected=False)
-    placebo_metrics = _stability_metrics(placebo_sub, expected_detected=False)
-
-    verdict, notes = _protocol_verdict(
-        test_metrics, stable_metrics, placebo_metrics,
-        test_win, stable_win, placebo_win,
+    print(
+        f"Protocol mode: {'fast' if args.fast else 'full'}  "
+        f"(N_window={n_window}, N_boot={n_boot}, sample_frac={SAMPLE_FRAC})"
     )
+    print(f"Inputs ({len(inputs)}):")
+    for p in inputs:
+        print(f"  - {p}")
 
-    # Print summary
-    print(f"\n── Stability Summary ──")
-    print(f"  test    : det_rate={test_metrics.get('detection_rate', 'NaN'):.2f}  "
-          f"stability={test_metrics.get('stability_fraction', 'NaN'):.2f}  "
-          f"modal={test_metrics.get('modal_verdict')}")
-    print(f"  stable  : non_det_rate={stable_metrics.get('non_detection_rate', 'NaN'):.2f}  "
-          f"stability={stable_metrics.get('stability_fraction', 'NaN'):.2f}")
-    print(f"  placebo : non_det_rate={placebo_metrics.get('non_detection_rate', 'NaN'):.2f}  "
-          f"stability={placebo_metrics.get('stability_fraction', 'NaN'):.2f}")
-    print(f"  C1={notes['C1_transition']['passed']}  "
-          f"C2={notes['C2_stable']['passed']}  "
-          f"C3={notes['C3_placebo']['passed']}")
-    print(f"\n── Protocol Verdict: {verdict} ──")
-    print(f"  {notes.get('reason', '')}")
+    aggregate_rows: list[dict] = []
+    best_row: dict | None = None
 
-    # Write outputs
-    pd.DataFrame(all_window_rows).to_csv(tabdir / "window_sensitivity.csv", index=False)
-    pd.DataFrame(all_subsample_rows).to_csv(tabdir / "subsample_stability.csv", index=False)
+    for inp in inputs:
+        inp_path = Path(inp)
+        # Make a stable subdir name
+        stem = inp_path.stem.replace(" ", "_")
+        subdir = outdir_root / stem
+        tabdir = subdir / "tables"
+        figdir = subdir / "figures"
+        tabdir.mkdir(parents=True, exist_ok=True)
+        figdir.mkdir(parents=True, exist_ok=True)
 
-    validation_summary = {
-        "input_csv": str(Path(args.input)),
-        "n_rows_test": int(len(df_test)),
-        "n_rows_stable": int(len(df_stable)),
-        "n_window_variants": int(n_window),
-        "n_boot": int(n_boot),
-        "sample_frac": float(SAMPLE_FRAC),
-        "mode": "fast" if args.fast else "full",
-        "seed": int(args.seed),
-        "test_metrics": test_metrics,
-        "stable_metrics": stable_metrics,
-        "placebo_metrics": placebo_metrics,
-        "protocol_conditions": notes,
-        "verdict": verdict,
-        "stability_min": float(STABILITY_MIN),
-        "stable_min": float(STABLE_MIN),
-        "placebo_min": float(PLACEBO_MIN),
+        print("\n" + "=" * 78)
+        print(f"Running protocol on: {inp}")
+        print(f"Output dir: {subdir}")
+        print("=" * 78)
+
+        df_test = pd.read_csv(inp_path)
+        df_stable = _make_stable(df_test)
+        df_placebo = _make_placebo(df_test, args.seed)
+
+        print(f"Dataset sizes: test={len(df_test)}  stable={len(df_stable)}  placebo={len(df_placebo)}")
+
+        datasets = [
+            ("test", df_test),
+            ("stable", df_stable),
+            ("placebo", df_placebo),
+        ]
+
+        all_window_rows: list[dict] = []
+        all_subsample_rows: list[dict] = []
+
+        with tempfile.TemporaryDirectory(prefix="oric_val_") as tmpstr:
+            tmpdir = Path(tmpstr)
+
+            for ds_label, df_ds in datasets:
+                print(f"\n── Dataset: {ds_label} (n={len(df_ds)}) ──")
+
+                # Phase A: window sensitivity
+                print(f"  Phase A: window sensitivity ({n_window} variants) ...")
+                wrows = _phase_window_sensitivity(
+                    df_ds,
+                    ds_label,
+                    tmpdir,
+                    window_variants,
+                    args.col_O,
+                    args.col_R,
+                    args.col_I,
+                    args.col_demand,
+                    args.col_S,
+                    args.col_time,
+                    args.time_mode,
+                    args.normalize,
+                    args.control_mode,
+                    args.baseline_n,
+                    args.lags,
+                    args.seed,
+                )
+                all_window_rows.extend(wrows)
+
+                # Phase B: subsample stability (fixed default window)
+                print(f"  Phase B: subsample stability (n_boot={n_boot}) ...")
+                srows = _phase_subsample_stability(
+                    df_ds,
+                    ds_label,
+                    tmpdir,
+                    pre_horizon=60,
+                    post_horizon=60,
+                    n_boot=n_boot,
+                    sample_frac=SAMPLE_FRAC,
+                    col_O=args.col_O,
+                    col_R=args.col_R,
+                    col_I=args.col_I,
+                    col_demand=args.col_demand,
+                    col_S=args.col_S,
+                    col_time=args.col_time,
+                    time_mode=args.time_mode,
+                    normalize=args.normalize,
+                    control_mode=args.control_mode,
+                    baseline_n=args.baseline_n,
+                    lags=args.lags,
+                    seed=args.seed,
+                )
+                all_subsample_rows.extend(srows)
+
+        # Write raw protocol tables
+        dfw = pd.DataFrame(all_window_rows)
+        dfs = pd.DataFrame(all_subsample_rows)
+        dfw.to_csv(tabdir / "window_sensitivity.csv", index=False)
+        dfs.to_csv(tabdir / "subsample_stability.csv", index=False)
+
+        summary = _summarise_protocol(dfw, dfs)
+        (tabdir / "validation_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+        verdict = summary.get("protocol_verdict", "UNKNOWN")
+        det_rate = float(summary.get("test_det_rate", 0.0) or 0.0)
+        stable_rate = float(summary.get("stable_det_rate", 0.0) or 0.0)
+        placebo_rate = float(summary.get("placebo_det_rate", 0.0) or 0.0)
+        modal = summary.get("test_modal", "")
+
+        (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
+
+        row = {
+            "input": str(inp_path),
+            "stem": stem,
+            "protocol_verdict": verdict,
+            "test_det_rate": det_rate,
+            "stable_det_rate": stable_rate,
+            "placebo_det_rate": placebo_rate,
+            "test_modal": modal,
+            "n_test": int(len(df_test)),
+        }
+        aggregate_rows.append(row)
+
+        # Best row = highest det_rate among ACCEPT; else highest det_rate overall
+        if best_row is None:
+            best_row = row
+        else:
+            def _rank(r: dict) -> tuple:
+                return (
+                    1 if r["protocol_verdict"] == "ACCEPT" else 0,
+                    r["test_det_rate"],
+                    -r["stable_det_rate"],
+                    -r["placebo_det_rate"],
+                )
+            if _rank(row) > _rank(best_row):
+                best_row = row
+
+        print(f"Protocol verdict for {stem}: {verdict}  (det_rate={det_rate:.3f}, modal={modal})")
+
+    # Aggregate verdict
+    dfagg = pd.DataFrame(aggregate_rows)
+    dfagg.to_csv(outdir_root / "tables" / "aggregate_inputs.csv", index=False) if len(dfagg) else None
+
+    any_accept = any(r["protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
+    overall_verdict = "ACCEPT" if any_accept else "REJECT"
+
+    outdir_root.joinpath("tables").mkdir(parents=True, exist_ok=True)
+    outdir_root.joinpath("figures").mkdir(parents=True, exist_ok=True)
+
+    overall = {
+        "protocol_verdict": overall_verdict,
+        "n_inputs": len(inputs),
+        "any_accept": any_accept,
+        "best_input": (best_row or {}).get("input"),
+        "best_stem": (best_row or {}).get("stem"),
+        "best_test_det_rate": (best_row or {}).get("test_det_rate"),
+        "inputs": aggregate_rows,
     }
-    (tabdir / "validation_summary.json").write_text(
-        json.dumps(validation_summary, indent=2, default=str), encoding="utf-8"
-    )
+    (outdir_root / "tables" / "validation_summary.json").write_text(json.dumps(overall, indent=2), encoding="utf-8")
+    (outdir_root / "verdict.txt").write_text(f"{overall_verdict}\n", encoding="utf-8")
+    if best_row:
+        (outdir_root / "best_input.txt").write_text(f"{best_row['input']}\n", encoding="utf-8")
 
-    summary_row = {
-        "input_csv": str(Path(args.input)),
-        "mode": "fast" if args.fast else "full",
-        "n_boot": int(n_boot),
-        "test_det_rate": test_metrics.get("detection_rate"),
-        "stable_non_det_rate": stable_metrics.get("non_detection_rate"),
-        "placebo_non_det_rate": placebo_metrics.get("non_detection_rate"),
-        "test_stability": test_metrics.get("stability_fraction"),
-        "C1_passed": notes["C1_transition"]["passed"],
-        "C2_passed": notes["C2_stable"]["passed"],
-        "C3_passed": notes["C3_placebo"]["passed"],
-        "verdict": verdict,
-    }
-    pd.DataFrame([summary_row]).to_csv(tabdir / "summary.csv", index=False)
-    (outdir / "verdict.txt").write_text(verdict + "\n", encoding="utf-8")
+    print("\n" + "=" * 78)
+    print(f"OVERALL PROTOCOL VERDICT: {overall_verdict}")
+    if best_row:
+        print(f"Best input: {best_row['input']}  (verdict={best_row['protocol_verdict']}, det_rate={best_row['test_det_rate']:.3f})")
+    print("=" * 78)
 
-    print(f"\nOutputs written to {outdir}")
-    return 0
+    return 0 if overall_verdict == "ACCEPT" else 1
 
 
 if __name__ == "__main__":

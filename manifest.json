@@ -1,0 +1,437 @@
+{
+  "generated_utc": "2026-02-25T17:54:53.888854Z",
+  "files": [
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/south_korea_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "c1970e2d396259b895f86163c95d96436db756672903045f75e81a69a0a51991"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/south_korea_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "4e27195a67cfe3aee7e580cdfd05e9e26ff15f4079f9829f6e3c8a95f67a6322"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/sweden_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "6bcdebe15c739d7830263f3e1a2e62577331390edfc9640f712d486dd224d10e"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/sweden_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "a174bcdec5c3e8b02a38e1e711465a54e3369d24b69f01d3fc7b27756736350d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/china_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "0518cba041b6408bcb7497b907fcac2b518cf8151523a476030944c5d913f201"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/china_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "d38f239fcc7e1ee69749a07f50ec23035b5c8f2303e4f866aff6b752207ecb69"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/mexico_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "c94e19225c27d643fc8818bed13b442247d284ea10c0cf082f3bcbd7ac4a7455"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/mexico_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "f3f1642c1e340480af0b1be1c81df35691298545fb386ec2941d480e5f8a69cf"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/canada_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "bf60fbcdd66dcd7865f556eb5aca145ca2a70fb7801e6844ab6413ab8b169e36"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/canada_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "2d962fad28b7ccef2a192687e6ac498a3c1814fbbf7c220c81c87c72a7d5f630"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/netherlands_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "0ca19724f3eb9a35909438cb5f8a775e5349025b2fe42d383865c6aeb97abbe2"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/netherlands_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "496cfca680f0dbbb1c7ec830c912a565770276e5c7cb1b9294ee47c05b236965"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/italy_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "c31385e7f2bbb7a888e4bcddda8ec7f1964912d317c89a4bc8f8d0d34934ff81"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/italy_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "a8fc87a0bad53f223c439b0ebb0d1462f5c205806532873c57fb277d07fa0e8f"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/norway_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "fe7d4bf8cbc7ea0a53d784ff2f4cfaf7d8c9db01c783a15a30c0f5601cebf1b1"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/norway_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "0e0f600e46c99bb18be898a3079a130de47d3f4f55cee61505d24a65ce2a162c"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/iran_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "449df1d7a642deb548b3927f80eda07ce31fef9be05aae6d736a310b4001d6a0"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/iran_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "def45a4ad149aa114afa42e9ae8caa7b68b8bcf0824deef3992ee62db961eca8"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/brazil_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "12868c64c8daaadccbb93cc57dc3fc6ed7a4922fdcc693e5d648e23e1ab49495"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/brazil_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "4eff2fe4f2fdafef68217162ef514f7bedc1b71e4355a9bad647c364629705ad"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/russia_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "ceb34e61b9357b396ea47b0c6c959284cb68a0be8aa861e2dcf5c163ff96cb8a"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/russia_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "7b71edb22376bf5261512b2c2cb1992d2d4bb0b43e6416388e594a5abd866288"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/singapore_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "439e960638722dcdb54887b96ae925c866001074e9a4fd9a66a5047d934b0690"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/singapore_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "0aa05214f07e1770f4038e5b040fdf775cea6b36f4299c9c3accfdb2aadd5b11"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/belgium_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "241d44a28d4700978c77c0ede772f85eed1aaa3e38b996574567c9a935cd5f2d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/belgium_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "baf114d39010562bc79fedaa2b1d1b5f95624331b8b99d26fa83e98533708efe"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/iceland_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "b344dc3708ee04f84888352bf6c911b74b668ad82864746a246ae1bbad6fa604"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/iceland_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "b94466ceadaf1629e39a6286c2af4acc5ec795af812a643e25183a91aa8236f4"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/czechia_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "420e4c6ab63a1af5d6ec8fb45f016572f92acfb438f27b1c8476e7ce07e9e38d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/czechia_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "550bc1ec6a1fbc8d564bad6c3d01a47c06831edbcf07ef17c3d35ededa204553"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/japan_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "c00edf608a1fe713215995f0f76d64c95718423591adcfae2d2a207b419a6c83"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/japan_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "f62a81fcfab07bd204a7ea8377eae06143ee20fed5f87386506986c58acf32c7"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/denmark_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "75321faf52568db8111bb780ab6f220cf0d96818fd994db5127afee8bf133ff4"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/denmark_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "62a1af159a40b08fd6def8219f4ae2a692d79d0010b7e33b5cad404b57f07c38"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/taiwan_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "495a62a65727b9717e1fd285f885be77fc756e10eacb2c8966abc212c9dc778d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/taiwan_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "7652cdb3d2806ab6b3e842fbbc525d6226ce048c3b8084ab40c90283b964e4aa"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/france_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "e2b0dbfd8c1408bf18202451d1fb38d23f8f8aaf99defd064feb19b856c9ee41"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/france_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "aad41cf789ccf154154a237a9a0ce7186ec55583de2cabaefb05dfcebb504d7f"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/united_states_of_america_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "54116c772e321ce3d5c00ee602b3da10f1fbb845c97252e8fec843a17e1fc87d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/united_states_of_america_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "aa67428cb4145d5c02c405e9107358269e5cfbeae65bf6d4bc75da70dbcde8b4"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/austria_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "6cd1ec063d11e35d4ea2870b299c590bf2d9a970f5d0ce4d38ab4d465ee3e58a"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/austria_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "27395a9ea073bb51fa4b58be5de090fcab338e4feb910fbed1b0e1de997a2c5c"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/united_kingdom_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "aba169000d8e4a8461fabde8c837a491f96db46e7ea262e01b47d8d4cc1e7fde"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/united_kingdom_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "8fde65f58665501faceb3e7cda3398d4848b5b6934ce0accee5da36b112bb248"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/australia_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "cb50aaaa74272310bbd41c80ec36e12a5b4889e72ba32b970cb23b9b53f44ce3"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/australia_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "8f120ca5357be8f7b9ad20e6967c9036aaf7cac6c8b2acfd728a9da855b6f9d4"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/germany_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "447de9793273edcbfbe3e00af0d4fa36b381c987c98de6bb9cfbcda672b3caf6"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/germany_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "f5c5d3fdea81436c67077f26f41e019652a5d941f9b60fca3c382386a04c713f"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/switzerland_daily.csv",
+      "rows": 350,
+      "cols": 9,
+      "sha256": "ec8c2527bf7712a260b696383a968b2021817ca44decfd2ddec1b98883a555da"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_epidemic_ecdc/switzerland_weekly.csv",
+      "rows": 51,
+      "cols": 7,
+      "sha256": "f578b56747d8f1b72778472adc3088ca811ec428be85e5c352ce64d32036f651"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/belgium_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "00f13396f5de6e933d8295f3f3382763a74667975f53c6ba348f48f7772a6d06"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/france_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "21480df0107113f7dc43df2168f6a7bbbb2340e9421f6b28a77d23eb49ffa87b"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/germany_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "3b375d2e958b9783e53d1b105b11f4dcad42ace4968bc14421ae36e131e6d5bc"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/italy_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "f7efd0574b3b2f0b6b7511fea843c931e703ce6651ba4b11dfcaa439349185d4"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/spain_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "e6d481aee694bd58a09f0c16cac3500cbf36413ba862ab5688c0be19af6c93ba"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/netherlands_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "53db8ce670786a7fce8c49a56566ca26481021f7e80ad9d33f79e7816c45cb63"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/united_kingdom_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "b47c9129e5bb344381144f6324d929f605f60404760c8c99b1ab1108dbf093a7"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/united_states_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "5bc76ac72942591aad5f2e7fb7a3c15af2e53796940aa96002e8b763a1116daa"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/sweden_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "63eb93bd025fa15c2f370bdd829cc2ee6a39aee5d8a1785f42f7b86fb979b126"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/brazil_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "ce6aa925f503e0b510d1d3e57fc19b5754b30a377da90ddbbc34b51a2514d7ca"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/mexico_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "5ec68590c9629ed47d628e194deb90f44198fc62ff43d75e1204fbde93ac783d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_excess_deaths_owid/canada_excess_deaths.csv",
+      "rows": 2229,
+      "cols": 10,
+      "sha256": "5a242f3546b874ba9d17a8c5be7dca29cdc413df196f6434accc16c0ba1b3647"
+    },
+    {
+      "path": "03_Data/sector_stress/real/pilot_stressEcho/stressEcho_raw.csv",
+      "rows": 558,
+      "cols": 32,
+      "sha256": "79b294b558e4bc3ca2abeabf2f400d06ba302ff8eb9e820356c3197ac38b53e6"
+    },
+    {
+      "path": "03_Data/sector_stress/real/pilot_stressEcho/stressEcho_sorted_by_dose.csv",
+      "rows": 558,
+      "cols": 33,
+      "sha256": "bd12399470aa6deddd1fcf3a09f90c8d2216027b6aa0faa70c7dbbe25cec7b83"
+    },
+    {
+      "path": "03_Data/sector_stress/real/pilot_stressEcho/stressEcho_by_dose_means.csv",
+      "rows": 7,
+      "cols": 30,
+      "sha256": "c5d703f4f0b9c6212b2dc7642503ac058f318ab99695712d924392e79dd8b0fd"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_flu/flu_genotype_raw.csv",
+      "rows": 76,
+      "cols": 9,
+      "sha256": "03d7fcadeef9d6c11440b78efbadec8599fec2cb0287c2568277a37aac35ff58"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_flu/flu_genotype_value_counts.csv",
+      "rows": 26,
+      "cols": 4,
+      "sha256": "ee98f96ca13bd124e3d801e1fe2be6f1914ee8594c9c662bc655df7ad692ef7d"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_flu/flu_aasequence_features.csv",
+      "rows": 76,
+      "cols": 24,
+      "sha256": "80f24986a791d9a008a2e86b43f0664ad53c66b17a7d4bdaeda4e293e29f0329"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_ecology_pelt/ecology_pelt_source.csv",
+      "rows": 91,
+      "cols": 3,
+      "sha256": "61337307d820c3705a44439fd43bcf75023bdf17af20b843fc3212f502ae9a60"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_ecology_pelt/ecology_pelt_real_oric.csv",
+      "rows": 91,
+      "cols": 6,
+      "sha256": "8316a530f8e61176a0f27fea977823b88213645accbe6bd19eff3fbdbbb39020"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_ecology_pelt/ecology_pelt_real_oric_robustz.csv",
+      "rows": 91,
+      "cols": 6,
+      "sha256": "a13cbf889e15818bc596f72c275f00421ad5444753639db90e5c50f52ea476bb"
+    },
+    {
+      "path": "03_Data/sector_bio/real/pilot_ecology_pelt/ecology_pelt_proxy_spec_addon.json",
+      "rows": null,
+      "cols": null,
+      "sha256": "383b1c145a17f00fe59309cbb71e8c5e7552ad08338de23fe309260a076fd2e6"
+    }
+  ]
+}

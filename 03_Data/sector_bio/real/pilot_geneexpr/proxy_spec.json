@@ -1,0 +1,47 @@
+{
+  "dataset_id": "sector_bio.pilot_geneexpr.real.v2",
+  "spec_version": "2.0",
+  "sector": "bio",
+  "time_column": "t",
+  "time_mode": "value",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "O from robust-z PC1, smoothed."
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "R from -diff(deviation), recovery proxy."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "I rolling MAD of dev diff, avoids sigma_nul from constant I."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp"
+    }
+  ]
+}

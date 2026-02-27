@@ -12,9 +12,9 @@
             --bg-deep: #0a0b0d;
             --bg-surface: #111214;
             --bg-elevated: #181a1d;
-            --text-primary: #e8e6e1;
-            --text-muted: #7a7872;
-            --text-subtle: #4a4842;
+            --text-primary: #f0eeea;
+            --text-muted: #a0a098;
+            --text-subtle: #6a6862;
             --accent-flow: #3d5a4c;
             --accent-pulse: #8b6b4a;
             --accent-github: #238636;
@@ -348,6 +348,171 @@
             color: var(--accent-fail);
         }
 
+        /* Test metrics */
+        .test-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+            background: rgba(255,255,255,0.03);
+            padding: 0.2rem 0.5rem;
+            border-radius: 2px;
+        }
+
+        .metric strong {
+            color: var(--text-primary);
+        }
+
+        /* Version highlights */
+        .version-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .highlight-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-left: 3px solid var(--accent-flow);
+        }
+
+        .highlight-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-title {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .highlight-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Section subtitle */
+        .section-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+            margin-top: 0.5rem;
+        }
+
+        /* Verdict summary */
+        .verdict-summary {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--bg-surface);
+            border: 1px solid rgba(61, 139, 74, 0.3);
+        }
+
+        .verdict-global {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .verdict-global.accept {
+            border-left: 4px solid var(--accent-pass);
+            padding-left: 1rem;
+        }
+
+        .verdict-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            color: var(--text-subtle);
+            text-transform: uppercase;
+        }
+
+        .verdict-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-pass);
+        }
+
+        .verdict-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            background: rgba(61, 139, 74, 0.2);
+            color: var(--accent-pass);
+            padding: 0.3rem 0.6rem;
+            border-radius: 2px;
+        }
+
+        .verdict-note {
+            font-size: 0.8rem;
+            color: var(--text-subtle);
+            font-style: italic;
+        }
+
+        /* Data sources */
+        .data-sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .source-card {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1.5rem;
+        }
+
+        .source-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-osf);
+            margin-bottom: 0.5rem;
+        }
+
+        .source-vars {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .source-period {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-subtle);
+        }
+
+        .real-tests-summary {
+            background: rgba(45, 105, 135, 0.1);
+            border: 1px solid var(--accent-osf);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .real-tests-summary p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .real-tests-summary p:last-child {
+            margin-bottom: 0;
+        }
+
+        .real-tests-summary strong {
+            color: var(--accent-osf);
+        }
+
         /* Variables table */
         .variables-table {
             width: 100%;
@@ -472,14 +637,14 @@
     <!-- Navigation -->
     <nav>
         <a href="ori-c-presentation-en.html" class="nav-logo">ORI-C</a>
-        <ul class="nav-links">
-            <li><a href="ori-c-presentation-en.html#foundation">Foundation</a></li>
-            <li><a href="ori-c-presentation-en.html#principles">Principles</a></li>
+                <ul class="nav-links">
+            <li><a href="ori-c-presentation-en.html">Presentation</a></li>
             <li><a href="ori-c-cadre-complet-en.html">Framework</a></li>
             <li><a href="palm-cadre-en.html">PALM</a></li>
             <li><a href="ori-c-articles-en.html">Articles</a></li>
             <li><a href="ori-c-livres-en.html">Books</a></li>
-            <li><a href="ori-c-recherche-en.html" class="active">Research</a></li>
+            <li><a href="ori-c-recherche-en.html">Research</a></li>
+            <li><a href="ori-c-outils-en.html">Tools</a></li>
             <li><a href="ori-c-contact-en.html">Contact</a></li>
         </ul>
         <div class="lang-switcher">
@@ -612,69 +777,160 @@
             </div>
         </section>
 
-        <!-- Tests canoniques -->
+        <!-- Version info -->
         <section class="section">
             <div class="section-header">
-                <div class="section-label">Validation</div>
-                <h2 class="section-title">Tests canoniques T1-T8</h2>
+                <div class="section-label">Latest version</div>
+                <h2 class="section-title">v1.3 — February 22, 2026</h2>
+            </div>
+
+            <div class="version-highlights">
+                <div class="highlight-card">
+                    <div class="highlight-icon">🔒</div>
+                    <div class="highlight-title">Machine-enforced "full support" gate</div>
+                    <div class="highlight-desc">Automatic gate verifying 4 statistical criteria (p_ok, ci_ok, sesoi_ok, power_ok) and N ≥ 50 per condition before granting "full_statistical_support" label.</div>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">📊</div>
+                    <div class="highlight-title">Real data conformance suite</div>
+                    <div class="highlight-desc">Aligned decision tree between synthetic and real data suites. Controlled vocabulary: "real_data_canonical_support" for ACCEPT on real data.</div>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🧪</div>
+                    <div class="highlight-title">Synthetic vs real separation</div>
+                    <div class="highlight-desc">Clarification: T1–T8 synthetic (simulation) ≠ T1–T8 real data (Granger, VAR, cointegration). Both suites must ACCEPT for maximum canonical confirmation.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Canonical tests -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Synthetic validation</div>
+                <h2 class="section-title">Canonical tests T1-T8</h2>
+                <p class="section-subtitle">Synthetic suite — run_all_tests.py — Last run: 02/18/2026</p>
             </div>
 
             <div class="tests-grid">
                 <div class="test-card pass">
-                    <div class="test-id">T1</div>
-                    <div class="test-name">Noyau demand shock</div>
-                    <div class="test-desc">Test du mécanisme causal de base sous choc de demande.</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T1 — Core</div>
+                    <div class="test-name">Demand shock</div>
+                    <div class="test-desc">Test of the basic causal mechanism under demand shock.</div>
+                    <div class="test-metrics">
+                        <span class="metric">C_mean_post: <strong>15.04</strong></span>
+                        <span class="metric">p-value: <strong>8.9e-51</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T2</div>
-                    <div class="test-name">Threshold demo on dataset</div>
-                    <div class="test-desc">Démonstration de détection du seuil sur données synthétiques.</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T2 — Detection</div>
+                    <div class="test-name">Threshold demo</div>
+                    <div class="test-desc">Threshold detection demonstration on synthetic data.</div>
+                    <div class="test-metrics">
+                        <span class="metric">Threshold detected: <strong>0.136</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T3</div>
-                    <div class="test-name">Robustness on dataset</div>
-                    <div class="test-desc">Tests de robustesse multi-paramètres.</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T3 — Robustness</div>
+                    <div class="test-name">Multi-parameter</div>
+                    <div class="test-desc">Robustness tests on k, m, baseline variations.</div>
+                    <div class="test-metrics">
+                        <span class="metric">Detection: <strong>100%</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T4</div>
-                    <div class="test-name">S rich vs poor on C</div>
-                    <div class="test-desc">Comparaison de l'effet de S riche vs pauvre sur C.</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T4 — Symbolic</div>
+                    <div class="test-name">S rich vs poor</div>
+                    <div class="test-desc">Comparison of rich vs poor S effect on C.</div>
+                    <div class="test-metrics">
+                        <span class="metric">mean_diff: <strong>42.66</strong></span>
+                        <span class="metric">p-value: <strong>0.0</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T5</div>
-                    <div class="test-name">Injection effect on C</div>
-                    <div class="test-desc">Test de l'effet d'injection symbolique sur C.</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T5 — Symbolic</div>
+                    <div class="test-name">Injection effect</div>
+                    <div class="test-desc">Test of symbolic injection effect on C.</div>
+                    <div class="test-metrics">
+                        <span class="metric">mean_diff: <strong>10.74</strong></span>
+                        <span class="metric">p-value: <strong>2.6e-301</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T6</div>
-                    <div class="test-name">Symbolic cut on C</div>
-                    <div class="test-desc">Test de coupure du canal symbolique.</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T6 — Symbolic</div>
+                    <div class="test-name">Symbolic cut</div>
+                    <div class="test-desc">Test of symbolic channel cut — C must drop.</div>
+                    <div class="test-metrics">
+                        <span class="metric">C_mean_post: <strong>-13.50</strong></span>
+                        <span class="metric">p-value: <strong>6.7e-10</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T7</div>
+                    <div class="test-id">T7 — Threshold</div>
                     <div class="test-name">Progressive sweep S₀*</div>
-                    <div class="test-desc">Estimation du seuil critique S₀* = 0.41</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-desc">Critical threshold S₀* estimation via bootstrap (B=500).</div>
+                    <div class="test-metrics">
+                        <span class="metric">Estimated S₀*: <strong>0.41</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
 
                 <div class="test-card pass">
-                    <div class="test-id">T8</div>
-                    <div class="test-name">Real data validation</div>
-                    <div class="test-desc">Validation sur données réelles (FRED, Eurostat).</div>
-                    <span class="test-verdict pass">✓ PASS</span>
+                    <div class="test-id">T8 — Reinjection</div>
+                    <div class="test-name">Recovery test</div>
+                    <div class="test-desc">Symbolic cut then reinjection → C recovery.</div>
+                    <div class="test-metrics">
+                        <span class="metric">Status: <strong>Secondary confirmatory</strong></span>
+                    </div>
+                    <span class="test-verdict pass">✓ ACCEPT</span>
                 </div>
+            </div>
+
+            <div class="verdict-summary">
+                <div class="verdict-global accept">
+                    <span class="verdict-label">Synthetic global verdict</span>
+                    <span class="verdict-value">8/8 ACCEPT</span>
+                    <span class="verdict-status">smoke_ci_accept</span>
+                </div>
+                <p class="verdict-note">Note: run_mode=smoke_ci (n_runs=1). For full_statistical_support, run with --n-runs 50+.</p>
+            </div>
+        </section>
+
+        <!-- Real data -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Empirical validation</div>
+                <h2 class="section-title">Real data suite</h2>
+                <p class="section-subtitle">run_real_data_canonical_suite.py — Sources: FRED Monthly, Eurostat</p>
+            </div>
+
+            <div class="data-sources">
+                <div class="source-card">
+                    <div class="source-name">FRED Monthly</div>
+                    <div class="source-vars">CPI, INDPRO, M2SL, TCU, T10YFF, DCOILWTICO</div>
+                    <div class="source-period">1995-2023</div>
+                </div>
+                <div class="source-card">
+                    <div class="source-name">Eurostat</div>
+                    <div class="source-vars">BE, DE, EE, FR, EU27</div>
+                    <div class="source-period">Energy, employment, wages</div>
+                </div>
+            </div>
+
+            <div class="real-tests-summary">
+                <p>Applied causal tests: Granger, VAR, cointegration, bootstrap CI on observed time series.</p>
+                <p>Real data verdict: <strong>real_data_canonical_support</strong> (6/8 ACCEPT, T5/T6 INDETERMINATE expected)</p>
             </div>
         </section>
 

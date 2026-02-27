@@ -1,0 +1,44 @@
+{
+  "dataset_id": "bio_epidemic_real_v2",
+  "sector": "bio",
+  "pilot": "epidemic",
+  "spec_version": "2.0",
+  "data_type": "real",
+  "time_column": "t",
+  "time_mode": "value",
+  "normalization": "robust_minmax",
+  "data_source": "Derived from existing pilot_epidemic/real.csv (ECDC-based)",
+  "minimum_rows": 60,
+  "data_preparation_notes": [
+    "v2 proxies derived to reduce colinearity: O is rolling-mean log1p(demand) (window=7).",
+    "R is recovery proxy defined as -diff(O) (positive when pressure decreases).",
+    "I is local instability proxy defined as rolling MAD of diff(O) (window=14).",
+    "All transformations are deterministic and declared here; no synthetic augmentation."
+  ],
+  "columns": [
+    {
+      "oric_role": "O",
+      "source_column": "O",
+      "direction": "positive",
+      "description": "Pressure level proxy (smoothed log-demand)."
+    },
+    {
+      "oric_role": "R",
+      "source_column": "R",
+      "direction": "positive",
+      "description": "Recovery proxy (positive when pressure decreases)."
+    },
+    {
+      "oric_role": "I",
+      "source_column": "I",
+      "direction": "positive",
+      "description": "Instability proxy (local MAD of pressure changes)."
+    },
+    {
+      "oric_role": "demand",
+      "source_column": "demand",
+      "direction": "positive",
+      "description": "Raw demand (from upstream dataset)."
+    }
+  ]
+}
