@@ -1,48 +1,59 @@
 {
   "dataset_id": "sector_bio.pilot_epidemic.real.v2",
-  "spec_version": "2.0",
+  "spec_version": "2.1",
   "sector": "bio",
   "time_column": "t",
-  "time_mode": "value",
+  "time_mode": "index",
   "columns": [
     {
       "source_column": "O",
+      "oric_role": "O",
       "oric_variable": "O",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "O = smooth(log1p(demand)) level proxy."
+      "fragility_note": "O = smooth(log1p(demand)) level proxy.",
+      "manipulability_note": "Derived from demand; manipulation requires affecting demand series."
     },
     {
       "source_column": "R",
+      "oric_role": "R",
       "oric_variable": "R",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "R = -diff(deviation from rolling median), recovery proxy."
+      "fragility_note": "R = -diff(deviation), recovery proxy.",
+      "manipulability_note": "Derived from deviation; robust to affine shifts but sensitive to reporting shocks."
     },
     {
       "source_column": "I",
+      "oric_role": "I",
       "oric_variable": "I",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "I = rolling MAD of diff(deviation), instability proxy."
+      "fragility_note": "I = rolling MAD of diff(deviation), structure/instability proxy.",
+      "manipulability_note": "Harder to game without altering variability pattern over window."
     },
     {
       "source_column": "demand",
+      "oric_role": "demand",
       "oric_variable": "demand",
       "direction": "positive",
-      "normalization": "none",
-      "missing_strategy": "linear_interp"
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "Demand proxy (cases per 100k or equivalent).",
+      "manipulability_note": "Raw observed input; can be biased by measurement/reporting."
     },
     {
       "source_column": "S",
+      "oric_role": "S",
       "oric_variable": "S",
       "direction": "positive",
-      "normalization": "none",
+      "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "S mirrors demand for Granger direction checks."
+      "fragility_note": "Stock proxy aligned with demand (if used).",
+      "manipulability_note": "Constructed; must be declared and audited."
     }
   ]
 }

@@ -1,47 +1,59 @@
 {
   "dataset_id": "sector_bio.pilot_ecology.real.v2",
-  "spec_version": "2.0",
+  "spec_version": "2.1",
   "sector": "bio",
   "time_column": "t",
-  "time_mode": "value",
+  "time_mode": "index",
   "columns": [
     {
       "source_column": "O",
+      "oric_role": "O",
       "oric_variable": "O",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "O = log1p(Hare)."
+      "fragility_note": "O = log1p(prey) (e.g., Hare) smoothed.",
+      "manipulability_note": "Ecological counts; measurement noise possible but not user-controlled."
     },
     {
       "source_column": "R",
+      "oric_role": "R",
       "oric_variable": "R",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "R = -diff(deviation of log1p(Lynx) from rolling median), dynamic proxy."
+      "fragility_note": "R = log1p(predator) (e.g., Lynx) smoothed.",
+      "manipulability_note": "Ecological counts; noise possible; not easily gamed."
     },
     {
       "source_column": "I",
+      "oric_role": "I",
       "oric_variable": "I",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "I = rolling MAD of diff(O), structure proxy."
+      "fragility_note": "I = residual of O on lag(R) or coupling proxy.",
+      "manipulability_note": "Derived residual reduces colinearity; gaming would require coordinated changes."
     },
     {
       "source_column": "demand",
+      "oric_role": "demand",
       "oric_variable": "demand",
       "direction": "positive",
-      "normalization": "none",
-      "missing_strategy": "linear_interp"
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "demand = O+R or declared demand proxy.",
+      "manipulability_note": "Composite; transparent and auditable."
     },
     {
       "source_column": "S",
+      "oric_role": "S",
       "oric_variable": "S",
       "direction": "positive",
-      "normalization": "none",
-      "missing_strategy": "linear_interp"
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "S = demand (placeholder stock), declared.",
+      "manipulability_note": "Declared mapping; auditable."
     }
   ]
 }

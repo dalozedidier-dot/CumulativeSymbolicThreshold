@@ -1,47 +1,59 @@
 {
   "dataset_id": "sector_bio.pilot_geneexpr.real.v2",
-  "spec_version": "2.0",
+  "spec_version": "2.1",
   "sector": "bio",
   "time_column": "t",
-  "time_mode": "value",
+  "time_mode": "index",
   "columns": [
     {
       "source_column": "O",
+      "oric_role": "O",
       "oric_variable": "O",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "O from robust-z PC1, smoothed."
+      "fragility_note": "O = PC1 score (robust-zmad) smoothed.",
+      "manipulability_note": "Derived from gene expression matrix; manipulation requires global shift."
     },
     {
       "source_column": "R",
+      "oric_role": "R",
       "oric_variable": "R",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "R from -diff(deviation), recovery proxy."
+      "fragility_note": "R = -diff(deviation of O), recovery proxy.",
+      "manipulability_note": "Derived; sensitive to batch effects if not corrected."
     },
     {
       "source_column": "I",
+      "oric_role": "I",
       "oric_variable": "I",
       "direction": "positive",
       "normalization": "robust_minmax",
       "missing_strategy": "linear_interp",
-      "fragility_note": "I rolling MAD of dev diff, avoids sigma_nul from constant I."
+      "fragility_note": "I = rolling MAD of diff(deviation), instability proxy.",
+      "manipulability_note": "Hard to game without altering variability structure."
     },
     {
       "source_column": "demand",
+      "oric_role": "demand",
       "oric_variable": "demand",
       "direction": "positive",
-      "normalization": "none",
-      "missing_strategy": "linear_interp"
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "demand = index proxy (monotone) if no explicit demand.",
+      "manipulability_note": "Deterministic index; not a causal variable; used only for alignment."
     },
     {
       "source_column": "S",
+      "oric_role": "S",
       "oric_variable": "S",
       "direction": "positive",
-      "normalization": "none",
-      "missing_strategy": "linear_interp"
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "S = demand (if required), declared.",
+      "manipulability_note": "Deterministic; auditable."
     }
   ]
 }
