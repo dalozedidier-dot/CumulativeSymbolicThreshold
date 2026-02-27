@@ -294,7 +294,11 @@ def run_sector_panel(
                 elif not spec_path.exists():
                     print("[FATAL] No proxy_spec.json found (synth dir or real data dir)")
                     return 1
-            print(f"         → {csv_path}  ({sum(1 for _ in open(csv_path)) - 1} rows)")
+                try:
+                    n_rows = sum(1 for _ in open(csv_path, "r", encoding="utf-8", errors="ignore")) - 1
+                except Exception:
+                    n_rows = "?"
+                print(f"         → {csv_path}  ({n_rows} rows)")
         except Exception as exc:
             print(f"[step 0] Synth generator FAILED: {exc}")
             return 1
