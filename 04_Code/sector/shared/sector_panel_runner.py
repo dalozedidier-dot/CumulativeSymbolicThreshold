@@ -299,9 +299,9 @@ def run_sector_panel(
                 except Exception:
                     n_rows = "?"
                 print(f"         → {csv_path}  ({n_rows} rows)")
-        except Exception as exc:
-            print(f"[step 0] Synth generator FAILED: {exc}")
-            return 1
+            except Exception as exc:
+                print(f"[step 0] Synth generator FAILED: {exc}")
+                return 1
 
     if not spec_path.exists():
         print(f"[FATAL] proxy_spec.json not found: {spec_path}")
