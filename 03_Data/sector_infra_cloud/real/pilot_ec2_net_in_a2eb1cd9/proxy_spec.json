@@ -1,0 +1,71 @@
+{
+  "dataset_id": "pilot_ec2_net_in_a2eb1cd9",
+  "sector": "infra_cloud",
+  "spec_version": "1.0",
+  "time_column": "timestamp",
+  "time_mode": "value",
+  "normalization_global": "robust_minmax",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "oric_role": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Derived proxy from single observed series; may conflate multiple mechanisms.",
+      "manipulability_note": "Transformation declared; source series may be revised or impacted by instrumentation."
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "oric_role": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Derived proxy from single observed series; may conflate multiple mechanisms.",
+      "manipulability_note": "Transformation declared; source series may be revised or impacted by instrumentation."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "oric_role": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Derived proxy from single observed series; may conflate multiple mechanisms.",
+      "manipulability_note": "Transformation declared; source series may be revised or impacted by instrumentation."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "oric_role": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Derived proxy from single observed series; may conflate multiple mechanisms.",
+      "manipulability_note": "Transformation declared; source series may be revised or impacted by instrumentation."
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "oric_role": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Derived proxy from single observed series; may conflate multiple mechanisms.",
+      "manipulability_note": "Transformation declared; source series may be revised or impacted by instrumentation."
+    }
+  ],
+  "notes": "Real pilot built from iio_us-east-1_i-a2eb1cd9_NetworkIn.csv (timestamp,value) with declared transformations (log1p etc.)."
+}

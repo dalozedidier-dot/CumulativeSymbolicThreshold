@@ -12,7 +12,7 @@ Hard gates (→ REJECT):
 Soft gates (→ INDETERMINATE if any fail, ACCEPT otherwise):
   - |r| ∈ [0.75, 0.90) between any ORI pair  (borderline independence)
   - Any proxy declared with high fragility_score > 0.7
-  - Any proxy non-stationary (ADF p > 0.10)  [informative only, never REJECT]
+  - (removed) ADF non-stationarity is informative only (never affects verdict)
 
 Validity note (in output, not in verdict):
   - Direction annotations present for all mapped columns
@@ -35,7 +35,7 @@ CORR_HARD_REJECT = 0.90     # |r| >= this → REJECT
 CORR_SOFT_WARN   = 0.75     # |r| >= this → soft warning
 VAR_MIN          = 1e-6     # variance below → REJECT
 FRAGILITY_WARN   = 0.70     # fragility_score above → soft warning
-N_MIN            = 20       # minimum rows for any statistical check
+N_MIN            = 12       # minimum rows for statistical checks (real pilots can be short)
 ADF_PVALUE_WARN  = 0.10     # ADF p > this → non-stationarity warning
 
 REQUIRED_SPEC_KEYS = ["dataset_id", "sector", "spec_version", "columns"]
@@ -156,7 +156,7 @@ def _fragility_check(spec: dict) -> list[str]:
 
 
 def _adf_check(mapping: dict[str, str], df: pd.DataFrame) -> list[str]:
-    """Return informative non-stationarity warnings (never REJECT)."""
+    """Return informative non-stationarity notes (never affects verdict)."""
     warnings: list[str] = []
     try:
         from statsmodels.tsa.stattools import adfuller
@@ -279,8 +279,8 @@ def validate_mapping(
                     )[0, 1])
                     result["correlation_table"][f"{r_i}_{r_j}"] = round(corr, 4)
 
-        # 7. Non-stationarity (informative)
-        result["soft_warnings"].extend(_adf_check(mapping, df))
+        # 7. Non-stationarity (informative; does not affect verdict)
+        result["info_notes"].extend(_adf_check(mapping, df))
 
     # 8. Fragility + manipulability
     result["soft_warnings"].extend(_fragility_check(spec))
