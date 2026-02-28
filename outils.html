@@ -1428,7 +1428,70 @@
                 max-width: none;
             }
         }
-    
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.98), rgba(10, 11, 13, 0.9));
+            backdrop-filter: blur(10px);
+        }
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+        
         /* Hamburger menu */
         .hamburger {
             display: none;
@@ -1501,15 +1564,53 @@
             padding: 0.5rem 1rem;
         }
         
-        /* Responsive - hide nav-links on mobile */
         @media (max-width: 900px) {
             .nav-links, .lang-switcher { display: none; }
             .hamburger { display: flex; }
             nav { padding: 1rem 1.5rem; }
         }
+
     </style>
 </head>
 <body>
+
+    <nav>
+        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation.html">Présentation</a></li>
+            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherches</a></li>
+            <li><a href="ori-c-outils.html">Outils</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active">FR</button>
+            <button class="lang-btn" onclick="switchLang('en')">EN</button>
+        </div>
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="ori-c-presentation.html">Présentation</a>
+        <a href="ori-c-cadre-complet.html">Cadre</a>
+        <a href="palm-cadre.html">PALM</a>
+        <a href="ori-c-articles.html">Articles</a>
+        <a href="ori-c-livres.html">Livres</a>
+        <a href="ori-c-recherche.html">Recherches</a>
+        <a href="ori-c-outils.html">Outils</a>
+        <a href="ori-c-contact.html">Contact</a>
+        <div class="mobile-lang">
+            <button class="lang-btn active">FR</button>
+            <button class="lang-btn" onclick="switchLang('en')">EN</button>
+        </div>
+    </div>
+
 <!-- Living Background -->
 <div class="living-bg">
 <!-- Cyberspace grid floor -->
@@ -1571,42 +1672,7 @@
 <!-- Holographic Elements Container -->
 <div class="holo-elements" id="holoElements"></div>
 </div>
-    <nav>
-        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
-        <ul class="nav-links">
-            <li><a href="ori-c-presentation.html">Présentation</a></li>
-            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
-            <li><a href="palm-cadre.html">PALM</a></li>
-            <li><a href="ori-c-articles.html">Articles</a></li>
-            <li><a href="ori-c-livres.html">Livres</a></li>
-            <li><a href="ori-c-recherche.html">Recherches</a></li>
-            <li><a href="ori-c-outils.html">Outils</a></li>
-            <li><a href="ori-c-contact.html">Contact</a></li>
-        </ul>
-        <div class="lang-switcher">
-            <button class="lang-btn active">FR</button>
-            <button class="lang-btn" onclick="switchLang('en')">EN</button>
-        </div>
-        <div class="hamburger" onclick="toggleMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </nav>
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="ori-c-presentation.html">Présentation</a>
-        <a href="ori-c-cadre-complet.html">Cadre</a>
-        <a href="palm-cadre.html">PALM</a>
-        <a href="ori-c-articles.html">Articles</a>
-        <a href="ori-c-livres.html">Livres</a>
-        <a href="ori-c-recherche.html">Recherches</a>
-        <a href="ori-c-outils.html">Outils</a>
-        <a href="ori-c-contact.html">Contact</a>
-        <div class="mobile-lang">
-            <button class="lang-btn active">FR</button>
-            <button class="lang-btn" onclick="switchLang('en')">EN</button>
-        </div>
-    </div>
+
 <!-- Hero -->
 <section class="hero">
 <p class="hero-subtitle">Outils et formats de lecture. Des instruments, pas des récits.</p>
@@ -1615,7 +1681,6 @@
             Ici, tu trouves des outils concrets. Chaque outil a un cadre de lecture. Ce qu’il fait dans un système, ce qu’il permet de connaître, et où il intervient.
         </p>
 </section>
-
 
 
 <section id="outils"><span class="section-marker">Outils</span><div class="content-grid"><div class="section-header"><div class="section-number">01</div><h2 class="section-title">Outils et formats</h2><p class="section-lead">Des instruments. Une grammaire unique. Des sorties comparables.</p></div><div class="section-content"><p>On a 118 éléments chimiques. Tout le monde connaît le tableau périodique. Mais si je te demande : « Le silicium, il fait quoi, il prouve quoi, et il impacte quoi ? » tu vas souvent mélanger trois choses différentes dans la même phrase. Ici, on sépare ces niveaux, et on applique la même grammaire à des outils complets.</p><div class="principles-grid"><div class="principle-card"><svg class="principle-icon" fill="none" stroke="currentColor" stroke-width="1" viewbox="0 0 40 40">
@@ -1657,252 +1722,6 @@
 </div>
 <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
 </footer>
-<script>
-        // Precise scientific holographic elements
-        const holoSVGs = {
-            // DNA Double Helix - accurate representation
-            dna: `<svg viewBox="0 0 70 300">
-                <!-- Back strand -->
-                <path class="strand-back" d="M55,10 Q35,25 55,40 Q35,55 55,70 Q35,85 55,100 Q35,115 55,130 Q35,145 55,160 Q35,175 55,190 Q35,205 55,220 Q35,235 55,250 Q35,265 55,280 Q35,295 55,300"/>
-                <!-- Front strand -->
-                <path class="strand" d="M15,10 Q35,25 15,40 Q35,55 15,70 Q35,85 15,100 Q35,115 15,130 Q35,145 15,160 Q35,175 15,190 Q35,205 15,220 Q35,235 15,250 Q35,265 15,280 Q35,295 15,300"/>
-                <!-- Base pairs -->
-                <g class="base-pair">
-                    <line x1="18" y1="25" x2="52" y2="25"/>
-                    <line x1="18" y1="55" x2="52" y2="55"/>
-                    <line x1="18" y1="85" x2="52" y2="85"/>
-                    <line x1="18" y1="115" x2="52" y2="115"/>
-                    <line x1="18" y1="145" x2="52" y2="145"/>
-                    <line x1="18" y1="175" x2="52" y2="175"/>
-                    <line x1="18" y1="205" x2="52" y2="205"/>
-                    <line x1="18" y1="235" x2="52" y2="235"/>
-                    <line x1="18" y1="265" x2="52" y2="265"/>
-                </g>
-                <!-- Nucleotides -->
-                <circle class="nucleotide" cx="15" cy="25" r="3"/>
-                <circle class="nucleotide-t" cx="55" cy="25" r="3"/>
-                <circle class="nucleotide-t" cx="15" cy="55" r="3"/>
-                <circle class="nucleotide" cx="55" cy="55" r="3"/>
-                <circle class="nucleotide" cx="15" cy="85" r="3"/>
-                <circle class="nucleotide-t" cx="55" cy="85" r="3"/>
-                <circle class="nucleotide" cx="15" cy="145" r="3"/>
-                <circle class="nucleotide-t" cx="55" cy="145" r="3"/>
-                <circle class="nucleotide-t" cx="15" cy="205" r="3"/>
-                <circle class="nucleotide" cx="55" cy="205" r="3"/>
-                <circle class="nucleotide" cx="15" cy="265" r="3"/>
-                <circle class="nucleotide-t" cx="55" cy="265" r="3"/>
-            </svg>`,
-            
-            // Bohr Atom model - precise
-            atom: `<svg viewBox="0 0 140 140">
-                <!-- Nucleus with protons and neutrons -->
-                <g class="nucleus">
-                    <circle class="proton" cx="68" cy="68" r="5"/>
-                    <circle class="neutron" cx="72" cy="72" r="5"/>
-                    <circle class="proton" cx="72" cy="68" r="5"/>
-                    <circle class="neutron" cx="68" cy="72" r="5"/>
-                </g>
-                <!-- Electron orbits -->
-                <g class="orbit-group">
-                    <ellipse class="orbit" cx="70" cy="70" rx="55" ry="22"/>
-                    <circle class="electron" cx="125" cy="70" r="4"/>
-                </g>
-                <g class="orbit-group" transform="rotate(60 70 70)">
-                    <ellipse class="orbit" cx="70" cy="70" rx="55" ry="22"/>
-                    <circle class="electron" cx="125" cy="70" r="4"/>
-                </g>
-                <g class="orbit-group" transform="rotate(120 70 70)">
-                    <ellipse class="orbit" cx="70" cy="70" rx="55" ry="22"/>
-                    <circle class="electron" cx="125" cy="70" r="4"/>
-                </g>
-            </svg>`,
-            
-            // Caffeine molecule - C8H10N4O2
-            molecule: `<svg viewBox="0 0 120 100">
-                <!-- Bonds -->
-                <line class="bond" x1="30" y1="50" x2="50" y2="35"/>
-                <line class="bond" x1="50" y1="35" x2="70" y2="50"/>
-                <line class="bond" x1="70" y1="50" x2="70" y2="75"/>
-                <line class="bond" x1="70" y1="75" x2="50" y2="85"/>
-                <line class="bond" x1="50" y1="85" x2="30" y2="75"/>
-                <line class="bond" x1="30" y1="75" x2="30" y2="50"/>
-                <line class="bond" x1="70" y1="50" x2="95" y2="40"/>
-                <line class="bond" x1="50" y1="35" x2="50" y2="15"/>
-                <line class="bond-double" x1="33" y1="50" x2="33" y2="75"/>
-                <!-- Atoms -->
-                <circle class="atom-c" cx="30" cy="50" r="6"/>
-                <circle class="atom-n" cx="50" cy="35" r="5"/>
-                <circle class="atom-c" cx="70" cy="50" r="6"/>
-                <circle class="atom-c" cx="70" cy="75" r="6"/>
-                <circle class="atom-n" cx="50" cy="85" r="5"/>
-                <circle class="atom-c" cx="30" cy="75" r="6"/>
-                <circle class="atom-o" cx="95" cy="40" r="5"/>
-                <circle class="atom-o" cx="50" cy="15" r="5"/>
-                <!-- Labels -->
-                <text class="label" x="27" y="52">C</text>
-                <text class="label" x="47" y="37">N</text>
-                <text class="label" x="92" y="42">O</text>
-            </svg>`,
-            
-            // Quantum wave function
-            wave: `<svg viewBox="0 0 300 70">
-                <path class="wave-envelope" d="M0,35 L300,35"/>
-                <path class="wave-envelope" d="M0,10 Q75,10 150,35 Q225,60 300,60"/>
-                <path class="wave-envelope" d="M0,60 Q75,60 150,35 Q225,10 300,10"/>
-                <path class="wave-main" d="M0,35 Q10,15 20,35 T40,35 T60,35 T80,35 T100,35 T120,35 T140,35 T160,35 T180,35 T200,35 T220,35 T240,35 T260,35 T280,35 T300,35"/>
-                <path class="wave-secondary" d="M0,35 Q15,20 30,35 T60,35 T90,35 T120,35 T150,35 T180,35 T210,35 T240,35 T270,35 T300,35" transform="translate(5,0)"/>
-            </svg>`,
-            
-            // Neural network layer
-            neural: `<svg viewBox="0 0 160 160">
-                <!-- Connections -->
-                <line class="connection" x1="30" y1="40" x2="80" y2="55"/>
-                <line class="connection" x1="30" y1="80" x2="80" y2="55"/>
-                <line class="connection" x1="30" y1="80" x2="80" y2="105"/>
-                <line class="connection" x1="30" y1="120" x2="80" y2="105"/>
-                <line class="connection" x1="80" y1="55" x2="130" y2="50"/>
-                <line class="connection" x1="80" y1="55" x2="130" y2="80"/>
-                <line class="connection" x1="80" y1="105" x2="130" y2="80"/>
-                <line class="connection" x1="80" y1="105" x2="130" y2="110"/>
-                <!-- Input layer -->
-                <circle class="node" cx="30" cy="40" r="6"/>
-                <circle class="node" cx="30" cy="80" r="6"/>
-                <circle class="node" cx="30" cy="120" r="6"/>
-                <!-- Hidden layer -->
-                <circle class="node-active" cx="80" cy="55" r="7"/>
-                <circle class="node-active" cx="80" cy="105" r="7"/>
-                <!-- Output layer -->
-                <circle class="node" cx="130" cy="50" r="6"/>
-                <circle class="node" cx="130" cy="80" r="6"/>
-                <circle class="node" cx="130" cy="110" r="6"/>
-            </svg>`,
-            
-            // Benzene ring - accurate
-            hex: `<svg viewBox="0 0 90 100">
-                <polygon class="ring" points="45,10 80,27 80,63 45,80 10,63 10,27"/>
-                <circle class="inner-circle" cx="45" cy="45" r="18"/>
-                <!-- Carbon atoms -->
-                <circle class="vertex" cx="45" cy="10" r="4"/>
-                <circle class="vertex" cx="80" cy="27" r="4"/>
-                <circle class="vertex" cx="80" cy="63" r="4"/>
-                <circle class="vertex" cx="45" cy="80" r="4"/>
-                <circle class="vertex" cx="10" cy="63" r="4"/>
-                <circle class="vertex" cx="10" cy="27" r="4"/>
-                <!-- Hydrogen atoms -->
-                <circle class="h-atom" cx="45" cy="0" r="2"/>
-                <circle class="h-atom" cx="90" cy="22" r="2"/>
-                <circle class="h-atom" cx="90" cy="68" r="2"/>
-                <circle class="h-atom" cx="45" cy="90" r="2"/>
-                <circle class="h-atom" cx="0" cy="68" r="2"/>
-                <circle class="h-atom" cx="0" cy="22" r="2"/>
-            </svg>`,
-
-            // Golden spiral with rectangles
-            spiral: `<svg viewBox="0 0 150 150">
-                <rect class="golden-rect" x="5" y="5" width="140" height="86.5" fill="none"/>
-                <rect class="golden-rect" x="5" y="91.5" width="86.5" height="53.5" fill="none"/>
-                <rect class="golden-rect" x="91.5" y="91.5" width="53.5" height="33" fill="none"/>
-                <path class="spiral-path" d="M145,5 
-                    Q145,91.5 91.5,91.5 
-                    Q5,91.5 5,145 
-                    Q5,91.5 58.5,91.5
-                    Q91.5,91.5 91.5,58.5
-                    Q91.5,38 75,38
-                    Q58.5,38 58.5,55
-                    Q58.5,68 70,68
-                    Q78,68 78,60
-                    Q78,54 73,54"/>
-            </svg>`
-        };
-
-        const holoTypes = ['dna', 'atom', 'molecule', 'wave', 'neural', 'hex', 'spiral'];
-        const holoContainer = document.getElementById('holoElements');
-
-        function createHoloElement() {
-            const type = holoTypes[Math.floor(Math.random() * holoTypes.length)];
-            const element = document.createElement('div');
-            element.className = `holo-element holo-${type}`;
-            element.innerHTML = holoSVGs[type];
-            
-            element.style.left = Math.random() * 80 + 10 + '%';
-            element.style.animationDelay = Math.random() * 8 + 's';
-            
-            // Longer durations for slower, more subtle movement
-            const baseDuration = {
-                dna: 50, atom: 55, molecule: 60, wave: 45, 
-                neural: 65, hex: 52, spiral: 58
-            };
-            element.style.animationDuration = (baseDuration[type] + Math.random() * 15) + 's';
-            
-            holoContainer.appendChild(element);
-            
-            const duration = parseFloat(element.style.animationDuration) * 1000;
-            setTimeout(() => element.remove(), duration);
-        }
-
-        // Create initial elements with staggered timing
-        for (let i = 0; i < 8; i++) {
-            setTimeout(() => createHoloElement(), i * 2000);
-        }
-
-        // Create new elements less frequently for subtlety
-        setInterval(createHoloElement, 6000);
-
-        // Subtle particles
-        const livingBg = document.querySelector('.living-bg');
-        const particleSizes = ['small', 'medium', 'large'];
-        
-        for (let i = 0; i < 25; i++) {
-            const particle = document.createElement('div');
-            const size = particleSizes[Math.floor(Math.random() * particleSizes.length)];
-            particle.className = `particle ${size}`;
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 25 + 's';
-            particle.style.animationDuration = (20 + Math.random() * 15) + 's';
-            livingBg.appendChild(particle);
-        }
-
-        // Smooth reveal on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.content-grid, .principle-card, blockquote').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-            observer.observe(el);
-        });
-
-        // Subtle parallax
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            document.querySelectorAll('.flow-line').forEach((line, i) => {
-                line.style.transform = `translateY(${scrolled * (0.03 + i * 0.01)}px)`;
-            });
-        });
-
-        // Keyboard support
-        const orbitCenter = document.querySelector('.orbit-center');
-        if (orbitCenter) {
-            orbitCenter.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    window.location.href = 'ori-c-cadre-complet.html';
-                }
-            });
-        }
-    </script>
     <script>
         function toggleMenu() {
             document.querySelector('.hamburger').classList.toggle('active');
@@ -1927,5 +1746,6 @@
             });
         });
     </script>
+
 </body>
 </html>
