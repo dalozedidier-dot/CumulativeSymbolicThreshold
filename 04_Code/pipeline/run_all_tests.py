@@ -66,19 +66,21 @@ from typing import Dict, List, Optional
 def _seed_offsets() -> list[dict]:
     """Return the fixed per-test seed offsets (ex ante, immutable).
 
-    This is a pure data structure, no side effects, importable by tests.
-    Invariant enforced by test_seed_uniqueness.py: all offsets must be distinct.
+    Keys are part of CI contract and must match test_seed_uniqueness.py:
+      - test_id
+      - offset
+      - test_type in {"statistical","fixed_data","proof_only"}
     """
     return [
-        {"test_id": "T1_noyau_demand_shock", "offset": 0, "class": "statistical"},
-        {"test_id": "T2_threshold_demo_on_dataset", "offset": 1, "class": "fixed_data"},
-        {"test_id": "T3_robustness_on_dataset", "offset": 2, "class": "fixed_data"},
-        {"test_id": "T4_symbolic_S_rich_vs_poor_on_C", "offset": 3, "class": "statistical"},
-        {"test_id": "T5_symbolic_injection_effect_on_C", "offset": 4, "class": "statistical"},
-        {"test_id": "T6_symbolic_cut_on_C", "offset": 5, "class": "statistical"},
-        {"test_id": "T7_progressive_S_to_C_threshold", "offset": 6, "class": "statistical"},
-        {"test_id": "T8_reinjection_recovery_on_C", "offset": 7, "class": "statistical"},
-        {"test_id": "T9_cross_domain", "offset": 8, "class": "proof_only"},
+        {"test_id": "T1_noyau_demand_shock", "offset": 0, "test_type": "statistical"},
+        {"test_id": "T2_threshold_demo_on_dataset", "offset": 1, "test_type": "fixed_data"},
+        {"test_id": "T3_robustness_on_dataset", "offset": 2, "test_type": "fixed_data"},
+        {"test_id": "T4_symbolic_S_rich_vs_poor_on_C", "offset": 3, "test_type": "statistical"},
+        {"test_id": "T5_symbolic_injection_effect_on_C", "offset": 4, "test_type": "statistical"},
+        {"test_id": "T6_symbolic_cut_on_C", "offset": 5, "test_type": "statistical"},
+        {"test_id": "T7_progressive_S_to_C_threshold", "offset": 6, "test_type": "statistical"},
+        {"test_id": "T8_reinjection_recovery_on_C", "offset": 7, "test_type": "statistical"},
+        {"test_id": "T9_cross_domain", "offset": 8, "test_type": "proof_only"},
     ]
 
 
@@ -142,10 +144,6 @@ def main() -> int:
     in_path = root / args.input
 
     # Defaults tuned for CI runtimes.
-    # n_symbolic: N for simulation-based tests (T1,T4,T5,T6,T8).
-    # fast=20, full=60 (>= 50).
-    # n_sweep: N for T7 progressive sweep.
-    # fast=15, full=50 (>= 50).
     n_symbolic = 20 if args.fast else 60
     n_sweep = 15 if args.fast else 50
 
@@ -154,30 +152,30 @@ def main() -> int:
 
     tests: List[Dict] = []
 
-    _base = args.seed
-    _offsets = {d["test_id"]: d for d in _seed_offsets()}
+    base_seed = args.seed
+    offsets = {d["test_id"]: d for d in _seed_offsets()}
 
-    def _seed(test_id: str) -> int:
-        return _base + _offsets[test_id]["offset"]
+    def seed_for(test_id: str) -> int:
+        return base_seed + offsets[test_id]["offset"]
 
-    def _sfmt(test_id: str) -> str:
-        return f"base+{_offsets[test_id]['offset']}"
+    def seed_formula(test_id: str) -> str:
+        return f"base+{offsets[test_id]['offset']}"
 
-    def _cls(test_id: str) -> str:
-        return _offsets[test_id]["class"]
+    def test_type(test_id: str) -> str:
+        return offsets[test_id]["test_type"]
 
     # T1
     tests.append(
         {
             "id": "T1_noyau_demand_shock",
             "script": scripts_dir / "run_ori_c_demo.py",
-            "seed_used": _seed("T1_noyau_demand_shock"),
-            "seed_formula": _sfmt("T1_noyau_demand_shock"),
+            "seed_used": seed_for("T1_noyau_demand_shock"),
+            "seed_formula": seed_formula("T1_noyau_demand_shock"),
             "n_runs_used": n_symbolic,
-            "test_type": _cls("T1_noyau_demand_shock"),
+            "test_type": test_type("T1_noyau_demand_shock"),
             "args": [
                 "--seed-base",
-                str(_seed("T1_noyau_demand_shock")),
+                str(seed_for("T1_noyau_demand_shock")),
                 "--n-runs",
                 str(n_symbolic),
                 "--n-steps",
@@ -201,11 +199,11 @@ def main() -> int:
         {
             "id": "T2_threshold_demo_on_dataset",
             "script": scripts_dir / "run_synthetic_demo.py",
-            "seed_used": _seed("T2_threshold_demo_on_dataset"),
-            "seed_formula": _sfmt("T2_threshold_demo_on_dataset"),
+            "seed_used": seed_for("T2_threshold_demo_on_dataset"),
+            "seed_formula": seed_formula("T2_threshold_demo_on_dataset"),
             "n_runs_used": 1,
-            "test_type": _cls("T2_threshold_demo_on_dataset"),
-            "args": ["--input", str(in_path), "--seed", str(_seed("T2_threshold_demo_on_dataset"))],
+            "test_type": test_type("T2_threshold_demo_on_dataset"),
+            "args": ["--input", str(in_path), "--seed", str(seed_for("T2_threshold_demo_on_dataset"))],
         }
     )
 
@@ -214,11 +212,11 @@ def main() -> int:
         {
             "id": "T3_robustness_on_dataset",
             "script": scripts_dir / "run_robustness.py",
-            "seed_used": _seed("T3_robustness_on_dataset"),
-            "seed_formula": _sfmt("T3_robustness_on_dataset"),
+            "seed_used": seed_for("T3_robustness_on_dataset"),
+            "seed_formula": seed_formula("T3_robustness_on_dataset"),
             "n_runs_used": 1,
-            "test_type": _cls("T3_robustness_on_dataset"),
-            "args": ["--input", str(in_path), "--seed", str(_seed("T3_robustness_on_dataset"))],
+            "test_type": test_type("T3_robustness_on_dataset"),
+            "args": ["--input", str(in_path), "--seed", str(seed_for("T3_robustness_on_dataset"))],
         }
     )
 
@@ -227,15 +225,15 @@ def main() -> int:
         {
             "id": "T4_symbolic_S_rich_vs_poor_on_C",
             "script": scripts_dir / "run_symbolic_T4_s_rich_poor.py",
-            "seed_used": _seed("T4_symbolic_S_rich_vs_poor_on_C"),
-            "seed_formula": _sfmt("T4_symbolic_S_rich_vs_poor_on_C"),
+            "seed_used": seed_for("T4_symbolic_S_rich_vs_poor_on_C"),
+            "seed_formula": seed_formula("T4_symbolic_S_rich_vs_poor_on_C"),
             "n_runs_used": n_symbolic,
-            "test_type": _cls("T4_symbolic_S_rich_vs_poor_on_C"),
+            "test_type": test_type("T4_symbolic_S_rich_vs_poor_on_C"),
             "args": [
                 "--n",
                 str(n_symbolic),
                 "--seed",
-                str(_seed("T4_symbolic_S_rich_vs_poor_on_C")),
+                str(seed_for("T4_symbolic_S_rich_vs_poor_on_C")),
                 "--t-steps",
                 str(t_steps),
             ],
@@ -247,15 +245,15 @@ def main() -> int:
         {
             "id": "T5_symbolic_injection_effect_on_C",
             "script": scripts_dir / "run_symbolic_T5_injection.py",
-            "seed_used": _seed("T5_symbolic_injection_effect_on_C"),
-            "seed_formula": _sfmt("T5_symbolic_injection_effect_on_C"),
+            "seed_used": seed_for("T5_symbolic_injection_effect_on_C"),
+            "seed_formula": seed_formula("T5_symbolic_injection_effect_on_C"),
             "n_runs_used": n_symbolic,
-            "test_type": _cls("T5_symbolic_injection_effect_on_C"),
+            "test_type": test_type("T5_symbolic_injection_effect_on_C"),
             "args": [
                 "--n",
                 str(n_symbolic),
                 "--seed",
-                str(_seed("T5_symbolic_injection_effect_on_C")),
+                str(seed_for("T5_symbolic_injection_effect_on_C")),
                 "--t-steps",
                 str(t_steps),
                 "--t0",
@@ -269,13 +267,13 @@ def main() -> int:
         {
             "id": "T6_symbolic_cut_on_C",
             "script": scripts_dir / "run_ori_c_demo.py",
-            "seed_used": _seed("T6_symbolic_cut_on_C"),
-            "seed_formula": _sfmt("T6_symbolic_cut_on_C"),
+            "seed_used": seed_for("T6_symbolic_cut_on_C"),
+            "seed_formula": seed_formula("T6_symbolic_cut_on_C"),
             "n_runs_used": n_symbolic,
-            "test_type": _cls("T6_symbolic_cut_on_C"),
+            "test_type": test_type("T6_symbolic_cut_on_C"),
             "args": [
                 "--seed-base",
-                str(_seed("T6_symbolic_cut_on_C")),
+                str(seed_for("T6_symbolic_cut_on_C")),
                 "--n-runs",
                 str(n_symbolic),
                 "--n-steps",
@@ -299,15 +297,15 @@ def main() -> int:
         {
             "id": "T7_progressive_S_to_C_threshold",
             "script": scripts_dir / "run_symbolic_T7_progressive_sweep.py",
-            "seed_used": _seed("T7_progressive_S_to_C_threshold"),
-            "seed_formula": _sfmt("T7_progressive_S_to_C_threshold"),
+            "seed_used": seed_for("T7_progressive_S_to_C_threshold"),
+            "seed_formula": seed_formula("T7_progressive_S_to_C_threshold"),
             "n_runs_used": n_sweep,
-            "test_type": _cls("T7_progressive_S_to_C_threshold"),
+            "test_type": test_type("T7_progressive_S_to_C_threshold"),
             "args": [
                 "--n",
                 str(n_sweep),
                 "--seed",
-                str(_seed("T7_progressive_S_to_C_threshold")),
+                str(seed_for("T7_progressive_S_to_C_threshold")),
                 "--t-steps",
                 str(t_steps),
             ],
@@ -319,13 +317,13 @@ def main() -> int:
         {
             "id": "T8_reinjection_recovery_on_C",
             "script": scripts_dir / "run_reinjection_demo.py",
-            "seed_used": _seed("T8_reinjection_recovery_on_C"),
-            "seed_formula": _sfmt("T8_reinjection_recovery_on_C"),
+            "seed_used": seed_for("T8_reinjection_recovery_on_C"),
+            "seed_formula": seed_formula("T8_reinjection_recovery_on_C"),
             "n_runs_used": n_symbolic,
-            "test_type": _cls("T8_reinjection_recovery_on_C"),
+            "test_type": test_type("T8_reinjection_recovery_on_C"),
             "args": [
                 "--seed",
-                str(_seed("T8_reinjection_recovery_on_C")),
+                str(seed_for("T8_reinjection_recovery_on_C")),
                 "--n-runs",
                 str(n_symbolic),
                 "--n-steps",
@@ -344,11 +342,11 @@ def main() -> int:
             {
                 "id": "T9_cross_domain",
                 "script": scripts_dir / "run_T9_cross_domain.py",
-                "seed_used": _seed("T9_cross_domain"),
-                "seed_formula": _sfmt("T9_cross_domain"),
+                "seed_used": seed_for("T9_cross_domain"),
+                "seed_formula": seed_formula("T9_cross_domain"),
                 "n_runs_used": 1,
-                "test_type": _cls("T9_cross_domain"),
-                "args": ["--seed", str(_seed("T9_cross_domain"))],
+                "test_type": test_type("T9_cross_domain"),
+                "args": ["--seed", str(seed_for("T9_cross_domain"))],
             }
         )
     else:
