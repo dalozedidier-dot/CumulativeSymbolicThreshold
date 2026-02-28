@@ -51,7 +51,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python 3.12
+
+- name: Clean CI output directory
+  run: |
+    rm -rf _ci_out
+    mkdir -p _ci_out      - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -109,54 +113,58 @@ jobs:
         #   smoke_ci CANNOT produce full_statistical_support by construction.
         run: |
           python - <<'PYEOF'
-          import json, glob, sys, os
+import json, glob, sys, os
 
-          verdict_file = None
-          for f in glob.glob("_ci_out/**/global_verdict.json", recursive=True):
-              verdict_file = f
-              break
+# Prefer the verdict produced by the canonical suite in this run.
+candidates = glob.glob("_ci_out/canonical_tests/**/global_verdict.json", recursive=True)
+if not candidates:
+    candidates = glob.glob("_ci_out/**/global_verdict.json", recursive=True)
 
-          if verdict_file is None:
-              print("WARNING: global_verdict.json not found — cannot assert support level")
-              sys.exit(0)
+if not candidates:
+    print("WARNING: global_verdict.json not found — cannot assert support level")
+    sys.exit(0)
 
-          d = json.loads(open(verdict_file).read())
-          run_mode      = d.get("run_mode", "UNKNOWN")
-          support_level = d.get("support_level", "UNKNOWN")
-          global_v      = d.get("global", "UNKNOWN")
-          forbidden     = d.get("forbidden_report_labels", [])
+# Pick the most recent verdict file (avoid stale/committed artifacts).
+verdict_file = max(candidates, key=lambda p: os.path.getmtime(p))
 
-          # HARD GATE: smoke_ci must NEVER produce full_statistical_support
-          if "full_statistical" in support_level:
-              print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
-              sys.exit(1)
+d = json.loads(open(verdict_file).read())
+run_mode      = d.get("run_mode", "UNKNOWN")
+support_level = d.get("support_level", "UNKNOWN")
+global_v      = d.get("global", "UNKNOWN")
+forbidden     = d.get("forbidden_report_labels", [])
 
-          summary = f"""## ORI-C CI Run — Support Level Assertion
+# HARD GATE:
+# - smoke_ci must not claim full_statistical support
+# - full_statistical must not claim smoke_ci support
+if run_mode == "smoke_ci" and support_level in ("full_statistical_support", "full_statistical_accept"):
+    print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
+    sys.exit(1)
+if run_mode == "full_statistical" and support_level.startswith("smoke_ci"):
+    print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
+    sys.exit(1)
 
-          | Field | Value |
-          |-------|-------|
-          | run_mode | `{run_mode}` |
-          | global verdict | `{global_v}` |
-          | support_level | `{support_level}` |
+summary = f"""## ORI-C CI Run — Support Level Assertion
 
-          ### Meaning of `{support_level}`
-          This is a **smoke CI check** (`--fast`, n=20 < N_min=50).
-          It verifies the pipeline executes correctly — it does **NOT** satisfy
-          the DECISION_RULES v1/v2 triplet requirement (p + CI 99% + SESOI + power gate).
+| Field | Value |
+|-------|-------|
+| verdict_file | `{verdict_file}` |
+| run_mode | `{run_mode}` |
+| global verdict | `{global_v}` |
+| support_level | `{support_level}` |
 
-          ### Labels FORBIDDEN in any report derived from this run
-          {chr(10).join(f"- `{lbl}`" for lbl in forbidden)}
+### Labels FORBIDDEN in any report derived from this run
+{chr(10).join(f"- `{lbl}`" for lbl in forbidden)}
 
-          For full statistical validation, see the **nightly workflow** (`nightly.yml`),
-          which runs with n=60 and enforces the complete triplet gate.
-          """
-          summary = "\n".join(line.lstrip() for line in summary.splitlines())
+For full statistical validation, see the **nightly workflow** (`nightly.yml`),
+which runs with n=60 and enforces the complete triplet gate.
+"""
+summary = "\n".join(line.lstrip() for line in summary.splitlines())
 
-          step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
-          if step_summary:
-              with open(step_summary, "a") as fh:
-                  fh.write(summary)
-          print(summary)
+step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+if step_summary:
+    with open(step_summary, "a") as fh:
+        fh.write(summary)
+print(summary)
           PYEOF
 
       - name: Upload artifacts
