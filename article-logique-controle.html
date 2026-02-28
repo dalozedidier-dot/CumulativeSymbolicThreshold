@@ -203,7 +203,7 @@
 <body>
     <div class="cyber-bg"><div class="cyber-grid-floor"></div>
 
-    <nav>
+        <nav>
         <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
         <ul class="nav-links">
             <li><a href="ori-c-presentation.html">Présentation</a></li>
@@ -239,8 +239,7 @@
             <button class="lang-btn" onclick="switchLang('en')">EN</button>
         </div>
     </div>
-
-<div class="cyber-light-source"></div></div>
+    <div class="cyber-light-source"></div></div>
 
     
 
@@ -295,7 +294,6 @@
     <footer>
         <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
     </footer>
-
     <script>
         function toggleMenu() {
             document.querySelector('.hamburger').classList.toggle('active');
@@ -312,7 +310,6 @@
             }
             window.location.href = newPage;
         }
-        // Fermer menu si clic sur lien
         document.querySelectorAll('.mobile-menu a').forEach(link => {
             link.addEventListener('click', () => {
                 document.querySelector('.hamburger').classList.remove('active');

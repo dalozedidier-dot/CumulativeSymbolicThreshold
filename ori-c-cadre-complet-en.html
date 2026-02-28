@@ -818,7 +818,7 @@
     </style>
 </head>
 <body>
-    <nav>
+        <nav>
         <a href="ori-c-presentation-en.html" class="nav-logo">ORI-C</a>
         <ul class="nav-links">
             <li><a href="ori-c-presentation-en.html">Presentation</a></li>
@@ -1625,7 +1625,6 @@
             revealObserver.observe(el);
         });
     </script>
-
     <script>
         function toggleMenu() {
             document.querySelector('.hamburger').classList.toggle('active');
@@ -1642,7 +1641,6 @@
             }
             window.location.href = newPage;
         }
-        // Fermer menu si clic sur lien
         document.querySelectorAll('.mobile-menu a').forEach(link => {
             link.addEventListener('click', () => {
                 document.querySelector('.hamburger').classList.remove('active');
