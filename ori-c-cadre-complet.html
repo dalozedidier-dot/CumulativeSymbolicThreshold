@@ -575,7 +575,12 @@
                 font-size: 0.6rem;
             }
         }
-            /* Navigation */
+            
+        
+        /* Responsive */
+
+    
+        /* ========== NAVIGATION ========== */
         nav {
             position: fixed;
             top: 0;
@@ -638,8 +643,6 @@
         }
         .lang-btn:hover { opacity: 0.8; }
         .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
-        
-        /* Hamburger menu */
         .hamburger {
             display: none;
             flex-direction: column;
@@ -654,17 +657,9 @@
             margin: 3px 0;
             transition: 0.3s;
         }
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(5px, -5px);
-        }
-        
-        /* Mobile menu overlay */
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
         .mobile-menu {
             display: none;
             position: fixed;
@@ -677,13 +672,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
-        .mobile-menu.active {
-            display: flex;
-            opacity: 1;
-        }
+        .mobile-menu.active { display: flex; }
         .mobile-menu a {
             color: var(--text-primary);
             text-decoration: none;
@@ -695,10 +685,7 @@
             opacity: 0.7;
             transition: opacity 0.3s ease, color 0.3s ease;
         }
-        .mobile-menu a:hover, .mobile-menu a.active {
-            opacity: 1;
-            color: var(--accent-flow);
-        }
+        .mobile-menu a:hover, .mobile-menu a.active { opacity: 1; color: var(--accent-flow); }
         .mobile-lang {
             display: flex;
             gap: 1rem;
@@ -706,24 +693,17 @@
             padding-top: 2rem;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
-        .mobile-lang .lang-btn {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-        }
-        
-        /* Responsive */
+        .mobile-lang .lang-btn { font-size: 0.9rem; padding: 0.5rem 1rem; }
         @media (max-width: 900px) {
             .nav-links, .lang-switcher { display: none; }
             .hamburger { display: flex; }
             nav { padding: 1rem 1.5rem; }
         }
+        /* ========== FIN NAVIGATION ========== */
+
     </style>
 </head>
 <body>
-    <!-- Cyberspace Background -->
-    <div class="cyber-bg">
-        <div class="cyber-grid-floor"></div>
-
     <nav>
         <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
         <ul class="nav-links">
@@ -741,9 +721,7 @@
             <button class="lang-btn" onclick="switchLang('en')">EN</button>
         </div>
         <div class="hamburger" onclick="toggleMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
         </div>
     </nav>
     <div class="mobile-menu" id="mobileMenu">
@@ -760,6 +738,10 @@
             <button class="lang-btn" onclick="switchLang('en')">EN</button>
         </div>
     </div>
+
+    <!-- Cyberspace Background -->
+    <div class="cyber-bg">
+        <div class="cyber-grid-floor"></div>
 
 <div class="cyber-light-source"></div>
         <div class="scan-line"></div>
@@ -1541,14 +1523,7 @@
             }
             window.location.href = newPage;
         }
-        // Fermer menu si clic sur lien
-        document.querySelectorAll('.mobile-menu a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.querySelector('.hamburger').classList.remove('active');
-                document.getElementById('mobileMenu').classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
     </script>
+
 </body>
 </html>
