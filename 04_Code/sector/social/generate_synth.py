@@ -1,30 +1,29 @@
-"""generate_synth.py — Minimal synthetic generator for the sector.
+"""generate_synth.py — Social sector fallback generator (real-data only).
 
-This is intentionally lightweight. It exists so the sector suite can run
-synthetic demos if needed, but the preferred validation path is real data.
+Copies the pilot's real.csv + proxy_spec.json into the run outdir when
+--real-csv is omitted.
 """
 
 from __future__ import annotations
 
-import numpy as np
-import pandas as pd
+from pathlib import Path
+import shutil
 
 
-def generate(pilot_id: str, n: int = 2000, seed: int = 1234) -> pd.DataFrame:
-    rng = np.random.default_rng(seed)
-    t = np.arange(n, dtype=float)
+def synth_generator(outdir: Path, seed: int, pilot_id: str) -> None:
+    _ = seed  # unused, kept for API compatibility
 
-    # Base signal with a regime shift
-    base = 0.02 * t + 0.5 * np.sin(t / 30.0)
-    shift = (t > n * 0.6).astype(float) * 2.0
-    x = base + shift + rng.normal(0, 0.2, size=n)
+    repo_root = Path(__file__).resolve().parents[3]
+    data_dir = repo_root / "03_Data" / "sector_social" / "real" / f"pilot_{pilot_id}"
 
-    # ORI-C style derived columns
-    O = x
-    dev = x - pd.Series(x).rolling(200, min_periods=1).median().to_numpy()
-    R = -np.diff(dev, prepend=dev[0])
-    I = pd.Series(np.abs(np.diff(dev, prepend=dev[0]))).rolling(50, min_periods=1).median().to_numpy()
-    demand = O
-    S = np.cumsum(np.maximum(dev, 0.0))
+    src_csv = data_dir / "real.csv"
+    src_spec = data_dir / "proxy_spec.json"
 
-    return pd.DataFrame({"t": t, "O": O, "R": R, "I": I, "demand": demand, "S": S})
+    if not src_csv.exists():
+        raise FileNotFoundError(f"Missing real.csv for pilot_id={pilot_id}: {src_csv}")
+    if not src_spec.exists():
+        raise FileNotFoundError(f"Missing proxy_spec.json for pilot_id={pilot_id}: {src_spec}")
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src_csv, outdir / "real.csv")
+    shutil.copy2(src_spec, outdir / "proxy_spec.json")
