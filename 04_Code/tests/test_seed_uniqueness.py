@@ -2,67 +2,43 @@
 
 Invariant (non-negotiable, ex ante fixed):
 - _seed_offsets() defines a unique offset per test (0–8 sequential).
-- No two tests may share the same base+offset value for the default base_seed.
-- "distinct" ≠ "statistically independent" — independence is NOT claimed.
+- No two tests may share the same base+offset value for the same base_seed.
+- _seed_offsets() is defined in 04_Code/pipeline/run_all_tests.py and imported here.
 
-This test fails the CI if:
-  1. Two tests share the same offset (collision in the offset table).
-  2. The offset table does not cover exactly 9 tests.
-  3. Any computed seed (base=1234) is duplicated.
+Also checks:
+- Expected canonical test IDs are present.
+- test_type values are valid.
+
+Allowed test_type values:
+- statistical
+- fixed_data
+- proof_only
 """
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-# Ensure pipeline module is importable
-_CODE_DIR = Path(__file__).resolve().parents[1]
-if str(_CODE_DIR) not in sys.path:
-    sys.path.insert(0, str(_CODE_DIR))
+from typing import Set
 
 from pipeline.run_all_tests import _seed_offsets
 
 
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-
-def test_exactly_9_tests_defined() -> None:
-    """The canonical suite has exactly 9 tests (T1–T9)."""
-    offsets = _seed_offsets()
-    assert len(offsets) == 9, (
-        f"Expected 9 tests in _seed_offsets(), got {len(offsets)}. "
-        f"Test IDs: {[d['test_id'] for d in offsets]}"
-    )
+def test_offsets_unique_and_sequential() -> None:
+    """Offsets must be unique and cover 0..8."""
+    offsets = [d["offset"] for d in _seed_offsets()]
+    assert len(offsets) == 9, f"Expected 9 offsets, got {len(offsets)}: {offsets}"
+    assert len(set(offsets)) == 9, f"Offsets must be unique: {offsets}"
+    assert set(offsets) == set(range(9)), f"Offsets must be exactly 0..8, got: {sorted(set(offsets))}"
 
 
-def test_all_offsets_distinct() -> None:
-    """All per-test offsets must be distinct (no two tests share an offset)."""
-    offsets = _seed_offsets()
-    offset_values = [d["offset"] for d in offsets]
-    duplicates = [v for v in offset_values if offset_values.count(v) > 1]
-    assert len(duplicates) == 0, (
-        f"Non-unique offsets detected: {sorted(set(duplicates))}. "
-        f"Full offset table: {[(d['test_id'], d['offset']) for d in offsets]}"
-    )
+def test_seeds_distinct_for_any_base() -> None:
+    """For any base_seed, base+offset seeds are distinct because offsets are distinct."""
+    base_seed = 1234
+    seeds = [base_seed + d["offset"] for d in _seed_offsets()]
+    assert len(seeds) == len(set(seeds)), f"Seeds must be distinct, got duplicates: {seeds}"
 
 
-def test_seeds_distinct_for_default_base() -> None:
-    """Computed seeds must all be distinct for the default base_seed=1234."""
-    base = 1234
-    offsets = _seed_offsets()
-    seeds = [base + d["offset"] for d in offsets]
-    duplicates = [s for s in seeds if seeds.count(s) > 1]
-    assert len(duplicates) == 0, (
-        f"Non-unique seeds for base={base}: duplicated values {sorted(set(duplicates))}. "
-        f"Full seed table: {[(d['test_id'], base + d['offset']) for d in offsets]}"
-    )
-
-
-def test_all_test_ids_present() -> None:
-    """All canonical test IDs must appear in the offset table."""
-    expected = {
+def test_expected_test_ids_present() -> None:
+    expected: Set[str] = {
         "T1_noyau_demand_shock",
         "T2_threshold_demo_on_dataset",
         "T3_robustness_on_dataset",
@@ -81,8 +57,8 @@ def test_all_test_ids_present() -> None:
 
 
 def test_test_type_values_valid() -> None:
-    """Every entry must have test_type in ('statistical', 'fixed_data')."""
-    valid = {"statistical", "fixed_data"}
+    """Every entry must have test_type in ('statistical','fixed_data','proof_only')."""
+    valid = {"statistical", "fixed_data", "proof_only"}
     for d in _seed_offsets():
         assert d["test_type"] in valid, (
             f"Invalid test_type '{d['test_type']}' for {d['test_id']}. "
