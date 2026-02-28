@@ -1,7 +1,7 @@
-name: CI — Canonical Synthetic Suite
+name: CI - Canonical Synthetic Suite
 
-# Triggered on every push to main and on all PRs.
-# Uses --fast mode (smoke_ci: n=20 per statistical test) to stay within the 30-min CI budget.
+# Triggered on pushes to main, pull requests, and manual runs.
+# Uses --fast mode (smoke_ci: n=20 per statistical test) to stay within the CI budget.
 # For full_statistical validation (n=60), see nightly.yml.
 
 on:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ── Syntax gate: catch Python errors before running anything else ──────────
+  # Syntax gate: catch Python errors before running anything else.
   compileall:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -23,7 +23,7 @@ jobs:
       - name: Check Python syntax (compileall)
         run: python -m compileall 04_Code -q
 
-  # ── Unit / e2e tests ───────────────────────────────────────────────────────
+  # Unit / e2e tests.
   unit_tests:
     needs: compileall
     runs-on: ubuntu-latest
@@ -36,14 +36,25 @@ jobs:
           cache: "pip"
       - name: Install dependencies
         run: |
+          set -e
           python -m pip install --upgrade pip
-          python -m pip install "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" \
-            "statsmodels>=0.14" "matplotlib>=3.8" "pytest>=8.0"
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install \
+            "numpy>=1.26" \
+            "pandas>=2.0" \
+            "scipy>=1.11" \
+            "statsmodels>=0.14" \
+            "matplotlib>=3.8" \
+            "pytest>=8.0"
+
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
       - name: Run pytest
         run: pytest -q 04_Code/tests 2>&1
 
   canonical_suite:
+    needs: unit_tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -51,11 +62,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Clean CI output directory
+        run: |
+          rm -rf _ci_out
+          mkdir -p _ci_out
 
-- name: Clean CI output directory
-  run: |
-    rm -rf _ci_out
-    mkdir -p _ci_out      - name: Setup Python 3.12
+      - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -72,23 +84,23 @@ jobs:
             "scipy>=1.11" \
             "statsmodels>=0.14" \
             "pytest>=8.0"
+
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
           elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
       - name: Log environment
         run: |
-          mkdir -p _ci_out
           python -V | tee _ci_out/python_version.txt
           pip list | tee _ci_out/pip_list.txt
 
-      - name: Run canonical suite (smoke_ci — fast mode)
+      - name: Run canonical suite (smoke_ci - fast mode)
         run: |
           set -eo pipefail
-          # --fast → smoke_ci: n=20 per statistical test (< N_min=50).
-          # run_mode will be "smoke_ci" — pipeline execution check only.
-          # This does NOT claim "full statistical support" (see nightly.yml for that).
+          # --fast -> smoke_ci: n=20 per statistical test (< N_min=50).
+          # This validates pipeline execution and report integrity, not full statistical support.
           PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
             --outdir _ci_out/canonical_tests \
             --fast \
@@ -99,7 +111,11 @@ jobs:
       - name: Build registered report assets (figures + tables)
         run: |
           set -e
-          RUN_DIR=$(ls -1d _ci_out/canonical_tests/* | sort | tail -n 1)
+          RUN_DIR=$(ls -1d _ci_out/canonical_tests/* 2>/dev/null | sort | tail -n 1)
+          if [ -z "$RUN_DIR" ]; then
+            echo "ERROR: no run directory found under _ci_out/canonical_tests"
+            exit 1
+          fi
           echo "Using RUN_DIR=$RUN_DIR"
           python 04_Code/reporting/build_registered_report_assets.py --run-dir "$RUN_DIR"
 
@@ -107,64 +123,61 @@ jobs:
           if [ -d 06_Manuscript ]; then cp -R 06_Manuscript _ci_out/06_Manuscript; fi
 
       - name: Assert support level (hard gate)
-        # Reads the machine-computed support_level from global_verdict.json.
-        # Writes it to $GITHUB_STEP_SUMMARY so it is visible in the Actions UI.
-        # HARD RULE: if support_level contains "full_statistical" the step fails —
-        #   smoke_ci CANNOT produce full_statistical_support by construction.
+        # Reads support_level from global_verdict.json and writes it to the step summary.
+        # Hard rule: smoke_ci must not claim full_statistical_support.
         run: |
           python - <<'PYEOF'
-import json, glob, sys, os
+          import glob
+          import json
+          import os
+          import sys
 
-# Prefer the verdict produced by the canonical suite in this run.
-candidates = glob.glob("_ci_out/canonical_tests/**/global_verdict.json", recursive=True)
-if not candidates:
-    candidates = glob.glob("_ci_out/**/global_verdict.json", recursive=True)
+          candidates = glob.glob("_ci_out/canonical_tests/**/global_verdict.json", recursive=True)
+          if not candidates:
+              candidates = glob.glob("_ci_out/**/global_verdict.json", recursive=True)
 
-if not candidates:
-    print("WARNING: global_verdict.json not found — cannot assert support level")
-    sys.exit(0)
+          if not candidates:
+              print("WARNING: global_verdict.json not found - cannot assert support level")
+              sys.exit(0)
 
-# Pick the most recent verdict file (avoid stale/committed artifacts).
-verdict_file = max(candidates, key=lambda p: os.path.getmtime(p))
+          verdict_file = max(candidates, key=lambda p: os.path.getmtime(p))
+          d = json.loads(open(verdict_file, encoding="utf-8").read())
 
-d = json.loads(open(verdict_file).read())
-run_mode      = d.get("run_mode", "UNKNOWN")
-support_level = d.get("support_level", "UNKNOWN")
-global_v      = d.get("global", "UNKNOWN")
-forbidden     = d.get("forbidden_report_labels", [])
+          run_mode = d.get("run_mode", "UNKNOWN")
+          support_level = d.get("support_level", "UNKNOWN")
+          global_v = d.get("global", "UNKNOWN")
+          forbidden = d.get("forbidden_report_labels", [])
 
-# HARD GATE:
-# - smoke_ci must not claim full_statistical support
-# - full_statistical must not claim smoke_ci support
-if run_mode == "smoke_ci" and support_level in ("full_statistical_support", "full_statistical_accept"):
-    print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
-    sys.exit(1)
-if run_mode == "full_statistical" and support_level.startswith("smoke_ci"):
-    print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
-    sys.exit(1)
+          if run_mode == "smoke_ci" and support_level in ("full_statistical_support", "full_statistical_accept"):
+              print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
+              sys.exit(1)
+          if run_mode == "full_statistical" and str(support_level).startswith("smoke_ci"):
+              print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
+              sys.exit(1)
 
-summary = f"""## ORI-C CI Run — Support Level Assertion
+          summary = f"""## ORI-C CI Run - Support Level Assertion
 
-| Field | Value |
-|-------|-------|
-| verdict_file | `{verdict_file}` |
-| run_mode | `{run_mode}` |
-| global verdict | `{global_v}` |
-| support_level | `{support_level}` |
+          | Field | Value |
+          |-------|-------|
+          | verdict_file | `{verdict_file}` |
+          | run_mode | `{run_mode}` |
+          | global verdict | `{global_v}` |
+          | support_level | `{support_level}` |
 
-### Labels FORBIDDEN in any report derived from this run
-{chr(10).join(f"- `{lbl}`" for lbl in forbidden)}
+          ### Labels forbidden in any report derived from this run
+          {chr(10).join(f"- `{lbl}`" for lbl in forbidden)}
 
-For full statistical validation, see the **nightly workflow** (`nightly.yml`),
-which runs with n=60 and enforces the complete triplet gate.
-"""
-summary = "\n".join(line.lstrip() for line in summary.splitlines())
+          For full statistical validation, use the nightly workflow (`nightly.yml`).
+          """
 
-step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
-if step_summary:
-    with open(step_summary, "a") as fh:
-        fh.write(summary)
-print(summary)
+          summary = "\n".join(line.lstrip() for line in summary.splitlines())
+
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as fh:
+                  fh.write(summary)
+
+          print(summary)
           PYEOF
 
       - name: Upload artifacts
