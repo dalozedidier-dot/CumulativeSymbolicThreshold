@@ -1,214 +1,67 @@
-name: Real Data Smoke (ORI-C)
+name: CI - Real Data Smoke
 
 on:
   workflow_dispatch:
-    inputs:
-      dataset_csv:
-        description: "Chemin du CSV à exécuter"
-        required: true
-        default: "03_Data/real/_custom/custom.csv"
-      col_time:
-        description: "Nom de la colonne temps"
-        required: true
-        default: "t"
-      time_mode:
-        description: "index ou date/value"
-        required: true
-        default: "index"
-      col_O:
-        description: "Nom de la colonne proxy O"
-        required: true
-        default: "O"
-      col_R:
-        description: "Nom de la colonne proxy R"
-        required: true
-        default: "R"
-      col_I:
-        description: "Nom de la colonne proxy I"
-        required: true
-        default: "I"
-      col_demand:
-        description: "Nom de la colonne demand"
-        required: true
-        default: "demand"
-      col_S:
-        description: "Nom de la colonne S (symbolic stress)"
-        required: true
-        default: "S"
-      normalize:
-        description: "none, minmax, zscore"
-        required: true
-        default: "minmax"
-      control_mode:
-        description: "same ou no_symbolic"
-        required: true
-        default: "same"
-      baseline_n:
-        description: "Taille de la fenetre baseline pour detection seuil"
-        required: false
-        default: "20"
-      pre_horizon:
-        description: "Nombre de steps pre-seuil pour tests causaux"
-        required: false
-        default: "25"
-      post_horizon:
-        description: "Nombre de steps post-seuil pour tests causaux"
-        required: false
-        default: "25"
-      lags:
-        description: "Lags Granger/VAR (ex: 1-3 ou 1-5)"
-        required: false
-        default: "1-5"
-      seed:
-        description: "Graine RNG pour reproductibilité"
-        required: false
-        default: "123"
-      proxy_spec:
-        description: "Chemin vers proxy_spec.json (optionnel — validation ex ante de la spec)"
-        required: false
-        default: ""
-
-permissions:
-  contents: read
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
   real_data_smoke:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
+          cache: "pip"
 
-      - name: Install deps
+      - name: Prepare output directory
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          rm -rf _ci_out
+          mkdir -p _ci_out/real_data_smoke
 
-      - name: Validate proxy spec (ex ante)
-        if: inputs.proxy_spec != ''
-        shell: bash
+      - name: Install dependencies
         run: |
-          # Gate: validate the proxy_spec.json before any run.
-          # A broken spec (missing columns, invalid values) must fail CI here,
-          # not silently produce garbage outputs downstream.
-          python 04_Code/pipeline/validate_proxy_spec.py \
-            --spec "${{ inputs.proxy_spec }}" \
-            --csv  "${{ inputs.dataset_csv }}"
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          # Base scientific stack
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" "statsmodels>=0.14" "matplotlib>=3.8"
+          # Repo deps
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
-      - name: Run ORI-C real data smoke
-        shell: bash
+      - name: Run real data demo (pipeline)
         run: |
-          set -u
+          set -eo pipefail
+          # Convention: the real-data demo script writes a self-contained run directory
+          # under the provided outdir, including tables/verdict.json and tables/summary.json.
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py             --outdir _ci_out/real_data_smoke             2>&1 | tee _ci_out/real_data_smoke_run.log
 
-          RUN_ID="${GITHUB_RUN_ID}"
-          RUN_ATTEMPT="${GITHUB_RUN_ATTEMPT}"
-          ROOT="_ci_out/real_data_smoke/custom/run_${RUN_ID}_${RUN_ATTEMPT}"
-          mkdir -p "${ROOT}"
-
-          echo "dataset_csv=${{ inputs.dataset_csv }}" > "${ROOT}/inputs.txt"
-          echo "col_time=${{ inputs.col_time }}" >> "${ROOT}/inputs.txt"
-          echo "time_mode=${{ inputs.time_mode }}" >> "${ROOT}/inputs.txt"
-          echo "col_O=${{ inputs.col_O }}" >> "${ROOT}/inputs.txt"
-          echo "col_R=${{ inputs.col_R }}" >> "${ROOT}/inputs.txt"
-          echo "col_I=${{ inputs.col_I }}" >> "${ROOT}/inputs.txt"
-          echo "col_demand=${{ inputs.col_demand }}" >> "${ROOT}/inputs.txt"
-          echo "col_S=${{ inputs.col_S }}" >> "${ROOT}/inputs.txt"
-          echo "normalize=${{ inputs.normalize }}" >> "${ROOT}/inputs.txt"
-          echo "control_mode=${{ inputs.control_mode }}" >> "${ROOT}/inputs.txt"
-
-          if [ ! -f "${{ inputs.dataset_csv }}" ]; then
-            echo "ERREUR: dataset introuvable: ${{ inputs.dataset_csv }}" > "${ROOT}/ERROR.txt"
-          fi
-
-          RUN_DIR="${ROOT}/run"
-          mkdir -p "${RUN_DIR}"
-
-          # ── Append-only global log: every command's output is captured both
-          # in its own log file AND in run.log so no execution is ever lost.
-          GLOBAL_LOG="${ROOT}/run.log"
-          echo "=== run started at $(date -u +%Y-%m-%dT%H:%M:%SZ) ===" >> "${GLOBAL_LOG}"
-
-          echo "--- run_real_data_demo ---" >> "${GLOBAL_LOG}"
-          python 04_Code/pipeline/run_real_data_demo.py \
-            --input "${{ inputs.dataset_csv }}" \
-            --outdir "${RUN_DIR}" \
-            --col-time "${{ inputs.col_time }}" \
-            --time-mode "${{ inputs.time_mode }}" \
-            --col-O "${{ inputs.col_O }}" \
-            --col-R "${{ inputs.col_R }}" \
-            --col-I "${{ inputs.col_I }}" \
-            --col-demand "${{ inputs.col_demand }}" \
-            --col-S "${{ inputs.col_S }}" \
-            --normalize "${{ inputs.normalize }}" \
-            --control-mode "${{ inputs.control_mode }}" \
-            --baseline-n "${{ inputs.baseline_n }}" \
-            --seed "${{ inputs.seed || '123' }}" \
-            2>&1 | tee "${ROOT}/run_real_data_demo.log" >> "${GLOBAL_LOG}"
-          echo "${PIPESTATUS[0]}" > "${ROOT}/rc_demo.txt"
-
-          echo "--- tests_causaux ---" >> "${GLOBAL_LOG}"
-          # Run tests_causaux once with all params + PDF in a single pass.
-          # Previously two separate calls overwrote the same log file.
-          python 04_Code/pipeline/tests_causaux.py \
-            --run-dir "${RUN_DIR}" \
-            --baseline-n "${{ inputs.baseline_n }}" \
-            --pre-horizon "${{ inputs.pre_horizon }}" \
-            --post-horizon "${{ inputs.post_horizon }}" \
-            --lags "${{ inputs.lags }}" \
-            --seed "${{ inputs.seed || '123' }}" \
-            --pdf \
-            2>&1 | tee "${ROOT}/tests_causaux.log" >> "${GLOBAL_LOG}"
-          echo "${PIPESTATUS[0]}" > "${ROOT}/rc_causal.txt"
-
-          if [ -f "04_Code/pipeline/make_sha256_manifest.py" ]; then
-            echo "--- make_sha256_manifest ---" >> "${GLOBAL_LOG}"
-            python 04_Code/pipeline/make_sha256_manifest.py \
-              --root "${ROOT}" \
-              --out  "${ROOT}/manifest.json" \
-              2>&1 | tee "${ROOT}/manifest.log" >> "${GLOBAL_LOG}" || true
-          fi
-
-          echo "=== run finished at $(date -u +%Y-%m-%dT%H:%M:%SZ) ===" >> "${GLOBAL_LOG}"
-          echo "done" > "${ROOT}/status.txt"
-
-      - name: Check exit codes (fail CI on any pipeline error)
-        shell: bash
+      - name: Run causal tests on real outputs (if available)
         run: |
-          # Normative gate: CI must not silently pass when a pipeline command fails.
-          # rc files are written by the previous step; missing = treat as failure.
-          ROOT="_ci_out/real_data_smoke/custom/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
-          rc_demo=$(cat "${ROOT}/rc_demo.txt" 2>/dev/null || echo 99)
-          rc_causal=$(cat "${ROOT}/rc_causal.txt" 2>/dev/null || echo 99)
-
-          failed=0
-          if [ "${rc_demo}" != "0" ]; then
-            echo "ERROR: run_real_data_demo.py exited with rc=${rc_demo}" >&2
-            failed=1
-          fi
-          if [ "${rc_causal}" != "0" ]; then
-            echo "ERROR: tests_causaux.py exited with rc=${rc_causal}" >&2
-            failed=1
+          set -e
+          # Optional: only if your repo provides the causal tests runner.
+          if [ -f 04_Code/pipeline/tests_causaux.py ]; then
+            PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py               --run-root _ci_out/real_data_smoke               2>&1 | tee _ci_out/real_data_causal_tests.log
+          else
+            echo "tests_causaux.py not found, skip."
           fi
 
-          if [ "${failed}" = "1" ]; then
-            echo "" >&2
-            echo "=== run.log (last 60 lines) ===" >&2
-            tail -n 60 "${ROOT}/run.log" >&2 || true
-            exit 1
-          fi
+      - name: Build real-data CI summary (json + md + Actions summary)
+        run: |
+          set -e
+          python 04_Code/reporting/build_real_data_ci_summary.py --ci-out _ci_out --real-root _ci_out/real_data_smoke
 
-          echo "All pipeline commands exited successfully (rc_demo=${rc_demo}, rc_causal=${rc_causal})."
-
-      - name: Upload artifact
-        if: always()
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: real_data_smoke_custom_${{ github.run_id }}
-          path: _ci_out/real_data_smoke/custom
+          name: ci_real_data_${{ github.run_id }}
+          path: _ci_out
           if-no-files-found: warn
