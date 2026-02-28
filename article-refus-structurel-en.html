@@ -29,17 +29,6 @@
 
         a { color: var(--text-primary); }
 
-        nav { position: fixed; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0)); }
-        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; border-bottom: none; }
-        .nav-links { display: flex; gap: 2rem; list-style: none; }
-        .nav-links a { color: var(--text-primary); text-decoration: none; border-bottom: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; transition: opacity 0.3s ease, color 0.3s ease; }
-        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
-        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
-        .lang-switcher { display: flex; align-items: center; gap: 0.5rem; margin-left: 2rem; padding-left: 2rem; border-left: 1px solid rgba(255,255,255,0.2); }
-        .lang-btn { background: none; border: 1px solid transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; padding: 0.3rem 0.6rem; cursor: pointer; opacity: 0.5; transition: all 0.3s ease; }
-        .lang-btn:hover { opacity: 0.8; }
-        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
-
         .article-hero { padding: 10rem 2rem 4rem; max-width: 900px; margin: 0 auto; }
         .back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-subtle); text-decoration: none; margin-bottom: 2rem; transition: color 0.3s ease; }
         .back-link:hover { color: var(--accent-flow); }
@@ -57,11 +46,153 @@
         footer { padding: 3rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
         .footer-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-subtle); }
 
-        @media (max-width: 768px) { nav { padding: 1rem 1.5rem; } .nav-links { display: none; } .article-hero { padding: 7rem 1.5rem 3rem; } .article-content { padding: 0 1.5rem 3rem; } }
+        @media (max-width: 768px) { .article-hero { padding: 7rem 1.5rem 3rem; } .article-content { padding: 0 1.5rem 3rem; } }
+            /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.98), rgba(10, 11, 13, 0.9));
+            backdrop-filter: blur(10px);
+        }
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+        
+        /* Hamburger menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1001;
+        }
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+        
+        /* Mobile menu overlay */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 11, 13, 0.98);
+            z-index: 999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .mobile-menu.active {
+            display: flex;
+            opacity: 1;
+        }
+        .mobile-menu a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 1rem 2rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .mobile-menu a:hover, .mobile-menu a.active {
+            opacity: 1;
+            color: var(--accent-flow);
+        }
+        .mobile-lang {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-lang .lang-btn {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .nav-links, .lang-switcher { display: none; }
+            .hamburger { display: flex; }
+            nav { padding: 1rem 1.5rem; }
+        }
     </style>
 </head>
 <body>
-    <div class="cyber-bg"><div class="cyber-grid-floor"></div><div class="cyber-light-source"></div></div>
+    <div class="cyber-bg"><div class="cyber-grid-floor"></div>
 
     <nav>
         <a href="ori-c-presentation-en.html" class="nav-logo">ORI-C</a>
@@ -69,17 +200,40 @@
             <li><a href="ori-c-presentation-en.html">Presentation</a></li>
             <li><a href="ori-c-cadre-complet-en.html">Framework</a></li>
             <li><a href="palm-cadre-en.html">PALM</a></li>
-            <li><a href="ori-c-articles-en.html" class="active">Articles</a></li>
+            <li><a href="ori-c-articles-en.html">Articles</a></li>
             <li><a href="ori-c-livres-en.html">Books</a></li>
             <li><a href="ori-c-recherche-en.html">Research</a></li>
             <li><a href="ori-c-outils-en.html">Tools</a></li>
             <li><a href="ori-c-contact-en.html">Contact</a></li>
         </ul>
         <div class="lang-switcher">
-            <button class="lang-btn" onclick="window.location.href='article-refus-structurel.html'">FR</button>
+            <button class="lang-btn" onclick="switchLang('fr')">FR</button>
             <button class="lang-btn active">EN</button>
         </div>
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </nav>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="ori-c-presentation-en.html">Presentation</a>
+        <a href="ori-c-cadre-complet-en.html">Framework</a>
+        <a href="palm-cadre-en.html">PALM</a>
+        <a href="ori-c-articles-en.html">Articles</a>
+        <a href="ori-c-livres-en.html">Books</a>
+        <a href="ori-c-recherche-en.html">Research</a>
+        <a href="ori-c-outils-en.html">Tools</a>
+        <a href="ori-c-contact-en.html">Contact</a>
+        <div class="mobile-lang">
+            <button class="lang-btn" onclick="switchLang('fr')">FR</button>
+            <button class="lang-btn active">EN</button>
+        </div>
+    </div>
+
+<div class="cyber-light-source"></div></div>
+
+    
 
     <header class="article-hero">
         <a href="ori-c-articles-en.html" class="back-link">
@@ -113,5 +267,31 @@
     <footer>
         <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
     </footer>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector('.hamburger').classList.toggle('active');
+            document.getElementById('mobileMenu').classList.toggle('active');
+            document.body.style.overflow = document.getElementById('mobileMenu').classList.contains('active') ? 'hidden' : '';
+        }
+        function switchLang(lang) {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            let newPage;
+            if (lang === 'en') {
+                newPage = currentPage.replace('.html', '-en.html').replace('-en-en.html', '-en.html');
+            } else {
+                newPage = currentPage.replace('-en.html', '.html');
+            }
+            window.location.href = newPage;
+        }
+        // Fermer menu si clic sur lien
+        document.querySelectorAll('.mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelector('.hamburger').classList.remove('active');
+                document.getElementById('mobileMenu').classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    </script>
 </body>
 </html>

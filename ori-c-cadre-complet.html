@@ -81,85 +81,10 @@
         .scan-line { position: absolute; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(40, 120, 180, 0.1) 20%, rgba(60, 160, 220, 0.2) 50%, rgba(40, 120, 180, 0.1) 80%, transparent 100%); animation: scanMove 8s linear infinite; }
         @keyframes scanMove { 0% { top: -2px; opacity: 0; } 5% { opacity: 0.6; } 95% { opacity: 0.6; } 100% { top: 100%; opacity: 0; } }
 
-        /* Navigation */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 1.5rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0));
-        }
-
-        .nav-logo {
-            font-size: 1.1rem;
-            font-weight: 300;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            color: var(--text-primary);
-            text-decoration: none;
-            border-bottom: none;
-        }
-
-                .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-primary);
-            text-decoration: none;
-            border-bottom: none;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            opacity: 0.6;
-            transition: opacity 0.3s ease, color 0.3s ease;
-        }
-
-        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
-        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
-
-        /* Language switcher */
-        .lang-switcher {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: 2rem;
-            padding-left: 2rem;
-            border-left: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .lang-btn {
-            background: none;
-            border: 1px solid transparent;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
-            padding: 0.3rem 0.6rem;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: all 0.3s ease;
-        }
-
-        .lang-btn:hover { opacity: 0.8; }
-        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
-
         @media (max-width: 900px) {
-            nav { padding: 1rem 1.5rem; }
-            .nav-links { gap: 1rem; }
-            .nav-links a { font-size: 0.6rem; }
         }
 
         @media (max-width: 700px) {
-            .nav-links { display: none; }
         }
 
         /* Hero compact */
@@ -194,18 +119,7 @@
         }
 
         /* Module Navigation */
-        .module-nav {
-            position: sticky;
-            top: 0;
-            background: var(--bg-deep);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            z-index: 50;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
+        .module-
 
         .module-nav a {
             font-family: 'JetBrains Mono', monospace;
@@ -654,14 +568,154 @@
                 grid-template-columns: 1fr;
             }
 
-            .module-nav {
-                gap: 0.3rem;
-            }
+            .module-
 
             .module-nav a {
                 padding: 0.5rem 0.8rem;
                 font-size: 0.6rem;
             }
+        }
+            /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.98), rgba(10, 11, 13, 0.9));
+            backdrop-filter: blur(10px);
+        }
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+        
+        /* Hamburger menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1001;
+        }
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+        
+        /* Mobile menu overlay */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(10, 11, 13, 0.98);
+            z-index: 999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .mobile-menu.active {
+            display: flex;
+            opacity: 1;
+        }
+        .mobile-menu a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 1rem 2rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .mobile-menu a:hover, .mobile-menu a.active {
+            opacity: 1;
+            color: var(--accent-flow);
+        }
+        .mobile-lang {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .mobile-lang .lang-btn {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .nav-links, .lang-switcher { display: none; }
+            .hamburger { display: flex; }
+            nav { padding: 1rem 1.5rem; }
         }
     </style>
 </head>
@@ -669,7 +723,45 @@
     <!-- Cyberspace Background -->
     <div class="cyber-bg">
         <div class="cyber-grid-floor"></div>
-        <div class="cyber-light-source"></div>
+
+    <nav>
+        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation.html">Présentation</a></li>
+            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherches</a></li>
+            <li><a href="ori-c-outils.html">Outils</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active">FR</button>
+            <button class="lang-btn" onclick="switchLang('en')">EN</button>
+        </div>
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="ori-c-presentation.html">Présentation</a>
+        <a href="ori-c-cadre-complet.html">Cadre</a>
+        <a href="palm-cadre.html">PALM</a>
+        <a href="ori-c-articles.html">Articles</a>
+        <a href="ori-c-livres.html">Livres</a>
+        <a href="ori-c-recherche.html">Recherches</a>
+        <a href="ori-c-outils.html">Outils</a>
+        <a href="ori-c-contact.html">Contact</a>
+        <div class="mobile-lang">
+            <button class="lang-btn active">FR</button>
+            <button class="lang-btn" onclick="switchLang('en')">EN</button>
+        </div>
+    </div>
+
+<div class="cyber-light-source"></div>
         <div class="scan-line"></div>
         <div class="data-stream" style="top: 22%; width: 190px;"></div>
         <div class="data-stream" style="top: 50%; width: 160px; animation-delay: 3s;"></div>
@@ -683,23 +775,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav>
-        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
-                        <ul class="nav-links">
-            <li><a href="ori-c-presentation.html">Présentation</a></li>
-            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
-            <li><a href="palm-cadre.html">PALM</a></li>
-            <li><a href="ori-c-articles.html">Articles</a></li>
-            <li><a href="ori-c-livres.html">Livres</a></li>
-            <li><a href="ori-c-recherche.html">Recherches</a></li>
-            <li><a href="ori-c-outils.html">Outils</a></li>
-            <li><a href="ori-c-contact.html">Contact</a></li>
-        </ul>
-        <div class="lang-switcher">
-            <button class="lang-btn active" onclick="window.location.href='ori-c-cadre-complet.html'">FR</button>
-            <button class="lang-btn" onclick="window.location.href='ori-c-cadre-complet-en.html'">EN</button>
-        </div>
-    </nav>
+    
 
     <!-- Hero -->
     <section class="hero-compact">
@@ -1446,6 +1522,32 @@
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
             revealObserver.observe(el);
+        });
+    </script>
+
+    <script>
+        function toggleMenu() {
+            document.querySelector('.hamburger').classList.toggle('active');
+            document.getElementById('mobileMenu').classList.toggle('active');
+            document.body.style.overflow = document.getElementById('mobileMenu').classList.contains('active') ? 'hidden' : '';
+        }
+        function switchLang(lang) {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            let newPage;
+            if (lang === 'en') {
+                newPage = currentPage.replace('.html', '-en.html').replace('-en-en.html', '-en.html');
+            } else {
+                newPage = currentPage.replace('-en.html', '.html');
+            }
+            window.location.href = newPage;
+        }
+        // Fermer menu si clic sur lien
+        document.querySelectorAll('.mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelector('.hamburger').classList.remove('active');
+                document.getElementById('mobileMenu').classList.remove('active');
+                document.body.style.overflow = '';
+            });
         });
     </script>
 </body>
