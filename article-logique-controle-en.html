@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | When Control Logic Breaks the Living</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #f0eeea;
+            --text-muted: #a0a098;
+            --text-subtle: #6a6862;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Cormorant Garamond', Georgia, serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.8; }
+
+        .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%); }
+        .cyber-grid-floor { position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%; background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px); background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; }
+        .cyber-light-source { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%); }
+
+        a { color: var(--text-primary); }
+
+        nav { position: fixed; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0)); }
+        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; border-bottom: none; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: var(--text-primary); text-decoration: none; border-bottom: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; transition: opacity 0.3s ease, color 0.3s ease; }
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+        .lang-switcher { display: flex; align-items: center; gap: 0.5rem; margin-left: 2rem; padding-left: 2rem; border-left: 1px solid rgba(255,255,255,0.2); }
+        .lang-btn { background: none; border: 1px solid transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; padding: 0.3rem 0.6rem; cursor: pointer; opacity: 0.5; transition: all 0.3s ease; }
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
+        .article-hero { padding: 10rem 2rem 4rem; max-width: 900px; margin: 0 auto; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-subtle); text-decoration: none; margin-bottom: 2rem; transition: color 0.3s ease; }
+        .back-link:hover { color: var(--accent-flow); }
+        .article-date { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-subtle); margin-bottom: 1rem; }
+        .article-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; line-height: 1.3; margin-bottom: 1.5rem; }
+        .article-lead { font-size: 1.2rem; color: var(--text-muted); font-style: italic; margin-bottom: 1.5rem; }
+        .article-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; padding: 0.4rem 0.8rem; background: rgba(139, 107, 74, 0.2); color: var(--accent-pulse); border: 1px solid var(--accent-pulse); }
+
+        .article-content { max-width: 800px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .article-content h3 { font-size: 1.3rem; font-weight: 400; margin: 2.5rem 0 1.2rem; color: var(--text-primary); }
+        .article-content p { font-size: 1.05rem; margin-bottom: 1.3rem; color: var(--text-muted); }
+
+        .note { background: var(--bg-surface); border-left: 3px solid var(--accent-flow); padding: 1.2rem 1.5rem; margin: 1.5rem 0; font-size: 1rem; color: var(--text-primary); font-style: italic; }
+
+        footer { padding: 3rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
+        .footer-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-subtle); }
+
+        @media (max-width: 768px) { nav { padding: 1rem 1.5rem; } .nav-links { display: none; } .article-hero { padding: 7rem 1.5rem 3rem; } .article-content { padding: 0 1.5rem 3rem; } }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg"><div class="cyber-grid-floor"></div><div class="cyber-light-source"></div></div>
+
+    <nav>
+        <a href="ori-c-presentation-en.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation-en.html">Presentation</a></li>
+            <li><a href="ori-c-cadre-complet-en.html">Framework</a></li>
+            <li><a href="palm-cadre-en.html">PALM</a></li>
+            <li><a href="ori-c-articles-en.html" class="active">Articles</a></li>
+            <li><a href="ori-c-livres-en.html">Books</a></li>
+            <li><a href="ori-c-recherche-en.html">Research</a></li>
+            <li><a href="ori-c-outils-en.html">Tools</a></li>
+            <li><a href="ori-c-contact-en.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="window.location.href='article-logique-controle.html'">FR</button>
+            <button class="lang-btn active">EN</button>
+        </div>
+    </nav>
+
+    <header class="article-hero">
+        <a href="ori-c-articles-en.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back to articles
+        </a>
+        <div class="article-date">2026</div>
+        <h1 class="article-title">When Control Logic Breaks the Living</h1>
+        <p class="article-lead">Toward a culture of co-evolution rather than mastery.</p>
+        <span class="article-tag">Control</span>
+    </header>
+
+    <article class="article-content">
+        <p>Controlling is not regulating. Control assumes a fixed target, a model that knows the response of the system, and an ability to impose corrections. Regulation assumes a dynamics, margins, and an ability to absorb without breaking.</p>
+
+        <h3>The machine paradigm</h3>
+        <p>Control logic comes from mechanics: input, output, feedback, correction. It works for machines. It breaks when applied to living systems.</p>
+
+        <h3>Why control breaks the living</h3>
+        <p>The living is adaptive. It responds to control attempts by reconfiguring. Imposed stability produces hidden fragility. Optimized performance consumes margins. Controlled systems become dependent on the controller.</p>
+
+        <h3>Co-evolution instead of mastery</h3>
+        <p>The alternative is not abandonment but accompaniment. Creating conditions favorable to adaptation rather than imposing trajectories. Maintaining margins rather than maximizing outputs.</p>
+
+        <h3>Science as misuse</h3>
+        <p>Science describes. It does not prescribe. Using scientific knowledge to control rather than understand transforms a tool of lucidity into an instrument of fragility.</p>
+
+        <div class="note">The living cannot be piloted like a machine — it requires conditions favorable to adaptation, not precise commands.</div>
+    </article>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
+    </footer>
+</body>
+</html>
