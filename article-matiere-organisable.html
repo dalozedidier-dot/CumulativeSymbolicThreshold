@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORI-C | Constat d'un refus structurel d'intégrer l'instabilité du réel</title>
+    <title>ORI-C | La matière est organisable</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
             --text-subtle: #6a6862;
             --accent-flow: #3d5a4c;
             --accent-pulse: #8b6b4a;
-            --accent-system: #5a6b4a;
+            --accent-matiere: #6b6b8b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,7 +31,7 @@
         a { color: var(--text-primary); }
 
         nav { position: fixed; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0)); }
-        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; }
+        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; border-bottom: none; }
         .nav-links { display: flex; gap: 2rem; list-style: none; }
         .nav-links a { color: var(--text-primary); text-decoration: none; border-bottom: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; transition: opacity 0.3s ease, color 0.3s ease; }
         .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
@@ -46,22 +46,24 @@
         .back-link:hover { color: var(--accent-flow); }
         .article-date { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-subtle); margin-bottom: 1rem; }
         .article-title { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 300; line-height: 1.3; margin-bottom: 1.5rem; }
-        .article-lead { font-size: 1.3rem; color: var(--text-muted); font-style: italic; margin-bottom: 1.5rem; }
-        .article-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; padding: 0.4rem 0.8rem; background: rgba(90, 107, 74, 0.2); color: var(--accent-system); border: 1px solid var(--accent-system); }
+        .article-lead { font-size: 1.2rem; color: var(--text-muted); font-style: italic; margin-bottom: 1.5rem; }
+        .article-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; padding: 0.4rem 0.8rem; background: rgba(107, 107, 139, 0.2); color: var(--accent-matiere); border: 1px solid var(--accent-matiere); }
 
         .article-content { max-width: 800px; margin: 0 auto; padding: 0 2rem 4rem; }
-        .article-content h3 { font-size: 1.4rem; font-weight: 400; margin: 3rem 0 1.5rem; color: var(--text-primary); }
+        .article-content h3 { font-size: 1.3rem; font-weight: 400; margin: 2.5rem 0 1.2rem; color: var(--text-primary); }
         .article-content p { font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-muted); }
-        .article-content ul { margin: 1.5rem 0; padding-left: 1.5rem; }
-        .article-content li { font-size: 1.05rem; color: var(--text-muted); margin-bottom: 0.8rem; }
 
-        .key-point { background: var(--bg-surface); border-left: 3px solid var(--accent-flow); padding: 1.5rem; margin: 2rem 0; }
-        .key-point-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent-flow); margin-bottom: 0.5rem; }
-        .key-point p { font-size: 1.1rem; color: var(--text-primary); margin: 0; }
+        .key-definition { background: var(--bg-surface); border-left: 3px solid var(--accent-matiere); padding: 1.5rem; margin: 2rem 0; }
+        .key-definition p { font-size: 1.1rem; color: var(--text-primary); margin: 0; font-style: italic; }
+
+        .mechanism { background: var(--bg-surface); padding: 1.5rem; margin: 1.5rem 0; border: 1px solid rgba(255,255,255,0.05); }
+        .mechanism-title { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 0.1em; color: var(--accent-matiere); margin-bottom: 0.8rem; }
+        .mechanism p { font-size: 1rem; color: var(--text-muted); margin: 0; }
 
         .compact-box { background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; margin: 3rem 0; }
         .compact-box h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; color: var(--accent-pulse); margin-bottom: 1rem; }
-        .compact-box p { font-size: 1rem; color: var(--text-primary); margin: 0; }
+        .compact-box p { font-size: 1rem; color: var(--text-primary); margin-bottom: 0.8rem; }
+        .compact-box p:last-child { margin-bottom: 0; }
 
         footer { padding: 3rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
         .footer-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-subtle); }
@@ -74,11 +76,11 @@
 
     <nav>
         <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
-                        <ul class="nav-links">
+        <ul class="nav-links">
             <li><a href="ori-c-presentation.html">Présentation</a></li>
             <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
             <li><a href="palm-cadre.html">PALM</a></li>
-            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-articles.html" class="active">Articles</a></li>
             <li><a href="ori-c-livres.html">Livres</a></li>
             <li><a href="ori-c-recherche.html">Recherches</a></li>
             <li><a href="ori-c-outils.html">Outils</a></li>
@@ -95,48 +97,55 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Retour aux articles
         </a>
-        <div class="article-date">22 février 2026</div>
-        <h1 class="article-title">Constat d'un refus structurel d'intégrer l'instabilité du réel</h1>
-        <p class="article-lead">Il n'y a pas un manque de preuves. Il y a un défaut de capacité collective à intégrer ce que les preuves disent du réel.</p>
-        <span class="article-tag">Systémique</span>
+        <div class="article-date">2026</div>
+        <h1 class="article-title">La matière est organisable parce qu'elle possède des degrés de liberté, des contraintes et des voies de dissipation</h1>
+        <p class="article-lead">La vie n'est pas une structure. C'est un régime dynamique de viabilité.</p>
+        <span class="article-tag">Ontologie</span>
     </header>
 
     <article class="article-content">
-        <p>De quoi parle-t-on ici ? De l'aveuglisme comme refus structurel d'admettre une propriété simple : le réel n'est pas stable par défaut. Il est instable, non linéaire, historique, multi-échelles. Il produit des attracteurs locaux, des coûts déplacés, des transitions, des ruptures. Et il ne garantit pas le retour à l'équilibre.</p>
-
-        <p>Ce constat n'appartient pas à une discipline. Il émerge par convergence de corpus :</p>
-
-        <ul>
-            <li><strong>En climat :</strong> oscillations, seuils, ruptures abruptes, variabilité géologique normale.</li>
-            <li><strong>En psychisme :</strong> schémas comme attracteurs, stabilité coûteuse, dissipation chronique, bascules quand le coût dépasse un seuil.</li>
-            <li><strong>En biologie :</strong> ordre local maintenu par flux, organisation conditionnelle, fragilité des régimes stationnaires.</li>
-            <li><strong>En cosmos :</strong> structures qui émergent d'instabilités, organisation locale via dissipation globale.</li>
-        </ul>
-
-        <div class="key-point">
-            <div class="key-point-label">Invariant</div>
-            <p>Vivant = flux + attracteurs + coûts + transitions. À toutes les échelles, on retrouve la même grammaire dynamique : on ne "maîtrise" pas l'instabilité, on l'habite et on la convertit.</p>
+        <div class="key-definition">
+            <p>La matière est organisable parce qu'elle possède des degrés de liberté, des contraintes et des voies de dissipation. La vie apparaît lorsque des flux, sous contraintes, alimentent des boucles de régulation capables de soutenir une organisation auto-entretenue et maintenue.</p>
         </div>
 
-        <h3>L'aveuglisme n'est pas une ignorance. C'est une architecture.</h3>
+        <p>Un système vivant se maintient en produisant sa propre cohérence, en dissipant de l'énergie et en résistant au retour vers l'équilibre. La vie n'est pas une structure. C'est un régime dynamique de viabilité.</p>
 
-        <p>Une architecture qui permet à un système de fonctionner sans modifier ses hypothèses de base, même lorsque les signaux les invalident. Elle produit une stabilité apparente en neutralisant la portée des faits.</p>
+        <h3>Le temps dans le vivant</h3>
+        <p>Dans la relativité, le temps propre est invariant localement, et la dilatation est un effet de comparaison entre référentiels.</p>
+        <p>Dans le vivant, il n'existe pas d'invariant temporel vécu : la durée dépend de la capacité du système à convertir des flux en organisation.</p>
+        <p>Quand les marges se réduisent, cette conversion se dégrade, et le temps subjectif se déforme. Ce n'est pas une dilatation métrique. C'est une perte de viabilité dynamique.</p>
 
-        <p>Elle repose sur des dispositifs simples, répétés, stabilisateurs :</p>
+        <h3>Pourquoi le vivant peut tenir loin de l'équilibre</h3>
+        <p>Un système vivant peut demeurer longtemps « loin de l'équilibre » parce qu'il n'est pas isolé. Il est immergé dans un tout, relié à des flux, nourri par des échanges. Autrement dit, il tient parce qu'il est porté, alimenté, contenu, corrigé et parfois même « compensé » par son environnement.</p>
 
-        <ul>
-            <li>Réduire le réel à ce qui rentre dans les tableaux</li>
-            <li>Déplacer la charge de preuve : exiger du monde qu'il se démontre sans fin</li>
-            <li>Confondre incertitude locale et incertitude globale</li>
-            <li>Transformer la critique en procédure : on ne réfute pas, on ajourne</li>
-            <li>Appeler "prudence" ce qui est un maintien de structure</li>
-        </ul>
+        <div class="mechanism">
+            <div class="mechanism-title">Il vit sur des flux</div>
+            <p>Le vivant est une structure qui se maintient par des entrées et des sorties : énergie, information, relations, ressources. Tant que ces flux circulent, une forme peut se maintenir, même sous tension interne. L'analogie est simple : une ville tient parce que l'eau, la nourriture et l'électricité arrivent. Si les flux se coupent, l'organisation se désagrège rapidement.</p>
+        </div>
 
-        <p>Dans ce cadre, demander "encore des preuves" n'est pas une demande scientifique. C'est un geste de stabilisation.</p>
+        <div class="mechanism">
+            <div class="mechanism-title">Le tout amortit ses excès</div>
+            <p>L'idée de « rester parmi le tout » décrit un effet de milieu. Le système bénéficie d'une stabilité externe relative. Il peut donc demeurer dysrégulé à l'intérieur tout en paraissant stable de l'extérieur, parce que l'environnement absorbe une partie du coût de cette dysrégulation.</p>
+        </div>
+
+        <div class="mechanism">
+            <div class="mechanism-title">Les connexions servent de béquilles</div>
+            <p>Dans un couple, une famille ou une institution, quelqu'un ou quelque chose compense souvent : un membre « porte » l'ensemble, une règle maintient l'ordre, une routine prévient l'effondrement, un revenu évite la crise, un récit évite de voir. Tant que ces béquilles tiennent, le système tient.</p>
+        </div>
+
+        <div class="mechanism">
+            <div class="mechanism-title">L'éloignement de l'équilibre peut être une forme d'organisation</div>
+            <p>Paradoxalement, certains vivants s'organisent précisément loin de l'équilibre, parce qu'ils exploitent un gradient, c'est-à-dire une différence de potentiel. Cette forme de stabilité reste possible tant que le gradient existe et que la régulation interne suit.</p>
+        </div>
+
+        <h3>Là où ça bascule</h3>
+        <p>Le risque n'est pas d'être loin de l'équilibre en soi. Le risque est de dépendre du tout pour compenser une désorganisation interne qui continue de croître. Le maintien devient alors un effet de soutien externe, plutôt qu'un effet de cohérence interne. Le jour où le soutien baisse, où les flux se tarissent ou où la complexité augmente, la désintégration peut devenir rapide.</p>
 
         <div class="compact-box">
-            <h4>Diagnostic</h4>
-            <p>L'obstacle principal n'est pas la preuve, mais la compatibilité entre les preuves et les structures qui devraient en tenir compte. Les preuves, il y en a "dix mille". Et pourtant on continue d'agir comme si une seule manquait encore — la preuve magique qui autoriserait une transition sans perte, sans conflit, sans reconfiguration. Cette preuve-là n'existera pas.</p>
+            <h4>En résumé</h4>
+            <p>Le vivant n'est pas "stable" au sens d'un équilibre statique. Il est maintenu dans un état organisé loin de l'équilibre par des flux continus, des amortisseurs externes et l'exploitation de gradients.</p>
+            <p>C'est une victoire temporaire contre la seconde loi, payée par une dissipation constante.</p>
+            <p>Tant que le "tout" porte le coût, le système tient. Quand il cesse, la facture arrive d'un coup.</p>
         </div>
     </article>
 

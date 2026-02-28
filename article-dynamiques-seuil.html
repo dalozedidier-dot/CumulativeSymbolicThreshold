@@ -30,7 +30,7 @@
         a { color: var(--text-primary); }
 
         nav { position: fixed; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0)); }
-        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; }
+        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; border-bottom: none; }
         .nav-links { display: flex; gap: 2rem; list-style: none; }
         .nav-links a { color: var(--text-primary); text-decoration: none; border-bottom: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; transition: opacity 0.3s ease, color 0.3s ease; }
         .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
@@ -45,30 +45,33 @@
         .back-link:hover { color: var(--accent-flow); }
         .article-date { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-subtle); margin-bottom: 1rem; }
         .article-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; line-height: 1.3; margin-bottom: 1.5rem; }
-        .article-lead { font-size: 1.3rem; color: var(--text-muted); font-style: italic; margin-bottom: 1.5rem; }
+        .article-lead { font-size: 1.15rem; color: var(--text-muted); font-style: italic; margin-bottom: 1.5rem; line-height: 1.6; }
         .article-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; padding: 0.4rem 0.8rem; background: rgba(139, 107, 74, 0.2); color: var(--accent-pulse); border: 1px solid var(--accent-pulse); }
 
         .article-content { max-width: 800px; margin: 0 auto; padding: 0 2rem 4rem; }
-        .article-content h3 { font-size: 1.4rem; font-weight: 400; margin: 3rem 0 1.5rem; color: var(--text-primary); }
-        .article-content p { font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--text-muted); }
-        .article-content ul { margin: 1.5rem 0; padding-left: 1.5rem; }
-        .article-content li { font-size: 1.05rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+        .article-content h3 { font-size: 1.3rem; font-weight: 400; margin: 2.5rem 0 1.2rem; color: var(--text-primary); }
+        .article-content h4 { font-size: 1.1rem; font-weight: 400; margin: 2rem 0 1rem; color: var(--accent-pulse); }
+        .article-content p { font-size: 1.05rem; margin-bottom: 1.3rem; color: var(--text-muted); }
+        .article-content ul { margin: 1rem 0 1.5rem 1.5rem; }
+        .article-content li { font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; }
 
-        .key-point { background: var(--bg-surface); border-left: 3px solid var(--accent-flow); padding: 1.5rem; margin: 2rem 0; }
-        .key-point-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent-flow); margin-bottom: 0.5rem; }
-        .key-point p { font-size: 1.1rem; color: var(--text-primary); margin: 0; }
+        .quadruplet { background: var(--bg-surface); padding: 1.5rem; margin: 1.5rem 0; border-left: 3px solid var(--accent-pulse); }
+        .quadruplet-title { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; color: var(--accent-pulse); margin-bottom: 0.8rem; }
+        .quadruplet ul { margin: 0; padding-left: 1.2rem; }
+        .quadruplet li { font-size: 0.95rem; margin-bottom: 0.4rem; }
 
-        .equation-block { background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; margin: 2rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: var(--accent-pulse); text-align: center; }
+        .section-box { background: var(--bg-surface); padding: 1.5rem; margin: 1.5rem 0; border: 1px solid rgba(255,255,255,0.05); }
+        .section-box p { font-size: 0.95rem; margin-bottom: 0.8rem; }
+        .section-box p:last-child { margin-bottom: 0; }
 
-        .regime-table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
-        .regime-table th, .regime-table td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .regime-table th { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-subtle); font-weight: 400; }
-        .regime-table td { font-size: 0.95rem; color: var(--text-muted); }
-        .regime-table td:first-child { color: var(--accent-pulse); font-weight: 600; }
+        .references { background: var(--bg-elevated); padding: 2rem; margin: 3rem 0; border: 1px solid rgba(255,255,255,0.05); }
+        .references h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; color: var(--accent-pulse); margin-bottom: 1rem; }
+        .references p { font-size: 0.85rem; color: var(--text-subtle); margin-bottom: 0.6rem; line-height: 1.5; }
 
         .compact-box { background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; margin: 3rem 0; }
         .compact-box h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; color: var(--accent-pulse); margin-bottom: 1rem; }
-        .compact-box p { font-size: 1rem; color: var(--text-primary); margin: 0; }
+        .compact-box p { font-size: 1rem; color: var(--text-primary); margin-bottom: 0.8rem; }
+        .compact-box p:last-child { margin-bottom: 0; }
 
         footer { padding: 3rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
         .footer-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-subtle); }
@@ -104,121 +107,84 @@
         </a>
         <div class="article-date">2026</div>
         <h1 class="article-title">Dynamiques à seuil et bascules de régime</h1>
-        <p class="article-lead">Au-delà d'un seuil critique d'accumulation symbolique, le canal de transmission devient auto-renforçant — une transition de phase mesurable.</p>
+        <p class="article-lead">Une très grande variété de systèmes présente des changements brusques de régime lorsqu'un paramètre de contrôle franchit une valeur critique. Ce document propose une cartographie unifiée et opérationnelle, enrichie par des références fondatrices.</p>
         <span class="article-tag">Seuils</span>
     </header>
 
     <article class="article-content">
-        <h3>L'hypothèse centrale</h3>
-        
-        <p>Le cadre ORI-C propose une hypothèse testable et falsifiable : au-delà d'un seuil critique d'accumulation symbolique S*, le canal de transmission symbolique devient auto-renforçant. Ce basculement constitue une transition de phase mesurable, d'un régime pré-seuil vers un régime cumulatif symbolique.</p>
+        <p>De la thermodynamique classique aux transitions quantiques, des plasmas au nucléaire, de la matière molle aux tissus vivants, des écosystèmes aux réseaux sociaux, les signatures se répètent : coexistence de phases, hystérèse, divergence de corrélations, lois d'échelle, percolation, avalanches, transitions vers états absorbants, bifurcations d'attracteurs, défauts topologiques.</p>
 
-        <div class="key-point">
-            <div class="key-point-label">Transition de phase</div>
-            <p>La transition n'est pas graduelle. Elle marque un changement qualitatif dans la dynamique du système : ce qui était linéaire devient non-linéaire, ce qui était réversible devient irréversible.</p>
+        <h3>1) Grammaire commune des bascules</h3>
+
+        <div class="quadruplet">
+            <div class="quadruplet-title">Quadruplet minimal</div>
+            <ul>
+                <li><strong>Paramètre de contrôle :</strong> température T, pression P, densité ρ, champ B ou E, contrainte σ, flux, taux d'erreur, connectivité, bruit</li>
+                <li><strong>Variable d'ordre :</strong> fraction d'une phase, magnétisation, rigidité, connectivité globale, cohérence, débit, viabilité</li>
+                <li><strong>Mécanisme :</strong> brisure de symétrie, compétition de minima, barrières, nucléation, rétroactions, dissipation, topologie</li>
+                <li><strong>Signature :</strong> saut, divergence, hystérèse, scaling, état absorbant, défauts topologiques</li>
+            </ul>
         </div>
 
-        <h3>Variables fondamentales</h3>
+        <h4>Universalité, exposants critiques, renormalisation</h4>
+        <p>Au voisinage de certains seuils, des observables suivent des lois d'échelle caractérisées par des exposants critiques. Des systèmes microscopiquement différents peuvent partager les mêmes exposants lorsqu'ils appartiennent à une même classe d'universalité, ce qui est formalisé par le groupe de renormalisation (Wilson, 1975).</p>
 
-        <p>Le modèle repose sur un ensemble de variables définies ex ante :</p>
+        <h4>Champ moyen et rôle des fluctuations</h4>
+        <p>Les approches de type Landau et champ moyen fournissent une compréhension structurante des transitions liées à l'apparition d'un ordre et à la brisure de symétrie. Leur limite principale apparaît lorsque les fluctuations dominent, notamment près des points critiques et en dimension basse.</p>
 
-        <ul>
-            <li><strong>O(t)</strong> — Organisation : proxy de la coordination structurelle et fonctionnelle</li>
-            <li><strong>R(t)</strong> — Résilience : capacité d'absorption des perturbations</li>
-            <li><strong>I(t)</strong> — Intégration : cohérence inter-composants</li>
-            <li><strong>Cap(t)</strong> — Capacité : O(t) · R(t) · I(t)</li>
-            <li><strong>Σ(t)</strong> — Mismatch : max(0, D(E(t)) − Cap(t))</li>
-            <li><strong>S(t)</strong> — Stock symbolique : répertoire transmissible</li>
-            <li><strong>C(t)</strong> — Variable d'ordre : gain symbolique intergénérationnel</li>
-        </ul>
+        <h3>2) Transitions d'équilibre</h3>
 
-        <h3>Le critère de détection du seuil</h3>
-
-        <p>La détection du seuil repose sur un critère statistique pré-enregistré :</p>
-
-        <div class="equation-block">
-            ΔC(t) > μ_ΔC + k · σ_ΔC &nbsp;&nbsp; pour m pas consécutifs<br>
-            <span style="color: var(--text-subtle); font-size: 0.8rem;">k = 2.5, m = 3 (pré-enregistrés)</span>
+        <div class="section-box">
+            <p><strong>Transitions du premier ordre :</strong> discontinuité de grandeurs thermodynamiques, chaleur latente, coexistence de phases. La cinétique est gouvernée par la nucléation et la croissance, ce qui explique des effets d'hystérèse.</p>
+            <p><strong>Transitions continues :</strong> absence de chaleur latente, émergence de corrélations de grande portée. Les susceptibilités peuvent diverger, la longueur de corrélation augmente fortement, et des lois d'échelle apparaissent.</p>
+            <p><strong>Critique dynamique :</strong> même lorsque la transition statique est bien identifiée, la dynamique près du seuil possède ses propres classes d'universalité. Les temps caractéristiques augmentent souvent fortement — ralentissement critique.</p>
         </div>
 
-        <p>Ce critère identifie le moment où la variation de C dépasse significativement sa moyenne historique, de façon persistante. Le seuil n'est pas arbitraire : il émerge des données selon une procédure reproductible.</p>
+        <h3>3) Hors équilibre : bifurcations et instabilités</h3>
+        <p>Hors équilibre, les "diagrammes de phase" sont souvent des diagrammes de stabilité qui délimitent les régions d'existence d'états stationnaires, oscillants ou spatialisés. Les systèmes de réaction-diffusion et la formation de motifs offrent un cadre canonique.</p>
+        <p>Dans certains systèmes stochastiques hors équilibre, une fonction de type Lyapunov ou un potentiel effectif peut exister et fournir une lecture "paysage" de la stabilité — pont conceptuel entre transitions d'équilibre et bascules hors équilibre.</p>
 
-        <h3>Les trois régimes dynamiques</h3>
+        <h3>4) Connectivité, cascades et états absorbants</h3>
 
-        <table class="regime-table">
-            <thead>
-                <tr>
-                    <th>Régime</th>
-                    <th>C(t)</th>
-                    <th>S(t)</th>
-                    <th>Interprétation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Pré-seuil</td>
-                    <td>≈ 0</td>
-                    <td>Non cumulatif</td>
-                    <td>La transmission symbolique ne s'auto-amplifie pas</td>
-                </tr>
-                <tr>
-                    <td>Transition</td>
-                    <td>Instable</td>
-                    <td>Décorrélation partielle</td>
-                    <td>O, R, I et C commencent à se découpler</td>
-                </tr>
-                <tr>
-                    <td>Cumulatif</td>
-                    <td>> 0, stable</td>
-                    <td>Amplificateur</td>
-                    <td>Le gain intergénérationnel est verrouillé</td>
-                </tr>
-            </tbody>
-        </table>
+        <h4>Percolation</h4>
+        <p>La percolation formalise l'apparition d'une connectivité globale au-delà d'un seuil de densité de sites ou de liens. Elle fournit un modèle minimal de transition de connectivité, avec lois d'échelle et universalité (Broadbent et Hammersley, 1957).</p>
 
-        <h3>La chaîne causale</h3>
+        <h4>Transitions vers états absorbants</h4>
+        <p>De nombreux systèmes hors équilibre présentent une transition entre un régime actif et un régime absorbant, où la dynamique ne peut plus "redémarrer" spontanément. Extinction de populations, propagation dirigée, certains processus de réaction-diffusion relèvent de cette famille (Hinrichsen, 2000).</p>
 
-        <p>Le modèle spécifie une chaîne causale explicite :</p>
+        <h3>5) Rhéologie, yielding et jamming</h3>
+        <p>Dans les matériaux mous, les suspensions concentrées, les gels et certains solides amorphes, l'écoulement apparaît au-delà d'un seuil de contrainte ou de taux de cisaillement. Hystérèse, localisation de la déformation et bandes de cisaillement sont fréquentes.</p>
+        <p>La perspective jamming relie densité, agitation effective et contrainte à l'apparition d'un état bloqué (Liu et Nagel, 1998). La friction modifie profondément la frontière de jamming.</p>
 
-        <div class="equation-block" style="text-align: left; padding: 2rem;">
-            O(t) ─┐<br>
-            R(t) ─┼──► Cap(t) = O·R·I ──► Σ(t) = max(0, D − Cap) ──► V(t)<br>
-            I(t) ─┘<br><br>
-            S(t) ──────────────────────────────────────────────────► C(t) ──► ΔC(t) ──► seuil?
-        </div>
+        <h3>6) Quantique : transitions et phases topologiques</h3>
+        <p>À température proche de zéro, des changements de champ, pression, dopage ou interaction peuvent modifier l'état fondamental. Les fluctuations quantiques jouent le rôle central (Sachdev, 2011).</p>
+        <p>Certaines transitions ne s'expriment pas par une brisure de symétrie conventionnelle, mais par des invariants topologiques et des excitations protégées (Hasan et Kane, 2010).</p>
 
-        <p>Cette architecture permet de tester indépendamment chaque maillon de la chaîne. Si un maillon ne se comporte pas comme prédit, l'hypothèse est falsifiée à cet endroit précis.</p>
+        <h3>7) Systèmes actifs, vivant, social</h3>
+        <p>Les systèmes de particules actives présentent des transitions entre mouvement désordonné et mouvement collectif ordonné, pilotées par densité et bruit. Le modèle de Vicsek introduit une transition de flocking (Vicsek et al., 1995).</p>
+        <p>Dans des groupes animaux, certaines mesures de corrélations à grande portée ont été discutées comme des signatures de proximité critique (Cavagna et al., 2010). Dans les systèmes sociaux, des modèles à seuil décrivent l'adoption et les cascades lorsque la proportion d'adoptants dépasse une valeur critique (Granovetter, 1978).</p>
 
-        <h3>Implications pour les systèmes réels</h3>
-
-        <p>La dynamique à seuil n'est pas une métaphore. Elle décrit un mécanisme observable dans de nombreux systèmes :</p>
-
-        <ul>
-            <li>En économie : les crises ne sont pas des événements linéaires, mais des bascules de régime après accumulation de tensions</li>
-            <li>En écologie : les écosystèmes ne se dégradent pas graduellement, ils basculent quand un seuil de résilience est franchi</li>
-            <li>En psychisme : les schémas ne changent pas par ajustement continu, mais par transition quand le coût dépasse un seuil</li>
-            <li>En société : les transformations culturelles procèdent par accumulation puis basculement, pas par évolution lisse</li>
-        </ul>
-
-        <div class="key-point">
-            <div class="key-point-label">Invariant</div>
-            <p>À toutes les échelles, on retrouve la même grammaire : flux + attracteurs + coûts + transitions. On ne "maîtrise" pas l'instabilité, on l'habite et on la convertit.</p>
-        </div>
-
-        <h3>Falsifiabilité</h3>
-
-        <p>Le cadre est conçu pour être falsifiable. Les tests T1-T8 définissent huit points de rupture potentiels :</p>
-
-        <ul>
-            <li><strong>T4</strong> : Si ΔC n'est pas attribuable à ΔS, le canal symbolique est réfuté</li>
-            <li><strong>T5</strong> : Si une injection de S n'a pas d'effet différé, la dynamique cumulative est réfutée</li>
-            <li><strong>T6</strong> : Si une coupure de S ne fait pas chuter C (sans changement de O, R, I), la dimension symbolique est réductible</li>
-            <li><strong>T7</strong> : Si C est strictement linéaire en S (pas de point de bascule), il n'y a pas de seuil</li>
-        </ul>
+        <h3>8) Pont conceptuel équilibre / hors équilibre</h3>
+        <p>À l'équilibre, les transitions peuvent être comprises via la structure d'un potentiel thermodynamique, la compétition entre minima, et la brisure de symétrie. Hors équilibre, les bascules se lisent le plus souvent comme des bifurcations d'attracteurs, des instabilités maintenues par des flux, ou des transitions vers états absorbants.</p>
+        <p>Le lien unificateur réside dans la stabilité, les fluctuations, et les structures d'échelle, même lorsque l'interprétation par potentiel n'est plus disponible.</p>
 
         <div class="compact-box">
-            <h4>Conclusion</h4>
-            <p>Les dynamiques à seuil ne sont pas des anomalies. Elles sont la règle dans les systèmes complexes. Le cadre ORI-C fournit une méthode pour les détecter, les mesurer et les anticiper — sans prétendre les contrôler, mais en apprenant à les lire.</p>
+            <h4>Conclusion et enjeux appliqués</h4>
+            <p>La récurrence des dynamiques à seuil à travers les disciplines n'est pas un simple effet de langage. Elle reflète une structure générale des systèmes non linéaires collectifs : multiplicativité, rétroactions, contraintes, dissipation, et parfois topologie.</p>
+            <p>Sur le plan appliqué, cette cartographie sert deux objectifs majeurs : améliorer la détection de proximité de seuils et de points de bascule, puis concevoir des stratégies de contrôle et de résilience capables de déplacer les seuils, réduire les cascades, et limiter l'hystérèse.</p>
+        </div>
+
+        <div class="references">
+            <h4>Références</h4>
+            <p>Broadbent, S. R., Hammersley, J. M. (1957). Percolation processes. <em>Mathematical Proceedings of the Cambridge Philosophical Society</em>, 53(3), 629-641.</p>
+            <p>Hinrichsen, H. (2000). Non-equilibrium critical phenomena and phase transitions into absorbing states. <em>Advances in Physics</em>, 49(7), 815-958.</p>
+            <p>Liu, A. J., Nagel, S. R. (1998). Jamming is not just cool any more. <em>Nature</em>, 396, 21-22.</p>
+            <p>Hasan, M. Z., Kane, C. L. (2010). Colloquium: Topological insulators. <em>Reviews of Modern Physics</em>, 82, 3045-3067.</p>
+            <p>Sachdev, S. (2011). <em>Quantum Phase Transitions</em> (2nd ed.). Cambridge University Press.</p>
+            <p>Vicsek, T., et al. (1995). Novel type of phase transition in a system of self-driven particles. <em>Physical Review Letters</em>, 75, 1226-1229.</p>
+            <p>Cavagna, A., et al. (2010). Scale-free correlations in starling flocks. <em>PNAS</em>, 107(26), 11865-11870.</p>
+            <p>Granovetter, M. (1978). Threshold models of collective behavior. <em>American Journal of Sociology</em>, 83(6), 1420-1443.</p>
+            <p>Wilson, K. G. (1975). The renormalization group. <em>Reviews of Modern Physics</em>, 47, 773-840.</p>
         </div>
     </article>
 

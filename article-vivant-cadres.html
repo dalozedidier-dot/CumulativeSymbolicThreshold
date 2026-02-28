@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Le vivant fait tomber des cadres</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #f0eeea;
+            --text-muted: #a0a098;
+            --text-subtle: #6a6862;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-cadre: #6b5a4a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Cormorant Garamond', Georgia, serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.8; }
+
+        .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%); }
+        .cyber-grid-floor { position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%; background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px); background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; }
+        .cyber-light-source { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%); }
+
+        a { color: var(--text-primary); }
+
+        nav { position: fixed; top: 0; left: 0; width: 100%; padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0)); }
+        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; border-bottom: none; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: var(--text-primary); text-decoration: none; border-bottom: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; transition: opacity 0.3s ease, color 0.3s ease; }
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+        .lang-switcher { display: flex; align-items: center; gap: 0.5rem; margin-left: 2rem; padding-left: 2rem; border-left: 1px solid rgba(255,255,255,0.2); }
+        .lang-btn { background: none; border: 1px solid transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; padding: 0.3rem 0.6rem; cursor: pointer; opacity: 0.5; transition: all 0.3s ease; }
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
+        .article-hero { padding: 10rem 2rem 4rem; max-width: 900px; margin: 0 auto; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-subtle); text-decoration: none; margin-bottom: 2rem; transition: color 0.3s ease; }
+        .back-link:hover { color: var(--accent-flow); }
+        .article-date { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-subtle); margin-bottom: 1rem; }
+        .article-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; line-height: 1.3; margin-bottom: 1.5rem; }
+        .article-lead { font-size: 1.3rem; color: var(--text-muted); font-style: italic; margin-bottom: 1.5rem; }
+        .article-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; padding: 0.4rem 0.8rem; background: rgba(107, 90, 74, 0.2); color: var(--accent-cadre); border: 1px solid var(--accent-cadre); }
+
+        .article-content { max-width: 800px; margin: 0 auto; padding: 0 2rem 4rem; }
+        .article-content h3 { font-size: 1.3rem; font-weight: 400; margin: 2.5rem 0 1rem; color: var(--text-primary); }
+        .article-content p { font-size: 1.05rem; margin-bottom: 1.2rem; color: var(--text-muted); }
+
+        .cadre-box { background: var(--bg-surface); border-left: 3px solid var(--accent-cadre); padding: 1.2rem 1.5rem; margin: 1.5rem 0; }
+        .cadre-box .demo { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+        .cadre-box .conclusion { font-size: 0.95rem; color: var(--accent-cadre); font-style: italic; margin: 0; }
+
+        .synthese { background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; margin: 3rem 0; }
+        .synthese h4 { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.15em; color: var(--accent-pulse); margin-bottom: 1rem; }
+        .synthese p { font-size: 1rem; color: var(--text-primary); margin-bottom: 0.8rem; }
+        .synthese p:last-child { margin-bottom: 0; }
+
+        footer { padding: 3rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
+        .footer-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-subtle); }
+
+        @media (max-width: 768px) { nav { padding: 1rem 1.5rem; } .nav-links { display: none; } .article-hero { padding: 7rem 1.5rem 3rem; } .article-content { padding: 0 1.5rem 3rem; } }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg"><div class="cyber-grid-floor"></div><div class="cyber-light-source"></div></div>
+
+    <nav>
+        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation.html">Présentation</a></li>
+            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html" class="active">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherches</a></li>
+            <li><a href="ori-c-outils.html">Outils</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active">FR</button>
+            <button class="lang-btn">EN</button>
+        </div>
+    </nav>
+
+    <header class="article-hero">
+        <a href="ori-c-articles.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Retour aux articles
+        </a>
+        <div class="article-date">2026</div>
+        <h1 class="article-title">Le vivant fait tomber des cadres</h1>
+        <p class="article-lead">Un système vivant fonctionne parce qu'il maintient une viabilité sous contraintes. Cette simple exigence fait tomber, un par un, des cadres entiers de pensée.</p>
+        <span class="article-tag">Épistémologie</span>
+    </header>
+
+    <article class="article-content">
+        <p>On croit souvent qu'un système "fonctionne" parce qu'il a une bonne explication. En réalité, un système vivant fonctionne parce qu'il maintient une viabilité sous contraintes. Et cette simple exigence fait tomber, un par un, des cadres entiers de pensée.</p>
+
+        <p>Ce texte ne part pas d'une théorie. Il part d'un fait brutal : un système vivant doit continuer, malgré le bruit, la dissipation, l'incertitude, les conflits internes et les chocs externes. À partir de là, certaines grammaires explicatives deviennent impossibles.</p>
+
+        <h3>1) Premier cadre qui tombe : l'additif</h3>
+        <div class="cadre-box">
+            <p class="demo">Dans le vivant, on n'ajoute pas des causes comme des briques. Il existe des boucles. Une action modifie l'état, l'état modifie la capacité d'action, la capacité d'action modifie l'accès à l'information, et l'information modifie la régulation. Un terme "petit" devient dominant s'il est dans une boucle positive ou s'il touche une variable lente.</p>
+            <p class="conclusion">Conclusion : le cadre additif tombe parce qu'il ne sait pas représenter la reconfiguration de régime, seulement l'accumulation.</p>
+        </div>
+
+        <h3>2) Deuxième cadre qui tombe : le décor neutre</h3>
+        <div class="cadre-box">
+            <p class="demo">Un système vivant n'existe pas sur un fond. Il existe dans un milieu. Et le milieu n'est pas un arrière-plan, c'est une partie de l'équation, parce qu'il impose les contraintes, les flux, les ressources et les gradients.</p>
+            <p class="conclusion">Conclusion : le décor passif tombe parce que le vivant n'a pas de "hors contexte" stable.</p>
+        </div>
+
+        <h3>3) Troisième cadre qui tombe : l'objectivité naïve</h3>
+        <div class="cadre-box">
+            <p class="demo">Dans un système vivant, ce que l'on peut observer dépend de l'état du système et de l'interaction avec lui. L'observation n'est pas une lecture, c'est une intervention, même minimale. Et le vivant réagit.</p>
+            <p class="conclusion">Conclusion : "mesurer = accéder" tombe, parce que dans le vivant, mesurer change déjà ce que l'on prétend saisir.</p>
+        </div>
+
+        <h3>4) Quatrième cadre qui tombe : déterminisme donc maîtrise</h3>
+        <div class="cadre-box">
+            <p class="demo">Même si les micro-lois étaient déterministes, la viabilité dépend de marges, de buffers, de redondances, de temps de récupération. Quand un système est proche de ses limites, la moindre perturbation peut déclencher une cascade.</p>
+            <p class="conclusion">Conclusion : la maîtrise tombe dès qu'on confond loi et stabilité.</p>
+        </div>
+
+        <h3>5) Cinquième cadre qui tombe : linéarité et correction continue</h3>
+        <div class="cadre-box">
+            <p class="demo">Le vivant n'évolue pas par corrections fines autour d'un point fixe. Il passe par phases. Accumulations silencieuses, compensations, puis rupture, puis réorganisation. La signature, c'est l'hystérèse : revenir en arrière n'est pas symétrique.</p>
+            <p class="conclusion">Conclusion : le cadre linéaire tombe parce qu'il ne voit pas les seuils, seulement des écarts.</p>
+        </div>
+
+        <h3>6) Sixième cadre qui tombe : tout est explicable par le micro</h3>
+        <div class="cadre-box">
+            <p class="demo">Un système vivant a des niveaux. Certains sont rapides, d'autres lents. Certains sont locaux, d'autres globaux. Les contraintes globales peuvent piloter le local. Et les variables lentes imposent le régime aux variables rapides.</p>
+            <p class="conclusion">Conclusion : le réductionnisme naïf tombe parce qu'il confond composants et organisation.</p>
+        </div>
+
+        <h3>7) Septième cadre qui tombe : équilibre comme normalité</h3>
+        <div class="cadre-box">
+            <p class="demo">Un système viable est hors équilibre. Il maintient des gradients, dépense de l'énergie, crée de l'ordre local au prix d'une dissipation globale. La stabilité n'est pas le repos, c'est une tenue dans le flux.</p>
+            <p class="conclusion">Conclusion : l'équilibre tombe comme cadre par défaut, parce que le vivant est un maintien, pas une détente.</p>
+        </div>
+
+        <h3>8) Huitième cadre qui tombe : causalité simple</h3>
+        <div class="cadre-box">
+            <p class="demo">Dans le vivant, une même cause produit des effets différents selon l'état. Et un même effet peut venir de causes différentes. Donc la causalité n'est pas une flèche unique, c'est une relation conditionnelle au régime.</p>
+            <p class="conclusion">Conclusion : la causalité simple tombe, remplacée par une causalité sous contraintes.</p>
+        </div>
+
+        <h3>9) Neuvième cadre qui tombe : le mesurable épuise le réel</h3>
+        <div class="cadre-box">
+            <p class="demo">Le vivant filtre, adapte, compense. Beaucoup de processus fondamentaux sont latents, distribués, ou visibles seulement dans des périodes transitoires. Mesurer ce qui est stable peut masquer ce qui est essentiel.</p>
+            <p class="conclusion">Conclusion : "seul le mesurable compte" tombe, car il sélectionne un sous-ensemble qui peut être précisément celui qui ment sur le régime.</p>
+        </div>
+
+        <h3>10) Dixième cadre qui tombe : un langage unique suffit</h3>
+        <div class="cadre-box">
+            <p class="demo">Un système viable se décrit différemment selon l'échelle et l'objectif : contrôle, prévision, compréhension, diagnostic. Aucun langage unique ne suffit, parce que les observables pertinents changent avec le régime.</p>
+            <p class="conclusion">Conclusion : le monolinguisme tombe, remplacé par des descriptions valides par domaine.</p>
+        </div>
+
+        <h3>11) Onzième cadre qui tombe : le bruit est un déchet</h3>
+        <div class="cadre-box">
+            <p class="demo">Près d'un seuil, les fluctuations augmentent, les corrélations s'allongent, les récupérations ralentissent. Le bruit devient la trace de la stabilité. Chercher à l'éliminer, c'est parfois éliminer le signal d'alarme.</p>
+            <p class="conclusion">Conclusion : le bruit tombe comme nuisance, il devient information.</p>
+        </div>
+
+        <h3>12) Douzième cadre qui tombe : l'idée d'une continuité tranquille</h3>
+        <div class="cadre-box">
+            <p class="demo">Dans un système viable, la continuité apparente cache souvent une dette accumulée. Tant que les marges compensent, tout semble stable. Quand les marges sont consommées, la rupture apparaît "soudaine". Elle ne l'est pas. Elle est la sortie visible d'un déficit invisible.</p>
+            <p class="conclusion">Conclusion : la continuité tombe comme récit, remplacée par l'alternance compensation puis rupture.</p>
+        </div>
+
+        <div class="synthese">
+            <h4>Synthèse — Ce que la dynamique impose</h4>
+            <p>Le vivant impose une grammaire :</p>
+            <p>• Priorité à la viabilité, pas à l'élégance<br>
+            • Primat des boucles sur les chaînes causales simples<br>
+            • Régime avant variable isolée<br>
+            • Stabilité avant loi<br>
+            • Multi-échelles avant micro-primat<br>
+            • Observables dépendants du protocole, donc explicitation des opérations</p>
+            <p>Ce n'est pas un discours sur la science. C'est une contrainte du réel vivant. Et c'est pour cela que certains cadres tombent. Ils ne passent pas les tests de viabilité.</p>
+        </div>
+    </article>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
+    </footer>
+</body>
+</html>
