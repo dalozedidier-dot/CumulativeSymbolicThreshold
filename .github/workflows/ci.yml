@@ -1,9 +1,5 @@
 name: CI - Canonical Synthetic Suite
 
-# Triggered on pushes to main, pull requests, and manual runs.
-# Uses --fast mode (smoke_ci: n=20 per statistical test) to stay within the CI budget.
-# For full_statistical validation (n=60), see nightly.yml.
-
 on:
   push:
     branches: ["main"]
@@ -11,7 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Syntax gate: catch Python errors before running anything else.
   compileall:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -23,7 +18,6 @@ jobs:
       - name: Check Python syntax (compileall)
         run: python -m compileall 04_Code -q
 
-  # Unit / e2e tests.
   unit_tests:
     needs: compileall
     runs-on: ubuntu-latest
@@ -38,13 +32,7 @@ jobs:
         run: |
           set -e
           python -m pip install --upgrade pip
-          python -m pip install \
-            "numpy>=1.26" \
-            "pandas>=2.0" \
-            "scipy>=1.11" \
-            "statsmodels>=0.14" \
-            "matplotlib>=3.8" \
-            "pytest>=8.0"
+          python -m pip install             "numpy>=1.26"             "pandas>=2.0"             "scipy>=1.11"             "statsmodels>=0.14"             "matplotlib>=3.8"             "pytest>=8.0"
 
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
@@ -77,16 +65,9 @@ jobs:
         run: |
           set -e
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install \
-            "numpy>=1.26" \
-            "pandas>=2.0" \
-            "matplotlib>=3.8" \
-            "scipy>=1.11" \
-            "statsmodels>=0.14" \
-            "pytest>=8.0"
+          python -m pip install             "numpy>=1.26"             "pandas>=2.0"             "matplotlib>=3.8"             "scipy>=1.11"             "statsmodels>=0.14"             "pytest>=8.0"
 
-          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; \
-          elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt;           elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
 
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
@@ -99,12 +80,7 @@ jobs:
       - name: Run canonical suite (smoke_ci - fast mode)
         run: |
           set -eo pipefail
-          # --fast -> smoke_ci: n=20 per statistical test (< N_min=50).
-          # This validates pipeline execution and report integrity, not full statistical support.
-          PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
-            --outdir _ci_out/canonical_tests \
-            --fast \
-            2>&1 | tee _ci_out/run_all_tests.log
+          PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py             --outdir _ci_out/canonical_tests             --fast             2>&1 | tee _ci_out/run_all_tests.log
 
           if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
@@ -122,9 +98,7 @@ jobs:
           mkdir -p _ci_out/06_Manuscript
           if [ -d 06_Manuscript ]; then cp -R 06_Manuscript _ci_out/06_Manuscript; fi
 
-      - name: Assert support level (hard gate)
-        # Reads support_level from global_verdict.json and writes it to the step summary.
-        # Hard rule: smoke_ci must not claim full_statistical_support.
+      - name: Assert smoke CI contract (hard gate)
         run: |
           python - <<'PYEOF'
           import glob
@@ -137,48 +111,31 @@ jobs:
               candidates = glob.glob("_ci_out/**/global_verdict.json", recursive=True)
 
           if not candidates:
-              print("WARNING: global_verdict.json not found - cannot assert support level")
-              sys.exit(0)
+              print("ERROR: global_verdict.json not found")
+              sys.exit(1)
 
-          verdict_file = max(candidates, key=lambda p: os.path.getmtime(p))
+          verdict_file = max(candidates, key=os.path.getmtime)
           d = json.loads(open(verdict_file, encoding="utf-8").read())
 
           run_mode = d.get("run_mode", "UNKNOWN")
           support_level = d.get("support_level", "UNKNOWN")
-          global_v = d.get("global", "UNKNOWN")
-          forbidden = d.get("forbidden_report_labels", [])
 
-          if run_mode == "smoke_ci" and support_level in ("full_statistical_support", "full_statistical_accept"):
-              print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
-              sys.exit(1)
-          if run_mode == "full_statistical" and str(support_level).startswith("smoke_ci"):
-              print(f"ERROR: support_level='{support_level}' is impossible for run_mode='{run_mode}'")
+          if run_mode == "smoke_ci" and support_level == "full_statistical_support":
+              print(f"ERROR: smoke_ci cannot claim full_statistical_support. verdict_file={verdict_file}")
               sys.exit(1)
 
-          summary = f"""## ORI-C CI Run - Support Level Assertion
+          ok = (run_mode == "smoke_ci" and support_level in ("smoke_ci_accept","rejected","inconclusive")) or (run_mode != "smoke_ci")
+          if not ok:
+              print(f"ERROR: invalid support_level={support_level} for run_mode={run_mode}. verdict_file={verdict_file}")
+              sys.exit(1)
 
-          | Field | Value |
-          |-------|-------|
-          | verdict_file | `{verdict_file}` |
-          | run_mode | `{run_mode}` |
-          | global verdict | `{global_v}` |
-          | support_level | `{support_level}` |
-
-          ### Labels forbidden in any report derived from this run
-          {chr(10).join(f"- `{lbl}`" for lbl in forbidden)}
-
-          For full statistical validation, use the nightly workflow (`nightly.yml`).
-          """
-
-          summary = "\n".join(line.lstrip() for line in summary.splitlines())
-
-          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
-          if step_summary:
-              with open(step_summary, "a", encoding="utf-8") as fh:
-                  fh.write(summary)
-
-          print(summary)
+          print(f"OK contract: run_mode={run_mode} support_level={support_level} verdict_file={verdict_file}")
           PYEOF
+
+      - name: Build CI summary (json + md + Actions summary)
+        run: |
+          set -e
+          python 04_Code/reporting/build_ci_summary.py --ci-out _ci_out --canonical-root _ci_out/canonical_tests
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
