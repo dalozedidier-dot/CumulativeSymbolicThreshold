@@ -575,9 +575,10 @@ def main() -> int:
                     args.time_mode,
                     args.normalize,
                     args.control_mode,
-                    args.baseline_n,
                     args.lags,
+                    args.baseline_n,
                     args.seed,
+                    args.verbose,
                 )
                 all_window_rows.extend(wrows)
 
