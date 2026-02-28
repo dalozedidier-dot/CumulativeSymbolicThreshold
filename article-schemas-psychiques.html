@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORI-C | Les schémas psychiques comme structures dissipatives</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a0b0d;
+            --bg-surface: #111214;
+            --bg-elevated: #181a1d;
+            --text-primary: #f0eeea;
+            --text-muted: #a0a098;
+            --text-subtle: #6a6862;
+            --accent-flow: #3d5a4c;
+            --accent-pulse: #8b6b4a;
+            --accent-psyche: #5a4a6b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        /* Cyberspace Background */
+        .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%); }
+        .cyber-grid-floor { position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%; background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px); background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; }
+        .cyber-light-source { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%); }
+
+        a { color: var(--text-primary); }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0));
+        }
+
+        .nav-logo {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+
+        .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
+        .nav-links a.active { opacity: 1; color: var(--accent-flow); }
+
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+            padding-left: 2rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover { opacity: 0.8; }
+        .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
+
+        /* Article header */
+        .article-hero {
+            padding: 10rem 2rem 4rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            color: var(--text-subtle);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover { color: var(--accent-flow); }
+
+        .article-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+            margin-bottom: 1rem;
+        }
+
+        .article-title {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 300;
+            line-height: 1.3;
+            margin-bottom: 1.5rem;
+        }
+
+        .article-lead {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+
+        .article-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            padding: 0.4rem 0.8rem;
+            background: rgba(90, 74, 107, 0.2);
+            color: var(--accent-psyche);
+            border: 1px solid var(--accent-psyche);
+        }
+
+        /* Article content */
+        .article-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .article-content h3 {
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin: 3rem 0 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .article-content ul {
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .article-content li {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+        }
+
+        .key-point {
+            background: var(--bg-surface);
+            border-left: 3px solid var(--accent-flow);
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .key-point-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-flow);
+            margin-bottom: 0.5rem;
+        }
+
+        .key-point p {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .compact-box {
+            background: var(--bg-elevated);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem;
+            margin: 3rem 0;
+        }
+
+        .compact-box h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            color: var(--accent-pulse);
+            margin-bottom: 1rem;
+        }
+
+        .compact-box p {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        footer {
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            color: var(--text-subtle);
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .nav-links { display: none; }
+            .article-hero { padding: 7rem 1.5rem 3rem; }
+            .article-content { padding: 0 1.5rem 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg">
+        <div class="cyber-grid-floor"></div>
+        <div class="cyber-light-source"></div>
+    </div>
+
+    <nav>
+        <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
+        <ul class="nav-links">
+            <li><a href="ori-c-presentation.html">Présentation</a></li>
+            <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
+            <li><a href="palm-cadre.html">PALM</a></li>
+            <li><a href="ori-c-articles.html" class="active">Articles</a></li>
+            <li><a href="ori-c-livres.html">Livres</a></li>
+            <li><a href="ori-c-recherche.html">Recherches</a></li>
+            <li><a href="ori-c-outils.html">Outils</a></li>
+            <li><a href="ori-c-contact.html">Contact</a></li>
+        </ul>
+        <div class="lang-switcher">
+            <button class="lang-btn active">FR</button>
+            <button class="lang-btn">EN</button>
+        </div>
+    </nav>
+
+    <header class="article-hero">
+        <a href="ori-c-articles.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Retour aux articles
+        </a>
+        <div class="article-date">21 février 2026</div>
+        <h1 class="article-title">Les schémas psychiques comme structures dissipatives</h1>
+        <p class="article-lead">Une lecture thermodynamique de la répétition, de la souffrance chronique et des conditions de transition psychique.</p>
+        <span class="article-tag">Psychisme</span>
+    </header>
+
+    <article class="article-content">
+        <h3>1) Le vivant biologique : ordre local, dissipation, entropie globale</h3>
+        
+        <p>Dans le cadre de la thermodynamique hors équilibre, le vivant n'est pas une exception au second principe.</p>
+        
+        <ul>
+            <li>Un organisme maintient une organisation interne élevée (ordre local, gradients, différenciation).</li>
+            <li>Il ne le fait qu'au prix d'un flux continu d'énergie et de matière.</li>
+            <li>Ce flux implique une dissipation vers l'environnement (chaleur, sous-produits, déchets métaboliques).</li>
+            <li>Au bilan, l'entropie totale du système élargi (organisme + environnement) augmente.</li>
+            <li>Quand le flux s'interrompt durablement, l'organisation se défait.</li>
+        </ul>
+
+        <div class="key-point">
+            <div class="key-point-label">Principe</div>
+            <p>La vie se tient par des régimes stationnaires loin de l'équilibre, rendus possibles par la dissipation.</p>
+        </div>
+
+        <h3>2) Le psychisme : une structure dissipative informationnelle et affective</h3>
+
+        <p>La transposition fonctionne si on conserve l'invariant dynamique et qu'on change le support. Un schéma psychique (attachement insécure, contrôle compulsif, évitement, hypervigilance, rumination) peut être compris comme une structure de stabilité.</p>
+
+        <ul>
+            <li>Il produit un ordre interne familier : continuité du soi, prévisibilité, cohérence narrative minimale, réduction de l'inconnu.</li>
+            <li>Cet ordre a un coût : tension, vigilance, rumination, stratégies de contrôle, conflits relationnels, épuisement.</li>
+            <li>Le schéma se maintient par un flux affectif et attentionnel continu. Il convertit l'incertitude en réponses déjà connues.</li>
+            <li>Il exporte du "désordre" sous forme de perturbations : frictions relationnelles, instabilité émotionnelle, rigidification.</li>
+        </ul>
+
+        <p><em>Point de méthode important :</em> "entropie psychique" n'est pas une entropie thermodynamique. C'est un analogue utile pour désigner la dispersion, la désorganisation fonctionnelle, la perte de degrés de liberté exploitables et l'augmentation du coût de régulation.</p>
+
+        <h3>3) La répétition : non pas faute, mais mécanisme de stabilisation</h3>
+
+        <p>La répétition n'est pas d'abord punitive. C'est un mécanisme de maintien.</p>
+
+        <ul>
+            <li>Le schéma recrée des configurations qu'il sait gérer.</li>
+            <li>Il préfère un ordre douloureux mais lisible à un chaos incertain.</li>
+            <li>Il protège une identité et une continuité, même au prix d'un surcoût chronique.</li>
+        </ul>
+
+        <div class="key-point">
+            <div class="key-point-label">Attracteur</div>
+            <p>C'est la logique d'un attracteur : un bassin de stabilité où le système retombe spontanément.</p>
+        </div>
+
+        <h3>4) La friction : signal d'instabilité et seuil de transition</h3>
+
+        <p>Tant que le coût est soutenable, le régime tient. Quand la dissipation devient trop chère, la stabilité se dégrade :</p>
+
+        <ul>
+            <li>Escalade des symptômes ou des conflits</li>
+            <li>Rendements décroissants des stratégies habituelles</li>
+            <li>Fatigue, saturation, contradictions insolubles</li>
+            <li>Sentiment que "ce qui marchait" ne marche plus</li>
+        </ul>
+
+        <p>Cette zone correspond à une perte de stabilité. Une transition devient possible : soit simplification défensive (retrait, anesthésie, fermeture), soit réorganisation vers une structure plus complexe et plus souple.</p>
+
+        <h3>5) L'observation : rediriger le flux, ouvrir un nouvel attracteur</h3>
+
+        <p>Observer sans juger n'est pas un commentaire moral. C'est une opération de régulation.</p>
+
+        <ul>
+            <li>L'observation crée une distance entre le schéma et le sujet.</li>
+            <li>Elle introduit de l'information intégrable (différenciation, symbolisation, choix).</li>
+            <li>Elle détourne une partie de l'énergie auparavant consommée par la compulsion vers une boucle de méta-régulation.</li>
+            <li>Résultat : moins de dissipation brute, plus de complexité fonctionnelle, et la possibilité qu'un nouvel attracteur devienne viable.</li>
+        </ul>
+
+        <div class="compact-box">
+            <h4>Formulation compacte</h4>
+            <p>Un schéma psychique est une structure de stabilité qui maintient un ordre interne familier en consommant un flux affectif et attentionnel continu. La répétition stabilise cet ordre. La souffrance chronique correspond au coût dissipatif de cette stabilité. Quand ce coût dépasse un seuil, le régime devient instable et une transition devient possible. L'observation introduit une méta-régulation qui réduit le gaspillage et rend accessible un attracteur plus souple.</p>
+        </div>
+    </article>
+
+    <footer>
+        <p class="footer-meta">ORI-C · Didier Daloze · 2026</p>
+    </footer>
+</body>
+</html>

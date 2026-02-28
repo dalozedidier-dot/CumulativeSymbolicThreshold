@@ -20,6 +20,7 @@
             --accent-psyche: #5a4a6b;
             --accent-climate: #4a5a6b;
             --accent-control: #6b4a4a;
+            --accent-system: #5a6b4a;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,205 +33,34 @@
             line-height: 1.8;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-        }
-
         /* Cyberspace Background */
-        .cyber-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            background: 
-                radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%),
-                linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%);
-        }
+        .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, rgba(20, 60, 100, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(10, 20, 40, 0.3) 0%, transparent 70%), linear-gradient(to bottom, #050608 0%, #0a0d12 50%, #0d1015 100%); }
+        .cyber-grid-floor { position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%; background: linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px); background-size: 100% 100%, 80px 100%; transform: perspective(500px) rotateX(60deg); transform-origin: center top; }
+        .cyber-light-source { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%); }
 
-        .cyber-grid-floor {
-            position: absolute;
-            bottom: 0; left: -50%;
-            width: 200%; height: 60%;
-            background: 
-                linear-gradient(90deg, transparent 0%, rgba(30, 80, 120, 0.03) 49.5%, rgba(40, 100, 150, 0.08) 50%, rgba(30, 80, 120, 0.03) 50.5%, transparent 100%),
-                repeating-linear-gradient(90deg, transparent 0px, transparent 79px, rgba(30, 80, 120, 0.04) 80px);
-            background-size: 100% 100%, 80px 100%;
-            transform: perspective(500px) rotateX(60deg);
-            transform-origin: center top;
-            animation: gridFloorPulse 8s ease-in-out infinite;
-        }
-
-        .cyber-grid-floor::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, transparent 0px, transparent 39px, rgba(30, 80, 120, 0.04) 40px);
-            background-size: 100% 40px;
-            animation: gridLinesMove 4s linear infinite;
-        }
-
-        @keyframes gridFloorPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.9; } }
-        @keyframes gridLinesMove { 0% { transform: translateY(0); } 100% { transform: translateY(40px); } }
-
-        .cyber-light-source {
-            position: absolute;
-            top: 40%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px; height: 400px;
-            background: radial-gradient(ellipse at center, rgba(40, 120, 180, 0.08) 0%, rgba(30, 80, 120, 0.04) 30%, transparent 70%);
-            animation: lightPulse 6s ease-in-out infinite;
-        }
-
-        .cyber-light-source::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 8px; height: 8px;
-            background: rgba(100, 180, 220, 0.6);
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(80, 160, 200, 0.4), 0 0 40px rgba(60, 140, 180, 0.2), 0 0 80px rgba(40, 120, 160, 0.1);
-            animation: corePulse 3s ease-in-out infinite;
-        }
-
-        @keyframes lightPulse { 0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } }
-        @keyframes corePulse { 0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } }
-
-        .data-stream {
-            position: absolute; height: 1px;
-            background: linear-gradient(90deg, transparent 0%, rgba(40, 120, 180, 0.4) 20%, rgba(60, 160, 220, 0.6) 50%, rgba(40, 120, 180, 0.4) 80%, transparent 100%);
-            animation: dataStreamMove 8s linear infinite; opacity: 0;
-        }
-
-        @keyframes dataStreamMove { 0% { transform: translateX(-100%) scaleX(0.3); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translateX(100vw) scaleX(0.3); opacity: 0; } }
-
-        .data-line-vertical {
-            position: absolute; width: 1px;
-            background: linear-gradient(180deg, transparent 0%, rgba(40, 120, 180, 0.2) 30%, rgba(60, 160, 220, 0.4) 50%, rgba(40, 120, 180, 0.2) 70%, transparent 100%);
-            animation: dataLineVertical 12s linear infinite;
-        }
-
-        @keyframes dataLineVertical { 0% { transform: translateY(-100%); opacity: 0; } 5% { opacity: 0.5; } 95% { opacity: 0.5; } 100% { transform: translateY(100vh); opacity: 0; } }
-
-        .data-block {
-            position: absolute;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 8px;
-            color: rgba(60, 140, 180, 0.3);
-            white-space: nowrap;
-            animation: floatDataBlock 20s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes floatDataBlock { 0% { transform: translateY(100vh) translateX(0); opacity: 0; } 5% { opacity: 0.4; } 95% { opacity: 0.4; } 100% { transform: translateY(-10vh) translateX(-50px); opacity: 0; } }
-
-        .hex-node { position: absolute; width: 30px; height: 35px; animation: hexFloat 25s linear infinite; pointer-events: none; }
-        .hex-node svg { width: 100%; height: 100%; }
-        .hex-node polygon { fill: none; stroke: rgba(40, 120, 160, 0.2); stroke-width: 1; }
-        .hex-node circle { fill: rgba(60, 160, 200, 0.3); }
-
-        @keyframes hexFloat { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0; } 5% { opacity: 0.5; } 95% { opacity: 0.5; } 100% { transform: translateY(-10vh) rotate(180deg); opacity: 0; } }
-
-        .scan-line {
-            position: absolute; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent 0%, rgba(40, 120, 180, 0.1) 20%, rgba(60, 160, 220, 0.2) 50%, rgba(40, 120, 180, 0.1) 80%, transparent 100%);
-            animation: scanMove 8s linear infinite;
-        }
-
-        @keyframes scanMove { 0% { top: -2px; opacity: 0; } 5% { opacity: 0.6; } 95% { opacity: 0.6; } 100% { top: 100%; opacity: 0; } }
-
-        a { color: inherit; }
+        a { color: var(--text-primary); }
 
         /* Navigation */
         nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+            position: fixed; top: 0; left: 0; width: 100%;
             padding: 1.5rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             z-index: 100;
             background: linear-gradient(to bottom, rgba(10, 11, 13, 0.95), rgba(10, 11, 13, 0));
         }
 
-        .nav-logo {
-            font-size: 1.1rem;
-            font-weight: 300;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            color: var(--text-primary);
-            text-decoration: none;
-            border-bottom: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-primary);
-            text-decoration: none;
-            border-bottom: none;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            opacity: 0.6;
-            transition: opacity 0.3s ease, color 0.3s ease;
-        }
-
+        .nav-logo { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: var(--text-primary); text-decoration: none; border-bottom: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; transition: opacity 0.3s ease, color 0.3s ease; }
         .nav-links a:hover { opacity: 1; color: var(--accent-flow); }
         .nav-links a.active { opacity: 1; color: var(--accent-flow); }
 
-        /* Language switcher */
-        .lang-switcher {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: 2rem;
-            padding-left: 2rem;
-            border-left: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .lang-btn {
-            background: none;
-            border: 1px solid transparent;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            letter-spacing: 0.1em;
-            padding: 0.3rem 0.6rem;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: all 0.3s ease;
-        }
-
+        .lang-switcher { display: flex; align-items: center; gap: 0.5rem; margin-left: 2rem; padding-left: 2rem; border-left: 1px solid rgba(255,255,255,0.2); }
+        .lang-btn { background: none; border: 1px solid transparent; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; padding: 0.3rem 0.6rem; cursor: pointer; opacity: 0.5; transition: all 0.3s ease; }
         .lang-btn:hover { opacity: 0.8; }
         .lang-btn.active { opacity: 1; border-color: var(--accent-flow); }
 
-        @media (max-width: 900px) {
-            nav { padding: 1rem 1.5rem; }
-            .nav-links { gap: 1rem; }
-            .nav-links a { font-size: 0.6rem; }
-        }
-
-        @media (max-width: 700px) {
-            .nav-links { display: none; }
-        }
-
+        /* Hero */
         .hero {
             min-height: 40vh;
             display: flex;
@@ -239,11 +69,10 @@
             align-items: center;
             text-align: center;
             padding: 8rem 2rem 4rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         .hero h1 {
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-size: clamp(2.5rem, 6vw, 4rem);
             font-weight: 300;
             letter-spacing: 0.1em;
             margin-bottom: 1rem;
@@ -251,219 +80,117 @@
 
         .hero-subtitle {
             font-size: 1.2rem;
-            font-style: italic;
             color: var(--text-muted);
-            max-width: 600px;
+            max-width: 700px;
         }
 
+        .hero-subtitle a {
+            color: var(--accent-flow);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-flow);
+        }
+
+        /* Main content */
         .main-content {
             max-width: 900px;
             margin: 0 auto;
-            padding: 4rem 2rem;
+            padding: 2rem;
         }
 
-        /* Article card in list */
-        .articles-list {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-
-        .article-preview {
+        /* Article cards */
+        .article-card {
             background: var(--bg-surface);
             border: 1px solid rgba(255,255,255,0.05);
             padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
             transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none;
-            border-bottom: none;
-            display: block;
         }
 
-        .article-preview:hover {
-            border-color: var(--accent-flow);
-            transform: translateX(10px);
+        .article-card:hover {
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .article-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+        }
+
+        .article-card.psyche::before { background: var(--accent-psyche); }
+        .article-card.climate::before { background: var(--accent-climate); }
+        .article-card.control::before { background: var(--accent-control); }
+        .article-card.system::before { background: var(--accent-system); }
+        .article-card.threshold::before { background: var(--accent-pulse); }
+
+        .article-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
         }
 
         .article-date {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem;
-            letter-spacing: 0.15em;
             color: var(--text-subtle);
-            margin-bottom: 0.5rem;
         }
+
+        .article-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            border: 1px solid;
+        }
+
+        .tag-psyche { background: rgba(90, 74, 107, 0.2); color: var(--accent-psyche); border-color: var(--accent-psyche); }
+        .tag-climate { background: rgba(74, 90, 107, 0.2); color: var(--accent-climate); border-color: var(--accent-climate); }
+        .tag-control { background: rgba(107, 74, 74, 0.2); color: var(--accent-control); border-color: var(--accent-control); }
+        .tag-system { background: rgba(90, 107, 74, 0.2); color: var(--accent-system); border-color: var(--accent-system); }
+        .tag-threshold { background: rgba(139, 107, 74, 0.2); color: var(--accent-pulse); border-color: var(--accent-pulse); }
 
         .article-title {
             font-size: 1.5rem;
             font-weight: 400;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
+            margin-bottom: 0.8rem;
+            line-height: 1.3;
         }
 
         .article-excerpt {
             font-size: 1rem;
             color: var(--text-muted);
-            font-style: italic;
-        }
-
-        .article-tag {
-            display: inline-block;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            padding: 0.3rem 0.8rem;
-            margin-top: 1rem;
-            border: 1px solid;
-        }
-
-        .tag-psyche { border-color: var(--accent-psyche); color: var(--accent-psyche); }
-        .tag-climate { border-color: var(--accent-climate); color: var(--accent-climate); }
-        .tag-control { border-color: var(--accent-control); color: var(--accent-control); }
-        .tag-system { border-color: var(--accent-flow); color: var(--accent-flow); }
-
-        /* Full article */
-        .article-full {
-            margin-bottom: 6rem;
-            padding-bottom: 4rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .article-header {
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-
-        .article-header .article-date {
-            margin-bottom: 1rem;
-        }
-
-        .article-header h2 {
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            font-weight: 300;
-            line-height: 1.3;
-            margin-bottom: 1rem;
-        }
-
-        .article-header .article-lead {
-            font-size: 1.2rem;
-            font-style: italic;
-            color: var(--text-muted);
-            max-width: 650px;
-            margin: 0 auto;
-        }
-
-        .article-body p {
-            font-size: 1.1rem;
             margin-bottom: 1.5rem;
+            line-height: 1.7;
         }
 
-        .article-body h3 {
-            font-size: 1.4rem;
-            font-weight: 400;
-            margin: 2.5rem 0 1rem;
+        .article-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--accent-flow);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .article-link:hover {
             color: var(--text-primary);
         }
 
-        .article-body ul {
-            margin: 1rem 0 1.5rem 1.5rem;
+        .article-link svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.3s ease;
         }
 
-        .article-body li {
-            font-size: 1.05rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-muted);
-        }
-
-        .article-body blockquote {
-            border-left: 3px solid var(--accent-flow);
-            padding-left: 1.5rem;
-            margin: 2rem 0;
-            font-style: italic;
-            color: var(--text-muted);
-        }
-
-        .key-point {
-            background: var(--bg-surface);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 1.5rem 2rem;
-            margin: 2rem 0;
-        }
-
-        .key-point-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.2em;
-            color: var(--accent-pulse);
-            margin-bottom: 0.5rem;
-        }
-
-        .key-point p {
-            font-size: 1.15rem;
-            margin: 0;
-            font-style: italic;
-        }
-
-        /* Formulation compacte */
-        .compact-box {
-            background: linear-gradient(135deg, var(--bg-surface), var(--bg-elevated));
-            border-left: 4px solid var(--accent-psyche);
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-
-        .compact-box h4 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            letter-spacing: 0.2em;
-            color: var(--accent-psyche);
-            margin-bottom: 1rem;
-        }
-
-        .compact-box p {
-            font-size: 1.1rem;
-            margin: 0;
-            line-height: 1.9;
-        }
-
-        /* Phases list */
-        .phases-list {
-            margin: 2rem 0;
-        }
-
-        .phase-item {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-            align-items: flex-start;
-        }
-
-        .phase-num {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--bg-surface);
-            border: 1px solid var(--accent-flow);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--accent-flow);
-            flex-shrink: 0;
-        }
-
-        .phase-content h4 {
-            font-size: 1.1rem;
-            font-weight: 400;
-            margin-bottom: 0.3rem;
-        }
-
-        .phase-content p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            margin: 0;
+        .article-link:hover svg {
+            transform: translateX(4px);
         }
 
         footer {
@@ -475,46 +202,32 @@
         .footer-meta {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.65rem;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
+            letter-spacing: 0.2em;
             color: var(--text-subtle);
         }
 
         @media (max-width: 768px) {
+            nav { padding: 1rem 1.5rem; }
+            .nav-links { display: none; }
             .hero { padding: 6rem 1.5rem 3rem; }
-            .main-content { padding: 3rem 1.5rem; }
+            .main-content { padding: 1.5rem; }
+            .article-card { padding: 1.5rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Cyberspace Background -->
     <div class="cyber-bg">
         <div class="cyber-grid-floor"></div>
         <div class="cyber-light-source"></div>
-        <div class="scan-line"></div>
-        <div class="data-stream" style="top: 20%; width: 200px;"></div>
-        <div class="data-stream" style="top: 45%; width: 150px; animation-delay: 3s;"></div>
-        <div class="data-stream" style="top: 70%; width: 180px; animation-delay: 5s;"></div>
-        <div class="data-line-vertical" style="left: 15%; height: 150px;"></div>
-        <div class="data-line-vertical" style="left: 85%; height: 140px; animation-delay: 4s;"></div>
-        <div class="data-block" style="left: 8%; animation-delay: 0s;">0x7F3A</div>
-        <div class="data-block" style="left: 75%; animation-delay: 6s;">∞ FLOW</div>
-        <div class="hex-node" style="left: 20%; animation-delay: 2s;">
-            <svg viewBox="0 0 30 35"><polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/><circle cx="15" cy="17" r="3"/></svg>
-        </div>
-        <div class="hex-node" style="left: 70%; animation-delay: 12s;">
-            <svg viewBox="0 0 30 35"><polygon points="15,2 28,10 28,25 15,33 2,25 2,10"/><circle cx="15" cy="17" r="3"/></svg>
-        </div>
     </div>
 
-    <!-- Navigation -->
     <nav>
         <a href="ori-c-presentation.html" class="nav-logo">ORI-C</a>
-                <ul class="nav-links">
+        <ul class="nav-links">
             <li><a href="ori-c-presentation.html">Présentation</a></li>
             <li><a href="ori-c-cadre-complet.html">Cadre</a></li>
             <li><a href="palm-cadre.html">PALM</a></li>
-            <li><a href="ori-c-articles.html">Articles</a></li>
+            <li><a href="ori-c-articles.html" class="active">Articles</a></li>
             <li><a href="ori-c-livres.html">Livres</a></li>
             <li><a href="ori-c-recherche.html">Recherches</a></li>
             <li><a href="ori-c-outils.html">Outils</a></li>
@@ -529,253 +242,110 @@
     <section class="hero">
         <h1>Articles & Essais</h1>
         <p class="hero-subtitle">
-            Explorations du cadre ORI-C par <a href="ori-c-contact.html" style="color: var(--accent-flow); text-decoration: none; border-bottom: 1px solid var(--accent-flow);">Didier Daloze</a> — 
+            Explorations du cadre ORI-C par <a href="ori-c-contact.html">Didier Daloze</a> — 
             appliqué au psychisme, au climat, aux systèmes de contrôle et à la viabilité des sociétés.
         </p>
     </section>
 
     <main class="main-content">
 
-        <!-- Article 1 : Schémas psychiques -->
-        <article class="article-full" id="schemas-psychiques">
-            <header class="article-header">
-                <div class="article-date">21 février 2026</div>
-                <h2>Les schémas psychiques comme structures dissipatives</h2>
-                <p class="article-lead">
-                    Une lecture thermodynamique de la répétition, de la souffrance chronique 
-                    et des conditions de transition psychique.
-                </p>
+        <!-- Article 1 -->
+        <article class="article-card psyche">
+            <div class="article-meta">
+                <span class="article-date">21 février 2026</span>
                 <span class="article-tag tag-psyche">Psychisme</span>
-            </header>
-
-            <div class="article-body">
-                <h3>1) Le vivant biologique : ordre local, dissipation, entropie globale</h3>
-                
-                <p>Dans le cadre de la thermodynamique hors équilibre, le vivant n'est pas une exception au second principe.</p>
-                
-                <ul>
-                    <li>Un organisme maintient une organisation interne élevée (ordre local, gradients, différenciation).</li>
-                    <li>Il ne le fait qu'au prix d'un flux continu d'énergie et de matière.</li>
-                    <li>Ce flux implique une dissipation vers l'environnement (chaleur, sous-produits, déchets métaboliques).</li>
-                    <li>Au bilan, l'entropie totale du système élargi (organisme + environnement) augmente.</li>
-                    <li>Quand le flux s'interrompt durablement, l'organisation se défait.</li>
-                </ul>
-
-                <div class="key-point">
-                    <div class="key-point-label">Principe</div>
-                    <p>La vie se tient par des régimes stationnaires loin de l'équilibre, rendus possibles par la dissipation.</p>
-                </div>
-
-                <h3>2) Le psychisme : une structure dissipative informationnelle et affective</h3>
-
-                <p>La transposition fonctionne si on conserve l'invariant dynamique et qu'on change le support. Un schéma psychique (attachement insécure, contrôle compulsif, évitement, hypervigilance, rumination) peut être compris comme une structure de stabilité.</p>
-
-                <ul>
-                    <li>Il produit un ordre interne familier : continuité du soi, prévisibilité, cohérence narrative minimale, réduction de l'inconnu.</li>
-                    <li>Cet ordre a un coût : tension, vigilance, rumination, stratégies de contrôle, conflits relationnels, épuisement.</li>
-                    <li>Le schéma se maintient par un flux affectif et attentionnel continu. Il convertit l'incertitude en réponses déjà connues.</li>
-                    <li>Il exporte du "désordre" sous forme de perturbations : frictions relationnelles, instabilité émotionnelle, rigidification.</li>
-                </ul>
-
-                <p><em>Point de méthode important :</em> "entropie psychique" n'est pas une entropie thermodynamique. C'est un analogue utile pour désigner la dispersion, la désorganisation fonctionnelle, la perte de degrés de liberté exploitables et l'augmentation du coût de régulation.</p>
-
-                <h3>3) La répétition : non pas faute, mais mécanisme de stabilisation</h3>
-
-                <p>La répétition n'est pas d'abord punitive. C'est un mécanisme de maintien.</p>
-
-                <ul>
-                    <li>Le schéma recrée des configurations qu'il sait gérer.</li>
-                    <li>Il préfère un ordre douloureux mais lisible à un chaos incertain.</li>
-                    <li>Il protège une identité et une continuité, même au prix d'un surcoût chronique.</li>
-                </ul>
-
-                <div class="key-point">
-                    <div class="key-point-label">Attracteur</div>
-                    <p>C'est la logique d'un attracteur : un bassin de stabilité où le système retombe spontanément.</p>
-                </div>
-
-                <h3>4) La friction : signal d'instabilité et seuil de transition</h3>
-
-                <p>Tant que le coût est soutenable, le régime tient. Quand la dissipation devient trop chère, la stabilité se dégrade :</p>
-
-                <ul>
-                    <li>Escalade des symptômes ou des conflits</li>
-                    <li>Rendements décroissants des stratégies habituelles</li>
-                    <li>Fatigue, saturation, contradictions insolubles</li>
-                    <li>Sentiment que "ce qui marchait" ne marche plus</li>
-                </ul>
-
-                <p>Cette zone correspond à une perte de stabilité. Une transition devient possible : soit simplification défensive (retrait, anesthésie, fermeture), soit réorganisation vers une structure plus complexe et plus souple.</p>
-
-                <h3>5) L'observation : rediriger le flux, ouvrir un nouvel attracteur</h3>
-
-                <p>Observer sans juger n'est pas un commentaire moral. C'est une opération de régulation.</p>
-
-                <ul>
-                    <li>L'observation crée une distance entre le schéma et le sujet.</li>
-                    <li>Elle introduit de l'information intégrable (différenciation, symbolisation, choix).</li>
-                    <li>Elle détourne une partie de l'énergie auparavant consommée par la compulsion vers une boucle de méta-régulation.</li>
-                    <li>Résultat : moins de dissipation brute, plus de complexité fonctionnelle, et la possibilité qu'un nouvel attracteur devienne viable.</li>
-                </ul>
-
-                <div class="compact-box">
-                    <h4>Formulation compacte</h4>
-                    <p>Un schéma psychique est une structure de stabilité qui maintient un ordre interne familier en consommant un flux affectif et attentionnel continu. La répétition stabilise cet ordre. La souffrance chronique correspond au coût dissipatif de cette stabilité. Quand ce coût dépasse un seuil, le régime devient instable et une transition devient possible. L'observation introduit une méta-régulation qui réduit le gaspillage et rend accessible un attracteur plus souple.</p>
-                </div>
             </div>
+            <h2 class="article-title">Les schémas psychiques comme structures dissipatives</h2>
+            <p class="article-excerpt">
+                Une lecture thermodynamique de la répétition, de la souffrance chronique 
+                et des conditions de transition psychique. Le schéma comme attracteur, 
+                la friction comme signal, l'observation comme méta-régulation.
+            </p>
+            <a href="article-schemas-psychiques.html" class="article-link">
+                Lire l'article
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
         </article>
 
-        <!-- Article 2 : Climat -->
-        <article class="article-full" id="climat-instabilite">
-            <header class="article-header">
-                <div class="article-date">22 février 2026</div>
-                <h2>Le climat a toujours été instable</h2>
-                <p class="article-lead">
-                    L'erreur n'est pas le changement, c'est notre incapacité à vivre avec l'instabilité.
-                </p>
+        <!-- Article 2 -->
+        <article class="article-card climate">
+            <div class="article-meta">
+                <span class="article-date">22 février 2026</span>
                 <span class="article-tag tag-climate">Climat</span>
-            </header>
-
-            <div class="article-body">
-                <p>Le climat de la Terre n'a jamais été stable. Glaciations, réchauffements rapides, sécheresses prolongées, inondations majeures, tempêtes extrêmes, ruptures abruptes. Ce n'est ni polémique ni idéologique. C'est un fait documenté par la paléoclimatologie.</p>
-
-                <p>L'erreur n'est donc pas de découvrir que le climat change. L'erreur est d'avoir construit des sociétés qui supposent implicitement un monde stable, prévisible, maîtrisable.</p>
-
-                <h3>Le mythe de la stabilité climatique</h3>
-
-                <p>Les archives climatiques décrivent un système qui n'évolue pas toujours de façon linéaire. Il peut fonctionner par oscillations, seuils et ruptures. Penser la nature comme un système qui devrait rester stable, et qu'il suffirait de "réparer" pour retrouver une normalité, relève souvent d'une projection culturelle — celle de la maîtrise, du contrôle et de la sécurité totale.</p>
-
-                <h3>Même avec un objectif global, la météo restera chaotique</h3>
-
-                <p>Un point est rarement dit clairement : même dans les scénarios les plus optimistes, la météo restera chaotique. Les tempêtes, les inondations, les sécheresses et les anomalies locales ne disparaîtront pas parce qu'un seuil global serait respecté.</p>
-
-                <div class="key-point">
-                    <div class="key-point-label">Insight</div>
-                    <p>Le sujet n'est pas seulement la science du climat. Le sujet, c'est notre imaginaire de stabilité.</p>
-                </div>
-
-                <h3>Les catastrophes révèlent nos fragilités</h3>
-
-                <p>Les catastrophes ne contredisent pas cette thèse, elles la confirment. L'histoire montre que le monde n'a jamais été "sûr" au sens moderne du terme. Ce qui change, c'est la manière dont nos sociétés se rendent vulnérables :</p>
-
-                <ul>
-                    <li>Concentration des populations dans des zones à risque</li>
-                    <li>Infrastructures rigides et non adaptatives</li>
-                    <li>Dépendance à des chaînes logistiques longues et fragiles</li>
-                    <li>Optimisation pour l'efficacité plutôt que pour la résilience</li>
-                </ul>
-
-                <p>Une catastrophe n'est pas seulement un aléa. C'est un aléa qui rencontre une fragilité structurelle.</p>
-
-                <h3>Habiter l'incertitude</h3>
-
-                <p>Aucun système vivant durable ne se construit sur la stabilité. Il se construit sur la capacité à absorber des chocs, à se reconfigurer, à conserver des marges, à multiplier les redondances, à réduire les dépendances critiques.</p>
-
-                <div class="compact-box">
-                    <h4>Conclusion</h4>
-                    <p>Habiter la Terre, ce n'est pas vivre dans un décor. C'est vivre dans un système vivant, mobile, imprévisible. Notre époque a confondu confort et contrôle, prévision et maîtrise, sécurité et absence de risque. La question n'est pas de revenir à un "avant" imaginaire. La question est d'apprendre à vivre avec l'incertitude, et de bâtir des formes de vie qui ne s'effondrent pas quand le monde bouge.</p>
-                </div>
             </div>
+            <h2 class="article-title">Le climat a toujours été instable</h2>
+            <p class="article-excerpt">
+                L'erreur n'est pas le changement, c'est notre incapacité à vivre avec l'instabilité. 
+                Le mythe de la stabilité climatique et la construction de sociétés qui supposent 
+                un monde prévisible et maîtrisable.
+            </p>
+            <a href="article-climat-instable.html" class="article-link">
+                Lire l'article
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
         </article>
 
-        <!-- Article 3 : Contrôle -->
-        <article class="article-full" id="logique-controle">
-            <header class="article-header">
-                <div class="article-date">18 février 2026</div>
-                <h2>Quand la logique de contrôle casse le vivant</h2>
-                <p class="article-lead">
-                    Pour une culture de la co-évolution plutôt que de la maîtrise.
-                </p>
+        <!-- Article 3 -->
+        <article class="article-card control">
+            <div class="article-meta">
+                <span class="article-date">18 février 2026</span>
                 <span class="article-tag tag-control">Contrôle</span>
-            </header>
-
-            <div class="article-body">
-                <p>Nous vivons dans des sociétés qui ont empilé, couche après couche, une logique de maîtrise sur un monde qui fonctionne par adaptation, relation, rétroaction et émergence. Cette dissonance n'est pas un détail. Elle éclaire une part majeure des crises écologiques, sanitaires, économiques et institutionnelles.</p>
-
-                <div class="key-point">
-                    <div class="key-point-label">Constat</div>
-                    <p>Quand on applique la commande là où il faudrait de la co-évolution, le système se rigidifie, se fragilise, puis finit par rompre.</p>
-                </div>
-
-                <h3>Le malentendu sur la science</h3>
-
-                <p>La science, dans son sens le plus exigeant, est une méthode de correction. Le problème apparaît lorsque la société convertit la science en outil de pilotage, de prédiction et de légitimation. Ce glissement fabrique plusieurs illusions :</p>
-
-                <ul>
-                    <li>L'illusion que des indicateurs peuvent contenir la réalité</li>
-                    <li>L'illusion que des modèles fermés décrivent correctement des systèmes ouverts</li>
-                    <li>L'illusion que la réduction de la complexité n'a pas de coût</li>
-                    <li>L'illusion que la maîtrise technique peut remplacer l'adaptation</li>
-                </ul>
-
-                <h3>Contrôler n'est pas réguler</h3>
-
-                <p><strong>Contrôler</strong>, c'est rigidifier, fixer, imposer une trajectoire, réduire la variance, stabiliser coûte que coûte.</p>
-                
-                <p><strong>Réguler</strong>, c'est maintenir une viabilité, ajuster en temps réel, absorber les fluctuations, apprendre en continu.</p>
-
-                <p>Le vivant ne se contrôle pas comme une machine. Il se régule en permanence. Quand on force la stabilité, on supprime souvent exactement ce qui permet de survivre aux chocs. La stabilité imposée produit la fragilité.</p>
-
-                <h3>Vers une culture de la co-évolution</h3>
-
-                <p>Cela change la manière de définir un problème, de décider, de mesurer, d'apprendre, de gouverner. La maîtrise n'est plus un pilotage direct. Elle devient une capacité à maintenir des conditions favorables à l'adaptation.</p>
-
-                <div class="compact-box">
-                    <h4>Question finale</h4>
-                    <p>La question n'est pas "comment tout contrôler". La question devient : quelles structures, quelles règles, quelles limites, quels espaces de liberté rendent l'évolution soutenable, au lieu de la casser ?</p>
-                </div>
             </div>
+            <h2 class="article-title">Quand la logique de contrôle casse le vivant</h2>
+            <p class="article-excerpt">
+                Pour une culture de la co-évolution plutôt que de la maîtrise. Contrôler n'est pas réguler. 
+                Le vivant ne se pilote pas comme une machine — il demande des conditions favorables 
+                à l'adaptation.
+            </p>
+            <a href="article-logique-controle.html" class="article-link">
+                Lire l'article
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
         </article>
 
-        <!-- Article 4 : Refus structurel -->
-        <article class="article-full" id="refus-structurel">
-            <header class="article-header">
-                <div class="article-date">22 février 2026</div>
-                <h2>Constat d'un refus structurel d'intégrer l'instabilité du réel</h2>
-                <p class="article-lead">
-                    Il n'y a pas un manque de preuves. Il y a un défaut de capacité collective à intégrer ce que les preuves disent du réel.
-                </p>
+        <!-- Article 4 -->
+        <article class="article-card system">
+            <div class="article-meta">
+                <span class="article-date">22 février 2026</span>
                 <span class="article-tag tag-system">Systémique</span>
-            </header>
-
-            <div class="article-body">
-                <p>De quoi parle-t-on ici ? De l'aveuglisme comme refus structurel d'admettre une propriété simple : le réel n'est pas stable par défaut. Il est instable, non linéaire, historique, multi-échelles. Il produit des attracteurs locaux, des coûts déplacés, des transitions, des ruptures. Et il ne garantit pas le retour à l'équilibre.</p>
-
-                <p>Ce constat n'appartient pas à une discipline. Il émerge par convergence de corpus :</p>
-
-                <ul>
-                    <li><strong>En climat :</strong> oscillations, seuils, ruptures abruptes, variabilité géologique normale.</li>
-                    <li><strong>En psychisme :</strong> schémas comme attracteurs, stabilité coûteuse, dissipation chronique, bascules quand le coût dépasse un seuil.</li>
-                    <li><strong>En biologie :</strong> ordre local maintenu par flux, organisation conditionnelle, fragilité des régimes stationnaires.</li>
-                    <li><strong>En cosmos :</strong> structures qui émergent d'instabilités, organisation locale via dissipation globale.</li>
-                </ul>
-
-                <div class="key-point">
-                    <div class="key-point-label">Invariant</div>
-                    <p>Vivant = flux + attracteurs + coûts + transitions. À toutes les échelles, on retrouve la même grammaire dynamique : on ne "maîtrise" pas l'instabilité, on l'habite et on la convertit.</p>
-                </div>
-
-                <h3>L'aveuglisme n'est pas une ignorance. C'est une architecture.</h3>
-
-                <p>Une architecture qui permet à un système de fonctionner sans modifier ses hypothèses de base, même lorsque les signaux les invalident. Elle produit une stabilité apparente en neutralisant la portée des faits.</p>
-
-                <p>Elle repose sur des dispositifs simples, répétés, stabilisateurs :</p>
-
-                <ul>
-                    <li>Réduire le réel à ce qui rentre dans les tableaux</li>
-                    <li>Déplacer la charge de preuve : exiger du monde qu'il se démontre sans fin</li>
-                    <li>Confondre incertitude locale et incertitude globale</li>
-                    <li>Transformer la critique en procédure : on ne réfute pas, on ajourne</li>
-                    <li>Appeler "prudence" ce qui est un maintien de structure</li>
-                </ul>
-
-                <p>Dans ce cadre, demander "encore des preuves" n'est pas une demande scientifique. C'est un geste de stabilisation.</p>
-
-                <div class="compact-box">
-                    <h4>Diagnostic</h4>
-                    <p>L'obstacle principal n'est pas la preuve, mais la compatibilité entre les preuves et les structures qui devraient en tenir compte. Les preuves, il y en a "dix mille". Et pourtant on continue d'agir comme si une seule manquait encore — la preuve magique qui autoriserait une transition sans perte, sans conflit, sans reconfiguration. Cette preuve-là n'existera pas.</p>
-                </div>
             </div>
+            <h2 class="article-title">Constat d'un refus structurel d'intégrer l'instabilité du réel</h2>
+            <p class="article-excerpt">
+                Il n'y a pas un manque de preuves. Il y a un défaut de capacité collective à intégrer 
+                ce que les preuves disent du réel. L'aveuglisme comme architecture de stabilisation.
+            </p>
+            <a href="article-refus-structurel.html" class="article-link">
+                Lire l'article
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </article>
+
+        <!-- Article 5 - Dynamiques à seuil -->
+        <article class="article-card threshold">
+            <div class="article-meta">
+                <span class="article-date">2026</span>
+                <span class="article-tag tag-threshold">Seuils</span>
+            </div>
+            <h2 class="article-title">Dynamiques à seuil et bascules de régime</h2>
+            <p class="article-excerpt">
+                Analyse des mécanismes de transition dans les systèmes complexes. 
+                Comment les seuils cumulatifs déclenchent des bascules de régime 
+                et reconfigurent la dynamique globale.
+            </p>
+            <a href="https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/blob/main/Dynamiques%20%C3%A0%20seuil%20et%20bascules%20de%20r%C3%A9gime.pdf" target="_blank" class="article-link">
+                Lire l'article (PDF)
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
         </article>
 
     </main>
