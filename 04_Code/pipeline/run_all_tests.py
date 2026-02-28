@@ -176,7 +176,7 @@ def main() -> int:
         "seed_used": _seed("T1_noyau_demand_shock"),
         "seed_formula": _sfmt("T1_noyau_demand_shock"),
         "n_runs_used": n_symbolic,
-        "test_type": "statistical",
+        "test_type": "proof",
         "args": [
             "--seed-base", str(_seed("T1_noyau_demand_shock")),
             "--n-runs", str(n_symbolic),
@@ -221,7 +221,7 @@ def main() -> int:
         "seed_used": _seed("T4_symbolic_S_rich_vs_poor_on_C"),
         "seed_formula": _sfmt("T4_symbolic_S_rich_vs_poor_on_C"),
         "n_runs_used": n_symbolic,
-        "test_type": "statistical",
+        "test_type": "proof",
         "args": [
             "--n", str(n_symbolic),
             "--seed", str(_seed("T4_symbolic_S_rich_vs_poor_on_C")),
@@ -237,7 +237,7 @@ def main() -> int:
         "seed_used": _seed("T5_symbolic_injection_effect_on_C"),
         "seed_formula": _sfmt("T5_symbolic_injection_effect_on_C"),
         "n_runs_used": n_symbolic,
-        "test_type": "statistical",
+        "test_type": "proof",
         "args": [
             "--n", str(n_symbolic),
             "--seed", str(_seed("T5_symbolic_injection_effect_on_C")),
@@ -254,7 +254,7 @@ def main() -> int:
         "seed_used": _seed("T6_symbolic_cut_on_C"),
         "seed_formula": _sfmt("T6_symbolic_cut_on_C"),
         "n_runs_used": n_symbolic,
-        "test_type": "statistical",
+        "test_type": "proof",
         "args": [
             "--seed-base", str(_seed("T6_symbolic_cut_on_C")),
             "--n-runs", str(n_symbolic),
@@ -275,7 +275,7 @@ def main() -> int:
         "seed_used": _seed("T7_progressive_S_to_C_threshold"),
         "seed_formula": _sfmt("T7_progressive_S_to_C_threshold"),
         "n_runs_used": n_sweep,
-        "test_type": "statistical",
+        "test_type": "proof",
         "args": [
             "--n", str(n_sweep),
             "--seed", str(_seed("T7_progressive_S_to_C_threshold")),
@@ -291,7 +291,7 @@ def main() -> int:
         "seed_used": _seed("T8_reinjection_recovery_on_C"),
         "seed_formula": _sfmt("T8_reinjection_recovery_on_C"),
         "n_runs_used": n_symbolic,
-        "test_type": "statistical",
+        "test_type": "proof",
         "args": [
             "--seed", str(_seed("T8_reinjection_recovery_on_C")),
             "--n-runs", str(n_symbolic),
@@ -312,7 +312,7 @@ def main() -> int:
             "seed_used": _seed("T9_cross_domain"),
             "seed_formula": _sfmt("T9_cross_domain"),
             "n_runs_used": 1,
-            "test_type": "statistical",
+            "test_type": "proof",
             "args": ["--seed", str(_seed("T9_cross_domain"))],
         })
     else:

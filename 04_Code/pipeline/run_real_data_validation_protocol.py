@@ -309,12 +309,21 @@ def _phase_subsample_stability(
     col_time: str, time_mode: str, normalize: str, control_mode: str,
     lags: str, baseline_n: int, base_seed: int,
     verbose: bool,
+    pre_horizon: int | None = None,
+    post_horizon: int | None = None,
+    sample_frac: float = 0.8,
 ) -> list[dict]:
     """Run n_boot subsamples of 80% rows. Returns per-rep verdict rows."""
     rows: list[dict] = []
     rng = np.random.default_rng(base_seed)
+    if pre_horizon is not None:
+        default_pre = int(pre_horizon)
+    if post_horizon is not None:
+        default_post = int(post_horizon)
     n = len(df)
-    n_sample = max(5, int(n * SAMPLE_FRAC))
+    sf = float(sample_frac)
+    sf = 0.8 if not (0.05 <= sf <= 0.95) else sf
+    n_sample = max(5, int(n * sf))
 
     for rep in range(n_boot):
         sub_seed = int(base_seed + 1000 + rep)
@@ -575,10 +584,9 @@ def main() -> int:
                     args.time_mode,
                     args.normalize,
                     args.control_mode,
-                    args.lags,
                     args.baseline_n,
+                    args.lags,
                     args.seed,
-                    args.verbose,
                 )
                 all_window_rows.extend(wrows)
 
