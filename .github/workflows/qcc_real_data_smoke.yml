@@ -1,0 +1,46 @@
+name: QCC Real Data Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/qcc/**"
+      - ".github/workflows/qcc_real_data_smoke.yml"
+      - "data/qcc/**"
+
+jobs:
+  qcc-real-data-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -V
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas matplotlib
+
+      - name: Run QCC real data smoke
+        env:
+          PYTHONPATH: .
+        run: |
+          python tools/qcc/run_qcc_real_data.py --data-dir data/qcc --out-root 05_Results/qcc_real --cmin 0.20 --ccl-min 0.70 --mcl 5
+
+      - name: Check outputs (non interpretive)
+        env:
+          PYTHONPATH: .
+        run: |
+          python tools/qcc/check_qcc_outputs.py --out-root 05_Results/qcc_real
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcc_real_data_smoke_artifacts
+          path: 05_Results/qcc_real
