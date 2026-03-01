@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hologramme Quantique - Qubit + Décohérence</title>
   <style>
-    body { margin: 0; background: #000; color: #0f0; font-family: Arial; text-align: center; }
+    body { margin: 0; background: #000; color: #0f0; font-family: Arial, sans-serif; text-align: center; }
     h1 { margin: 20px; color: #0f0; }
     p { max-width: 800px; margin: 20px auto; line-height: 1.5; }
     #container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; }
@@ -90,7 +90,7 @@
       const theta = time * 2.0;
 
       // Décohérence : rapprochement du pôle nord + perte amplitude
-      const decay = Math.exp(-time * 0.3); // taux de décohérence
+      const decay = Math.exp(-time * 0.3);
 
       // État sur Bloch : commence à |+> (x=1, y=0, z=0) → rotation + décohérence
       const x = Math.sin(theta) * decay;
@@ -100,7 +100,7 @@
       statePoints[index].position.set(x, y, z);
 
       // Vecteur d’état (flèche du centre au point)
-      const length = Math.sqrt(x*x + y*y + z*z);
+      const length = Math.sqrt(x*x + y*y + z*z) || 0.01; // évite division par 0
       stateVectors[index].scale.y = length;
       stateVectors[index].position.set(x/2, y/2, z/2);
       stateVectors[index].rotation.z = Math.atan2(y, x);
