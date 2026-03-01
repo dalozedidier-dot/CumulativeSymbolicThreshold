@@ -29,25 +29,49 @@ jobs:
         run: |
           set -e
           python -m pip install --upgrade pip setuptools wheel
-          # Base scientific stack
           python -m pip install "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" "statsmodels>=0.14" "matplotlib>=3.8"
-          # Repo deps
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
+      - name: Select real dataset (stable CI default)
+        id: pickdata
+        run: |
+          set -e
+          DEFAULT="03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv"
+          if [ -f "$DEFAULT" ]; then
+            echo "input=$DEFAULT" >> $GITHUB_OUTPUT
+            echo "Using default input: $DEFAULT"
+            exit 0
+          fi
+
+          # Fallback: pick the first oric_inputs_*.csv found under 03_Data/real
+          FOUND="$(ls -1 03_Data/real/**/oric_inputs_*.csv 2>/dev/null | head -n 1 || true)"
+          if [ -n "$FOUND" ]; then
+            echo "input=$FOUND" >> $GITHUB_OUTPUT
+            echo "Using fallback input: $FOUND"
+            exit 0
+          fi
+
+          echo "ERROR: No real input CSV found."
+          echo "Expected: $DEFAULT"
+          echo "Also tried: 03_Data/real/**/oric_inputs_*.csv"
+          echo "Available CSV samples (first 40):"
+          find 03_Data -maxdepth 5 -type f -name "*.csv" | head -n 40 || true
+          exit 1
+
       - name: Run real data demo (pipeline)
         run: |
           set -eo pipefail
-          # Convention: the real-data demo script writes a self-contained run directory
-          # under the provided outdir, including tables/verdict.json and tables/summary.json.
-          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py             --outdir _ci_out/real_data_smoke             2>&1 | tee _ci_out/real_data_smoke_run.log
+          INPUT="${{ steps.pickdata.outputs.input }}"
+          echo "INPUT=$INPUT"
+          # CI recommendation: time-mode index (no need for a time column).
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py             --input "$INPUT"             --outdir _ci_out/real_data_smoke             --time-mode index             --normalize robust             --auto-scale             2>&1 | tee _ci_out/real_data_smoke_run.log
 
       - name: Run causal tests on real outputs (if available)
         run: |
           set -e
-          # Optional: only if your repo provides the causal tests runner.
           if [ -f 04_Code/pipeline/tests_causaux.py ]; then
             PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py               --run-root _ci_out/real_data_smoke               2>&1 | tee _ci_out/real_data_causal_tests.log
           else
