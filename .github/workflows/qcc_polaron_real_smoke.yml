@@ -1,0 +1,62 @@
+name: QCC Polaron Real Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs_index:
+        description: "Chemin de l'index runs (CSV)"
+        required: true
+        default: "data/qcc/real_polaron/qcc_runs_index.csv"
+      c_min:
+        description: "Seuil C_min (float)"
+        required: true
+        default: "0.35"
+      out_dir:
+        description: "Répertoire résultats"
+        required: true
+        default: "05_Results/qcc_polaron_real_smoke"
+
+  pull_request:
+    paths:
+      - ".github/workflows/qcc_polaron_real_smoke.yml"
+      - "tools/qcc_real_data_from_runs_index.py"
+      - "tools/qcc_checks.py"
+      - "tools/make_manifest.py"
+      - "data/qcc/real_polaron/**"
+      - "requirements-qcc.txt"
+
+jobs:
+  run-qcc-polaron-real-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -V
+          pip -V
+          pip install -r requirements-qcc.txt
+
+      - name: Run QCC from runs index
+        run: |
+          python tools/qcc_real_data_from_runs_index.py             --runs-index "${{ inputs.runs_index }}"             --c-min "${{ inputs.c_min }}"             --out-root "${{ inputs.out_dir }}"
+
+      - name: Check outputs (non interpretatif)
+        run: |
+          python tools/qcc_checks.py --out-root "${{ inputs.out_dir }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcc_polaron_real_smoke_artifact
+          path: ${{ inputs.out_dir }}
+          if-no-files-found: error

@@ -1,0 +1,4 @@
+run_id,cq_csv,time_col,cq_col,spectrum_csv,u_imp_target,r_value
+polaron_N6,raw/dynamics_N6.csv,Time,S(t),raw/spectrum_N6.csv,2.5,0.0
+polaron_N8,raw/dynamics_N8.csv,Time,S(t),raw/spectrum_N8.csv,2.5,0.0
+polaron_N10,raw/dynamics_N10.csv,Time,S(t),raw/spectrum_N10.csv,2.5,0.0
