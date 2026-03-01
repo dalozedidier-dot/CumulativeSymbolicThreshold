@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hologramme Quantique - Qubit + Décohérence</title>
   <style>
-    body { margin: 0; background: #000; color: #0f0; font-family: Arial, sans-serif; text-align: center; }
+    body { margin: 0; background: #000; color: #0f0; font-family: Arial; text-align: center; }
     h1 { margin: 20px; color: #0f0; }
     p { max-width: 800px; margin: 20px auto; line-height: 1.5; }
     #container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; }
@@ -18,8 +18,8 @@
 </head>
 <body>
   <h1>Hologramme Quantique : Qubit + Décohérence</h1>
-  <p>Simulation interactive d’un qubit en superposition |+⟩ → décohérence progressive → état classique |0⟩.<br>
-  Mode Pyramide : fabriquez une pyramide en plastique transparent (base 6 cm, sommet 1 cm, hauteur 3,5 cm) et posez-la sur l’écran pour effet 3D flottant.</p>
+  <p>État initial |+⟩ (superposition maximale) → rotation cohérente → décohérence → état classique |0⟩.<br>
+  Mode Pyramide : fabriquez une pyramide (base 6 cm, sommet 1 cm, hauteur 3,5 cm) et posez-la sur l’écran pour effet 3D flottant.</p>
   
   <button onclick="togglePyramidMode()">Activer Mode Pyramide (4 vues)</button>
   
@@ -27,7 +27,7 @@
 
   <script>
     let pyramidMode = false;
-    const scenes = [], cameras = [], renderers = [], controls = [], blochPoints = [];
+    const scenes = [], cameras = [], renderers = [], controls = [], statePoints = [], stateVectors = [];
     const container = document.getElementById('container');
 
     function createBlochScene(index) {
@@ -55,16 +55,24 @@
       const sphere = new THREE.Mesh(geometry, material);
       scene.add(sphere);
 
-      // Axes x, y, z (rouge, vert, bleu)
+      // Axes x (rouge), y (vert), z (bleu)
       const axes = new THREE.AxesHelper(1.5);
       scene.add(axes);
 
-      // Point représentant l’état quantique (magenta)
+      // Point état quantique (magenta)
       const stateGeo = new THREE.SphereGeometry(0.08, 16, 16);
       const stateMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
       const statePoint = new THREE.Mesh(stateGeo, stateMat);
       scene.add(statePoint);
-      blochPoints.push(statePoint);
+      statePoints.push(statePoint);
+
+      // Vecteur d’état (flèche verte du centre au point)
+      const vectorGeo = new THREE.CylinderGeometry(0.02, 0.02, 1, 8);
+      const vectorMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      const vector = new THREE.Mesh(vectorGeo, vectorMat);
+      vector.position.y = 0.5;
+      scene.add(vector);
+      stateVectors.push(vector);
 
       const control = new THREE.OrbitControls(camera, renderer.domElement);
       control.enableDamping = true;
@@ -78,14 +86,25 @@
 
       const time = performance.now() * 0.001;
 
-      // Hamiltonien simple (rotation autour x) + décohérence
-      const theta = time * 1.5;          // Rotation Bloch
-      const decay = Math.exp(-time * 0.4); // Décohérence (perte cohérence)
+      // Hamiltonien sigmax : rotation autour x
+      const theta = time * 2.0;
 
-      // État initial |+> → décohérence vers |0> (z positif)
-      blochPoints[index].position.x = Math.sin(theta) * decay;
-      blochPoints[index].position.y = Math.cos(theta) * decay;
-      blochPoints[index].position.z = Math.cos(time * 0.6) * decay + (1 - decay); // rapproche du pôle nord
+      // Décohérence : rapprochement du pôle nord + perte amplitude
+      const decay = Math.exp(-time * 0.3); // taux de décohérence
+
+      // État sur Bloch : commence à |+> (x=1, y=0, z=0) → rotation + décohérence
+      const x = Math.sin(theta) * decay;
+      const y = Math.cos(theta) * decay;
+      const z = (1 - decay); // rapprochement progressif du pôle nord
+
+      statePoints[index].position.set(x, y, z);
+
+      // Vecteur d’état (flèche du centre au point)
+      const length = Math.sqrt(x*x + y*y + z*z);
+      stateVectors[index].scale.y = length;
+      stateVectors[index].position.set(x/2, y/2, z/2);
+      stateVectors[index].rotation.z = Math.atan2(y, x);
+      stateVectors[index].rotation.x = Math.acos(z / length);
 
       controls[index].update();
       renderers[index].render(scenes[index], cameras[index]);
@@ -94,10 +113,9 @@
     function togglePyramidMode() {
       pyramidMode = !pyramidMode;
       container.innerHTML = '';
-      scenes.length = cameras.length = renderers.length = controls.length = blochPoints.length = 0;
+      scenes.length = cameras.length = renderers.length = controls.length = statePoints.length = stateVectors.length = 0;
 
       if (pyramidMode) {
-        // 4 vues symétriques (0°, 90°, 180°, 270°)
         for (let i = 0; i < 4; i++) {
           createBlochScene(i);
           const angle = i * Math.PI / 2;
@@ -113,7 +131,7 @@
       }
     }
 
-    // Démarrage par défaut : 1 vue
+    // Démarrage : 1 vue
     createBlochScene();
   </script>
 </body>
