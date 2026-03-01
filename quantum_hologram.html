@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Hologramme quantique (léger)</title>
+  <title>Qubit + Lindblad sur sphère de Bloch (hologramme pyramide)</title>
   <style>
     :root{
       --bg:#05060a; --fg:#e8eefc; --muted:#9fb0d0; --panel:rgba(16,18,28,0.85);
@@ -12,7 +12,7 @@
     html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
     button{border:1px solid var(--stroke);background:var(--panel);color:var(--fg);padding:8px 10px;border-radius:12px;cursor:pointer}
     button:hover{border-color:rgba(255,255,255,0.18)}
-    input[type="range"]{width:170px}
+    input[type="range"]{width:160px}
     .topbar{
       position:fixed;left:0;right:0;top:0;z-index:50;
       display:flex;gap:10px;align-items:center;justify-content:space-between;
@@ -43,16 +43,16 @@
     .hud{
       position:fixed;left:12px;bottom:12px;z-index:40;
       border:1px solid var(--stroke);background:var(--panel);
-      padding:10px 12px;border-radius:12px;width:min(520px, calc(100vw - 24px));
+      padding:10px 12px;border-radius:12px;width:min(560px, calc(100vw - 24px));
     }
     .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
     .row small{color:var(--muted)}
     .bars{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
     .bar{height:10px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;border:1px solid rgba(255,255,255,0.07)}
     .bar>i{display:block;height:100%;width:0%}
-    .bar .p{background:linear-gradient(90deg, rgba(106,166,255,0.0), rgba(106,166,255,0.95))}
-    .bar .c{background:linear-gradient(90deg, rgba(72,255,176,0.0), rgba(72,255,176,0.95))}
-    .bar .n{background:linear-gradient(90deg, rgba(255,75,92,0.0), rgba(255,75,92,0.95))}
+    .bar .coh{background:linear-gradient(90deg, rgba(72,255,176,0.0), rgba(72,255,176,0.95))}
+    .bar .t1{background:linear-gradient(90deg, rgba(255,75,92,0.0), rgba(255,75,92,0.95))}
+    .bar .t2{background:linear-gradient(90deg, rgba(106,166,255,0.0), rgba(106,166,255,0.95))}
     .hint{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.35}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:7px;border:1px solid rgba(255,255,255,0.08)}
   </style>
@@ -60,8 +60,8 @@
 <body>
   <div class="topbar">
     <div class="brand">
-      <b>Hologramme quantique (léger)</b>
-      <span>Fonction d’onde, interférence, mesure (collapse). Mode pyramide DIY.</span>
+      <b>Qubit Lindblad sur sphère de Bloch</b>
+      <span>Hamiltonien + décohérence (déphasage et relaxation). Mode pyramide 4 vues.</span>
     </div>
 
     <div class="controls">
@@ -71,18 +71,33 @@
       </div>
 
       <div class="chip">
-        <label for="slit">Fentes</label>
-        <input id="slit" type="range" min="0" max="100" value="55" />
-        <span id="slitVal" style="font-size:12px;width:34px;text-align:right">55</span>
+        <label for="omx">Ωx</label>
+        <input id="omx" type="range" min="0" max="200" value="90" />
+        <span id="omxVal" style="font-size:12px;width:38px;text-align:right">0.90</span>
+      </div>
+      <div class="chip">
+        <label for="omy">Ωy</label>
+        <input id="omy" type="range" min="0" max="200" value="20" />
+        <span id="omyVal" style="font-size:12px;width:38px;text-align:right">0.20</span>
+      </div>
+      <div class="chip">
+        <label for="omz">Ωz</label>
+        <input id="omz" type="range" min="0" max="200" value="55" />
+        <span id="omzVal" style="font-size:12px;width:38px;text-align:right">0.55</span>
       </div>
 
       <div class="chip">
-        <label for="noise">Bruit</label>
-        <input id="noise" type="range" min="0" max="100" value="10" />
-        <span id="noiseVal" style="font-size:12px;width:34px;text-align:right">10</span>
+        <label for="g1">γ1 (T1)</label>
+        <input id="g1" type="range" min="0" max="200" value="20" />
+        <span id="g1Val" style="font-size:12px;width:38px;text-align:right">0.20</span>
+      </div>
+      <div class="chip">
+        <label for="gphi">γφ</label>
+        <input id="gphi" type="range" min="0" max="200" value="40" />
+        <span id="gphiVal" style="font-size:12px;width:38px;text-align:right">0.40</span>
       </div>
 
-      <button id="btnMeasure" type="button">Mesurer</button>
+      <button id="btnKick" type="button">Impulsion π/2</button>
       <button id="btnReset" type="button">Reset</button>
     </div>
   </div>
@@ -106,8 +121,8 @@
   <div class="hud" aria-live="polite">
     <div class="row">
       <div>
-        <div style="font-size:13px"><b>Etat</b> <small id="state">superposition</small></div>
-        <small>Mesurer déclenche un collapse vers un paquet localisé.</small>
+        <div style="font-size:13px"><b>Etat</b> <small id="state">superposition cohérente</small></div>
+        <small>Le vecteur de Bloch se contracte avec la décohérence. La superposition devient classique.</small>
       </div>
       <div style="text-align:right">
         <div style="font-size:13px"><b>t</b> <small id="t">0.0</small></div>
@@ -117,28 +132,28 @@
 
     <div class="bars">
       <div>
-        <small>Interférence</small>
-        <div class="bar"><i class="p" id="bInter"></i></div>
+        <small>Norme |r| (cohérence globale)</small>
+        <div class="bar"><i class="coh" id="bCoh"></i></div>
       </div>
       <div>
-        <small>Coherence</small>
-        <div class="bar"><i class="c" id="bCoh"></i></div>
+        <small>Relaxation (γ1)</small>
+        <div class="bar"><i class="t1" id="bT1"></i></div>
       </div>
       <div>
-        <small>Bruit (décohérence)</small>
-        <div class="bar"><i class="n" id="bNoise"></i></div>
+        <small>Déphasage (γφ)</small>
+        <div class="bar"><i class="t2" id="bT2"></i></div>
       </div>
     </div>
 
     <div class="hint">
-      Mode pyramide. Pièce sombre, luminosité forte, posez la pyramide inversée au centre.
-      Raccourcis. <span class="kbd">P</span> pyramide. <span class="kbd">N</span> normal. <span class="kbd">Espace</span> mesurer.
-      Touchez l’écran pour placer un détecteur local (mesure locale).
+      Mode pyramide. Pièce sombre, luminosité forte, pyramide inversée centrée.
+      Raccourcis. <span class="kbd">P</span> pyramide. <span class="kbd">N</span> normal. <span class="kbd">Espace</span> impulsion.
     </div>
   </div>
 
-  <script>
-    // Rendu ultra léger: Canvas 2D, pas de WebGL. 100% navigateur, fluide mobile.
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
     const clamp01 = (x) => Math.min(1, Math.max(0, x));
     const lerp = (a,b,t) => a + (b-a)*t;
 
@@ -147,29 +162,25 @@
       btnPyr: document.getElementById("btnPyr"),
       single: document.getElementById("single"),
       grid4: document.getElementById("grid4"),
-      slit: document.getElementById("slit"),
-      slitVal: document.getElementById("slitVal"),
-      noise: document.getElementById("noise"),
-      noiseVal: document.getElementById("noiseVal"),
-      btnMeasure: document.getElementById("btnMeasure"),
+      omx: document.getElementById("omx"),
+      omy: document.getElementById("omy"),
+      omz: document.getElementById("omz"),
+      omxVal: document.getElementById("omxVal"),
+      omyVal: document.getElementById("omyVal"),
+      omzVal: document.getElementById("omzVal"),
+      g1: document.getElementById("g1"),
+      gphi: document.getElementById("gphi"),
+      g1Val: document.getElementById("g1Val"),
+      gphiVal: document.getElementById("gphiVal"),
+      btnKick: document.getElementById("btnKick"),
       btnReset: document.getElementById("btnReset"),
       state: document.getElementById("state"),
       t: document.getElementById("t"),
       fps: document.getElementById("fps"),
-      bInter: document.getElementById("bInter"),
       bCoh: document.getElementById("bCoh"),
-      bNoise: document.getElementById("bNoise"),
+      bT1: document.getElementById("bT1"),
+      bT2: document.getElementById("bT2"),
     };
-
-    const canvases = {
-      single: document.getElementById("cSingle"),
-      top: document.getElementById("cTop"),
-      right: document.getElementById("cRight"),
-      left: document.getElementById("cLeft"),
-      bottom: document.getElementById("cBottom"),
-    };
-    const ctxs = {};
-    Object.keys(canvases).forEach(k => ctxs[k] = canvases[k].getContext("2d", { alpha:true }));
 
     let mode = "normal";
     function setMode(m){
@@ -187,234 +198,387 @@
       }
       resizeAll();
     }
-
     ui.btnNormal.onclick = () => setMode("normal");
     ui.btnPyr.onclick = () => setMode("pyr");
-
-    // "Quantique" visuel: somme de deux ondes issues de deux fentes + phase bruitée (décohérence)
-    const sim = {
-      t: 0,
-      slit: 0.55,       // distance/écart fentes
-      noise: 0.10,      // décohérence
-      coherence: 0.92,
-      interference: 0.80,
-      measuring: 0.0,   // 0..1 collapse amount
-      detector: { x: 0.0, y: 0.0 }, // position détecteur
-      detectorOn: false,
-    };
-
-    function syncSliders(){
-      ui.slitVal.textContent = ui.slit.value;
-      ui.noiseVal.textContent = ui.noise.value;
-      sim.slit = clamp01(Number(ui.slit.value)/100);
-      sim.noise = clamp01(Number(ui.noise.value)/100);
-    }
-    ui.slit.oninput = syncSliders;
-    ui.noise.oninput = syncSliders;
-    syncSliders();
-
-    ui.btnMeasure.onclick = () => triggerMeasure();
-    ui.btnReset.onclick = () => resetSim();
-
-    function resetSim(){
-      sim.t = 0;
-      sim.measuring = 0;
-      sim.detectorOn = false;
-      sim.coherence = 0.92;
-      ui.slit.value = "55";
-      ui.noise.value = "10";
-      syncSliders();
-    }
-
-    function triggerMeasure(){
-      sim.measuring = Math.min(1, sim.measuring + 0.65);
-      sim.detectorOn = true;
-      ui.state.textContent = "mesure (collapse)";
-    }
-
-    function setDetectorFromEvent(ev){
-      const canvas = (mode === "normal") ? canvases.single : canvases.top;
-      const r = canvas.getBoundingClientRect();
-      const x = (ev.clientX - r.left) / r.width;
-      const y = (ev.clientY - r.top) / r.height;
-      sim.detector.x = clamp01(x);
-      sim.detector.y = clamp01(y);
-      sim.detectorOn = true;
-    }
-
-    // Touch/click => place detector + measure
-    ["pointerdown"].forEach(evtName => {
-      window.addEventListener(evtName, (ev) => {
-        const target = ev.target;
-        if(target && target.tagName === "CANVAS"){
-          setDetectorFromEvent(ev);
-          triggerMeasure();
-        }
-      }, { passive:true });
-    });
 
     window.addEventListener("keydown", (e) => {
       if(e.key === "p" || e.key === "P") setMode("pyr");
       if(e.key === "n" || e.key === "N") setMode("normal");
-      if(e.code === "Space"){ e.preventDefault(); triggerMeasure(); }
+      if(e.code === "Space"){ e.preventDefault(); kickPiOver2(); }
     });
 
-    function resizeCanvas(canvas){
-      const r = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = Math.max(2, Math.floor(r.width * dpr));
-      const h = Math.max(2, Math.floor(r.height * dpr));
-      if(canvas.width !== w || canvas.height !== h){
-        canvas.width = w; canvas.height = h;
-      }
-      return { w, h, dpr };
+    // ---------- Lindblad qubit (2x2 complex) ----------
+    // Représentation complexe minimale: z = {re, im}
+    const c = (re, im) => ({re, im});
+    const cAdd = (a,b) => c(a.re+b.re, a.im+b.im);
+    const cSub = (a,b) => c(a.re-b.re, a.im-b.im);
+    const cMul = (a,b) => c(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re);
+    const cConj = (a) => c(a.re, -a.im);
+    const cScale = (a, s) => c(a.re*s, a.im*s);
+
+    // Matrice 2x2 de complexes: [[a,b],[c,d]]
+    const m2 = (a,b,c2,d) => [[a,b],[c2,d]];
+
+    const mAdd = (A,B)=> m2(cAdd(A[0][0],B[0][0]), cAdd(A[0][1],B[0][1]),
+                           cAdd(A[1][0],B[1][0]), cAdd(A[1][1],B[1][1]));
+    const mSub = (A,B)=> m2(cSub(A[0][0],B[0][0]), cSub(A[0][1],B[0][1]),
+                           cSub(A[1][0],B[1][0]), cSub(A[1][1],B[1][1]));
+    const mScale = (A,s)=> m2(cScale(A[0][0],s), cScale(A[0][1],s), cScale(A[1][0],s), cScale(A[1][1],s));
+    const mMul = (A,B)=>{
+      const a = cAdd(cMul(A[0][0],B[0][0]), cMul(A[0][1],B[1][0]));
+      const b = cAdd(cMul(A[0][0],B[0][1]), cMul(A[0][1],B[1][1]));
+      const c3 = cAdd(cMul(A[1][0],B[0][0]), cMul(A[1][1],B[1][0]));
+      const d = cAdd(cMul(A[1][0],B[0][1]), cMul(A[1][1],B[1][1]));
+      return m2(a,b,c3,d);
+    };
+    const mDag = (A)=> m2(cConj(A[0][0]), cConj(A[1][0]), cConj(A[0][1]), cConj(A[1][1]));
+
+    // Pauli
+    const I = m2(c(1,0), c(0,0), c(0,0), c(1,0));
+    const X = m2(c(0,0), c(1,0), c(1,0), c(0,0));
+    const Y = m2(c(0,0), c(0,-1), c(0,1), c(0,0)); // [[0,-i],[i,0]]
+    const Z = m2(c(1,0), c(0,0), c(0,0), c(-1,0));
+    const SIGMA_MINUS = m2(c(0,0), c(0,0), c(1,0), c(0,0)); // |0><1|
+
+    // Trace(A*B) helpers
+    const trace = (A)=> cAdd(A[0][0], A[1][1]);
+    const realTrace = (A)=> trace(A).re;
+
+    // Bloch components: r_i = Tr(ρ σ_i)
+    function blochVec(rho){
+      return {
+        x: realTrace(mMul(rho, X)),
+        y: realTrace(mMul(rho, Y)),
+        z: realTrace(mMul(rho, Z)),
+      };
     }
 
-    function resizeAll(){
-      Object.values(canvases).forEach(c => resizeCanvas(c));
+    // Initial state: |+> = (|0>+|1>)/sqrt(2) => rho = 1/2 [[1,1],[1,1]]
+    function rhoPlus(){
+      return m2(c(0.5,0), c(0.5,0), c(0.5,0), c(0.5,0));
     }
-    window.addEventListener("resize", resizeAll, { passive:true });
+
+    // Build Hamiltonian H = 0.5*(Ωx X + Ωy Y + Ωz Z). We set ħ = 1.
+    function hamiltonian(omx,omy,omz){
+      const Hx = mScale(X, 0.5*omx);
+      const Hy = mScale(Y, 0.5*omy);
+      const Hz = mScale(Z, 0.5*omz);
+      return mAdd(mAdd(Hx, Hy), Hz);
+    }
+
+    // Lindblad dissipator: D[L](ρ) = LρL† - 0.5*(L†L ρ + ρ L†L)
+    function dissipator(L, rho){
+      const Ldag = mDag(L);
+      const Lrho = mMul(L, rho);
+      const LrhoLdag = mMul(Lrho, Ldag);
+
+      const LdagL = mMul(Ldag, L);
+      const term1 = mMul(LdagL, rho);
+      const term2 = mMul(rho, LdagL);
+      const half = mScale(mAdd(term1, term2), 0.5);
+
+      return mSub(LrhoLdag, half);
+    }
+
+    // Time derivative: dρ/dt = -i[H,ρ] + Σ_k D[L_k](ρ)
+    function drho_dt(rho, H, Ls){
+      const Hr = mMul(H, rho);
+      const rH = mMul(rho, H);
+      const comm = mSub(Hr, rH);
+      // -i * comm : multiply by -i => (a+ib)*(-i) = b - ia
+      const minusI = (z)=> c(z.im, -z.re);
+      const unitary = m2(minusI(comm[0][0]), minusI(comm[0][1]), minusI(comm[1][0]), minusI(comm[1][1]));
+
+      let diss = mScale(I, 0.0);
+      for(const L of Ls){
+        diss = mAdd(diss, dissipator(L, rho));
+      }
+      return mAdd(unitary, diss);
+    }
+
+    // RK4 integrator for stability
+    function rk4Step(rho, dt, H, Ls){
+      const k1 = drho_dt(rho, H, Ls);
+      const k2 = drho_dt(mAdd(rho, mScale(k1, dt*0.5)), H, Ls);
+      const k3 = drho_dt(mAdd(rho, mScale(k2, dt*0.5)), H, Ls);
+      const k4 = drho_dt(mAdd(rho, mScale(k3, dt)), H, Ls);
+
+      const sum = mAdd(mAdd(k1, mScale(k2,2.0)), mAdd(mScale(k3,2.0), k4));
+      const next = mAdd(rho, mScale(sum, dt/6.0));
+
+      // enforce Hermiticity numerically: rho = (rho + rho†)/2
+      const rdag = mDag(next);
+      const herm = mScale(mAdd(next, rdag), 0.5);
+
+      // renormalize trace to 1
+      const tr = realTrace(herm);
+      return mScale(herm, 1.0/Math.max(1e-9, tr));
+    }
+
+    // ---------- UI to parameters ----------
+    const params = {
+      omx: 0.90, omy: 0.20, omz: 0.55,
+      g1: 0.20, gphi: 0.40
+    };
+
+    function syncParams(){
+      params.omx = Number(ui.omx.value)/100;
+      params.omy = Number(ui.omy.value)/100;
+      params.omz = Number(ui.omz.value)/100;
+      params.g1 = Number(ui.g1.value)/100;
+      params.gphi = Number(ui.gphi.value)/100;
+
+      ui.omxVal.textContent = params.omx.toFixed(2);
+      ui.omyVal.textContent = params.omy.toFixed(2);
+      ui.omzVal.textContent = params.omz.toFixed(2);
+      ui.g1Val.textContent = params.g1.toFixed(2);
+      ui.gphiVal.textContent = params.gphi.toFixed(2);
+    }
+    ui.omx.oninput = syncParams;
+    ui.omy.oninput = syncParams;
+    ui.omz.oninput = syncParams;
+    ui.g1.oninput = syncParams;
+    ui.gphi.oninput = syncParams;
+    syncParams();
+
+    // Kick: apply a fast unitary rotation around X of angle pi/2 (approx as instantaneous)
+    function unitaryRx(theta){
+      // U = cos(theta/2) I - i sin(theta/2) X
+      const a = Math.cos(theta/2);
+      const b = Math.sin(theta/2);
+      const minusI = (z)=> c(z.im, -z.re);
+      const iX = m2(minusI(X[0][0]), minusI(X[0][1]), minusI(X[1][0]), minusI(X[1][1]));
+      return mAdd(mScale(I, a), mScale(iX, -b)); // -i*sin * X
+    }
+    function applyUnitary(rho, U){
+      const Udag = mDag(U);
+      return mMul(mMul(U, rho), Udag);
+    }
+    function kickPiOver2(){
+      rho = applyUnitary(rho, unitaryRx(Math.PI/2));
+    }
+
+    ui.btnKick.onclick = () => kickPiOver2();
+    ui.btnReset.onclick = () => {
+      t = 0;
+      rho = rhoPlus();
+      trail.length = 0;
+    };
+
+    // ---------- Three.js scene ----------
+    function makeRenderer(canvas){
+      const r = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:"high-performance" });
+      r.setPixelRatio(Math.min(devicePixelRatio, 2));
+      r.setClearColor(0x000000, 0);
+      return r;
+    }
+    function makeCamera(){
+      const cam = new THREE.PerspectiveCamera(45, 1, 0.05, 80);
+      cam.position.set(0, 1.5, 5.2);
+      cam.lookAt(0, 0, 0);
+      return cam;
+    }
+    function resize(renderer, cam, canvas){
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width));
+      const h = Math.max(2, Math.floor(rect.height));
+      renderer.setSize(w, h, false);
+      cam.aspect = w / h;
+      cam.updateProjectionMatrix();
+    }
+
+    const canvases = {
+      single: document.getElementById("cSingle"),
+      top: document.getElementById("cTop"),
+      right: document.getElementById("cRight"),
+      left: document.getElementById("cLeft"),
+      bottom: document.getElementById("cBottom"),
+    };
+    const renderers = {
+      single: makeRenderer(canvases.single),
+      top: makeRenderer(canvases.top),
+      right: makeRenderer(canvases.right),
+      left: makeRenderer(canvases.left),
+      bottom: makeRenderer(canvases.bottom),
+    };
+    const cameras = {
+      single: makeCamera(),
+      top: makeCamera(),
+      right: makeCamera(),
+      left: makeCamera(),
+      bottom: makeCamera(),
+    };
+    function resizeAll(){
+      resize(renderers.single, cameras.single, canvases.single);
+      resize(renderers.top, cameras.top, canvases.top);
+      resize(renderers.right, cameras.right, canvases.right);
+      resize(renderers.left, cameras.left, canvases.left);
+      resize(renderers.bottom, cameras.bottom, canvases.bottom);
+    }
+    window.addEventListener("resize", resizeAll, {passive:true});
     resizeAll();
 
-    // Core render: draw probability density as a “holographic” field + interference fringes
-    function renderTo(ctx, w, h, viewYaw){
-      // viewYaw used to rotate phase slightly per view (gives “3D-ish” illusion in pyramid)
-      const img = ctx.createImageData(w, h);
-      const data = img.data;
+    const scene = new THREE.Scene();
 
-      const t = sim.t;
-      const slit = lerp(0.10, 0.55, sim.slit);       // separation in normalized units
-      const k = 18.0;                                // spatial frequency
-      const speed = 1.6;
+    const ambient = new THREE.AmbientLight(0x6aa6ff, 0.25);
+    scene.add(ambient);
 
-      // Coherence decays with noise unless regulation stabilizes it
-      const cohTarget = clamp01(1.0 - sim.noise*1.15);
-      sim.coherence = lerp(sim.coherence, cohTarget, 0.02);
-      sim.interference = clamp01(sim.coherence * (1.0 - sim.measuring*0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 0.9);
+    key.position.set(3, 5, 3);
+    scene.add(key);
 
-      // If measuring, coherence collapses faster
-      sim.measuring = Math.max(0, sim.measuring - 0.015);
+    const rim = new THREE.DirectionalLight(0x48ffb0, 0.35);
+    rim.position.set(-4, 2, -2);
+    scene.add(rim);
 
-      // Detector center
-      const dx = sim.detectorOn ? sim.detector.x : 0.72;
-      const dy = sim.detectorOn ? sim.detector.y : 0.52;
+    const group = new THREE.Group();
+    scene.add(group);
 
-      // For speed: render at reduced resolution on mobile? Keep simple per-pixel but modest.
-      // Field: sum of two spherical waves from two slits + random phase noise
-      const cx1 = 0.35 - slit*0.18, cy1 = 0.25;
-      const cx2 = 0.35 + slit*0.18, cy2 = 0.25;
+    // Bloch sphere (wireframe)
+    const sphereGeom = new THREE.SphereGeometry(1, 48, 48);
+    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x2b375a, wireframe: true, transparent:true, opacity:0.55 });
+    const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+    group.add(sphere);
 
-      // Holographic palette
-      const baseR = 0.10, baseG = 0.14, baseB = 0.22;
-      const glowR = 0.35, glowG = 0.65, glowB = 1.00;
+    // Axes
+    function axisLine(dir, color){
+      const pts = [new THREE.Vector3(0,0,0), dir.clone().multiplyScalar(1.2)];
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      const m = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.85 });
+      return new THREE.Line(g, m);
+    }
+    group.add(axisLine(new THREE.Vector3(1,0,0), 0x6aa6ff));
+    group.add(axisLine(new THREE.Vector3(0,1,0), 0x48ffb0));
+    group.add(axisLine(new THREE.Vector3(0,0,1), 0xff4b5c));
 
-      for(let y=0; y<h; y++){
-        const ny = y / h;
-        for(let x=0; x<w; x++){
-          const nx = x / w;
+    // Great circle (equator)
+    const torus = new THREE.Mesh(
+      new THREE.TorusGeometry(1, 0.01, 12, 192),
+      new THREE.MeshBasicMaterial({ color: 0x6aa6ff, transparent:true, opacity:0.40 })
+    );
+    torus.rotation.x = Math.PI/2;
+    group.add(torus);
 
-          const r1 = Math.hypot(nx - cx1, ny - cy1) + 1e-4;
-          const r2 = Math.hypot(nx - cx2, ny - cy2) + 1e-4;
+    // State vector arrow
+    const arrow = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,0), 1.0, 0x48ffb0, 0.12, 0.06);
+    group.add(arrow);
 
-          // Phase includes viewYaw so the four views differ slightly
-          const ph1 = k * r1 - speed*t + viewYaw*0.9;
-          const ph2 = k * r2 - speed*t - viewYaw*0.9;
+    // State point at arrow tip
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.06, 18, 18),
+      new THREE.MeshBasicMaterial({ color: 0x48ffb0 })
+    );
+    group.add(dot);
 
-          // Noise phase
-          const nph = (Math.sin((nx*12 + ny*9 + t*0.7) * 2.1) + Math.sin((nx*7 - ny*11 + t*0.9)*1.7)) * 0.5;
-          const decoh = sim.noise;
-          const a1 = 1.0 / (1.0 + 6.0*r1);
-          const a2 = 1.0 / (1.0 + 6.0*r2);
+    // Trail (path) to show contraction on Bloch ball
+    const trail = [];
+    const trailMax = 220;
+    const trailGeom = new THREE.BufferGeometry();
+    const trailMat = new THREE.LineBasicMaterial({ color: 0x6aa6ff, transparent:true, opacity:0.60 });
+    const trailLine = new THREE.Line(trailGeom, trailMat);
+    group.add(trailLine);
 
-          // Two-wave superposition with decoherence reducing cross term
-          const w1 = a1 * Math.cos(ph1 + nph*decoh);
-          const w2 = a2 * Math.cos(ph2 - nph*decoh);
+    // ---------- Simulation loop ----------
+    let t = 0;
+    let rho = rhoPlus();
 
-          // Interference strength scaled by coherence
-          const psi = w1 + (sim.interference)*w2;
+    function setCamPose(cam, yaw, pitch, dist){
+      const x = Math.cos(yaw) * Math.cos(pitch) * dist;
+      const z = Math.sin(yaw) * Math.cos(pitch) * dist;
+      const y = Math.sin(pitch) * dist;
+      cam.position.set(x, y, z);
+      cam.lookAt(0, 0, 0);
+    }
 
-          // Probability density (approx)
-          let p = psi*psi;
+    function updateHUD(r){
+      const norm = Math.sqrt(r.x*r.x + r.y*r.y + r.z*r.z);
+      ui.t.textContent = t.toFixed(1);
+      ui.bCoh.style.width = (clamp01(norm) * 100).toFixed(1) + "%";
+      ui.bT1.style.width = (clamp01(params.g1) * 100).toFixed(1) + "%";
+      ui.bT2.style.width = (clamp01(params.gphi) * 100).toFixed(1) + "%";
 
-          // Measurement: collapse toward a localized packet around detector
-          if(sim.detectorOn){
-            const rd = Math.hypot(nx - dx, ny - dy);
-            const packet = Math.exp(-(rd*rd) / (0.004 + 0.03*(1.0 - sim.measuring)));
-            p = lerp(p, packet, clamp01(sim.measuring*1.1));
-          }
+      let st = "superposition cohérente";
+      if(norm < 0.55) st = "décohérence forte";
+      if(norm < 0.25) st = "quasi classique";
+      ui.state.textContent = st;
+      ui.state.style.color = (norm > 0.55) ? "var(--ok)" : (norm > 0.25 ? "var(--accent)" : "var(--danger)");
+    }
 
-          // Shape the field, add scanlines “holo”
-          const scan = 0.78 + 0.22*Math.sin((ny*18.0 + t*2.6) * Math.PI*2);
-          const vign = 1.0 - 0.6*Math.hypot(nx-0.5, ny-0.55);
+    function updateVisual(r){
+      const v = new THREE.Vector3(r.x, r.y, r.z);
 
-          // Normalize-ish
-          p = clamp01(p * 1.8);
-          const g = Math.pow(p, 0.55) * scan * vign;
+      // Arrow length equals Bloch norm. Direction is Bloch direction.
+      const norm = Math.max(1e-9, v.length());
+      const dir = v.clone().normalize();
 
-          // Color mix
-          const r = baseR + glowR*g;
-          const gg = baseG + glowG*g;
-          const b = baseB + glowB*g;
+      arrow.setDirection(dir);
+      arrow.setLength(Math.min(1.0, norm), 0.12, 0.06);
 
-          // Alpha: keep dark background
-          const alpha = clamp01(0.15 + g*0.95);
+      dot.position.copy(v.clampLength(0, 1.0));
 
-          const i = (y*w + x) * 4;
-          data[i]   = Math.floor(r*255);
-          data[i+1] = Math.floor(gg*255);
-          data[i+2] = Math.floor(b*255);
-          data[i+3] = Math.floor(alpha*255);
-        }
+      // Trail
+      trail.push(dot.position.clone());
+      if(trail.length > trailMax) trail.shift();
+
+      const pts = trail;
+      const pos = new Float32Array(pts.length * 3);
+      for(let i=0;i<pts.length;i++){
+        pos[i*3+0] = pts[i].x;
+        pos[i*3+1] = pts[i].y;
+        pos[i*3+2] = pts[i].z;
       }
+      trailGeom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      trailGeom.computeBoundingSphere();
 
-      ctx.putImageData(img, 0, 0);
-
-      // Overlay: detector marker
-      if(sim.detectorOn){
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.strokeStyle = "rgba(255,255,255,0.75)";
-        ctx.lineWidth = Math.max(1, Math.floor(w/420));
-        ctx.beginPath();
-        ctx.arc(dx*w, dy*h, Math.max(10, Math.floor(w*0.03)), 0, Math.PI*2);
-        ctx.stroke();
-        ctx.restore();
-      }
+      // Fade dot color with norm
+      const g = clamp01(norm);
+      dot.material.color.setRGB(lerp(0.15, 0.28, 1-g), lerp(0.35, 1.00, g), lerp(0.22, 0.70, g));
     }
 
     let last = performance.now();
     let fpsAcc = 0, fpsN = 0;
 
     function tick(now){
-      const dt = Math.min(0.05, (now - last)/1000);
+      const dt = Math.min(0.03, (now - last)/1000);
       last = now;
-      sim.t += dt;
 
-      ui.t.textContent = sim.t.toFixed(1);
+      syncParams();
 
-      ui.bInter.style.width = (sim.interference*100).toFixed(1) + "%";
-      ui.bCoh.style.width = (sim.coherence*100).toFixed(1) + "%";
-      ui.bNoise.style.width = (sim.noise*100).toFixed(1) + "%";
+      // Build H and Lindblad operators
+      const H = hamiltonian(params.omx, params.omy, params.omz);
 
-      const state = (sim.measuring > 0.05) ? "mesure (collapse)" : "superposition";
-      ui.state.textContent = state;
-      ui.state.style.color = (state === "superposition") ? "var(--ok)" : "var(--danger)";
+      // L1 = sqrt(g1) sigma-
+      const L1 = mScale(SIGMA_MINUS, Math.sqrt(Math.max(0, params.g1)));
 
+      // Lphi = sqrt(gphi) sigma_z
+      const Lphi = mScale(Z, Math.sqrt(Math.max(0, params.gphi)));
+
+      // Integrate
+      rho = rk4Step(rho, dt, H, [L1, Lphi]);
+
+      t += dt;
+
+      // Bloch vector
+      const r = blochVec(rho);
+
+      updateHUD(r);
+      updateVisual(r);
+
+      // Render
       if(mode === "normal"){
-        const { w, h } = resizeCanvas(canvases.single);
-        renderTo(ctxs.single, w, h, sim.t*0.08);
+        setCamPose(cameras.single, t*0.12, 0.25, 5.2);
+        renderers.single.render(scene, cameras.single);
       } else {
-        const a = sim.t*0.08;
-        const views = [
-          ["top", a],
-          ["right", a + Math.PI/2],
-          ["left", a - Math.PI/2],
-          ["bottom", a + Math.PI],
-        ];
-        for(const [key, yaw] of views){
-          const { w, h } = resizeCanvas(canvases[key]);
-          renderTo(ctxs[key], w, h, yaw);
-        }
+        const dist = 5.0;
+        setCamPose(cameras.top, 0, 0.95, dist);
+        setCamPose(cameras.bottom, Math.PI, -0.95, dist);
+        setCamPose(cameras.left, -Math.PI/2, 0.15, dist);
+        setCamPose(cameras.right, Math.PI/2, 0.15, dist);
+
+        renderers.top.render(scene, cameras.top);
+        renderers.right.render(scene, cameras.right);
+        renderers.left.render(scene, cameras.left);
+        renderers.bottom.render(scene, cameras.bottom);
       }
 
       fpsAcc += 1/dt; fpsN++;
@@ -426,8 +590,16 @@
       requestAnimationFrame(tick);
     }
 
+    ui.btnKick.onclick = () => kickPiOver2();
+    ui.btnReset.onclick = () => {
+      t = 0;
+      rho = rhoPlus();
+      trail.length = 0;
+    };
+
     setMode("normal");
     requestAnimationFrame(tick);
   </script>
 </body>
 </html>
+
