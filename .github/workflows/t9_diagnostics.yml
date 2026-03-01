@@ -1,0 +1,62 @@
+name: T9 - Cross-domain Diagnostics (non-blocking)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  t9_diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Prepare output directory
+        run: |
+          rm -rf _ci_out
+          mkdir -p _ci_out/t9_diagnostics
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" "statsmodels>=0.14" "matplotlib>=3.8"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
+
+      - name: Run T9 (diagnostic only, never blocks)
+        continue-on-error: true
+        run: |
+          set +e
+          echo "Running T9 cross-domain as DIAGNOSTIC ONLY."
+          echo "Rule: T9 must not emit ACCEPT/REJECT or influence any global verdict." > _ci_out/t9_diagnostics/t9_status.txt
+          echo "STATUS: START" >> _ci_out/t9_diagnostics/t9_status.txt
+
+          if [ -f 04_Code/pipeline/run_T9_cross_domain.py ]; then
+            PYTHONPATH=src python 04_Code/pipeline/run_T9_cross_domain.py --seed 1234               2>&1 | tee _ci_out/t9_diagnostics/t9_run.log
+            EXIT_CODE=${PIPESTATUS[0]}
+          else
+            echo "ERROR: missing 04_Code/pipeline/run_T9_cross_domain.py" | tee _ci_out/t9_diagnostics/t9_run.log
+            EXIT_CODE=2
+          fi
+
+          echo "STATUS: DONE" >> _ci_out/t9_diagnostics/t9_status.txt
+          echo "EXIT_CODE: ${EXIT_CODE}" >> _ci_out/t9_diagnostics/t9_status.txt
+
+          # Never block
+          exit 0
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: t9_diagnostics_${{ github.run_id }}
+          path: _ci_out/t9_diagnostics
+          if-no-files-found: warn
