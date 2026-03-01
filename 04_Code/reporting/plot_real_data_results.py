@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # 04_Code/reporting/plot_real_data_results.py
+#
+# Robust against two layouts:
+# 1) Flat: <root>/tables/test_timeseries.csv, <root>/figures/
+# 2) Timestamped: <root>/<run_id>/tables/test_timeseries.csv, <root>/<run_id>/figures/
 
 from __future__ import annotations
 
@@ -7,24 +11,29 @@ import argparse
 import json
 from pathlib import Path
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
-def _find_latest_run_dir(root: Path) -> Path:
+def _is_run_dir(p: Path) -> bool:
+    return (p / "tables" / "test_timeseries.csv").exists()
+
+
+def _find_run_dir(root: Path) -> Path:
     if not root.exists():
         raise FileNotFoundError(f"root not found: {root}")
 
-    candidates = []
-    for p in root.rglob("*"):
-        if p.is_dir() and (p / "tables" / "test_timeseries.csv").exists():
-            candidates.append(p)
+    # Flat layout
+    if _is_run_dir(root):
+        return root
 
+    # Timestamped layout: pick newest dir that contains tables/test_timeseries.csv
+    candidates = [p for p in root.rglob("*") if p.is_dir() and _is_run_dir(p)]
     if not candidates:
-        candidates = [p for p in root.iterdir() if p.is_dir()]
-        if not candidates:
-            raise FileNotFoundError(f"no run dirs under: {root}")
-
+        raise FileNotFoundError(
+            f"Could not find a run directory under {root}. "
+            "Expected tables/test_timeseries.csv."
+        )
     candidates.sort(key=lambda p: p.stat().st_mtime)
     return candidates[-1]
 
@@ -52,7 +61,7 @@ def _plot_series(df: pd.DataFrame, out_png: Path, title: str, cols: list[str]) -
 def _plot_delta(df: pd.DataFrame, out_png: Path, title: str) -> None:
     plt.figure()
     plotted = False
-    for c in ["delta_C", "deltaC", "dC"]:
+    for c in ["delta_C", "deltaC", "dC", "delta_c", "delta_c_t"]:
         if c in df.columns:
             plt.plot(df[c].to_numpy(), label=c)
             plotted = True
@@ -73,7 +82,7 @@ def main() -> int:
     args = ap.parse_args()
 
     real_root = Path(args.real_root)
-    run_dir = Path(args.run_dir) if args.run_dir else _find_latest_run_dir(real_root)
+    run_dir = Path(args.run_dir) if args.run_dir else _find_run_dir(real_root)
 
     tables = run_dir / "tables"
     figs = run_dir / "figures"
@@ -82,13 +91,11 @@ def main() -> int:
     test_csv = tables / "test_timeseries.csv"
     ctrl_csv = tables / "control_timeseries.csv"
 
-    if not test_csv.exists():
-        raise FileNotFoundError(f"missing {test_csv}")
-
     df_test = pd.read_csv(test_csv)
+
     title_prefix = f"ORI-C real data. run={run_dir.name}"
 
-    # Auto-detect likely column names for C and S
+    # Prefer explicit C and S if present
     c_cols = [c for c in df_test.columns if c.lower() in ("c", "c_t", "cap", "capacity", "capacity_proxy")]
     s_cols = [c for c in df_test.columns if c.lower() in ("s", "s_t", "symbolic", "symbolic_proxy")]
     if not c_cols:
@@ -121,9 +128,13 @@ def main() -> int:
         "figures": [p.name for p in sorted(figs.glob("*.png"))],
         "verdict": verdict,
         "summary": summary,
+        "columns_test": list(df_test.columns),
+        "detected_C_cols": c_cols,
+        "detected_S_cols": s_cols,
     }
     (figs / "plot_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
+    print(f"Run dir: {run_dir}")
     print(f"Plots written under: {figs}")
     for p in sorted(figs.glob("*.png")):
         print(f"- {p}")

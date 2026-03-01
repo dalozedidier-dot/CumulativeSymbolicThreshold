@@ -41,19 +41,15 @@ jobs:
           DEFAULT_INPUT="03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv"
           if [ ! -f "$DEFAULT_INPUT" ]; then
             echo "Default input not found: $DEFAULT_INPUT"
-            echo "Searching for a plausible ORI-C real input CSV..."
             FOUND=$(ls -1 03_Data/real/**/oric_inputs_*.csv 2>/dev/null | head -n 1 || true)
             if [ -z "$FOUND" ]; then
-              echo "ERROR: no real input found. Please add a real CSV and update DEFAULT_INPUT."
-              echo "Candidates under 03_Data (first 50):"
+              echo "ERROR: no real input found."
               find 03_Data -name "*.csv" | head -n 50
               exit 1
             fi
             DEFAULT_INPUT="$FOUND"
-            echo "Using found input: $DEFAULT_INPUT"
-          else
-            echo "Using default input: $DEFAULT_INPUT"
           fi
+          echo "Using input: $DEFAULT_INPUT"
 
           PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py             --input "$DEFAULT_INPUT"             --outdir _ci_out/real_data_smoke             --time-mode index             2>&1 | tee _ci_out/real_data_smoke_run.log
 
@@ -61,7 +57,8 @@ jobs:
         run: |
           set -e
           if [ -f 04_Code/pipeline/tests_causaux.py ]; then
-            PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py               --run-root _ci_out/real_data_smoke               2>&1 | tee _ci_out/real_data_causal_tests.log
+            # tests_causaux.py contract: requires --run-dir or --control-csv
+            PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py               --run-dir _ci_out/real_data_smoke               2>&1 | tee _ci_out/real_data_causal_tests.log
           else
             echo "tests_causaux.py not found, skip."
           fi
