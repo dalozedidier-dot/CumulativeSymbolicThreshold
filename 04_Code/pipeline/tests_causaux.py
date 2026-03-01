@@ -385,16 +385,20 @@ def main() -> int:
     else:
         thr_idx, thr_val = _detect_threshold(df_t["delta_C"].to_numpy(dtype=float), float(args.k), int(args.m), int(args.baseline_n))
 
-    # Real-data robustness: if the series is already above threshold at the first step,
-    # treat this as an immediate hit at step 0. This avoids false "no detection" when
-    # the dataset starts post-transition.
+    # If no hit yet, use sustained level criterion: C >= threshold_value for 3 consecutive steps.
+    # This avoids false "non_detecte" when delta-based hit is silent but level is clearly above threshold.
     if thr_idx is None and ("C" in df_t.columns) and ("threshold_value" in df_t.columns):
         try:
-            c0 = float(df_t["C"].iloc[0])
-            thr0 = float(df_t["threshold_value"].iloc[0])
-            if (c0 >= thr0) and (c0 > 0.0) and (thr0 > 0.0):
-                thr_idx = 0
-                thr_val = thr0
+            import numpy as _np
+            c = df_t["C"].to_numpy(dtype=float)
+            thr = df_t["threshold_value"].to_numpy(dtype=float)
+            cond = (c >= thr)
+            w = 3
+            runlen = _np.convolve(cond.astype(int), _np.ones(w, dtype=int), mode="same")
+            hits = _np.where(runlen >= w)[0]
+            if hits.size > 0:
+                thr_idx = int(hits[0])
+                thr_val = float(thr[thr_idx])
         except Exception:
             pass
 
@@ -582,7 +586,6 @@ def main() -> int:
         "min_granger_S_to_deltaC_p": _safe_float(min_granger_s_to_dc),
         "min_granger_deltaC_to_S_p": _safe_float(min_granger_dc_to_s),
         "reverse_warning": bool(reverse_warning),
-        "granger_diagnostic_only": bool(granger_diagnostic_only),
         "granger_diagnostic_only": bool(granger_diagnostic_only),
         "var_S_to_deltaC_p": float(var_p),
         "var_lag_used": int(var_lag),

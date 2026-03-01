@@ -396,21 +396,26 @@ def main() -> int:
     df_test.to_csv(tabdir / "test_timeseries.csv", index=False)
     df_control.to_csv(tabdir / "control_timeseries.csv", index=False)
 
-    thr_hit = int(df_test.index[df_test["threshold_hit"] > 0][0]) if ("threshold_hit" in df_test.columns and bool((df_test["threshold_hit"] > 0).any())) else None
-    thr_t = None if thr_hit is None else int(df_test.loc[int(thr_hit), "t"])
-
-    # Real-data robustness: if the series starts already above the threshold, we consider
-    # this as an immediate hit at step 0 (no "crossing" from below is needed).
-    # This is a detection of state, not a claim about the transition mechanism.
-    if thr_hit is None and ("C" in df_test.columns) and ("threshold_value" in df_test.columns):
+    # Ensure threshold_hit is meaningful on real data: if missing or never hits,
+    # fall back to a sustained level criterion: C >= threshold_value for 3 consecutive steps.
+    if ("threshold_value" in df_test.columns) and ("C" in df_test.columns):
         try:
-            c0 = float(df_test["C"].iloc[0])
-            thr0 = float(df_test["threshold_value"].iloc[0])
-            if (c0 >= thr0) and (c0 > 0.0) and (thr0 > 0.0):
-                thr_hit = 0
-                thr_t = int(df_test.loc[0, "t"])
+            if ("threshold_hit" not in df_test.columns) or (int(df_test["threshold_hit"].max()) <= 0):
+                cond = (df_test["C"].to_numpy(dtype=float) >= df_test["threshold_value"].to_numpy(dtype=float))
+                import numpy as _np
+                w = 3
+                runlen = _np.convolve(cond.astype(int), _np.ones(w, dtype=int), mode="same")
+                hit_candidates = _np.where(runlen >= w)[0]
+                if hit_candidates.size > 0:
+                    hit_i = int(hit_candidates[0])
+                    if "threshold_hit" not in df_test.columns:
+                        df_test["threshold_hit"] = 0
+                    df_test.loc[hit_i, "threshold_hit"] = 1
         except Exception:
             pass
+
+    thr_hit = int(df_test.index[df_test["threshold_hit"] > 0][0]) if bool((df_test["threshold_hit"] > 0).any()) else None
+    thr_t = None if thr_hit is None else int(df_test.loc[int(thr_hit), "t"])
 
     verdict_token = "ACCEPT" if thr_hit is not None else "INDETERMINATE"
 
