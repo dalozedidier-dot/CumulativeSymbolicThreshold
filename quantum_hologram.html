@@ -1,44 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hologramme quantique : Qubit + décohérence (sphère de Bloch)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hologramme Quantique - Qubit + Décohérence</title>
   <style>
-    :root{
-      --bg:#000;
-      --fg:#0f0;
-      --panel:#111;
-      --stroke:#0f0;
-      --muted:#7f7;
-    }
-    body { margin: 0; background: var(--bg); color: var(--fg); font-family: Arial, sans-serif; text-align: center; }
-    h1 { margin: 18px 10px 6px; color: var(--fg); font-size: 20px; }
-    p  { max-width: 860px; margin: 8px auto 14px; line-height: 1.5; color: var(--muted); padding: 0 10px; }
-    #bar { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:center; padding: 10px; }
-    .chip{ display:inline-flex; gap:10px; align-items:center; background: rgba(17,17,17,0.8); border:1px solid rgba(0,255,0,0.35); padding: 10px 12px; border-radius: 12px; }
-    .chip label{ font-size: 13px; color: var(--muted); }
-    .chip input{ width: 160px; }
-    .chip span{ width: 46px; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; color: var(--fg); }
-    button { padding: 10px 16px; background: #141414; color: var(--fg); border: 1px solid rgba(0,255,0,0.45); cursor: pointer; border-radius: 12px; font-size: 14px; }
-    button:hover { background: var(--fg); color: #000; }
+    body { margin: 0; background: #000; color: #0f0; font-family: Arial, sans-serif; text-align: center; }
+    h1 { margin: 20px; color: #0f0; }
+    p { max-width: 900px; margin: 12px auto; line-height: 1.5; padding: 0 12px; }
+    #bar { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; padding: 10px; align-items:center; }
     #container { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; justify-items:center; }
     #container.pyr { grid-template-columns: 1fr 1fr; }
-    .view { width: min(92vw, 520px); aspect-ratio: 1 / 1; border: 1px solid rgba(0,255,0,0.45); background: var(--panel); border-radius: 12px; overflow:hidden; position:relative; }
-    .tag { position:absolute; top:10px; left:10px; font-size:12px; color: var(--muted); background: rgba(0,0,0,0.55); border:1px solid rgba(0,255,0,0.20); padding: 6px 8px; border-radius: 10px; }
+    .view { width: min(92vw, 520px); aspect-ratio: 1 / 1; border: 1px solid #0f0; background:#111; position:relative; }
+    .tag { position:absolute; left:10px; top:10px; font-size:12px; color:#0f0; background: rgba(0,0,0,0.6); padding: 6px 8px; border:1px solid rgba(0,255,0,0.4); }
     canvas { width:100%; height:100%; display:block; }
-    #hud { max-width: 860px; margin: 0 auto 14px; padding: 0 10px; color: var(--muted); }
-    #hud b { color: var(--fg); }
+    button { margin: 10px; padding: 12px 18px; background: #222; color: #0f0; border: 1px solid #0f0; cursor: pointer; font-size: 15px; }
+    button:hover { background: #0f0; color: #000; }
+    .chip { display:inline-flex; gap:10px; align-items:center; border:1px solid rgba(0,255,0,0.35); padding: 10px 12px; background: rgba(17,17,17,0.85); }
+    .chip label { font-size: 13px; color:#9f9; }
+    .chip input { width: 160px; }
+    .chip span { width: 52px; text-align:right; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    #hud { margin: 6px auto 10px; color:#9f9; }
+    #hud b { color:#0f0; }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/examples/js/controls/OrbitControls.min.js"></script>
 </head>
 <body>
-  <h1>Hologramme quantique : Qubit + décohérence (sphère de Bloch)</h1>
+  <h1>Hologramme Quantique : Qubit + Décohérence</h1>
   <p>
-    Modèle léger et scientifiquement cohérent : équations de Bloch issues d’un Lindblad (T1, T2) sous un Hamiltonien effectif
-    (rotation sur la sphère). En mode pyramide, 4 vues symétriques pour hologramme DIY.
+    État initial |+⟩. Rotation cohérente sous Hamiltonien effectif. Décohérence progressive. Transition visible vers un état classique.
+    Mode Pyramide. Fabriquez une pyramide (base 6 cm, sommet 1 cm, hauteur 3,5 cm) et posez la sur l’écran pour effet flottant.
   </p>
 
   <div id="bar">
@@ -47,7 +39,7 @@
     <button id="btnReset">Reset</button>
 
     <div class="chip">
-      <label for="om">Ω (rotation)</label>
+      <label for="om">Ω</label>
       <input id="om" type="range" min="0" max="250" value="110" />
       <span id="omVal">1.10</span>
     </div>
@@ -66,7 +58,11 @@
   </div>
 
   <div id="hud">
-    <div><b>Etat</b> <span id="stateText">superposition cohérente</span> · <b>t</b> <span id="tText">0.0</span> · <b>|r|</b> <span id="rText">1.00</span></div>
+    <b>Etat</b> <span id="stateText">superposition cohérente</span>
+    <span> | </span>
+    <b>t</b> <span id="tText">0.0</span>
+    <span> | </span>
+    <b>|r|</b> <span id="rText">1.00</span>
   </div>
 
   <div id="container">
@@ -75,7 +71,6 @@
 
   <script>
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
-    const lerp = (a,b,t) => a + (b-a)*t;
 
     const ui = {
       container: document.getElementById("container"),
@@ -93,62 +88,45 @@
       rText: document.getElementById("rText"),
     };
 
-    // ---------- Paramètres physiques (échelles adimensionnées pour visualisation) ----------
-    const P = {
-      Omega: 1.10,    // fréquence de rotation
-      T1: 120,        // relaxation amplitude
-      T2: 70,         // déphasage (inclut T1 via 1/T2 = 1/(2T1) + 1/Tphi)
-      zEq: 1.0,       // état d’équilibre |0> => z -> +1
-    };
+    const P = { Omega: 1.10, T1: 120, T2: 70, zEq: 1.0 };
 
-    function sync(){
-      P.Omega = Number(ui.om.value)/100;
+    function sync() {
+      P.Omega = Number(ui.om.value) / 100;
       P.T1 = Number(ui.t1.value);
       P.T2 = Number(ui.t2.value);
       ui.omVal.textContent = P.Omega.toFixed(2);
       ui.t1Val.textContent = String(P.T1);
       ui.t2Val.textContent = String(P.T2);
     }
-    ui.om.oninput = sync;
-    ui.t1.oninput = sync;
-    ui.t2.oninput = sync;
+    ui.om.addEventListener("input", sync);
+    ui.t1.addEventListener("input", sync);
+    ui.t2.addEventListener("input", sync);
     sync();
 
-    // ---------- Etat Bloch r = (x,y,z) ----------
-    // Démarrage |+> => (x=1,y=0,z=0)
-    const r = { x: 1, y: 0, z: 0 };
-    let t = 0;
+    let pyramidMode = false;
 
-    // Impulsion π/2 autour X (approx): rotation y->z
-    function kickPiOver2(){
-      const cy = r.y, cz = r.z;
-      // Rx(pi/2): y -> y cos - z sin ; z -> y sin + z cos
-      const c = Math.cos(Math.PI/2), s = Math.sin(Math.PI/2);
-      r.y = cy*c - cz*s;
-      r.z = cy*s + cz*c;
+    function buildViews() {
+      ui.container.innerHTML = "";
+      if (!pyramidMode) {
+        ui.container.classList.remove("pyr");
+        ui.container.insertAdjacentHTML("beforeend",
+          `<div class="view"><div class="tag">Vue libre</div><canvas id="c0"></canvas></div>`
+        );
+      } else {
+        ui.container.classList.add("pyr");
+        const labels = ["Haut", "Droite", "Gauche", "Bas"];
+        for (let i = 0; i < 4; i++) {
+          ui.container.insertAdjacentHTML("beforeend",
+            `<div class="view"><div class="tag">${labels[i]}</div><canvas id="c${i}"></canvas></div>`
+          );
+        }
+      }
     }
 
-    function resetAll(){
-      t = 0;
-      r.x = 1; r.y = 0; r.z = 0;
-      trailPts.length = 0;
-    }
-
-    ui.btnKick.onclick = kickPiOver2;
-    ui.btnReset.onclick = resetAll;
-
-    // ---------- Three.js (une scène partagée, plusieurs caméras/renderers) ----------
-    function mkRenderer(canvas){
-      const rr = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:"high-performance" });
-      rr.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-      rr.setClearColor(0x000000, 0);
-      return rr;
-    }
-
+    // Scene unique
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    // Lumière légère
     scene.add(new THREE.AmbientLight(0xffffff, 0.25));
     const dl = new THREE.DirectionalLight(0xffffff, 0.9);
     dl.position.set(3, 5, 4);
@@ -157,19 +135,16 @@
     const group = new THREE.Group();
     scene.add(group);
 
-    // Sphère Bloch wireframe (léger)
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(1, 26, 26),
-      new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe:true, transparent:true, opacity:0.55 })
+      new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.55 })
     );
     group.add(sphere);
 
-    // Axes
     const axes = new THREE.AxesHelper(1.55);
     group.add(axes);
 
-    // Flèche (ArrowHelper) + point
-    const arrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,0), 1, 0x00ff00, 0.14, 0.08);
+    const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, 0x00ff00, 0.14, 0.08);
     group.add(arrow);
 
     const dot = new THREE.Mesh(
@@ -178,162 +153,141 @@
     );
     group.add(dot);
 
-    // Traînée
-    const trailPts = [];
-    const trailMax = 220;
-    const trailGeom = new THREE.BufferGeometry();
-    const trailMat = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent:true, opacity:0.35 });
-    const trailLine = new THREE.Line(trailGeom, trailMat);
-    group.add(trailLine);
+    // Views list
+    let views = [];
 
-    function updateVisual(){
-      const v = new THREE.Vector3(r.x, r.y, r.z);
-      const norm = Math.max(1e-6, v.length());
-      const dir = v.clone().normalize();
-
-      arrow.setDirection(dir);
-      arrow.setLength(Math.min(1, norm), 0.14, 0.08);
-
-      dot.position.copy(v.clampLength(0,1));
-
-      trailPts.push(dot.position.clone());
-      if(trailPts.length > trailMax) trailPts.shift();
-
-      const pos = new Float32Array(trailPts.length*3);
-      for(let i=0;i<trailPts.length;i++){
-        pos[i*3] = trailPts[i].x;
-        pos[i*3+1] = trailPts[i].y;
-        pos[i*3+2] = trailPts[i].z;
-      }
-      trailGeom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      trailGeom.computeBoundingSphere();
-
-      // HUD
-      ui.tText.textContent = t.toFixed(1);
-      ui.rText.textContent = norm.toFixed(2);
-      let st = "superposition cohérente";
-      if(norm < 0.55) st = "décohérence forte";
-      if(norm < 0.25) st = "quasi classique";
-      ui.stateText.textContent = st;
+    function mkRenderer(canvas) {
+      const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      r.setClearColor(0x000000, 0);
+      return r;
     }
 
-    // Cameras and renderers
-    let pyramidMode = false;
-    let views = []; // {canvas, renderer, camera, controls?}
-
-    function setContainerSingle(){
-      ui.container.classList.remove("pyr");
-      ui.container.innerHTML = "";
-      const v = document.createElement("div");
-      v.className = "view";
-      v.innerHTML = `<div class="tag">Vue libre</div><canvas id="c0"></canvas>`;
-      ui.container.appendChild(v);
-
-      const canvas = v.querySelector("canvas");
-      const renderer = mkRenderer(canvas);
-      const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-      camera.position.set(0, 0, 5);
-      camera.lookAt(0,0,0);
-
-      // OrbitControls uniquement en mode normal (1 vue)
-      const ctrl = new THREE.OrbitControls(camera, renderer.domElement);
-      ctrl.enableDamping = true;
-      ctrl.dampingFactor = 0.08;
-
-      views = [{ canvas, renderer, camera, controls: ctrl, label:"" }];
-      resizeAll();
-    }
-
-    function setContainerPyr(){
-      ui.container.classList.add("pyr");
-      ui.container.innerHTML = "";
-
-      const labels = ["Haut","Droite","Gauche","Bas"];
-      for(let i=0;i<4;i++){
-        const v = document.createElement("div");
-        v.className = "view";
-        v.innerHTML = `<div class="tag">${labels[i]}</div><canvas></canvas>`;
-        ui.container.appendChild(v);
-
-        const canvas = v.querySelector("canvas");
+    function setUpViews() {
+      views = [];
+      if (!pyramidMode) {
+        const canvas = document.getElementById("c0");
         const renderer = mkRenderer(canvas);
         const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+        camera.position.set(0, 0, 5);
+        camera.lookAt(0, 0, 0);
+        views.push({ canvas, renderer, camera });
+      } else {
+        const dist = 5.2;
+        const pitch = 0.22;
+        const yawList = [0, Math.PI / 2, -Math.PI / 2, Math.PI];
+        for (let i = 0; i < 4; i++) {
+          const canvas = document.getElementById(`c${i}`);
+          const renderer = mkRenderer(canvas);
+          const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
 
-        // Caméras symétriques (pas d’OrbitControls ici)
-        const ang = i * Math.PI/2;
-        camera.position.set(5*Math.cos(ang), 1.2, 5*Math.sin(ang));
-        camera.lookAt(0,0,0);
+          const yaw = yawList[i];
+          const x = Math.cos(yaw) * Math.cos(pitch) * dist;
+          const z = Math.sin(yaw) * Math.cos(pitch) * dist;
+          const y = Math.sin(pitch) * dist;
 
-        views.push({ canvas, renderer, camera, controls: null, label:labels[i] });
+          camera.position.set(x, y, z);
+          camera.lookAt(0, 0, 0);
+
+          views.push({ canvas, renderer, camera });
+        }
       }
       resizeAll();
     }
 
-    function resizeAll(){
-      for(const v of views){
+    function resizeAll() {
+      for (const v of views) {
         const rect = v.canvas.getBoundingClientRect();
         const w = Math.max(2, Math.floor(rect.width));
         const h = Math.max(2, Math.floor(rect.height));
         v.renderer.setSize(w, h, false);
-        v.camera.aspect = w/h;
+        v.camera.aspect = w / h;
         v.camera.updateProjectionMatrix();
       }
     }
-    window.addEventListener("resize", resizeAll, { passive:true });
+    window.addEventListener("resize", resizeAll, { passive: true });
 
-    ui.btnMode.onclick = () => {
+    // Etat Bloch initial |+> => (1,0,0)
+    const r = { x: 1, y: 0, z: 0 };
+    let t = 0;
+
+    function kickPiOver2() {
+      const cy = r.y, cz = r.z;
+      const c = Math.cos(Math.PI / 2), s = Math.sin(Math.PI / 2);
+      r.y = cy * c - cz * s;
+      r.z = cy * s + cz * c;
+    }
+
+    function resetAll() {
+      t = 0;
+      r.x = 1; r.y = 0; r.z = 0;
+    }
+
+    ui.btnKick.addEventListener("click", kickPiOver2);
+    ui.btnReset.addEventListener("click", resetAll);
+
+    ui.btnMode.addEventListener("click", () => {
       pyramidMode = !pyramidMode;
       ui.btnMode.textContent = pyramidMode ? "Désactiver Mode Pyramide" : "Activer Mode Pyramide (4 vues)";
-      views = [];
-      if(pyramidMode) setContainerPyr();
-      else setContainerSingle();
-    };
+      buildViews();
+      setUpViews();
+    });
 
-    // Init
-    setContainerSingle();
-
-    // ---------- Dynamique Bloch (Lindblad équivalent) ----------
-    // Équations de Bloch pour un qubit avec relaxation (T1) et déphasage (T2) sous une rotation autour de l’axe X:
-    // dx/dt = -x/T2
-    // dy/dt =  Ω z - y/T2
-    // dz/dt = -Ω y - (z - z_eq)/T1
-    // Rotation autour X: couplage y<->z.
-    function stepBloch(dt){
+    // Dynamique Bloch équivalente Lindblad (T1,T2) + rotation autour X
+    function stepBloch(dt) {
       const Omega = P.Omega;
-      const invT1 = 1/Math.max(5, P.T1);
-      const invT2 = 1/Math.max(5, P.T2);
+      const invT1 = 1 / Math.max(5, P.T1);
+      const invT2 = 1 / Math.max(5, P.T2);
 
       const dx = -r.x * invT2;
-      const dy =  Omega * r.z - r.y * invT2;
+      const dy = Omega * r.z - r.y * invT2;
       const dz = -Omega * r.y - (r.z - P.zEq) * invT1;
 
       r.x += dx * dt;
       r.y += dy * dt;
       r.z += dz * dt;
 
-      // Clamping doux vers l’intérieur de la boule (stabilité numérique)
-      const norm = Math.sqrt(r.x*r.x + r.y*r.y + r.z*r.z);
-      if(norm > 1.0){
-        const s = 1.0 / norm;
-        r.x *= s; r.y *= s; r.z *= s;
+      const norm = Math.sqrt(r.x * r.x + r.y * r.y + r.z * r.z);
+      if (norm > 1) {
+        r.x /= norm; r.y /= norm; r.z /= norm;
       }
     }
 
-    // ---------- Loop unique ----------
+    function updateVisual() {
+      const v = new THREE.Vector3(r.x, r.y, r.z);
+      const norm = Math.max(1e-6, v.length());
+      const dir = v.clone().normalize();
+
+      arrow.setDirection(dir);
+      arrow.setLength(Math.min(1, norm), 0.14, 0.08);
+      dot.position.copy(v.clampLength(0, 1));
+
+      ui.tText.textContent = t.toFixed(1);
+      ui.rText.textContent = norm.toFixed(2);
+
+      let st = "superposition cohérente";
+      if (norm < 0.55) st = "décohérence forte";
+      if (norm < 0.25) st = "quasi classique";
+      ui.stateText.textContent = st;
+    }
+
+    buildViews();
+    setUpViews();
+
     let last = performance.now();
-    function frame(now){
-      const dt = Math.min(0.03, (now - last)/1000);
+    function frame(now) {
+      const dt = Math.min(0.03, (now - last) / 1000);
       last = now;
       t += dt;
 
-      // Léger mouvement global de la sphère
+      sync();
+
       group.rotation.y += dt * 0.10;
 
       stepBloch(dt);
       updateVisual();
 
-      for(const v of views){
-        if(v.controls) v.controls.update();
+      for (const v of views) {
         v.renderer.render(scene, v.camera);
       }
 
@@ -341,9 +295,8 @@
     }
     requestAnimationFrame(frame);
 
-    // Raccourcis
     window.addEventListener("keydown", (e) => {
-      if(e.code === "Space"){ e.preventDefault(); kickPiOver2(); }
+      if (e.code === "Space") { e.preventDefault(); kickPiOver2(); }
     });
   </script>
 </body>
