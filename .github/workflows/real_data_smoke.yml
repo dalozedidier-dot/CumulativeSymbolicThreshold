@@ -9,7 +9,7 @@ on:
 jobs:
   real_data_smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,39 +35,27 @@ jobs:
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
-      - name: Select real dataset (stable CI default)
-        id: pickdata
-        run: |
-          set -e
-          DEFAULT="03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv"
-          if [ -f "$DEFAULT" ]; then
-            echo "input=$DEFAULT" >> $GITHUB_OUTPUT
-            echo "Using default input: $DEFAULT"
-            exit 0
-          fi
-
-          # Fallback: pick the first oric_inputs_*.csv found under 03_Data/real
-          FOUND="$(ls -1 03_Data/real/**/oric_inputs_*.csv 2>/dev/null | head -n 1 || true)"
-          if [ -n "$FOUND" ]; then
-            echo "input=$FOUND" >> $GITHUB_OUTPUT
-            echo "Using fallback input: $FOUND"
-            exit 0
-          fi
-
-          echo "ERROR: No real input CSV found."
-          echo "Expected: $DEFAULT"
-          echo "Also tried: 03_Data/real/**/oric_inputs_*.csv"
-          echo "Available CSV samples (first 40):"
-          find 03_Data -maxdepth 5 -type f -name "*.csv" | head -n 40 || true
-          exit 1
-
       - name: Run real data demo (pipeline)
         run: |
           set -eo pipefail
-          INPUT="${{ steps.pickdata.outputs.input }}"
-          echo "INPUT=$INPUT"
-          # CI recommendation: time-mode index (no need for a time column).
-          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py             --input "$INPUT"             --outdir _ci_out/real_data_smoke             --time-mode index             --normalize robust             --auto-scale             2>&1 | tee _ci_out/real_data_smoke_run.log
+          DEFAULT_INPUT="03_Data/real/_bundles/data_real_v2/oric_inputs/oric_inputs_BE.csv"
+          if [ ! -f "$DEFAULT_INPUT" ]; then
+            echo "Default input not found: $DEFAULT_INPUT"
+            echo "Searching for a plausible ORI-C real input CSV..."
+            FOUND=$(ls -1 03_Data/real/**/oric_inputs_*.csv 2>/dev/null | head -n 1 || true)
+            if [ -z "$FOUND" ]; then
+              echo "ERROR: no real input found. Please add a real CSV and update DEFAULT_INPUT."
+              echo "Candidates under 03_Data (first 50):"
+              find 03_Data -name "*.csv" | head -n 50
+              exit 1
+            fi
+            DEFAULT_INPUT="$FOUND"
+            echo "Using found input: $DEFAULT_INPUT"
+          else
+            echo "Using default input: $DEFAULT_INPUT"
+          fi
+
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py             --input "$DEFAULT_INPUT"             --outdir _ci_out/real_data_smoke             --time-mode index             2>&1 | tee _ci_out/real_data_smoke_run.log
 
       - name: Run causal tests on real outputs (if available)
         run: |
@@ -77,6 +65,11 @@ jobs:
           else
             echo "tests_causaux.py not found, skip."
           fi
+
+      - name: Generate plots (real data)
+        run: |
+          set -e
+          PYTHONPATH=src python 04_Code/reporting/plot_real_data_results.py             --real-root _ci_out/real_data_smoke             2>&1 | tee _ci_out/real_data_plots.log
 
       - name: Build real-data CI summary (json + md + Actions summary)
         run: |
