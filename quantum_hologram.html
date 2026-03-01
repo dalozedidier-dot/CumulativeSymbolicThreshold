@@ -1,36 +1,36 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hologramme Quantique - Qubit + Décohérence</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Hologramme quantique. Qubit + décohérence</title>
   <style>
-    body { margin: 0; background: #000; color: #0f0; font-family: Arial, sans-serif; text-align: center; }
-    h1 { margin: 20px; color: #0f0; }
-    p { max-width: 900px; margin: 12px auto; line-height: 1.5; padding: 0 12px; }
-    #bar { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; padding: 10px; align-items:center; }
-    #container { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; justify-items:center; }
-    #container.pyr { grid-template-columns: 1fr 1fr; }
-    .view { width: min(92vw, 520px); aspect-ratio: 1 / 1; border: 1px solid #0f0; background:#111; position:relative; }
-    .tag { position:absolute; left:10px; top:10px; font-size:12px; color:#0f0; background: rgba(0,0,0,0.6); padding: 6px 8px; border:1px solid rgba(0,255,0,0.4); }
-    canvas { width:100%; height:100%; display:block; }
-    button { margin: 10px; padding: 12px 18px; background: #222; color: #0f0; border: 1px solid #0f0; cursor: pointer; font-size: 15px; }
-    button:hover { background: #0f0; color: #000; }
-    .chip { display:inline-flex; gap:10px; align-items:center; border:1px solid rgba(0,255,0,0.35); padding: 10px 12px; background: rgba(17,17,17,0.85); }
-    .chip label { font-size: 13px; color:#9f9; }
-    .chip input { width: 160px; }
-    .chip span { width: 52px; text-align:right; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    #hud { margin: 6px auto 10px; color:#9f9; }
-    #hud b { color:#0f0; }
+    :root{--bg:#000;--fg:#0f0;--muted:#9f9;--panel:#111;--stroke:rgba(0,255,0,0.45)}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Arial,sans-serif;text-align:center}
+    h1{margin:18px 10px 6px;font-size:20px}
+    p{max-width:980px;margin:8px auto 12px;line-height:1.45;color:var(--muted);padding:0 12px}
+    #bar{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:10px;align-items:center}
+    button{padding:10px 16px;background:#141414;color:var(--fg);border:1px solid var(--stroke);cursor:pointer;border-radius:12px;font-size:14px}
+    button:hover{background:var(--fg);color:#000}
+    .chip{display:inline-flex;gap:10px;align-items:center;border:1px solid rgba(0,255,0,0.35);padding:10px 12px;background:rgba(17,17,17,0.85);border-radius:12px}
+    .chip label{font-size:13px;color:var(--muted)}
+    .chip input{width:160px}
+    .chip span{width:52px;text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    #hud{max-width:980px;margin:6px auto 10px;color:var(--muted);padding:0 12px}
+    #hud b{color:var(--fg)}
+    #container{display:grid;grid-template-columns:1fr;gap:10px;padding:10px;justify-items:center}
+    #container.pyr{grid-template-columns:1fr 1fr}
+    .view{width:min(92vw,520px);aspect-ratio:1/1;border:1px solid var(--stroke);background:var(--panel);border-radius:12px;overflow:hidden;position:relative}
+    .tag{position:absolute;left:10px;top:10px;font-size:12px;color:var(--muted);background:rgba(0,0,0,0.6);padding:6px 8px;border:1px solid rgba(0,255,0,0.25);border-radius:10px;z-index:2}
+    canvas{width:100%;height:100%;display:block}
+    #err{max-width:980px;margin:6px auto 0;color:#ff8080;font-size:12px;padding:0 12px;display:none}
   </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.min.js"></script>
 </head>
 <body>
-  <h1>Hologramme Quantique : Qubit + Décohérence</h1>
+  <h1>Hologramme quantique. Qubit, décohérence, sphère de Bloch</h1>
   <p>
-    État initial |+⟩. Rotation cohérente sous Hamiltonien effectif. Décohérence progressive. Transition visible vers un état classique.
-    Mode Pyramide. Fabriquez une pyramide (base 6 cm, sommet 1 cm, hauteur 3,5 cm) et posez la sur l’écran pour effet flottant.
+    Rotation sous Hamiltonien effectif et décohérence (T1, T2). Mode pyramide 4 vues pour hologramme DIY.
+    Cette version ne dépend pas de WebGL.
   </p>
 
   <div id="bar">
@@ -39,21 +39,30 @@
     <button id="btnReset">Reset</button>
 
     <div class="chip">
-      <label for="om">Ω</label>
-      <input id="om" type="range" min="0" max="250" value="110" />
-      <span id="omVal">1.10</span>
+      <label for="omx">Ωx</label>
+      <input id="omx" type="range" min="-250" max="250" value="110" />
+      <span id="omxVal">1.10</span>
+    </div>
+    <div class="chip">
+      <label for="omy">Ωy</label>
+      <input id="omy" type="range" min="-250" max="250" value="30" />
+      <span id="omyVal">0.30</span>
+    </div>
+    <div class="chip">
+      <label for="omz">Ωz</label>
+      <input id="omz" type="range" min="-250" max="250" value="60" />
+      <span id="omzVal">0.60</span>
     </div>
 
     <div class="chip">
       <label for="t1">T1</label>
-      <input id="t1" type="range" min="5" max="300" value="120" />
-      <span id="t1Val">120</span>
+      <input id="t1" type="range" min="5" max="300" value="140" />
+      <span id="t1Val">140</span>
     </div>
-
     <div class="chip">
       <label for="t2">T2</label>
-      <input id="t2" type="range" min="5" max="300" value="70" />
-      <span id="t2Val">70</span>
+      <input id="t2" type="range" min="5" max="300" value="80" />
+      <span id="t2Val">80</span>
     </div>
   </div>
 
@@ -65,239 +74,15 @@
     <b>|r|</b> <span id="rText">1.00</span>
   </div>
 
+  <div id="err"></div>
+
   <div id="container">
-    <div class="view"><div class="tag">Vue libre</div><canvas id="c0"></canvas></div>
+    <div class="view">
+      <div class="tag">Vue libre</div>
+      <canvas id="c0"></canvas>
+    </div>
   </div>
 
-  <script>
-    const clamp01 = (x) => Math.max(0, Math.min(1, x));
-
-    const ui = {
-      container: document.getElementById("container"),
-      btnMode: document.getElementById("btnMode"),
-      btnKick: document.getElementById("btnKick"),
-      btnReset: document.getElementById("btnReset"),
-      om: document.getElementById("om"),
-      t1: document.getElementById("t1"),
-      t2: document.getElementById("t2"),
-      omVal: document.getElementById("omVal"),
-      t1Val: document.getElementById("t1Val"),
-      t2Val: document.getElementById("t2Val"),
-      stateText: document.getElementById("stateText"),
-      tText: document.getElementById("tText"),
-      rText: document.getElementById("rText"),
-    };
-
-    const P = { Omega: 1.10, T1: 120, T2: 70, zEq: 1.0 };
-
-    function sync() {
-      P.Omega = Number(ui.om.value) / 100;
-      P.T1 = Number(ui.t1.value);
-      P.T2 = Number(ui.t2.value);
-      ui.omVal.textContent = P.Omega.toFixed(2);
-      ui.t1Val.textContent = String(P.T1);
-      ui.t2Val.textContent = String(P.T2);
-    }
-    ui.om.addEventListener("input", sync);
-    ui.t1.addEventListener("input", sync);
-    ui.t2.addEventListener("input", sync);
-    sync();
-
-    let pyramidMode = false;
-
-    function buildViews() {
-      ui.container.innerHTML = "";
-      if (!pyramidMode) {
-        ui.container.classList.remove("pyr");
-        ui.container.insertAdjacentHTML("beforeend",
-          `<div class="view"><div class="tag">Vue libre</div><canvas id="c0"></canvas></div>`
-        );
-      } else {
-        ui.container.classList.add("pyr");
-        const labels = ["Haut", "Droite", "Gauche", "Bas"];
-        for (let i = 0; i < 4; i++) {
-          ui.container.insertAdjacentHTML("beforeend",
-            `<div class="view"><div class="tag">${labels[i]}</div><canvas id="c${i}"></canvas></div>`
-          );
-        }
-      }
-    }
-
-    // Scene unique
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-    const dl = new THREE.DirectionalLight(0xffffff, 0.9);
-    dl.position.set(3, 5, 4);
-    scene.add(dl);
-
-    const group = new THREE.Group();
-    scene.add(group);
-
-    const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 26, 26),
-      new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true, transparent: true, opacity: 0.55 })
-    );
-    group.add(sphere);
-
-    const axes = new THREE.AxesHelper(1.55);
-    group.add(axes);
-
-    const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 1, 0x00ff00, 0.14, 0.08);
-    group.add(arrow);
-
-    const dot = new THREE.Mesh(
-      new THREE.SphereGeometry(0.075, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xff00ff })
-    );
-    group.add(dot);
-
-    // Views list
-    let views = [];
-
-    function mkRenderer(canvas) {
-      const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-      r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      r.setClearColor(0x000000, 0);
-      return r;
-    }
-
-    function setUpViews() {
-      views = [];
-      if (!pyramidMode) {
-        const canvas = document.getElementById("c0");
-        const renderer = mkRenderer(canvas);
-        const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-        camera.position.set(0, 0, 5);
-        camera.lookAt(0, 0, 0);
-        views.push({ canvas, renderer, camera });
-      } else {
-        const dist = 5.2;
-        const pitch = 0.22;
-        const yawList = [0, Math.PI / 2, -Math.PI / 2, Math.PI];
-        for (let i = 0; i < 4; i++) {
-          const canvas = document.getElementById(`c${i}`);
-          const renderer = mkRenderer(canvas);
-          const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-
-          const yaw = yawList[i];
-          const x = Math.cos(yaw) * Math.cos(pitch) * dist;
-          const z = Math.sin(yaw) * Math.cos(pitch) * dist;
-          const y = Math.sin(pitch) * dist;
-
-          camera.position.set(x, y, z);
-          camera.lookAt(0, 0, 0);
-
-          views.push({ canvas, renderer, camera });
-        }
-      }
-      resizeAll();
-    }
-
-    function resizeAll() {
-      for (const v of views) {
-        const rect = v.canvas.getBoundingClientRect();
-        const w = Math.max(2, Math.floor(rect.width));
-        const h = Math.max(2, Math.floor(rect.height));
-        v.renderer.setSize(w, h, false);
-        v.camera.aspect = w / h;
-        v.camera.updateProjectionMatrix();
-      }
-    }
-    window.addEventListener("resize", resizeAll, { passive: true });
-
-    // Etat Bloch initial |+> => (1,0,0)
-    const r = { x: 1, y: 0, z: 0 };
-    let t = 0;
-
-    function kickPiOver2() {
-      const cy = r.y, cz = r.z;
-      const c = Math.cos(Math.PI / 2), s = Math.sin(Math.PI / 2);
-      r.y = cy * c - cz * s;
-      r.z = cy * s + cz * c;
-    }
-
-    function resetAll() {
-      t = 0;
-      r.x = 1; r.y = 0; r.z = 0;
-    }
-
-    ui.btnKick.addEventListener("click", kickPiOver2);
-    ui.btnReset.addEventListener("click", resetAll);
-
-    ui.btnMode.addEventListener("click", () => {
-      pyramidMode = !pyramidMode;
-      ui.btnMode.textContent = pyramidMode ? "Désactiver Mode Pyramide" : "Activer Mode Pyramide (4 vues)";
-      buildViews();
-      setUpViews();
-    });
-
-    // Dynamique Bloch équivalente Lindblad (T1,T2) + rotation autour X
-    function stepBloch(dt) {
-      const Omega = P.Omega;
-      const invT1 = 1 / Math.max(5, P.T1);
-      const invT2 = 1 / Math.max(5, P.T2);
-
-      const dx = -r.x * invT2;
-      const dy = Omega * r.z - r.y * invT2;
-      const dz = -Omega * r.y - (r.z - P.zEq) * invT1;
-
-      r.x += dx * dt;
-      r.y += dy * dt;
-      r.z += dz * dt;
-
-      const norm = Math.sqrt(r.x * r.x + r.y * r.y + r.z * r.z);
-      if (norm > 1) {
-        r.x /= norm; r.y /= norm; r.z /= norm;
-      }
-    }
-
-    function updateVisual() {
-      const v = new THREE.Vector3(r.x, r.y, r.z);
-      const norm = Math.max(1e-6, v.length());
-      const dir = v.clone().normalize();
-
-      arrow.setDirection(dir);
-      arrow.setLength(Math.min(1, norm), 0.14, 0.08);
-      dot.position.copy(v.clampLength(0, 1));
-
-      ui.tText.textContent = t.toFixed(1);
-      ui.rText.textContent = norm.toFixed(2);
-
-      let st = "superposition cohérente";
-      if (norm < 0.55) st = "décohérence forte";
-      if (norm < 0.25) st = "quasi classique";
-      ui.stateText.textContent = st;
-    }
-
-    buildViews();
-    setUpViews();
-
-    let last = performance.now();
-    function frame(now) {
-      const dt = Math.min(0.03, (now - last) / 1000);
-      last = now;
-      t += dt;
-
-      sync();
-
-      group.rotation.y += dt * 0.10;
-
-      stepBloch(dt);
-      updateVisual();
-
-      for (const v of views) {
-        v.renderer.render(scene, v.camera);
-      }
-
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-
-    window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") { e.preventDefault(); kickPiOver2(); }
-    });
-  </script>
+  <script src="./qubit_bloch_2d.js"></script>
 </body>
 </html>
