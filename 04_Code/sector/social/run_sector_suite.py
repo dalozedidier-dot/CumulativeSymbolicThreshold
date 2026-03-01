@@ -12,7 +12,7 @@ sys.path.insert(0, str(_SHARED_DIR))
 
 from sector_panel_runner import SectorConfig, make_parser, run_sector_panel  # type: ignore
 
-from .generate_synth import synth_generator  # copies real pilot files when --real-csv is omitted
+from generate_synth import synth_generator  # copies real pilot files when --real-csv is omitted
 
 
 SECTOR_CONFIG = SectorConfig(
