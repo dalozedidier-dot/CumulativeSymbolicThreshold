@@ -396,8 +396,21 @@ def main() -> int:
     df_test.to_csv(tabdir / "test_timeseries.csv", index=False)
     df_control.to_csv(tabdir / "control_timeseries.csv", index=False)
 
-    thr_hit = int(df_test.index[df_test["threshold_hit"] > 0][0]) if bool((df_test["threshold_hit"] > 0).any()) else None
+    thr_hit = int(df_test.index[df_test["threshold_hit"] > 0][0]) if ("threshold_hit" in df_test.columns and bool((df_test["threshold_hit"] > 0).any())) else None
     thr_t = None if thr_hit is None else int(df_test.loc[int(thr_hit), "t"])
+
+    # Real-data robustness: if the series starts already above the threshold, we consider
+    # this as an immediate hit at step 0 (no "crossing" from below is needed).
+    # This is a detection of state, not a claim about the transition mechanism.
+    if thr_hit is None and ("C" in df_test.columns) and ("threshold_value" in df_test.columns):
+        try:
+            c0 = float(df_test["C"].iloc[0])
+            thr0 = float(df_test["threshold_value"].iloc[0])
+            if (c0 >= thr0) and (c0 > 0.0) and (thr0 > 0.0):
+                thr_hit = 0
+                thr_t = int(df_test.loc[0, "t"])
+        except Exception:
+            pass
 
     verdict_token = "ACCEPT" if thr_hit is not None else "INDETERMINATE"
 

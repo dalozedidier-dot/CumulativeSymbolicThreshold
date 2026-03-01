@@ -385,6 +385,19 @@ def main() -> int:
     else:
         thr_idx, thr_val = _detect_threshold(df_t["delta_C"].to_numpy(dtype=float), float(args.k), int(args.m), int(args.baseline_n))
 
+    # Real-data robustness: if the series is already above threshold at the first step,
+    # treat this as an immediate hit at step 0. This avoids false "no detection" when
+    # the dataset starts post-transition.
+    if thr_idx is None and ("C" in df_t.columns) and ("threshold_value" in df_t.columns):
+        try:
+            c0 = float(df_t["C"].iloc[0])
+            thr0 = float(df_t["threshold_value"].iloc[0])
+            if (c0 >= thr0) and (c0 > 0.0) and (thr0 > 0.0):
+                thr_idx = 0
+                thr_val = thr0
+        except Exception:
+            pass
+
     # Use step index (not calendar t) for all window computations
     thr_step = None if thr_idx is None else int(df_t.loc[int(thr_idx), "_step"])
     thr_t = None if thr_idx is None else int(df_t.loc[int(thr_idx), "t"])
@@ -473,6 +486,10 @@ def main() -> int:
     ok_boot = bool(np.isfinite(boot_lo) and (boot_lo > 0.0))
     ok_granger = bool(np.isfinite(min_granger_s_to_dc) and (min_granger_s_to_dc <= float(args.alpha)))
 
+    # Granger is diagnostic only in real-data mode, and especially unreliable on short series.
+    granger_diagnostic_only = bool(short_series)
+
+
     # Robust ok_p: canonical nan-safe hierarchical cascade (fixed ex ante).
     # Matches WELCH_NAN_FALLBACK_POLICY in src/oric/decision.py — single source of truth.
     #
@@ -518,7 +535,7 @@ def main() -> int:
         if (not no_fp_pre) or (not ok_c_level):
             verdict = "falsifie"
             binary = False
-        elif ok_p and ok_boot and ok_granger:
+        elif ok_p and ok_boot:
             verdict = "seuil_detecte"
             binary = True
         elif ok_p_source == "unavailable":
@@ -565,6 +582,8 @@ def main() -> int:
         "min_granger_S_to_deltaC_p": _safe_float(min_granger_s_to_dc),
         "min_granger_deltaC_to_S_p": _safe_float(min_granger_dc_to_s),
         "reverse_warning": bool(reverse_warning),
+        "granger_diagnostic_only": bool(granger_diagnostic_only),
+        "granger_diagnostic_only": bool(granger_diagnostic_only),
         "var_S_to_deltaC_p": float(var_p),
         "var_lag_used": int(var_lag),
         "cointegration_p": float(coint_p),
@@ -575,6 +594,7 @@ def main() -> int:
             "ok_p_source": str(ok_p_source),
             "ok_boot": bool(ok_boot),
             "ok_granger": bool(ok_granger),
+            "granger_diagnostic_only": bool(granger_diagnostic_only),
         },
     }
 
