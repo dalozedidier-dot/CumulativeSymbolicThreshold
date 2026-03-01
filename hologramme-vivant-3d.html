@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ORI-C Hologramme vivant 3D</title>
+  <style>
+    :root{
+      --bg:#05060a;
+      --fg:#e8eefc;
+      --muted:#9fb0d0;
+      --accent:#6aa6ff;
+      --danger:#ff4b5c;
+      --ok:#48ffb0;
+      --panel:rgba(16,18,28,0.82);
+      --stroke:rgba(255,255,255,0.08);
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    a{color:var(--accent)}
+    .topbar{
+      position:fixed;left:0;right:0;top:0;z-index:50;
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      padding:10px 12px;background:linear-gradient(to bottom, rgba(5,6,10,0.92), rgba(5,6,10,0.35));
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex;flex-direction:column;gap:2px}
+    .brand b{font-size:14px;letter-spacing:0.2px}
+    .brand span{font-size:12px;color:var(--muted)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      padding:8px 10px;border-radius:12px;
+    }
+    .chip label{font-size:12px;color:var(--muted)}
+    input[type="range"]{width:170px}
+    button{
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      color:var(--fg);
+      padding:8px 10px;border-radius:12px;
+      cursor:pointer;
+    }
+    button:hover{border-color:rgba(255,255,255,0.18)}
+    button:active{transform:translateY(1px)}
+    .mode-pill{
+      display:inline-flex;border:1px solid var(--stroke);border-radius:12px;overflow:hidden;
+      background:rgba(16,18,28,0.7)
+    }
+    .mode-pill button{
+      border:none;border-right:1px solid var(--stroke);border-radius:0;background:transparent
+    }
+    .mode-pill button:last-child{border-right:none}
+    .mode-pill button.active{background:rgba(106,166,255,0.18)}
+    .hud{
+      position:fixed;left:12px;bottom:12px;z-index:40;
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      padding:10px 12px;border-radius:12px;
+      width:min(420px, calc(100vw - 24px));
+    }
+    .hud .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .hud .row small{color:var(--muted)}
+    .bars{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+    .bar{
+      height:10px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;
+      border:1px solid rgba(255,255,255,0.07)
+    }
+    .bar > i{display:block;height:100%;width:0%}
+    .bar .v{background:linear-gradient(90deg, rgba(72,255,176,0.0), rgba(72,255,176,0.95))}
+    .bar .s{background:linear-gradient(90deg, rgba(106,166,255,0.0), rgba(106,166,255,0.95))}
+    .bar .o{background:linear-gradient(90deg, rgba(255,75,92,0.0), rgba(255,75,92,0.95))}
+    .hint{
+      margin-top:10px;font-size:12px;color:var(--muted);line-height:1.35
+    }
+    .canvas-wrap{
+      position:fixed;inset:0;display:flex;align-items:stretch;justify-content:stretch;
+      padding-top:58px;
+    }
+    .grid4{
+      width:100%;height:100%;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
+      gap:6px;
+      padding:6px;
+      box-sizing:border-box;
+    }
+    .view{
+      position:relative;border:1px solid rgba(255,255,255,0.06);
+      border-radius:14px;overflow:hidden;background:#03040a;
+    }
+    .view canvas{display:block;width:100%;height:100%}
+    .view .tag{
+      position:absolute;left:10px;top:10px;
+      font-size:12px;color:rgba(232,238,252,0.9);
+      background:rgba(16,18,28,0.65);
+      border:1px solid rgba(255,255,255,0.08);
+      padding:6px 8px;border-radius:10px;
+    }
+    .single{
+      width:100%;height:100%;padding:6px;box-sizing:border-box;
+    }
+    .single .view{width:100%;height:100%}
+    .footer{
+      position:fixed;right:12px;bottom:12px;z-index:40;
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      padding:10px 12px;border-radius:12px;
+      color:var(--muted);font-size:12px;max-width:min(520px, calc(100vw - 24px));
+    }
+    .footer b{color:var(--fg)}
+    .footer details{margin-top:6px}
+    .footer summary{cursor:pointer;color:var(--fg)}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:7px;border:1px solid rgba(255,255,255,0.08)}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <b>ORI-C. Hologramme vivant 3D</b>
+      <span>WebGL interactif. Mode pyramide 4 vues. Mobile et PC.</span>
+    </div>
+
+    <div class="controls">
+      <div class="mode-pill" role="tablist" aria-label="Mode d'affichage">
+        <button id="btnNormal" class="active" type="button">Normal</button>
+        <button id="btnPyramid" type="button">Mode Pyramide</button>
+      </div>
+
+      <div class="chip">
+        <label for="oSlider">Charge O(t)</label>
+        <input id="oSlider" type="range" min="0" max="100" value="15" />
+        <span id="oVal" style="font-size:12px;color:var(--fg);width:34px;text-align:right">15</span>
+      </div>
+
+      <button id="btnPerturb" type="button">Perturber</button>
+      <button id="btnReset" type="button">Reset</button>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="wrap">
+    <div class="single" id="single">
+      <div class="view"><div class="tag">Vue libre</div><canvas id="cSingle"></canvas></div>
+    </div>
+
+    <div class="grid4" id="grid4" style="display:none">
+      <div class="view"><div class="tag">Haut</div><canvas id="cTop"></canvas></div>
+      <div class="view"><div class="tag">Droite</div><canvas id="cRight"></canvas></div>
+      <div class="view"><div class="tag">Gauche</div><canvas id="cLeft"></canvas></div>
+      <div class="view"><div class="tag">Bas</div><canvas id="cBottom"></canvas></div>
+    </div>
+  </div>
+
+  <div class="hud" aria-live="polite">
+    <div class="row">
+      <div>
+        <div style="font-size:13px"><b>Etat</b> <small id="stateLabel">stable</small></div>
+        <small>Interagissez avec O(t). Observez Σ, les boucles et la viabilité V.</small>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px"><b>t</b> <small id="tLabel">0.0</small></div>
+        <small id="fpsLabel">fps</small>
+      </div>
+    </div>
+
+    <div class="bars">
+      <div>
+        <small>V(t) viabilité</small>
+        <div class="bar"><i class="v" id="barV"></i></div>
+      </div>
+      <div>
+        <small>Σ(t) régulation</small>
+        <div class="bar"><i class="s" id="barS"></i></div>
+      </div>
+      <div>
+        <small>O(t) charge</small>
+        <div class="bar"><i class="o" id="barO"></i></div>
+      </div>
+    </div>
+
+    <div class="hint">
+      Astuce pyramide. Passez en mode Pyramide, augmentez la luminosité, pièce sombre, posez la pyramide inversée au centre de l’écran.
+      Raccourcis. <span class="kbd">P</span> mode pyramide. <span class="kbd">N</span> mode normal. <span class="kbd">Espace</span> perturbation.
+    </div>
+  </div>
+
+  <div class="footer">
+    <b>DIY pyramide tronquée</b>
+    <details>
+      <summary>Dimensions rapides et usage</summary>
+      <div style="margin-top:8px;line-height:1.4">
+        Matériau. Plastique transparent fin, boîtier CD, feuille PVC, acétate.<br/>
+        Forme. Trapèze isocèle. Coupez 4 pièces identiques puis scotchez.<br/>
+        Dimensions recommandées pour smartphone. Base grande 6 cm, base petite 1 cm, hauteur 3.5 cm, angle environ 45 degrés.<br/>
+        Pose. Pyramide inversée, petite ouverture vers l’écran. Centrez sur la croix visuelle de l’écran.<br/>
+        Réglages. Luminosité forte, fond sombre, pièce sombre. OLED donne un effet plus net.<br/>
+      </div>
+    </details>
+  </div>
+
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+    const clamp01 = (x) => Math.min(1, Math.max(0, x));
+    const lerp = (a,b,t) => a + (b-a)*t;
+
+    const ui = {
+      btnNormal: document.getElementById("btnNormal"),
+      btnPyramid: document.getElementById("btnPyramid"),
+      oSlider: document.getElementById("oSlider"),
+      oVal: document.getElementById("oVal"),
+      btnPerturb: document.getElementById("btnPerturb"),
+      btnReset: document.getElementById("btnReset"),
+      grid4: document.getElementById("grid4"),
+      single: document.getElementById("single"),
+      stateLabel: document.getElementById("stateLabel"),
+      tLabel: document.getElementById("tLabel"),
+      fpsLabel: document.getElementById("fpsLabel"),
+      barV: document.getElementById("barV"),
+      barS: document.getElementById("barS"),
+      barO: document.getElementById("barO"),
+    };
+
+    function setMode(mode){
+      if(mode === "pyramid"){
+        ui.grid4.style.display = "grid";
+        ui.single.style.display = "none";
+        ui.btnPyramid.classList.add("active");
+        ui.btnNormal.classList.remove("active");
+      } else {
+        ui.grid4.style.display = "none";
+        ui.single.style.display = "block";
+        ui.btnNormal.classList.add("active");
+        ui.btnPyramid.classList.remove("active");
+      }
+      currentMode = mode;
+      onResizeAll();
+    }
+
+    let currentMode = "normal";
+
+    const sim = {
+      t: 0,
+      O: 0.15,
+      S: 0.55,
+      V: 0.92,
+      entropyLeak: 0.15,
+      inFlux: 0.6,
+      perturbPulse: 0.0,
+      stableBias: 0.55,
+      collapse: 0.0
+    };
+
+    function setOFromUI(){
+      const v = Number(ui.oSlider.value);
+      ui.oVal.textContent = String(v);
+      sim.O = clamp01(v / 100);
+    }
+
+    setOFromUI();
+    ui.oSlider.addEventListener("input", setOFromUI);
+
+    ui.btnPerturb.addEventListener("click", () => {
+      sim.perturbPulse = Math.min(1, sim.perturbPulse + 0.55);
+    });
+    ui.btnReset.addEventListener("click", () => {
+      sim.t = 0;
+      sim.O = 0.15;
+      sim.S = 0.55;
+      sim.V = 0.92;
+      sim.entropyLeak = 0.15;
+      sim.inFlux = 0.6;
+      sim.perturbPulse = 0.0;
+      sim.collapse = 0.0;
+      ui.oSlider.value = "15";
+      setOFromUI();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "p" || e.key === "P") setMode("pyramid");
+      if(e.key === "n" || e.key === "N") setMode("normal");
+      if(e.code === "Space"){ e.preventDefault(); sim.perturbPulse = Math.min(1, sim.perturbPulse + 0.55); }
+    });
+
+    ui.btnNormal.addEventListener("click", () => setMode("normal"));
+    ui.btnPyramid.addEventListener("click", () => setMode("pyramid"));
+
+    function makeRenderer(canvas){
+      const r = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:"high-performance" });
+      r.setPixelRatio(Math.min(devicePixelRatio, 2));
+      r.setClearColor(0x000000, 0);
+      return r;
+    }
+
+    function makeScene(){
+      const scene = new THREE.Scene();
+
+      const ambient = new THREE.AmbientLight(0x6aa6ff, 0.25);
+      scene.add(ambient);
+
+      const key = new THREE.DirectionalLight(0xffffff, 0.85);
+      key.position.set(3, 5, 3);
+      scene.add(key);
+
+      const rim = new THREE.DirectionalLight(0x48ffb0, 0.35);
+      rim.position.set(-4, 2, -2);
+      scene.add(rim);
+
+      const group = new THREE.Group();
+      scene.add(group);
+
+      return { scene, group };
+    }
+
+    function makeCamera(){
+      const cam = new THREE.PerspectiveCamera(45, 1, 0.05, 80);
+      cam.position.set(0, 1.6, 5.2);
+      cam.lookAt(0, 0, 0);
+      return cam;
+    }
+
+    const geometry = {
+      sphere: new THREE.SphereGeometry(1, 64, 64),
+      mito: new THREE.SphereGeometry(0.22, 24, 24),
+      ring: new THREE.TorusGeometry(0.55, 0.03, 16, 128),
+      particle: new THREE.SphereGeometry(0.03, 10, 10),
+      glow: new THREE.SphereGeometry(1.08, 48, 48)
+    };
+
+    function makeHoloMaterial(baseColor, opts = {}){
+      const uniforms = {
+        uTime: { value: 0 },
+        uBase: { value: new THREE.Color(baseColor) },
+        uIntensity: { value: opts.intensity ?? 1.0 },
+        uScan: { value: opts.scan ?? 1.0 },
+        uFresnel: { value: opts.fresnel ?? 1.0 },
+        uNoise: { value: opts.noise ?? 1.0 },
+        uAlpha: { value: opts.alpha ?? 0.85 }
+      };
+
+      const vert = `
+        varying vec3 vN;
+        varying vec3 vP;
+        void main(){
+          vN = normalize(normalMatrix * normal);
+          vec4 wp = modelMatrix * vec4(position,1.0);
+          vP = wp.xyz;
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }
+      `;
+
+      const frag = `
+        precision highp float;
+        varying vec3 vN;
+        varying vec3 vP;
+        uniform float uTime;
+        uniform vec3 uBase;
+        uniform float uIntensity;
+        uniform float uScan;
+        uniform float uFresnel;
+        uniform float uNoise;
+        uniform float uAlpha;
+
+        float hash(vec3 p){
+          p = fract(p * 0.3183099 + vec3(0.1,0.2,0.3));
+          p *= 17.0;
+          return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
+        }
+
+        void main(){
+          vec3 N = normalize(vN);
+          vec3 V = normalize(cameraPosition - vP);
+          float fres = pow(1.0 - clamp(dot(N,V), 0.0, 1.0), 1.4) * uFresnel;
+
+          float scan = sin((vP.y * 10.0) + uTime * 3.0) * 0.5 + 0.5;
+          scan = pow(scan, 2.0) * uScan;
+
+          float n = hash(vP * 2.1 + uTime) * uNoise;
+
+          float glow = (0.25 + 0.95*fres) + 0.35*scan + 0.10*n;
+          vec3 col = uBase * glow * uIntensity;
+
+          float a = clamp((0.18 + 0.85*fres + 0.25*scan) * uAlpha, 0.0, 1.0);
+          gl_FragColor = vec4(col, a);
+        }
+      `;
+
+      const mat = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: vert,
+        fragmentShader: frag,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      return mat;
+    }
+
+    const world = makeScene();
+
+    const membraneMat = makeHoloMaterial(0x6aa6ff, { intensity: 1.05, scan: 0.95, fresnel: 1.15, noise: 1.0, alpha: 0.85 });
+    const membrane = new THREE.Mesh(geometry.sphere, membraneMat);
+    world.group.add(membrane);
+
+    const glowMat = makeHoloMaterial(0x48ffb0, { intensity: 0.55, scan: 0.7, fresnel: 1.4, noise: 0.6, alpha: 0.35 });
+    const glow = new THREE.Mesh(geometry.glow, glowMat);
+    world.group.add(glow);
+
+    const mitoMat = makeHoloMaterial(0x48ffb0, { intensity: 0.85, scan: 0.6, fresnel: 1.2, noise: 0.8, alpha: 0.75 });
+    const mitochondria = [];
+    for(let i=0;i<6;i++){
+      const m = new THREE.Mesh(geometry.mito, mitoMat);
+      const a = (i/6) * Math.PI*2;
+      m.position.set(Math.cos(a)*0.55, (i%2?0.18:-0.12), Math.sin(a)*0.45);
+      m.scale.setScalar(lerp(0.9,1.2, (i%3)/2));
+      world.group.add(m);
+      mitochondria.push(m);
+    }
+
+    const ringMat = makeHoloMaterial(0x6aa6ff, { intensity: 0.7, scan: 0.9, fresnel: 1.0, noise: 0.4, alpha: 0.65 });
+    const rings = [];
+    for(let i=0;i<3;i++){
+      const r = new THREE.Mesh(geometry.ring, ringMat);
+      r.rotation.set(Math.PI/2, 0, (i/3)*Math.PI);
+      r.scale.setScalar(lerp(0.7, 1.05, i/2));
+      world.group.add(r);
+      rings.push(r);
+    }
+
+    function makeParticleCloud(n, color){
+      const mat = makeHoloMaterial(color, { intensity: 0.7, scan: 0.4, fresnel: 1.2, noise: 1.0, alpha: 0.65 });
+      const particles = [];
+      for(let i=0;i<n;i++){
+        const p = new THREE.Mesh(geometry.particle, mat);
+        p.userData.phase = Math.random()*Math.PI*2;
+        p.userData.speed = lerp(0.35, 1.25, Math.random());
+        p.userData.radius = lerp(0.35, 1.12, Math.random());
+        p.userData.height = lerp(-0.7, 0.7, Math.random());
+        p.userData.dir = Math.random() > 0.5 ? 1 : -1;
+        particles.push(p);
+        world.group.add(p);
+      }
+      return particles;
+    }
+
+    const inParticles = makeParticleCloud(140, 0x6aa6ff);
+    const outParticles = makeParticleCloud(120, 0xff4b5c);
+
+    const shardGeom = new THREE.IcosahedronGeometry(0.06, 0);
+    const shardMat = makeHoloMaterial(0xff4b5c, { intensity: 0.9, scan: 0.2, fresnel: 1.3, noise: 0.9, alpha: 0.75 });
+    const shards = [];
+    for(let i=0;i<24;i++){
+      const s = new THREE.Mesh(shardGeom, shardMat);
+      s.userData.v = new THREE.Vector3(lerp(-1,1,Math.random()), lerp(-1,1,Math.random()), lerp(-1,1,Math.random())).normalize().multiplyScalar(lerp(0.25, 0.7, Math.random()));
+      s.position.set(lerp(-0.3,0.3,Math.random()), lerp(-0.3,0.3,Math.random()), lerp(-0.3,0.3,Math.random()));
+      s.visible = false;
+      world.group.add(s);
+      shards.push(s);
+    }
+
+    const cameras = {
+      single: makeCamera(),
+      top: makeCamera(),
+      right: makeCamera(),
+      left: makeCamera(),
+      bottom: makeCamera(),
+    };
+
+    const renderers = {
+      single: makeRenderer(document.getElementById("cSingle")),
+      top: makeRenderer(document.getElementById("cTop")),
+      right: makeRenderer(document.getElementById("cRight")),
+      left: makeRenderer(document.getElementById("cLeft")),
+      bottom: makeRenderer(document.getElementById("cBottom")),
+    };
+
+    function setCamPose(cam, yaw, pitch, dist){
+      const x = Math.cos(yaw) * Math.cos(pitch) * dist;
+      const z = Math.sin(yaw) * Math.cos(pitch) * dist;
+      const y = Math.sin(pitch) * dist;
+      cam.position.set(x, y, z);
+      cam.lookAt(0, 0, 0);
+    }
+
+    function onResize(renderer, cam, canvas){
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width));
+      const h = Math.max(2, Math.floor(rect.height));
+      renderer.setSize(w, h, false);
+      cam.aspect = w / h;
+      cam.updateProjectionMatrix();
+    }
+
+    function onResizeAll(){
+      onResize(renderers.single, cameras.single, renderers.single.domElement);
+
+      onResize(renderers.top, cameras.top, renderers.top.domElement);
+      onResize(renderers.right, cameras.right, renderers.right.domElement);
+      onResize(renderers.left, cameras.left, renderers.left.domElement);
+      onResize(renderers.bottom, cameras.bottom, renderers.bottom.domElement);
+    }
+    window.addEventListener("resize", onResizeAll, { passive:true });
+    onResizeAll();
+
+    let lastT = performance.now();
+    let fpsAcc = 0;
+    let fpsN = 0;
+
+    function updateSim(dt){
+      sim.t += dt;
+
+      const targetO = sim.O;
+      sim.perturbPulse = Math.max(0, sim.perturbPulse - dt * 0.55);
+
+      const oEff = clamp01(targetO + sim.perturbPulse * 0.6);
+
+      const sTarget = clamp01(sim.stableBias + (0.35 * (1.0 - oEff)) - (0.25 * oEff));
+      sim.S = clamp01(lerp(sim.S, sTarget, 1 - Math.exp(-dt * 1.15)));
+
+      const leakTarget = clamp01(0.10 + 0.75 * oEff - 0.30 * sim.S);
+      sim.entropyLeak = clamp01(lerp(sim.entropyLeak, leakTarget, 1 - Math.exp(-dt * 0.9)));
+
+      const vLoss = (0.22 * oEff + 0.18 * sim.entropyLeak) * (1.0 - 0.35 * sim.S);
+      const vRec = (0.20 * (1.0 - oEff) + 0.12 * sim.S);
+      sim.V = clamp01(sim.V + (vRec - vLoss) * dt);
+
+      const collapseDrive = clamp01((oEff - 0.78) * 2.0 + (sim.entropyLeak - 0.55) * 1.2 - (sim.S - 0.55) * 0.8);
+      sim.collapse = clamp01(sim.collapse + collapseDrive * dt * 0.45 - (sim.S * 0.25) * dt);
+
+      ui.tLabel.textContent = sim.t.toFixed(1);
+      ui.barV.style.width = (sim.V * 100).toFixed(1) + "%";
+      ui.barS.style.width = (sim.S * 100).toFixed(1) + "%";
+      ui.barO.style.width = (oEff * 100).toFixed(1) + "%";
+
+      let state = "stable";
+      if(sim.V < 0.45 || sim.collapse > 0.55) state = "effondrement";
+      else if(oEff > 0.62) state = "sous stress";
+      ui.stateLabel.textContent = state;
+      ui.stateLabel.style.color = state === "stable" ? "var(--ok)" : (state === "sous stress" ? "var(--accent)" : "var(--danger)");
+    }
+
+    function updateVisuals(dt){
+      const t = sim.t;
+
+      membraneMat.uniforms.uTime.value = t;
+      glowMat.uniforms.uTime.value = t;
+      mitoMat.uniforms.uTime.value = t;
+      ringMat.uniforms.uTime.value = t;
+      shardMat.uniforms.uTime.value = t;
+
+      const pulse = 1.0 + Math.sin(t * 2.2) * 0.03 * (0.55 + sim.S);
+      membrane.scale.setScalar(pulse);
+
+      membraneMat.uniforms.uIntensity.value = lerp(0.55, 1.15, sim.V) * (1.0 - sim.collapse * 0.35);
+      membraneMat.uniforms.uScan.value = lerp(0.6, 1.2, sim.S);
+
+      glowMat.uniforms.uIntensity.value = lerp(0.15, 0.65, sim.S) * (0.75 + sim.V * 0.35);
+      glowMat.uniforms.uAlpha.value = lerp(0.15, 0.45, sim.S) * (1.0 - sim.collapse * 0.55);
+
+      mitochondria.forEach((m,i)=>{
+        const a = t * (0.7 + i*0.03);
+        m.position.x = Math.cos(a + i) * 0.55;
+        m.position.z = Math.sin(a + i*0.9) * 0.45;
+        m.position.y = Math.sin(a*1.4 + i*0.7) * 0.12;
+        const breath = 1.0 + Math.sin(t * 3.1 + i) * 0.06 * (0.6 + sim.S);
+        m.scale.setScalar(breath * (1.0 - sim.collapse * 0.25));
+      });
+
+      rings.forEach((r,i)=>{
+        r.rotation.x += dt * (0.35 + i*0.08) * (0.55 + sim.S);
+        r.rotation.y += dt * (0.22 + i*0.06);
+        r.rotation.z += dt * (0.12 + i*0.05);
+        r.scale.setScalar(lerp(0.7, 1.0, sim.S) * (1.0 - sim.collapse * 0.25));
+      });
+
+      const inSpeed = lerp(0.55, 1.55, sim.S) * (0.6 + (1.0 - sim.entropyLeak));
+      const outSpeed = lerp(0.55, 2.2, sim.entropyLeak) * (0.6 + (1.0 - sim.V));
+
+      function moveParticle(p, t, dir, speed, radius, height){
+        const ph = p.userData.phase;
+        const sp = p.userData.speed;
+        const rr = p.userData.radius;
+
+        const ang = (t * speed * sp + ph) * dir;
+        const rad = radius * rr;
+        const y = height * (0.55 + Math.sin(t*0.8 + ph)*0.25);
+        p.position.set(Math.cos(ang)*rad, y, Math.sin(ang)*rad);
+
+        const wob = 0.035 * Math.sin(t*3.0 + ph*2.0);
+        p.position.multiplyScalar(1.0 + wob);
+      }
+
+      inParticles.forEach(p => {
+        moveParticle(p, t, 1, inSpeed, 1.15, p.userData.height);
+      });
+
+      outParticles.forEach(p => {
+        moveParticle(p, t, -1, outSpeed, 1.2 + sim.entropyLeak*0.4, p.userData.height);
+      });
+
+      const leakAlpha = lerp(0.15, 0.85, sim.entropyLeak);
+      outParticles[0].material.uniforms.uAlpha.value = leakAlpha;
+      inParticles[0].material.uniforms.uAlpha.value = lerp(0.25, 0.85, sim.S);
+
+      const shardOn = (sim.collapse > 0.35) || (sim.V < 0.35);
+      shards.forEach((s,i)=>{
+        s.visible = shardOn;
+        if(!shardOn) return;
+        s.position.addScaledVector(s.userData.v, dt * lerp(0.6, 2.1, sim.collapse));
+        s.rotation.x += dt * (0.7 + i*0.02);
+        s.rotation.y += dt * (0.55 + i*0.03);
+        s.rotation.z += dt * (0.35 + i*0.04);
+        const fade = clamp01((sim.collapse - 0.25) * 1.4);
+        s.scale.setScalar(lerp(0.25, 1.2, fade));
+      });
+
+      world.group.rotation.y += dt * 0.18 * (0.45 + sim.S);
+      world.group.rotation.x = Math.sin(t * 0.35) * 0.08;
+    }
+
+    function renderAll(){
+      if(currentMode === "normal"){
+        setCamPose(cameras.single, sim.t*0.12, 0.25, 5.2);
+        renderers.single.render(world.scene, cameras.single);
+      } else {
+        const dist = 5.0;
+        setCamPose(cameras.top, 0, 0.95, dist);
+        setCamPose(cameras.bottom, Math.PI, -0.95, dist);
+        setCamPose(cameras.left, -Math.PI/2, 0.15, dist);
+        setCamPose(cameras.right, Math.PI/2, 0.15, dist);
+
+        renderers.top.render(world.scene, cameras.top);
+        renderers.right.render(world.scene, cameras.right);
+        renderers.left.render(world.scene, cameras.left);
+        renderers.bottom.render(world.scene, cameras.bottom);
+      }
+    }
+
+    function tick(now){
+      const dt = Math.min(0.05, (now - lastT) / 1000);
+      lastT = now;
+
+      updateSim(dt);
+      updateVisuals(dt);
+      renderAll();
+
+      fpsAcc += 1/dt;
+      fpsN += 1;
+      if(fpsN >= 18){
+        const fps = fpsAcc / fpsN;
+        ui.fpsLabel.textContent = "fps " + fps.toFixed(0);
+        fpsAcc = 0;
+        fpsN = 0;
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+
+    setMode("normal");
+  </script>
+</body>
+</html>
