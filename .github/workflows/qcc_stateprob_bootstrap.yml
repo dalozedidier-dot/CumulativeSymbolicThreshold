@@ -4,35 +4,35 @@ on:
   workflow_dispatch:
     inputs:
       dataset_zip:
-        description: Path to the 04-09-2020.zip dataset inside the repo (or just the filename). If missing, the job will search the repo.
+        description: Path to dataset zip inside repo
         required: false
         default: data/qcc/stateprob/04-09-2020.zip
       algo:
-        description: Algorithm folder (e.g. BV, DJ, QAOA)
+        description: Algorithm folder (BV, QAOA, ...)
         required: false
         default: BV
       device:
-        description: Optional device filter (empty = all devices)
+        description: Device filter (empty = all)
         required: false
         default: ""
       shots:
-        description: Shots filter (e.g. 8192). Empty = any.
+        description: Shots filter (empty = all)
         required: false
         default: "8192"
       t_axis:
-        description: Axis for t (Depth or Runtime)
+        description: t axis (Depth)
         required: false
         default: Depth
       ccl_metric:
-        description: Ccl metric (entropy, one_minus_maxprob, one_minus_purity)
+        description: Ccl metric (entropy, impurity, 1-max)
         required: false
         default: entropy
       ccl_threshold:
-        description: Threshold for t* detection (0-1)
+        description: Threshold for t* detection
         required: false
         default: "0.70"
       bootstrap_samples:
-        description: Bootstrap samples
+        description: Bootstrap resamples
         required: false
         default: "500"
 
@@ -43,36 +43,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show dataset hints
-        shell: bash
-        run: |
-          echo "Workspace: $GITHUB_WORKSPACE"
-          echo "Input dataset_zip: ${{ inputs.dataset_zip }}"
-          echo "Listing data/qcc/stateprob (if exists)"
-          ls -la data/qcc/stateprob || true
-          echo "Searching for 04-09-2020.zip (max 20 results)"
-          find . -maxdepth 5 -type f -name "04-09-2020.zip" | head -n 20 || true
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install deps
-        shell: bash
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-qcc-stateprob.txt
 
       - name: Run pipeline
-        shell: bash
         run: |
-          python tools/qcc_stateprob_bootstrap.py             --dataset-zip "${{ inputs.dataset_zip }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device }}"             --shots "${{ inputs.shots }}"             --t-axis "${{ inputs.t_axis }}"             --ccl-metric "${{ inputs.ccl_metric }}"             --ccl-threshold "${{ inputs.ccl_threshold }}"             --bootstrap-samples "${{ inputs.bootstrap_samples }}"             --out-root "05_Results/qcc_stateprob_bootstrap"
+          mkdir -p 05_Results/qcc_stateprob_bootstrap
+          python tools/qcc_stateprob_bootstrap.py             --dataset-zip "${{ inputs.dataset_zip }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device }}"             --shots "${{ inputs.shots }}"             --t-axis "${{ inputs.t_axis }}"             --metric "${{ inputs.ccl_metric }}"             --ccl-threshold "${{ inputs.ccl_threshold }}"             --bootstrap-samples "${{ inputs.bootstrap_samples }}"             --out-dir "05_Results/qcc_stateprob_bootstrap"
 
-      - name: Checks (non interpretatif)
-        shell: bash
+      - name: Checks
         run: |
-          python tools/qcc_stateprob_checks.py --out-root "05_Results/qcc_stateprob_bootstrap"
+          python tools/qcc_stateprob_checks.py --out-dir "05_Results/qcc_stateprob_bootstrap"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
