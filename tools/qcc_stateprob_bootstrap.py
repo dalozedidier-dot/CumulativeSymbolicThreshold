@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-"""QCC State Probability bootstrap pipeline.
-
-This tool is deliberately mechanical: it computes Ccl(t) from state probability distributions,
-builds simple t* detection, and runs bootstrap across instances. No interpretative verdicts.
-
-Dataset resolution:
-- If --dataset-zip path exists, use it.
-- Else, try basename in common folders.
-- Else, search the repository (limited depth) for the same filename.
-
+# -*- coding: utf-8 -*-
 """
-
+QCC / ORI-C - State_Probability dataset bootstrap
+- Builds C_cl proxy from measured state probability distributions
+- Uses circuit depth (or runtime) as the t-axis
+- Bootstraps t* (first threshold crossing) across instances
+Strict: no interpretive verdicts. Outputs are mechanical + fully auditable.
+"""
 from __future__ import annotations
 
 import argparse
+import csv
+import io
 import json
 import math
-import os
 import re
+import shutil
 import sys
-import zipfile
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -28,329 +26,325 @@ import numpy as np
 import pandas as pd
 
 
-def _is_blank(val: object) -> bool:
-    if val is None:
-        return True
-    if isinstance(val, float) and math.isnan(val):
-        return True
-    s = str(val).strip()
-    return s == "" or s.lower() in {"nan", "none", "null"}
-
-
-def resolve_dataset_zip(dataset_zip: str) -> Path:
-    p = Path(dataset_zip)
-    if p.exists():
-        return p
-
-    # Try basename in common locations
-    name = p.name
-    candidates = [
-        Path("data/qcc/stateprob") / name,
-        Path("data/qcc/stateprob") / "04-09-2020.zip",
-        Path(name),
-    ]
-    for c in candidates:
-        if c.exists():
-            return c
-
-    # Search repo (limited depth)
-    root = Path(".")
-    hits: List[Path] = []
-    for h in root.rglob(name):
-        if h.is_file() and h.suffix.lower() == ".zip":
-            # limit depth to avoid excessive traversal
-            try:
-                rel = h.relative_to(root)
-                if len(rel.parts) <= 6:
-                    hits.append(h)
-            except Exception:
-                hits.append(h)
-        if len(hits) >= 5:
-            break
-
-    if hits:
-        # deterministic: shortest path, then lexicographic
-        hits.sort(key=lambda x: (len(str(x)), str(x)))
-        return hits[0]
-
-    raise FileNotFoundError(
-        f"dataset_zip introuvable: {dataset_zip}. "
-        f"Placez le fichier 04-09-2020.zip dans data/qcc/stateprob/ ou indiquez son chemin exact via --dataset-zip."
-    )
-
-
-@dataclass
+@dataclass(frozen=True)
 class RunKey:
-    algo: str
     device: str
+    instance: int
     shots: int
-    instance: str
 
 
-def _entropy(probs: np.ndarray) -> float:
-    p = probs[probs > 0]
-    if p.size == 0:
-        return 0.0
-    return float(-(p * np.log(p)).sum())
+_STATES_RE = re.compile(r".*/State_Probability/STATES_(?P<device>.+)_(?P<algo>[A-Z0-9_]+)_(?P<instance>\d+)_(?P<shots>\d+)\.csv$")
+_ATTR_RE = re.compile(r".*/Count_Depth/ATTR_(?P<device>.+)_(?P<algo>[A-Z0-9_]+)_(?P<instance>\d+)_(?P<shots>\d+)\.csv$")
 
 
-def _ccl_from_probs(probs: np.ndarray, metric: str, n_qubits: Optional[int] = None) -> float:
-    metric = metric.strip().lower()
-    probs = np.asarray(probs, dtype=float)
-    probs = probs[~np.isnan(probs)]
-    if probs.size == 0:
-        return float("nan")
-    s = probs.sum()
+def _read_states_csv(raw_bytes: bytes) -> pd.DataFrame:
+    # Two-column CSV without headers: bitstring, prob
+    df = pd.read_csv(io.BytesIO(raw_bytes), header=None, names=["bitstring", "prob"])
+    df["bitstring"] = df["bitstring"].astype(str)
+    df["prob"] = pd.to_numeric(df["prob"], errors="coerce")
+    df = df.dropna(subset=["prob"])
+    s = float(df["prob"].sum())
     if s > 0:
-        probs = probs / s
+        df["prob"] = df["prob"] / s
+    return df
 
+
+def _read_attr_csv(raw_bytes: bytes) -> pd.DataFrame:
+    df = pd.read_csv(io.BytesIO(raw_bytes))
+    # Strip whitespace from headers
+    df.columns = [str(c).strip() for c in df.columns]
+    # Some files have " Count" and " Depth" as values; also strip those
+    if "Count" not in df.columns and " Count" in df.columns:
+        df = df.rename(columns={" Count": "Count"})
+    if "Depth" not in df.columns and " Depth" in df.columns:
+        df = df.rename(columns={" Depth": "Depth"})
+    return df
+
+
+def _ccl_entropy(df_states: pd.DataFrame) -> float:
+    p = df_states["prob"].to_numpy(dtype=float)
+    p = p[p > 0]
+    if p.size == 0:
+        return float("nan")
+    # infer n qubits from max bitstring length
+    n = int(df_states["bitstring"].map(lambda s: len(str(s))).max())
+    if n <= 0:
+        return float("nan")
+    H = float(-np.sum(p * np.log(p)))
+    Hmax = float(n * np.log(2.0))
+    return float(H / Hmax) if Hmax > 0 else float("nan")
+
+
+def _ccl_one_minus_maxprob(df_states: pd.DataFrame) -> float:
+    pmax = float(df_states["prob"].max()) if len(df_states) else float("nan")
+    return float(1.0 - pmax) if np.isfinite(pmax) else float("nan")
+
+
+def _ccl_impurity(df_states: pd.DataFrame) -> float:
+    p = df_states["prob"].to_numpy(dtype=float)
+    if p.size == 0:
+        return float("nan")
+    return float(1.0 - np.sum(p * p))
+
+
+def _compute_ccl(metric: str, df_states: pd.DataFrame) -> float:
+    metric = metric.lower().strip()
     if metric == "entropy":
-        h = _entropy(probs)
-        if n_qubits is None:
-            # fall back to log(len(probs)) for normalization
-            denom = math.log(max(probs.size, 2))
-        else:
-            denom = math.log(2**n_qubits)
-        return float(h / denom) if denom > 0 else 0.0
-
-    if metric in {"one_minus_maxprob", "1-max", "1-maxprob"}:
-        return float(1.0 - float(np.max(probs)))
-
-    if metric in {"one_minus_purity", "1-purity"}:
-        purity = float(np.sum(probs**2))
-        return float(1.0 - purity)
-
-    raise ValueError(f"ccl_metric inconnu: {metric}")
+        return _ccl_entropy(df_states)
+    if metric in ("1-maxprob", "one_minus_maxprob", "maxprob"):
+        return _ccl_one_minus_maxprob(df_states)
+    if metric in ("impurity", "1-purity"):
+        return _ccl_impurity(df_states)
+    raise ValueError(f"Unknown ccl_metric={metric!r}. Use entropy | 1-maxprob | impurity.")
 
 
-def _parse_filename(meta_name: str) -> Tuple[str, str, str, int]:
-    # Example: STATES_ibmqx2_BV_0_8192.csv  OR ATTR_ibmqx2_BV_0_8192.csv
-    m = re.match(r"^(STATES|ATTR)_(.+?)_([A-Za-z0-9]+)_(\d+?)_(\d+)\.csv$", meta_name)
-    if not m:
-        raise ValueError(f"Nom de fichier inattendu: {meta_name}")
-    kind = m.group(1)
-    device = m.group(2)
-    algo = m.group(3)
-    instance = m.group(4)
-    shots = int(m.group(5))
-    return kind, device, algo, instance, shots
+def _extract_depth_or_runtime(t_axis: str, df_attr: pd.DataFrame) -> float:
+    t_axis = t_axis.lower().strip()
+    if t_axis == "depth":
+        if "Depth" not in df_attr.columns:
+            raise KeyError("ATTR file missing 'Depth' column")
+        # Depth is constant per file in this dataset; take first numeric
+        val = pd.to_numeric(df_attr["Depth"], errors="coerce").dropna()
+        if val.empty:
+            raise ValueError("Depth column contains no numeric values")
+        return float(val.iloc[0])
+    if t_axis == "runtime":
+        # Some datasets store runtime elsewhere; keep option for future
+        # If Runtime not present, fail explicitly.
+        if "Runtime" not in df_attr.columns:
+            raise KeyError("ATTR file missing 'Runtime' column")
+        val = pd.to_numeric(df_attr["Runtime"], errors="coerce").dropna()
+        if val.empty:
+            raise ValueError("Runtime column contains no numeric values")
+        return float(val.iloc[0])
+    raise ValueError("t_axis must be Depth or Runtime")
 
 
-def _load_csv_from_zip(zf: zipfile.ZipFile, name: str) -> pd.DataFrame:
-    with zf.open(name) as f:
-        return pd.read_csv(f)
+def _write_json(path: Path, obj: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(obj, indent=2, sort_keys=True), encoding="utf-8")
 
 
-def main() -> int:
+def _safe_float(x) -> Optional[float]:
+    try:
+        v = float(x)
+        if math.isnan(v):
+            return None
+        return v
+    except Exception:
+        return None
+
+
+def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset-zip", required=True)
-    ap.add_argument("--algo", default="BV")
-    ap.add_argument("--device", default="")
-    ap.add_argument("--shots", default="8192")
-    ap.add_argument("--t-axis", default="Depth", choices=["Depth", "Runtime"])
-    ap.add_argument("--ccl-metric", default="entropy")
-    ap.add_argument("--ccl-threshold", type=float, default=0.70)
-    ap.add_argument("--bootstrap-samples", type=int, default=500)
-    ap.add_argument("--out-root", required=True)
-    args = ap.parse_args()
+    ap.add_argument("--dataset-zip", required=True, help="Path to 04-09-2020.zip (or compatible).")
+    ap.add_argument("--algo", default="BV", help="Algorithm folder name, e.g. BV, QAOA, QFT.")
+    ap.add_argument("--device", default="", help="Optional device filter. Empty = all devices.")
+    ap.add_argument("--shots", default="8192", help="Shots filter (as int).")
+    ap.add_argument("--t-axis", default="Depth", help="Depth or Runtime.")
+    ap.add_argument("--ccl-metric", default="entropy", help="entropy | 1-maxprob | impurity")
+    ap.add_argument("--ccl-threshold", default="0.70", help="Threshold for t* on mean Ccl.")
+    ap.add_argument("--bootstrap-samples", default="500", help="Bootstrap resamples.")
+    ap.add_argument("--out-root", default="05_Results/qcc_stateprob_bootstrap", help="Output root dir.")
+    args = ap.parse_args(argv)
 
-    dataset_zip = resolve_dataset_zip(args.dataset_zip)
+    dataset_zip = Path(args.dataset_zip)
+    if not dataset_zip.exists():
+        raise FileNotFoundError(f"dataset_zip not found: {dataset_zip}")
 
+    algo = str(args.algo).strip()
+    device_filter = str(args.device).strip()
+    shots = int(str(args.shots).strip())
+    t_axis = str(args.t_axis).strip()
+    ccl_metric = str(args.ccl_metric).strip()
+    ccl_threshold = float(str(args.ccl_threshold).strip())
+    bootstrap_samples = int(str(args.bootstrap_samples).strip())
     out_root = Path(args.out_root)
-    run_dir = out_root / "runs" / pd.Timestamp.utcnow().strftime("%Y%m%d_%H%M%S")
+
+    # Timestamped run dir (UTC-ish, no timezone dependency)
+    run_dir = out_root / "runs" / pd.Timestamp.now(tz="UTC").strftime("%Y%m%d_%H%M%S")
     tables_dir = run_dir / "tables"
-    figs_dir = run_dir / "figures"
+    figures_dir = run_dir / "figures"
     contracts_dir = run_dir / "contracts"
-    for d in (tables_dir, figs_dir, contracts_dir):
-        d.mkdir(parents=True, exist_ok=True)
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    contracts_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy contracts if present
-    # (The workflow pack places these under data/qcc/stateprob/)
-    contract_candidates = [
-        Path("data/qcc/stateprob/DATA_CONTRACT.md"),
-        Path("data/qcc/stateprob/mapping.json"),
-        Path("data/qcc/stateprob/runs_index_stateprob.csv"),
-    ]
-    copied = []
-    for c in contract_candidates:
-        if c.exists():
-            dst = contracts_dir / c.name
-            dst.write_bytes(c.read_bytes())
-            copied.append(dst.name)
-
-    # Parse zip: collect STATES and ATTR pairs
-    algo_filter = args.algo.strip()
-    device_filter = args.device.strip()
-    shots_filter = args.shots.strip()
-    shots_target = None if _is_blank(shots_filter) else int(shots_filter)
-
-    pairs: Dict[RunKey, Dict[str, str]] = {}
-    with zipfile.ZipFile(dataset_zip, "r") as zf:
-        for name in zf.namelist():
-            if not name.lower().endswith(".csv"):
-                continue
-            base = Path(name).name
-            if not (base.startswith("STATES_") or base.startswith("ATTR_")):
-                continue
-            kind, device, algo, instance, shots = _parse_filename(base)
-            if algo != algo_filter:
-                continue
-            if device_filter and device != device_filter:
-                continue
-            if shots_target is not None and shots != shots_target:
-                continue
-
-            key = RunKey(algo=algo, device=device, shots=shots, instance=instance)
-            pairs.setdefault(key, {})
-            pairs[key][kind] = name
-
-    if not pairs:
-        raise RuntimeError(
-            "Aucun fichier STATES/ATTR trouvé pour les filtres demandés. "
-            f"algo={algo_filter}, device={device_filter or '*'}, shots={shots_filter or '*'}."
-        )
-
-    # Build per-instance timeseries using chosen t-axis from ATTR and Ccl from STATES.
-    rows = []
-    for key, d in sorted(pairs.items(), key=lambda kv: (kv[0].device, kv[0].shots, kv[0].instance)):
-        if "STATES" not in d or "ATTR" not in d:
-            # skip incomplete pair
-            continue
-
-        df_states = _load_csv_from_zip(zipfile.ZipFile(dataset_zip, "r"), d["STATES"])
-        df_attr = _load_csv_from_zip(zipfile.ZipFile(dataset_zip, "r"), d["ATTR"])
-
-        # Infer probabilities column in STATES file
-        prob_col = None
-        for cand in ["Probability", "probability", "Prob", "p"]:
-            if cand in df_states.columns:
-                prob_col = cand
-                break
-        if prob_col is None:
-            # Try second column
-            if df_states.shape[1] >= 2:
-                prob_col = df_states.columns[1]
-            else:
-                continue
-
-        probs = df_states[prob_col].astype(float).to_numpy()
-
-        # Determine n_qubits by bitstring length if present
-        n_qubits = None
-        for bit_col in ["State", "state", "Bitstring", "bitstring"]:
-            if bit_col in df_states.columns:
-                s0 = str(df_states[bit_col].iloc[0])
-                n_qubits = len(s0.strip())
-                break
-
-        ccl = _ccl_from_probs(probs, args.ccl_metric, n_qubits=n_qubits)
-
-        # t-axis from ATTR
-        if args.t_axis == "Depth":
-            if "Depth" in df_attr.columns:
-                t_val = float(df_attr["Depth"].iloc[0])
-            else:
-                # fallback: any column containing depth
-                cols = [c for c in df_attr.columns if str(c).lower().startswith("depth")]
-                t_val = float(df_attr[cols[0]].iloc[0]) if cols else float("nan")
-        else:
-            # Runtime
-            if "Runtime" in df_attr.columns:
-                t_val = float(df_attr["Runtime"].iloc[0])
-            else:
-                cols = [c for c in df_attr.columns if "runtime" in str(c).lower()]
-                t_val = float(df_attr[cols[0]].iloc[0]) if cols else float("nan")
-
-        rows.append(
-            {
-                "algo": key.algo,
-                "device": key.device,
-                "shots": key.shots,
-                "instance": key.instance,
-                "t": t_val,
-                "Ccl": ccl,
-            }
-        )
-
-    df = pd.DataFrame(rows)
-    if df.empty:
-        raise RuntimeError("Aucune paire STATES/ATTR complète après filtrage.")
-
-    df = df.dropna(subset=["t", "Ccl"]).sort_values(["device", "shots", "instance", "t"]).reset_index(drop=True)
-
-    # Compute t* per instance: first t where Ccl >= threshold
-    tstar_rows = []
-    for (device, shots, instance), g in df.groupby(["device", "shots", "instance"], sort=False):
-        g2 = g.sort_values("t")
-        hit = g2[g2["Ccl"] >= float(args.ccl_threshold)]
-        tstar = float(hit["t"].iloc[0]) if not hit.empty else float("nan")
-        tstar_rows.append({"device": device, "shots": int(shots), "instance": instance, "t_star": tstar})
-    df_tstar = pd.DataFrame(tstar_rows)
-
-    # Bootstrap across instances (within each device+shots)
-    boot_rows = []
-    rng = np.random.default_rng(0)
-    for (device, shots), g in df_tstar.groupby(["device", "shots"], sort=False):
-        vals = g["t_star"].dropna().to_numpy(dtype=float)
-        if vals.size < 2:
-            continue
-        for b in range(int(args.bootstrap_samples)):
-            sample = rng.choice(vals, size=vals.size, replace=True)
-            boot_rows.append({"device": device, "shots": int(shots), "b": b, "t_star_mean": float(np.mean(sample))})
-    df_boot = pd.DataFrame(boot_rows)
-
-    # Write outputs
-    df.to_csv(tables_dir / "ccl_timeseries.csv", index=False)
-    df_tstar.to_csv(tables_dir / "tstar_by_instance.csv", index=False)
-    df_boot.to_csv(tables_dir / "bootstrap_tstar.csv", index=False)
-
-    summary = {
-        "dataset_zip": str(dataset_zip),
-        "algo": algo_filter,
+    # Minimal contracts captured for audit
+    _write_json(contracts_dir / "mapping.json", {
+        "dataset_zip": str(dataset_zip.as_posix()),
+        "algo": algo,
         "device_filter": device_filter,
-        "shots_filter": shots_filter,
-        "t_axis": args.t_axis,
-        "ccl_metric": args.ccl_metric,
-        "ccl_threshold": float(args.ccl_threshold),
-        "bootstrap_samples": int(args.bootstrap_samples),
-        "contracts_copied": copied,
-        "n_rows": int(df.shape[0]),
-        "n_instances": int(df[["device", "shots", "instance"]].drop_duplicates().shape[0]),
-    }
-    (tables_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        "shots": shots,
+        "t_axis": t_axis,
+        "ccl_metric": ccl_metric,
+        "ccl_threshold": ccl_threshold,
+        "bootstrap_samples": bootstrap_samples,
+        "note": "Ccl computed mechanically from State_Probability distributions. No interpretive verdict."
+    })
 
-    # Minimal plots (matplotlib)
-    import matplotlib.pyplot as plt
+    with tempfile.TemporaryDirectory() as td:
+        td_path = Path(td)
+        shutil.unpack_archive(str(dataset_zip), str(td_path))
 
-    # Mean Ccl vs t (aggregated by device+shots)
-    for (device, shots), g in df.groupby(["device", "shots"], sort=False):
-        g2 = g.groupby("t", as_index=False)["Ccl"].mean().sort_values("t")
+        # Collect pairs (STATES + ATTR) for given algo + shots (+ optional device)
+        pairs: Dict[RunKey, Dict[str, Path]] = {}
+        for p in td_path.rglob("*.csv"):
+            sp = p.as_posix()
+            mS = _STATES_RE.match(sp)
+            if mS and mS.group("algo") == algo and int(mS.group("shots")) == shots:
+                dev = mS.group("device")
+                if device_filter and dev != device_filter:
+                    continue
+                key = RunKey(dev, int(mS.group("instance")), shots)
+                pairs.setdefault(key, {})["states"] = p
+                continue
+            mA = _ATTR_RE.match(sp)
+            if mA and mA.group("algo") == algo and int(mA.group("shots")) == shots:
+                dev = mA.group("device")
+                if device_filter and dev != device_filter:
+                    continue
+                key = RunKey(dev, int(mA.group("instance")), shots)
+                pairs.setdefault(key, {})["attr"] = p
+
+        # Filter only complete pairs
+        complete = {k: v for k, v in pairs.items() if "states" in v and "attr" in v}
+        if not complete:
+            raise RuntimeError(
+                f"No complete (STATES+ATTR) pairs found for algo={algo}, shots={shots}, device_filter={device_filter!r}."
+            )
+
+        rows = []
+        for key, v in sorted(complete.items(), key=lambda kv: (kv[0].device, kv[0].instance)):
+            states_bytes = v["states"].read_bytes()
+            attr_bytes = v["attr"].read_bytes()
+            df_states = _read_states_csv(states_bytes)
+            df_attr = _read_attr_csv(attr_bytes)
+
+            t_val = _extract_depth_or_runtime(t_axis, df_attr)
+            ccl = _compute_ccl(ccl_metric, df_states)
+
+            rows.append({
+                "device": key.device,
+                "instance": key.instance,
+                "shots": key.shots,
+                "t": t_val,
+                "t_axis": t_axis,
+                "ccl_metric": ccl_metric,
+                "Ccl": ccl,
+                "states_file": v["states"].name,
+                "attr_file": v["attr"].name,
+            })
+
+        df = pd.DataFrame(rows)
+        df = df.sort_values(["device", "t", "instance"]).reset_index(drop=True)
+        df.to_csv(tables_dir / "ccl_timeseries.csv", index=False)
+
+        # Mean by depth per device
+        mean_df = (
+            df.groupby(["device", "t"], as_index=False)
+            .agg(Ccl_mean=("Ccl", "mean"), Ccl_std=("Ccl", "std"), n=("Ccl", "size"))
+            .sort_values(["device", "t"])
+        )
+        mean_df.to_csv(tables_dir / "ccl_mean_by_t.csv", index=False)
+
+        # Bootstrap t* per device: first t where Ccl_mean >= threshold
+        boot_rows = []
+        rng = np.random.default_rng(1337)
+        for dev, sub in df.groupby("device"):
+            instances = sub["instance"].unique()
+            if len(instances) < 2:
+                continue
+            inst_to_rows = {i: sub[sub["instance"] == i] for i in instances}
+            for b in range(bootstrap_samples):
+                samp = rng.choice(instances, size=len(instances), replace=True)
+                samp_df = pd.concat([inst_to_rows[i] for i in samp], ignore_index=True)
+                m = (
+                    samp_df.groupby("t", as_index=False)["Ccl"].mean()
+                    .sort_values("t")
+                )
+                tstar = None
+                for _, r in m.iterrows():
+                    if np.isfinite(r["Ccl"]) and float(r["Ccl"]) >= ccl_threshold:
+                        tstar = float(r["t"])
+                        break
+                boot_rows.append({
+                    "device": dev,
+                    "bootstrap_i": b,
+                    "tstar": tstar,
+                })
+
+        boot_df = pd.DataFrame(boot_rows)
+        boot_df.to_csv(tables_dir / "bootstrap_tstar.csv", index=False)
+
+        # Summary
+        summary = {
+            "algo": algo,
+            "shots": shots,
+            "device_filter": device_filter,
+            "t_axis": t_axis,
+            "ccl_metric": ccl_metric,
+            "ccl_threshold": ccl_threshold,
+            "bootstrap_samples": bootstrap_samples,
+            "n_pairs": int(len(df)),
+            "devices": sorted(df["device"].unique().tolist()),
+        }
+        # Add per-device t* on full mean
+        tstars = {}
+        for dev, m in mean_df.groupby("device"):
+            tstar = None
+            for _, r in m.sort_values("t").iterrows():
+                if np.isfinite(r["Ccl_mean"]) and float(r["Ccl_mean"]) >= ccl_threshold:
+                    tstar = float(r["t"])
+                    break
+            tstars[dev] = tstar
+        summary["tstar_by_device"] = tstars
+        _write_json(tables_dir / "summary.json", summary)
+
+        # Figures (matplotlib imported lazily to keep deps minimal)
+        import matplotlib.pyplot as plt
+
+        # Plot mean Ccl by t for each device
         plt.figure()
-        plt.plot(g2["t"], g2["Ccl"], marker="o")
-        plt.xlabel("t")
-        plt.ylabel("Ccl")
-        plt.title(f"Ccl mean vs {args.t_axis} ({algo_filter})\n{device} shots={shots}")
-        plt.ylim(0, 1)
-        plt.grid(True, alpha=0.3)
-        plt.savefig(figs_dir / f"ccl_mean_{device}_shots{shots}.png", dpi=160, bbox_inches="tight")
+        for dev, m in mean_df.groupby("device"):
+            plt.plot(m["t"].to_numpy(), m["Ccl_mean"].to_numpy(), marker="o", linestyle="-", label=dev)
+        plt.axhline(ccl_threshold, linestyle="--")
+        plt.xlabel(t_axis)
+        plt.ylabel("Ccl_mean")
+        plt.title(f"Ccl mean by {t_axis} (algo={algo}, shots={shots}, metric={ccl_metric})")
+        if len(mean_df["device"].unique()) <= 12:
+            plt.legend(fontsize="small")
+        plt.tight_layout()
+        plt.savefig(figures_dir / "ccl_mean.png", dpi=150)
         plt.close()
 
-    # Histogram of t* means
-    if not df_boot.empty:
-        for (device, shots), g in df_boot.groupby(["device", "shots"], sort=False):
+        # t* histogram if any finite values
+        if not boot_df.empty and boot_df["tstar"].notna().any():
             plt.figure()
-            plt.hist(g["t_star_mean"].to_numpy(), bins=30)
-            plt.xlabel("t_star_mean")
+            vals = boot_df["tstar"].dropna().to_numpy(dtype=float)
+            plt.hist(vals, bins=30)
+            plt.xlabel(f"t* ({t_axis})")
             plt.ylabel("count")
-            plt.title(f"Bootstrap t* mean ({algo_filter})\n{device} shots={shots}")
-            plt.grid(True, alpha=0.3)
-            plt.savefig(figs_dir / f"tstar_boot_hist_{device}_shots{shots}.png", dpi=160, bbox_inches="tight")
+            plt.title("Bootstrap distribution of t*")
+            plt.tight_layout()
+            plt.savefig(figures_dir / "tstar_hist.png", dpi=150)
             plt.close()
 
-    # Build manifest
-    from tools.make_manifest import build_manifest  # type: ignore
-
-    build_manifest(run_dir)
+    # Let existing make_manifest.py handle manifest if present, else write a minimal one.
+    manifest_path = run_dir / "manifest.json"
+    try:
+        # Local import (repo tool) if available
+        from tools.make_manifest import make_manifest  # type: ignore
+        make_manifest(run_dir, manifest_path)
+    except Exception:
+        # Minimal manifest: sha256 for all files under run_dir
+        import hashlib
+        entries = {}
+        for fp in run_dir.rglob("*"):
+            if fp.is_file():
+                h = hashlib.sha256(fp.read_bytes()).hexdigest()
+                entries[str(fp.relative_to(run_dir))] = h
+        _write_json(manifest_path, {"sha256": entries})
 
     return 0
 
