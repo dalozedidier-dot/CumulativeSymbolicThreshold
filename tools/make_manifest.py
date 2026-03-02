@@ -1,4 +1,3 @@
-# tools/make_manifest.py
 from __future__ import annotations
 
 import hashlib
@@ -23,7 +22,7 @@ def write_manifest_sha256(root_dir: Path, out_path: Path) -> None:
         if p.is_dir():
             continue
         rel = p.relative_to(root_dir).as_posix()
-        if rel == out_path.relative_to(root_dir).as_posix():
+        if out_path.exists() and rel == out_path.relative_to(root_dir).as_posix():
             continue
         files[rel] = sha256_file(p)
 

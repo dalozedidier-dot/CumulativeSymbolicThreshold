@@ -1,46 +1,29 @@
 {
-  "dataset_source": "Unified Hamiltonian Simulation of the Polaron-Molecule Transition on a NISQ Processor (GitHub repo).",
-  "intent": "Construire un pipeline QCC sur donn\u00e9es issues du repo source, sans verdict global.",
-  "definitions": {
-    "Cq(t)": {
-      "source": "dynamics_N{6,8,10}.csv",
-      "column": "S(t)",
-      "time_column": "Time",
-      "note": "Normalisation prudente: si |S(t)| d\u00e9passe 1, division par max(|S(t)|)."
-    },
-    "O": {
-      "source": "spectrum_N{6,8,10}.csv",
-      "columns": [
-        "U_imp",
-        "Frequency",
-        "Amplitude"
-      ],
-      "u_imp_target": 2.5,
-      "u_imp_used_rule": "choisir la valeur U_imp disponible la plus proche de u_imp_target",
-      "method": "O = int\u00e9grale trap\u00e9zo\u00efdale de Amplitude(f) sur toute la bande f disponible, pour ce U_imp",
-      "note": "O est constant par run dans ce pipeline."
-    },
-    "R": {
-      "method": "constante par run",
-      "default": 0.0,
-      "note": "R ne repr\u00e9sente pas encore une mitigation/protection explicite dans ces donn\u00e9es. Valeur fix\u00e9e ex ante."
-    },
-    "Sigma(t)": {
-      "definition": "Sigma(t)=\u222b max(0, O-R) dt (discret via dt)",
-      "note": "Avec O,R constants, Sigma cro\u00eet lin\u00e9airement si O>R."
-    }
+  "version": "1.1",
+  "dataset": "polaron_real_polaron",
+  "c_min": 0.35,
+  "cq": {
+    "source_col": "S(t)",
+    "transform": "identity"
   },
-  "outputs": {
-    "per_run": [
-      "tables/timeseries_<run_id>.csv",
-      "tables/events_<run_id>.json",
-      "figures/plot_<run_id>.png"
-    ],
-    "aggregate": [
-      "tables/summary.json",
-      "figures/compare_Cq.png",
-      "manifest.json"
-    ]
+  "o": {
+    "method": "spectrum_band_integral",
+    "u_imp_target": 2.5,
+    "u_imp_selection": "closest",
+    "u_imp_max_abs_delta_allowed": 0.25,
+    "frequency_band": {
+      "f_min": 0.0,
+      "f_max": 2.851666666666667
+    },
+    "amplitude_col": "Amplitude",
+    "frequency_col": "Frequency"
   },
-  "non_interpretative_policy": "Aucun verdict global. Sorties = mesures, \u00e9v\u00e9nements, checks de forme."
+  "r": {
+    "definition": "constant",
+    "value": 0.0
+  },
+  "sigma": {
+    "definition": "cumulative_max0_o_minus_r",
+    "time_col": "Time"
+  }
 }

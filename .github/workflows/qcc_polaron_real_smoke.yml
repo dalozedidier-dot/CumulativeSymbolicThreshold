@@ -3,19 +3,10 @@ name: QCC Polaron Real Smoke
 on:
   workflow_dispatch:
     inputs:
-      runs_index:
-        description: "Chemin de l'index runs (CSV)"
-        required: true
-        default: "data/qcc/real_polaron/qcc_runs_index.csv"
-      c_min:
-        description: "Seuil C_min (float)"
-        required: true
-        default: "0.35"
       out_dir:
         description: "Répertoire résultats"
         required: true
         default: "05_Results/qcc_polaron_real_smoke"
-
   pull_request:
     paths:
       - ".github/workflows/qcc_polaron_real_smoke.yml"
@@ -26,10 +17,9 @@ on:
       - "requirements-qcc.txt"
 
 jobs:
-  run-qcc-polaron-real-smoke:
+  run-polaron-real:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,9 +38,13 @@ jobs:
 
       - name: Run QCC from runs index
         run: |
-          python tools/qcc_real_data_from_runs_index.py             --runs-index "${{ inputs.runs_index }}"             --c-min "${{ inputs.c_min }}"             --out-root "${{ inputs.out_dir }}"
+          python tools/qcc_real_data_from_runs_index.py \
+            --runs-index data/qcc/real_polaron/qcc_runs_index.csv \
+            --mapping data/qcc/real_polaron/mapping.json \
+            --data-root data/qcc/real_polaron \
+            --out-root "${{ inputs.out_dir }}"
 
-      - name: Check outputs (non interpretatif)
+      - name: Check outputs (non interprétatif)
         run: |
           python tools/qcc_checks.py --out-root "${{ inputs.out_dir }}"
 
