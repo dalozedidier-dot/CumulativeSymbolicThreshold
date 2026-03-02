@@ -1,54 +1,107 @@
 #!/usr/bin/env python3
+"""Non-interpretive checks for QCC StateProb Cross-Conditions outputs.
+
+This checker is intentionally mechanical:
+- find latest run directory under <out_root>/runs/
+- verify required files exist inside the run
+- verify manifest.json exists and hashes required outputs (but does NOT require self-hashing)
+
+Exit code 1 on failure.
+"""
+
 from __future__ import annotations
+
 import argparse
 import json
+import sys
 from pathlib import Path
 
-REQUIRED_REL = [
-  "tables/inventory.csv",
-  "tables/recommendations.json",
-  "tables/selected_plan.json",
-  "tables/ccl_points.csv",
-  "tables/ccl_by_shots.csv",
-  "tables/tstar_by_shots.csv",
-  "tables/bootstrap_tstar_by_shots.csv",
-  "tables/summary.json",
-  "figures/ccl_vs_axis_by_shots.png",
-  "figures/tstar_hist.png",
-  "contracts/mapping_cross_conditions.json",
-  "manifest.json",
+
+REQUIRED_RELATIVE = [
+    "tables/summary.json",
+    "tables/inventory.csv",
+    "tables/recommendations.json",
+    "tables/selected_plan.json",
+    "tables/ccl_points.csv",
+    "tables/ccl_by_shots.csv",
+    "tables/tstar_by_shots.csv",
+    "tables/bootstrap_tstar_by_shots.csv",
+    "figures/ccl_vs_axis_by_shots.png",
+    "figures/tstar_hist.png",
+    "contracts/mapping_cross_conditions.json",
+    "manifest.json",
 ]
 
-def latest_run_dir(out_root: Path) -> Path:
-    runs = out_root / "runs"
-    if not runs.exists():
-        raise FileNotFoundError(f"No runs directory: {runs}")
-    candidates = [p for p in runs.iterdir() if p.is_dir()]
-    if not candidates:
-        raise FileNotFoundError(f"No run dirs under: {runs}")
-    return sorted(candidates)[-1]
+
+def _latest_run_dir(out_root: Path) -> Path:
+    runs_dir = out_root / "runs"
+    if not runs_dir.exists() or not runs_dir.is_dir():
+        raise FileNotFoundError(f"No runs directory: {runs_dir}")
+    run_dirs = sorted([p for p in runs_dir.iterdir() if p.is_dir()])
+    if not run_dirs:
+        raise FileNotFoundError(f"No run directories inside: {runs_dir}")
+    return run_dirs[-1]
+
+
+def _load_manifest(manifest_path: Path) -> dict:
+    with manifest_path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out-root", "--out-dir", dest="out_root", required=True)
+    ap.add_argument("--out-root", required=True, help="Root output dir (contains runs/)")
     args = ap.parse_args()
+
     out_root = Path(args.out_root)
-    run_dir = latest_run_dir(out_root)
+    try:
+        run_dir = _latest_run_dir(out_root)
+    except Exception as e:
+        print(str(e), file=sys.stderr)
+        return 1
 
-    missing = [rel for rel in REQUIRED_REL if not (run_dir / rel).exists()]
+    missing = []
+    for rel in REQUIRED_RELATIVE:
+        p = run_dir / rel
+        if not p.exists():
+            missing.append(rel)
+
     if missing:
-        print(f"Missing required outputs: {missing}")
+        print(f"Missing required outputs in {run_dir}: {missing}", file=sys.stderr)
         return 1
 
-    # Manifest coverage: ensure every required file except manifest itself is in entries
-    mani = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
-    entries = mani.get("entries", {})
-    need = [rel for rel in REQUIRED_REL if rel != "manifest.json"]
-    missing_entries = [rel for rel in need if rel not in entries]
-    if missing_entries:
-        print(f"Manifest missing entries: {missing_entries}")
+    # Manifest coverage checks
+    manifest_path = run_dir / "manifest.json"
+    try:
+        manifest = _load_manifest(manifest_path)
+    except Exception as e:
+        print(f"Failed to read manifest.json: {e}", file=sys.stderr)
         return 1
+
+    entries = manifest.get("entries")
+    if not isinstance(entries, dict) or not entries:
+        print("manifest.json missing or invalid 'entries' dict", file=sys.stderr)
+        return 1
+
+    # Ensure required outputs are present in entries (excluding manifest itself)
+    required_for_hash = [r for r in REQUIRED_RELATIVE if r != "manifest.json"]
+    missing_in_manifest = []
+    for rel in required_for_hash:
+        # manifest keys are stored as relative paths from run_dir
+        if rel not in entries:
+            missing_in_manifest.append(rel)
+
+    if missing_in_manifest:
+        print(
+            f"Manifest missing entries (relative to run_dir) in {run_dir}: {missing_in_manifest}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Also ensure entries do NOT require self-hash (allowed either way, but never required)
+    print(f"Checks OK for run: {run_dir}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
