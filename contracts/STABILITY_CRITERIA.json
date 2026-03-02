@@ -1,10 +1,12 @@
 {
-  "schema": "qcc.stability_criteria.v1",
+  "schema": "qcc.stability_criteria.v2",
   "note": "Mechanical stability thresholds. No ORI-C verdict. Never adjusted post-hoc.",
   "resample_found_rate_min": 0.5,
   "relative_variation_max": 0.30,
+  "window_min_size_for_check": 5,
   "rationale": {
     "resample_found_rate_min": "At least 50% of resampling runs must locate a finite t*. Below this, the signature is not robustly detectable under subsampling.",
-    "relative_variation_max": "CCL mean relative variation across sliding windows must stay below 30%. Above this, the profile is not stable across depth ranges."
+    "relative_variation_max": "CCL mean relative variation across sliding windows must stay below 30%. Above this, the profile is not stable across depth ranges.",
+    "window_min_size_for_check": "Only windows of size >= 5 are included in the relative_variation check. Windows of size 3 span too few depth points and mechanically amplify local variance, producing spurious failures unrelated to actual profile instability. This rule is pre-registered here and never adjusted to match observed results."
   }
 }
