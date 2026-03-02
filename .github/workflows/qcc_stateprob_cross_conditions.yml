@@ -4,37 +4,46 @@ on:
   workflow_dispatch:
     inputs:
       dataset_path:
-        description: "Path to dataset (.zip or directory)"
+        description: "Path to dataset (.zip or extracted dir) inside repo"
         required: true
         default: "data/qcc/stateprob/04-09-2020.zip"
+        type: string
       auto_plan:
-        description: "Auto select best (algo, device) then compare all shots"
+        description: "Auto-select best (algo, device) and compare all available shots"
         required: true
-        default: "true"
+        default: true
+        type: boolean
       algo:
-        description: "Optional algo filter (empty=all; ignored if auto_plan=true)"
+        description: "Algo filter (empty = all or autoplan)"
         required: false
         default: ""
+        type: string
       device_filter:
-        description: "Optional device filter (empty=all; ignored if auto_plan=true)"
+        description: "Device filter (empty = all or autoplan)"
         required: false
         default: ""
+        type: string
       shots_filter:
-        description: "Optional shots filter (empty=all; ignored if auto_plan=true)"
+        description: "Shots filter (empty = all shots)"
         required: false
         default: ""
+        type: string
       metric:
-        description: "Ccl metric: entropy | one_minus_max | impurity"
+        description: "Ccl metric"
         required: true
         default: "entropy"
+        type: choice
+        options: ["entropy", "impurity", "one_minus_max"]
       threshold:
-        description: "Ccl threshold for t*"
+        description: "Ccl threshold for t* detection"
         required: true
         default: "0.70"
+        type: string
       bootstrap_samples:
         description: "Bootstrap samples"
         required: true
         default: "500"
+        type: string
 
 jobs:
   cross:
@@ -49,17 +58,20 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
+        shell: bash
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           if [ -f requirements-qcc-stateprob.txt ]; then
             pip install -r requirements-qcc-stateprob.txt
-          elif [ -f requirements-qcc-stateprob-cross.txt ]; then
-            pip install -r requirements-qcc-stateprob-cross.txt
+          elif [ -f requirements-qcc.txt ]; then
+            pip install -r requirements-qcc.txt
           else
             pip install numpy pandas matplotlib
           fi
 
       - name: Run cross-conditions
+        shell: bash
         env:
           DATASET_PATH: ${{ inputs.dataset_path }}
           AUTO_PLAN: ${{ inputs.auto_plan }}
@@ -70,11 +82,22 @@ jobs:
           THRESHOLD: ${{ inputs.threshold }}
           BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
         run: |
+          set -euo pipefail
           mkdir -p _ci_out/qcc_stateprob_cross
-          python tools/qcc_stateprob_cross_conditions.py             --dataset "$DATASET_PATH"             --auto-plan "$AUTO_PLAN"             --algo "$ALGO"             --device-filter "$DEVICE_FILTER"             --shots-filter "$SHOTS_FILTER"             --metric "$METRIC"             --threshold "$THRESHOLD"             --bootstrap-samples "$BOOTSTRAP_SAMPLES"             --out-dir "_ci_out/qcc_stateprob_cross"
+
+          EXTRA_PLAN=""
+          if [ "${AUTO_PLAN}" = "true" ]; then
+            EXTRA_PLAN="--auto-plan"
+          else
+            EXTRA_PLAN="--no-auto-plan"
+          fi
+
+          python tools/qcc_stateprob_cross_conditions.py             --dataset-path "${DATASET_PATH}"             --out-root "_ci_out/qcc_stateprob_cross"             --algo "${ALGO}"             --device-filter "${DEVICE_FILTER}"             --shots-filter "${SHOTS_FILTER}"             --metric "${METRIC}"             --threshold "${THRESHOLD}"             --bootstrap-samples "${BOOTSTRAP_SAMPLES}"             ${EXTRA_PLAN}
 
       - name: Checks
+        shell: bash
         run: |
+          set -euo pipefail
           python tools/qcc_stateprob_cross_checks.py --out-root "_ci_out/qcc_stateprob_cross"
 
       - name: Upload artifact
