@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import csv
 import dataclasses
+import glob as _glob_mod
 import hashlib
 import json
 import math
@@ -355,6 +356,85 @@ def _filter_pairs(
     return out
 
 
+def _build_input_inventory(
+    pairs: List[Tuple[Path, Path, Dict[str, Any]]],
+    out_csv: Path,
+) -> pd.DataFrame:
+    """
+    Write contracts/input_inventory.csv listing all ingested (STATES, ATTR) pairs
+    with SHA256 hash of the states source file.
+    Columns: fichier, algo, device, shots, depth, instance_id, sha256_source
+    """
+    rows = []
+    for sp, ap, meta in pairs:
+        depth = _read_attr_depth(ap)
+        sha_states = _sha256_file(sp)
+        rows.append({
+            "fichier": str(sp.as_posix()),
+            "algo": meta["algo"],
+            "device": meta["device"],
+            "shots": int(meta["shots"]),
+            "depth": depth,
+            "instance_id": int(meta["instance"]),
+            "sha256_source": sha_states,
+        })
+    df = pd.DataFrame(rows) if rows else pd.DataFrame(
+        columns=["fichier", "algo", "device", "shots", "depth", "instance_id", "sha256_source"]
+    )
+    if not df.empty:
+        df = df.sort_values(["algo", "device", "shots", "instance_id"])
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(out_csv, index=False)
+    return df
+
+
+def _filter_pairs_by_algo(
+    pairs: List[Tuple[Path, Path, Dict[str, Any]]],
+    algo: str,
+    shots_filter: Optional[List[int]],
+) -> List[Tuple[Path, Path, Dict[str, Any]]]:
+    """Like _filter_pairs but includes ALL devices for the given algo (used for multi-device pooling)."""
+    out = []
+    shots_set = set(shots_filter) if shots_filter else None
+    for sp, ap, meta in pairs:
+        if meta["algo"] != algo:
+            continue
+        if shots_set is not None and int(meta["shots"]) not in shots_set:
+            continue
+        out.append((sp, ap, meta))
+    return out
+
+
+def _collect_datasets(
+    dataset: Optional[str],
+    dataset_paths: Optional[List[str]],
+    dataset_glob: Optional[str],
+) -> List[Path]:
+    """
+    Collect and deduplicate dataset paths from all CLI sources:
+    --dataset, --dataset-paths, --dataset-glob.
+    Returns a list of unique Paths (order: --dataset first, then --dataset-paths, then glob).
+    """
+    candidates: List[Path] = []
+    if dataset:
+        candidates.append(Path(dataset))
+    if dataset_paths:
+        for dp in dataset_paths:
+            candidates.append(Path(dp))
+    if dataset_glob:
+        for dp in sorted(_glob_mod.glob(dataset_glob)):
+            candidates.append(Path(dp))
+    # Deduplicate by resolved absolute path, preserving order
+    seen: set = set()
+    result: List[Path] = []
+    for p in candidates:
+        key = str(p.resolve())
+        if key not in seen:
+            seen.add(key)
+            result.append(p)
+    return result
+
+
 def _compute_points(
     pairs: List[Tuple[Path, Path, Dict[str, Any]]],
     metric: str,
@@ -513,7 +593,15 @@ def _evidence_strength(
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset", "--dataset-path", dest="dataset", required=True, help="Path to dataset .zip or extracted directory")
+    # Single dataset (legacy, kept for backwards-compat)
+    ap.add_argument("--dataset", "--dataset-path", dest="dataset", default="",
+                    help="Path to a single dataset .zip or directory (legacy; prefer --dataset-paths)")
+    # Multi-input: list of dataset paths
+    ap.add_argument("--dataset-paths", dest="dataset_paths", nargs="*", default=None,
+                    help="One or more dataset paths (.zip or directory). Merged before analysis.")
+    # Multi-input: glob pattern
+    ap.add_argument("--dataset-glob", dest="dataset_glob", default="",
+                    help="Glob pattern matching multiple dataset paths, e.g. 'data/stateprob_*.zip'")
     ap.add_argument("--out-dir", dest="out_dir", default="_ci_out/qcc_stateprob_cross", help="Output root directory")
     ap.add_argument("--out-root", dest="out_root", default=None, help="Alias for --out-dir (legacy)")
     ap.add_argument("--auto-plan", dest="auto_plan", action="store_true", help="Auto-select best (algo, device) from inventory")
@@ -539,10 +627,21 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = ap.parse_args(argv)
 
     out_root = Path(args.out_root) if args.out_root else Path(args.out_dir)
-    dataset_path = Path(args.dataset)
 
-    dataset_root = _extract_if_zip(dataset_path)
-    pairs = _discover_pairs(dataset_root)
+    # ── Multi-input: collect all dataset paths ───────────────────────────────
+    all_dataset_paths = _collect_datasets(
+        dataset=args.dataset or None,
+        dataset_paths=args.dataset_paths,
+        dataset_glob=args.dataset_glob or None,
+    )
+    if not all_dataset_paths:
+        print("ERROR: no dataset specified. Use --dataset, --dataset-paths, or --dataset-glob.", file=sys.stderr)
+        return 2
+
+    pairs: List[Tuple[Path, Path, Dict[str, Any]]] = []
+    for dp in all_dataset_paths:
+        dr = _extract_if_zip(dp)
+        pairs.extend(_discover_pairs(dr))
 
     run_ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     run_dir = out_root / "runs" / run_ts
@@ -561,6 +660,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     except Exception:
         pass
     import platform as _platform
+    _dataset_paths_repr = " | ".join(str(p) for p in all_dataset_paths)
     _params_lines = [
         f"generated_utc: {datetime.utcnow().isoformat(timespec='seconds')}Z",
         f"argv: {' '.join(sys.argv)}",
@@ -569,6 +669,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         f"pooling_mode: {args.pooling}",
         f"power_criteria: {args.power_criteria}",
         f"git_sha: {_git_sha}",
+        f"dataset_paths: {_dataset_paths_repr}",
+        f"n_dataset_sources: {len(all_dataset_paths)}",
     ]
     (run_dir / "params.txt").write_text("\n".join(_params_lines) + "\n", encoding="utf-8")
 
@@ -576,9 +678,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     power_criteria = _load_power_criteria(Path(args.power_criteria))
     # Copy criteria into run's contracts/ for self-contained auditability
     _criteria_src = Path(args.power_criteria)
+    _criteria_sha256: Optional[str] = None
     if _criteria_src.exists():
         import shutil as _shutil
         _shutil.copy2(_criteria_src, contracts_dir / "POWER_CRITERIA.json")
+        _criteria_sha256 = _sha256_file(_criteria_src)
+
+    # ── Input inventory (contracts/) ─────────────────────────────────────────
+    _build_input_inventory(pairs, contracts_dir / "input_inventory.csv")
 
     # Inventory and recommendations (global, regardless of filters)
     inv = _build_inventory(pairs)
@@ -613,25 +720,43 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
 
     algo = str(plan["algo"])
-    device = str(plan["device"])
 
     shots_filter = None
     if str(args.shots).strip():
         shots_filter = [_safe_int(s, None) for s in str(args.shots).split(",")]
         shots_filter = [s for s in shots_filter if s is not None]
 
-    sel_pairs = _filter_pairs(pairs, algo=algo, device=device, shots_filter=shots_filter)
+    # For multi-device: include ALL devices for the selected algo (not just the top device)
+    if args.pooling == "multi-device":
+        sel_pairs = _filter_pairs_by_algo(pairs, algo=algo, shots_filter=shots_filter)
+        device = "pooled"
+        plan = dict(plan)
+        plan["device"] = "pooled"
+        plan["note_pooling"] = "multi-device: all devices for selected algo pooled"
+        # Re-write selected_plan.json with updated device field
+        plan_path.write_text(json.dumps(plan, indent=2, sort_keys=True), encoding="utf-8")
+    else:
+        device = str(plan["device"])
+        sel_pairs = _filter_pairs(pairs, algo=algo, device=device, shots_filter=shots_filter)
 
     # Compute points
     points = _compute_points(sel_pairs, metric=args.metric)
 
     # Pooling (by-instance is default/no-op; others call the pooling module)
     pool_membership = None
+    devices_included: List[str] = []
     if args.pooling == "pooled-by-depth":
         from tools import qcc_stateprob_pooling as _pooling  # type: ignore
         points, pool_membership = _pooling.pool_by_depth(points, out_dir=tables_dir)
     elif args.pooling == "multi-device":
         from tools import qcc_stateprob_pooling as _pooling  # type: ignore
+        # Record which devices are included before relabelling
+        devices_included = sorted(points["device"].unique().tolist()) if not points.empty else []
+        # Write per-device tables for audit (BEFORE pooling relabels device to 'pooled')
+        for _dev in devices_included:
+            _dev_pts = points[points["device"] == _dev].copy()
+            _dev_safe = re.sub(r"[^A-Za-z0-9_\-]", "_", _dev)
+            _dev_pts.to_csv(tables_dir / f"ccl_points_{_dev_safe}.csv", index=False)
         points, pool_membership = _pooling.multi_device_pool(points, out_dir=tables_dir)
 
     points_path = tables_dir / "ccl_points.csv"
@@ -678,18 +803,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     _plot_tstar_hist(boot_df, figs_dir / "tstar_hist.png")
 
     # Contracts
-    mapping = {
-        "dataset": str(dataset_path.as_posix()),
-        "dataset_mode": "dir" if Path(args.dataset).is_dir() else "zip",
+    _dataset_entries = [
+        {"path": str(dp.as_posix()), "mode": "dir" if dp.is_dir() else "zip"}
+        for dp in all_dataset_paths
+    ]
+    mapping: Dict[str, Any] = {
+        "datasets": _dataset_entries,
+        "n_dataset_sources": len(all_dataset_paths),
         "algo": algo,
         "device": device,
+        "pooling_mode": args.pooling,
         "shots_filter": shots_filter,
         "metric": args.metric,
         "threshold": float(args.threshold),
         "bootstrap_samples": int(args.bootstrap_samples),
         "auto_plan": bool(args.auto_plan),
+        "power_criteria_path": args.power_criteria,
+        "power_criteria_sha256": _criteria_sha256,
         "note": "Non-interpretive cross-conditions Ccl vs Depth by shots.",
     }
+    if args.pooling == "multi-device" and devices_included:
+        mapping["devices_included"] = devices_included
     (contracts_dir / "mapping_cross_conditions.json").write_text(json.dumps(mapping, indent=2, sort_keys=True), encoding="utf-8")
 
     # Power diagnostic for summary.json (counts only)
