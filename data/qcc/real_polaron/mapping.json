@@ -1,29 +1,39 @@
 {
-  "version": "1.1",
-  "dataset": "polaron_real_polaron",
-  "c_min": 0.35,
+  "version": "qcc_polaron_mapping_v1_1",
+  "description": "Mapping QCC/ORI-C for Polaron dataset with optional Cq-only runs.",
   "cq": {
-    "source_col": "S(t)",
-    "transform": "identity"
+    "source": "csv",
+    "definition": "Cq_raw = value from cq_col (no implicit fit).",
+    "allowed_transforms": [
+      "raw"
+    ],
+    "transform": "raw"
   },
   "o": {
-    "method": "spectrum_band_integral",
-    "u_imp_target": 2.5,
-    "u_imp_selection": "closest",
-    "u_imp_max_abs_delta_allowed": 0.25,
-    "frequency_band": {
-      "f_min": 0.0,
-      "f_max": 2.851666666666667
-    },
-    "amplitude_col": "Amplitude",
-    "frequency_col": "Frequency"
+    "definition": "For qcc_full runs, O is derived from spectrum by bandpower integral of Amplitude over [o_fmin,o_fmax] at U_imp closest to u_imp target. For cq_only runs, O is undefined and Sigma is not computed."
   },
   "r": {
-    "definition": "constant",
-    "value": 0.0
+    "definition": "R is fixed ex ante per run via r_definition and r_value. Default is R_constant."
   },
   "sigma": {
-    "definition": "cumulative_max0_o_minus_r",
-    "time_col": "Time"
+    "definition": "Sigma(t) = cumulative integral over time of max(0, O - R). Only computed when O is defined."
+  },
+  "guards": {
+    "u_imp_target_default": 2.5,
+    "u_imp_max_abs_delta_allowed": 0.25,
+    "require_strictly_increasing_time": true
+  },
+  "modes": {
+    "qcc_full": {
+      "requires": [
+        "spectrum_csv",
+        "o_method"
+      ],
+      "produces_sigma": true
+    },
+    "cq_only": {
+      "requires": [],
+      "produces_sigma": false
+    }
   }
 }
