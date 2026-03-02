@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 """
-QCC StateProb Cross-Conditions (Ccl vs axis by shots) with optional auto-plan.
+QCC StateProb Cross-Conditions pipeline.
 
-This version is robustness-focused:
-- Always writes tables/summary.json
-- Always writes figures/ccl_vs_axis_by_shots.png and figures/tstar_hist.png
-  (even if empty / no t* found), so CI checks stay mechanical.
+Produces:
+- global inventory + recommendations over dataset
+- filtered cross-conditions tables/figures comparing Ccl vs axis by shots
+- t* per shots + bootstrap
+- contracts + manifest sha256
+
+Important:
+- Non-interpretive: no verdicts, only metrics + summaries.
+- Robust to dataset as .zip or extracted directory.
+
+Output layout:
+  <out_root>/runs/<timestamp>/{tables,figures,contracts,manifest.json}
 """
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import io
 import json
 import math
 import os
@@ -18,7 +28,6 @@ import re
 import shutil
 import sys
 import time
-import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -26,84 +35,8 @@ from typing import Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import zipfile
 
-
-# -----------------------------
-# Helpers
-# -----------------------------
-def _now_stamp() -> str:
-    return time.strftime("%Y%m%d_%H%M%S", time.gmtime())
-
-def _ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
-
-def _safe_float(x) -> Optional[float]:
-    try:
-        if x is None:
-            return None
-        if isinstance(x, float) and math.isnan(x):
-            return None
-        s = str(x).strip()
-        if s == "" or s.lower() == "nan":
-            return None
-        return float(s)
-    except Exception:
-        return None
-
-def _read_states_csv(path: Path) -> pd.DataFrame:
-    """
-    STATES_*.csv in this dataset often comes without a header:
-      bitstring,prob
-    but some variants may include headers.
-    We'll detect and normalize to columns: bitstring, prob
-    """
-    # Try with header inference
-    df = pd.read_csv(path, header=None)
-    if df.shape[1] < 2:
-        raise ValueError(f"STATES file malformed (need >=2 cols): {path}")
-    # If first row looks like header, re-read with header=0
-    first0 = str(df.iloc[0,0]).lower()
-    first1 = str(df.iloc[0,1]).lower()
-    if "bit" in first0 and ("prob" in first1 or "p(" in first1):
-        df = pd.read_csv(path)
-        cols = {c.lower(): c for c in df.columns}
-        bcol = cols.get("bitstring") or cols.get("state") or list(df.columns)[0]
-        pcol = cols.get("prob") or cols.get("probability") or list(df.columns)[1]
-        out = df[[bcol, pcol]].copy()
-        out.columns = ["bitstring", "prob"]
-        return out
-    out = df.iloc[:, :2].copy()
-    out.columns = ["bitstring", "prob"]
-    return out
-
-def _read_attr_csv(path: Path) -> pd.DataFrame:
-    """
-    ATTR_*.csv typically has headers but may contain spaces.
-    We'll read and normalize key columns:
-      Depth, Runtime (if exists)
-    """
-    df = pd.read_csv(path)
-    # Normalize columns stripping spaces
-    df.columns = [str(c).strip() for c in df.columns]
-    return df
-
-def _ccl_from_probs(probs: np.ndarray, metric: str) -> float:
-    probs = probs.astype(float)
-    probs = probs[probs > 0]
-    if probs.size == 0:
-        return float("nan")
-    metric = metric.lower().strip()
-    if metric == "entropy":
-        h = -(probs * np.log(probs)).sum()
-        # normalize by log(K)
-        k = int(probs.size)
-        denom = math.log(k) if k > 1 else 1.0
-        return float(h / denom) if denom > 0 else 0.0
-    if metric in ("impurity", "gini"):
-        return float(1.0 - (probs**2).sum())
-    if metric in ("1-max", "one_minus_max", "one-minus-max"):
-        return float(1.0 - probs.max())
-    raise ValueError(f"Unknown ccl metric: {metric}")
 
 @dataclass(frozen=True)
 class RunKey:
@@ -112,428 +45,417 @@ class RunKey:
     shots: int
     instance: int
 
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
-def _parse_name_bits(fname: str) -> Tuple[str, str, int, int]:
-    """
-    Parse filenames like:
-      STATES_ibmqx2_BV_0_8192.csv
-      ATTR_ibmqx2_BV_0_8192.csv
-    Returns (device, algo, instance, shots)
-    """
-    m = re.search(r'_(?P<device>[^_]+)_(?P<algo>[A-Za-z0-9]+)_(?P<inst>\d+)_(?P<shots>\d+)\.csv$', fname)
-    if not m:
-        raise ValueError(f"Unrecognized filename pattern: {fname}")
-    device = m.group("device")
-    algo = m.group("algo")
-    inst = int(m.group("inst"))
-    shots = int(m.group("shots"))
-    return device, algo, inst, shots
+def write_manifest(run_dir: Path) -> None:
+    files: List[Dict[str, str]] = []
+    for p in sorted(run_dir.rglob("*")):
+        if p.is_file():
+            rel = p.relative_to(run_dir).as_posix()
+            files.append({"path": rel, "sha256": sha256_file(p)})
+    (run_dir / "manifest.json").write_text(json.dumps({"files": files}, indent=2), encoding="utf-8")
 
+def _ensure_dir(p: Path) -> None:
+    p.mkdir(parents=True, exist_ok=True)
 
-def _collect_pairs(root: Path) -> List[Tuple[RunKey, Path, Path]]:
+def _timestamp() -> str:
+    return time.strftime("%Y%m%d_%H%M%S", time.gmtime())
+
+def _open_dataset(dataset_path: Path, work_dir: Path) -> Path:
     """
-    Find matching STATES and ATTR files.
-    Returns list of (RunKey, states_path, attr_path).
+    Returns a directory containing the extracted dataset tree.
+    If dataset_path is a directory, returns it.
+    If dataset_path is a zip, extracts to work_dir/dataset_extracted and returns that.
     """
-    states_files = {}
-    attr_files = {}
+    if dataset_path.is_dir():
+        return dataset_path
+    if dataset_path.is_file() and dataset_path.suffix.lower() == ".zip":
+        out = work_dir / "dataset_extracted"
+        if out.exists():
+            shutil.rmtree(out)
+        out.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(dataset_path) as zf:
+            zf.extractall(out)
+        return out
+    raise SystemExit(f"dataset_path must be a directory or .zip file: {dataset_path}")
+
+_state_prob_re = re.compile(r"STATES_(?P<device>[^_]+)_(?P<algo>[^_]+)_(?P<instance>\d+)_(?P<shots>\d+)\.csv$", re.IGNORECASE)
+_attr_re = re.compile(r"ATTR_(?P<device>[^_]+)_(?P<algo>[^_]+)_(?P<instance>\d+)_(?P<shots>\d+)\.csv$", re.IGNORECASE)
+
+def _iter_files(root: Path) -> Iterable[Path]:
     for p in root.rglob("*.csv"):
-        name = p.name
-        if name.startswith("STATES_"):
-            try:
-                device, algo, inst, shots = _parse_name_bits(name)
-            except Exception:
-                continue
-            states_files[(device, algo, inst, shots)] = p
-        elif name.startswith("ATTR_"):
-            try:
-                device, algo, inst, shots = _parse_name_bits(name)
-            except Exception:
-                continue
-            attr_files[(device, algo, inst, shots)] = p
+        yield p
 
-    pairs = []
-    for k, sp in states_files.items():
-        ap = attr_files.get(k)
-        if ap is None:
-            continue
-        device, algo, inst, shots = k
-        pairs.append((RunKey(algo=algo, device=device, shots=shots, instance=inst), sp, ap))
-    return pairs
+def _parse_states_csv(path: Path) -> pd.DataFrame:
+    # Many files are headerless: bitstring,prob
+    df = pd.read_csv(path, header=None)
+    if df.shape[1] >= 2:
+        df = df.iloc[:, :2]
+        df.columns = ["bitstring", "prob"]
+    else:
+        raise ValueError(f"Unexpected STATES CSV format: {path}")
+    df["prob"] = pd.to_numeric(df["prob"], errors="coerce").fillna(0.0)
+    return df
 
+def _parse_attr_csv(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    # Normalize columns (strip)
+    df.columns = [c.strip() for c in df.columns]
+    return df
 
-def _write_inventory_and_recs(pairs: List[Tuple[RunKey, Path, Path]], out_tables: Path, topk: int = 10) -> Tuple[pd.DataFrame, dict]:
-    rows = []
-    # Compute depth distinct per instance too
-    # Build a map to depths
-    depth_map: Dict[Tuple[str,str,int], Dict[int, set]] = {}
-    for rk, sp, ap in pairs:
-        try:
-            adf = _read_attr_csv(ap)
-        except Exception:
+def ccl_entropy(probs: np.ndarray) -> float:
+    probs = probs[probs > 0]
+    if probs.size == 0:
+        return float("nan")
+    h = -np.sum(probs * np.log(probs))
+    # normalize by log(K) where K is number of outcomes observed
+    k = max(int(probs.size), 2)
+    return float(h / math.log(k))
+
+def ccl_one_minus_max(probs: np.ndarray) -> float:
+    if probs.size == 0:
+        return float("nan")
+    return float(1.0 - np.max(probs))
+
+def ccl_impurity(probs: np.ndarray) -> float:
+    if probs.size == 0:
+        return float("nan")
+    return float(1.0 - np.sum(probs ** 2))
+
+def compute_ccl(metric: str, probs: np.ndarray) -> float:
+    metric = metric.lower().strip()
+    if metric == "entropy":
+        return ccl_entropy(probs)
+    if metric in {"1-max", "one_minus_max", "oneminusmax"}:
+        return ccl_one_minus_max(probs)
+    if metric in {"impurity", "purity"}:
+        return ccl_impurity(probs)
+    raise ValueError(f"Unknown metric: {metric}")
+
+def build_inventory(dataset_root: Path) -> Tuple[pd.DataFrame, Dict[Tuple[str,str,int], Dict[str,int]]]:
+    """
+    Returns inventory dataframe per (algo, device, shots) and also a dict with details.
+    """
+    states = {}
+    attrs = {}
+    for p in _iter_files(dataset_root):
+        m = _state_prob_re.search(p.name)
+        if m:
+            key = RunKey(m.group("algo"), m.group("device"), int(m.group("shots")), int(m.group("instance")))
+            states[key] = p
             continue
-        depth_col = None
-        for c in adf.columns:
-            if c.lower() == "depth":
-                depth_col = c
-                break
-        if depth_col is None:
-            continue
-        depths = set(int(x) for x in pd.to_numeric(adf[depth_col], errors="coerce").dropna().unique())
-        key = (rk.algo, rk.device, rk.shots)
-        depth_map.setdefault(key, {}).setdefault(rk.instance, set()).update(depths)
+        m = _attr_re.search(p.name)
+        if m:
+            key = RunKey(m.group("algo"), m.group("device"), int(m.group("shots")), int(m.group("instance")))
+            attrs[key] = p
+
+    # Pairing
+    pairs: Dict[RunKey, Tuple[Path, Path]] = {}
+    for k, sp in states.items():
+        ap = attrs.get(k)
+        if ap is not None:
+            pairs[k] = (sp, ap)
 
     # Aggregate
-    combos = {}
-    for rk, _, _ in pairs:
-        combos.setdefault((rk.algo, rk.device, rk.shots), set()).add(rk.instance)
+    rows = []
+    by_combo: Dict[Tuple[str,str,int], Dict[str, int]] = {}
+    depth_counts: Dict[Tuple[str,str,int], List[int]] = {}
+    for k, (sp, ap) in pairs.items():
+        combo = (k.algo, k.device, k.shots)
+        by_combo.setdefault(combo, {"pairs_count": 0, "instances_count": 0})
+        by_combo[combo]["pairs_count"] += 1
 
-    for (algo, device, shots), inst_set in combos.items():
-        inst_count = len(inst_set)
-        # pair count equals inst_count if 1 pair per instance; keep generic:
-        pair_count = sum(1 for rk, _, _ in pairs if rk.algo==algo and rk.device==device and rk.shots==shots)
-        dm = depth_map.get((algo, device, shots), {})
-        depth_total = len(set().union(*dm.values())) if dm else 0
-        per_inst = [len(dm.get(i,set())) for i in inst_set] if dm else [0]*inst_count
-        dmin = min(per_inst) if per_inst else 0
-        dmed = float(np.median(per_inst)) if per_inst else 0.0
-        dmax = max(per_inst) if per_inst else 0
-        score = float(pair_count + inst_count + depth_total)
+        # Count distinct depths within this ATTR file (often 1 row)
+        try:
+            df_attr = _parse_attr_csv(ap)
+            depth_col = "Depth" if "Depth" in df_attr.columns else ("depth" if "depth" in df_attr.columns else None)
+            depths = []
+            if depth_col is not None:
+                depths = [int(x) for x in pd.to_numeric(df_attr[depth_col], errors="coerce").dropna().unique().tolist()]
+            depth_counts.setdefault(combo, []).extend(depths if depths else [])
+        except Exception:
+            depth_counts.setdefault(combo, []).extend([])
+
+    # Instances count by unique instance per combo
+    inst_seen = set()
+    for k in pairs.keys():
+        inst_seen.add((k.algo, k.device, k.shots, k.instance))
+    inst_by_combo: Dict[Tuple[str,str,int], set] = {}
+    for a,d,s,i in inst_seen:
+        inst_by_combo.setdefault((a,d,s), set()).add(i)
+
+    for combo, dct in by_combo.items():
+        insts = inst_by_combo.get(combo, set())
+        depths = depth_counts.get(combo, [])
+        depth_distinct_total = len(set(depths)) if depths else 0
+        # per-instance depth counts are not reliable without grouping, so report overall stats
         rows.append({
-            "algo": algo,
-            "device": device,
-            "shots": shots,
-            "pairs_count": pair_count,
-            "instances_count": inst_count,
-            "depth_distinct_total": depth_total,
-            "depth_distinct_min": dmin,
-            "depth_distinct_median": dmed,
-            "depth_distinct_max": dmax,
-            "score": score,
+            "algo": combo[0],
+            "device": combo[1],
+            "shots": combo[2],
+            "pairs_count": dct["pairs_count"],
+            "instances_count": len(insts),
+            "depth_distinct_total": depth_distinct_total,
         })
 
     inv = pd.DataFrame(rows)
+    if not inv.empty:
+        inv["score"] = inv["pairs_count"] + inv["instances_count"] + inv["depth_distinct_total"]
+        inv = inv.sort_values(["score","pairs_count","instances_count","depth_distinct_total"], ascending=False).reset_index(drop=True)
+    return inv, { (r["algo"], r["device"], int(r["shots"])): r for r in rows }
+
+def pick_autoplan(inv: pd.DataFrame) -> Dict[str, object]:
     if inv.empty:
-        inv = pd.DataFrame(columns=[
-            "algo","device","shots","pairs_count","instances_count","depth_distinct_total",
-            "depth_distinct_min","depth_distinct_median","depth_distinct_max","score"
-        ])
-    inv = inv.sort_values(["score","pairs_count","depth_distinct_total","instances_count"], ascending=False).reset_index(drop=True)
+        raise SystemExit("No paired STATES/ATTR files found in dataset.")
+    best = inv.iloc[0].to_dict()
+    # plan chooses (algo, device) and includes all shots available for that pair
+    algo = str(best["algo"]); device = str(best["device"])
+    return {"algo": algo, "device": device, "reason": "max_score", "score": float(best.get("score", 0.0))}
 
-    _ensure_dir(out_tables)
-    inv.to_csv(out_tables / "inventory.csv", index=False)
-
-    top = inv.head(topk).to_dict(orient="records")
-    rec = {"topk": top, "scoring": "score = pairs_count + instances_count + depth_distinct_total"}
-    (out_tables / "recommendations.json").write_text(json.dumps(rec, indent=2, sort_keys=True), encoding="utf-8")
-    return inv, rec
-
-
-def _select_auto_plan(inv: pd.DataFrame) -> Tuple[str, str]:
-    if inv.empty:
-        raise RuntimeError("inventory is empty; cannot auto-plan")
-    # Select best (algo, device) by aggregating score across shots
-    agg = inv.groupby(["algo","device"]).agg(
-        score_sum=("score","sum"),
-        shots_count=("shots","nunique"),
-        pairs_sum=("pairs_count","sum"),
-        depth_sum=("depth_distinct_total","sum"),
-        inst_sum=("instances_count","sum"),
-    ).reset_index()
-    agg = agg.sort_values(["score_sum","pairs_sum","depth_sum","inst_sum","shots_count"], ascending=False).reset_index(drop=True)
-    best = agg.iloc[0]
-    return str(best["algo"]), str(best["device"])
-
-
-def _filter_pairs(pairs, algo: Optional[str], device: Optional[str], shots_list: Optional[List[int]]):
-    out=[]
-    for rk, sp, ap in pairs:
-        if algo and rk.algo != algo:
+def filter_pairs(dataset_root: Path, algo: Optional[str], device: Optional[str], shots: Optional[List[int]]) -> Dict[RunKey, Tuple[Path, Path]]:
+    states = {}
+    attrs = {}
+    for p in _iter_files(dataset_root):
+        m = _state_prob_re.search(p.name)
+        if m:
+            key = RunKey(m.group("algo"), m.group("device"), int(m.group("shots")), int(m.group("instance")))
+            states[key] = p
             continue
-        if device and rk.device != device:
+        m = _attr_re.search(p.name)
+        if m:
+            key = RunKey(m.group("algo"), m.group("device"), int(m.group("shots")), int(m.group("instance")))
+            attrs[key] = p
+
+    pairs: Dict[RunKey, Tuple[Path, Path]] = {}
+    for k, sp in states.items():
+        ap = attrs.get(k)
+        if ap is None:
             continue
-        if shots_list and rk.shots not in shots_list:
+        if algo and k.algo != algo:
             continue
-        out.append((rk, sp, ap))
-    return out
-
-
-def _compute_points(pairs: List[Tuple[RunKey, Path, Path]], metric: str, t_axis: str) -> pd.DataFrame:
-    rows=[]
-    axis_key = t_axis.lower().strip()
-    for rk, sp, ap in pairs:
-        sdf = _read_states_csv(sp)
-        adf = _read_attr_csv(ap)
-
-        # axis value(s)
-        # Expect one row in ATTR, but support multiple; take first non-null
-        axis_col = None
-        for c in adf.columns:
-            if c.lower() == axis_key:
-                axis_col = c
-                break
-        if axis_col is None:
-            # common names
-            for c in adf.columns:
-                if axis_key == "depth" and c.lower().startswith("depth"):
-                    axis_col = c; break
-                if axis_key == "runtime" and "runtime" in c.lower():
-                    axis_col = c; break
-        if axis_col is None:
+        if device and k.device != device:
             continue
-        axis_vals = pd.to_numeric(adf[axis_col], errors="coerce").dropna().tolist()
-        if not axis_vals:
+        if shots and k.shots not in shots:
             continue
-        axis_val = float(axis_vals[0])
+        pairs[k] = (sp, ap)
+    return pairs
 
-        probs = pd.to_numeric(sdf["prob"], errors="coerce").dropna().to_numpy()
-        ccl = _ccl_from_probs(probs, metric=metric)
-
-        rows.append({
-            "algo": rk.algo,
-            "device": rk.device,
-            "shots": rk.shots,
-            "instance": rk.instance,
-            "axis": axis_val,
-            "ccl": ccl,
-            "states_file": str(sp),
-            "attr_file": str(ap),
-        })
-    df = pd.DataFrame(rows)
-    return df
-
-
-def _first_crossing(axis: np.ndarray, y: np.ndarray, threshold: float) -> Tuple[Optional[float], Optional[float]]:
-    """Return (t*, y(t*)) where y crosses above threshold for the first time, after sorting by axis."""
-    if axis.size == 0:
-        return None, None
-    order = np.argsort(axis)
-    axis = axis[order]
-    y = y[order]
-    for a, v in zip(axis, y):
-        if not (isinstance(v, float) and math.isnan(v)) and v >= threshold:
-            return float(a), float(v)
-    return None, None
-
-
-def _bootstrap_tstar(points: pd.DataFrame, threshold: float, n: int, seed: int = 7) -> pd.DataFrame:
-    rng = np.random.default_rng(seed)
-    rows=[]
-    if points.empty:
-        return pd.DataFrame(columns=["shots","sample","tstar"])
-    for shots, sub in points.groupby("shots"):
-        vals = sub[["axis","ccl"]].dropna().to_numpy()
-        if vals.shape[0] == 0:
-            for i in range(n):
-                rows.append({"shots": int(shots), "sample": i, "tstar": np.nan})
+def _parse_shots_filter(s: str) -> Optional[List[int]]:
+    s = (s or "").strip()
+    if not s:
+        return None
+    vals = []
+    for part in s.split(","):
+        part = part.strip()
+        if not part:
             continue
-        for i in range(n):
-            idx = rng.integers(0, vals.shape[0], size=vals.shape[0])
-            sample = vals[idx]
-            tstar, _ = _first_crossing(sample[:,0], sample[:,1], threshold)
-            rows.append({"shots": int(shots), "sample": i, "tstar": (np.nan if tstar is None else tstar)})
-    return pd.DataFrame(rows)
+        vals.append(int(part))
+    return vals or None
 
-
-def _plot_ccl_by_shots(df: pd.DataFrame, out_png: Path, axis_name: str) -> None:
-    _ensure_dir(out_png.parent)
-    plt.figure()
-    if df.empty:
-        plt.text(0.5, 0.5, "No data to plot", ha="center", va="center")
-        plt.axis("off")
-        plt.savefig(out_png, dpi=160, bbox_inches="tight")
-        plt.close()
-        return
-
-    for shots, sub in df.groupby("shots"):
-        sub = sub.sort_values("axis")
-        plt.plot(sub["axis"], sub["ccl_mean"], marker="o", label=str(shots))
-    plt.xlabel(axis_name)
-    plt.ylabel("Ccl (metric mean)")
-    plt.title("Ccl vs axis by shots")
-    plt.legend(title="shots", loc="best")
+def _safe_savefig(path: Path) -> None:
     plt.tight_layout()
-    plt.savefig(out_png, dpi=160)
+    plt.savefig(path, dpi=150)
     plt.close()
-
-
-def _plot_tstar_hist(df: pd.DataFrame, out_png: Path) -> None:
-    _ensure_dir(out_png.parent)
-    plt.figure()
-    if df.empty or df["tstar"].dropna().empty:
-        plt.text(0.5, 0.5, "No t* found", ha="center", va="center")
-        plt.axis("off")
-        plt.savefig(out_png, dpi=160, bbox_inches="tight")
-        plt.close()
-        return
-    plt.hist(df["tstar"].dropna().to_numpy(), bins=15)
-    plt.xlabel("t* (axis)")
-    plt.ylabel("count")
-    plt.title("Bootstrap t* distribution (pooled)")
-    plt.tight_layout()
-    plt.savefig(out_png, dpi=160)
-    plt.close()
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset-path", required=True, help="Path to dataset zip OR extracted folder")
-    ap.add_argument("--out-dir", required=False, help="Output run directory (preferred)")
-    ap.add_argument("--out-root", required=False, help="Legacy alias for out dir")
-    ap.add_argument("--metric", default="entropy", choices=["entropy","impurity","1-max"])
-    ap.add_argument("--t-axis", default="Depth")
-    ap.add_argument("--threshold", type=float, default=0.70)
-    ap.add_argument("--bootstrap-samples", type=int, default=500)
-
-    ap.add_argument("--algo", default="", help="Filter algo (empty=all)")
-    ap.add_argument("--device-filter", default="", help="Filter device (empty=all)")
-    ap.add_argument("--shots-filter", default="", help="Comma-separated list of shots to include (empty=all)")
-
-    ap.add_argument("--auto-plan", action="store_true", help="Auto-select best (algo,device) across dataset")
-    ap.add_argument("--no-auto-plan", action="store_true", help="Disable auto-plan even if provided")
-
+    ap.add_argument("--dataset", required=True, help="Path to dataset .zip or extracted directory")
+    ap.add_argument("--out-dir", default=None, help="Preferred output root (contains runs/)")
+    ap.add_argument("--out-root", default=None, help="Legacy alias for --out-dir")
+    ap.add_argument("--algo", default="", help="Algo filter (empty=all)")
+    ap.add_argument("--device-filter", default="", help="Device filter (empty=all)")
+    ap.add_argument("--shots-filter", default="", help="Comma-separated shots filter (empty=all)")
+    ap.add_argument("--metric", default="entropy", help="Ccl metric: entropy|1-max|impurity")
+    ap.add_argument("--threshold", type=float, default=0.70, help="Ccl threshold for t*")
+    ap.add_argument("--bootstrap-samples", type=int, default=500, help="Bootstrap samples")
+    ap.add_argument("--auto-plan", action="store_true", help="Auto-select best (algo,device) and include all shots")
+    ap.add_argument("--no-auto-plan", dest="auto_plan", action="store_false")
+    ap.set_defaults(auto_plan=False)
     args = ap.parse_args()
 
-    out_dir = args.out_dir or args.out_root
-    if not out_dir:
-        raise SystemExit("Need --out-dir (or legacy --out-root)")
-    out_dir = Path(out_dir)
+    out_root = args.out_dir or args.out_root
+    if not out_root:
+        raise SystemExit("Either --out-dir or --out-root must be provided.")
+    out_root = Path(out_root)
+    _ensure_dir(out_root)
 
-    dataset_path = Path(args.dataset_path)
-    if not dataset_path.exists():
-        raise SystemExit(f"dataset path not found: {dataset_path}")
+    run_dir = out_root / "runs" / _timestamp()
+    _ensure_dir(run_dir / "tables")
+    _ensure_dir(run_dir / "figures")
+    _ensure_dir(run_dir / "contracts")
+    work_dir = run_dir / "_work"
+    _ensure_dir(work_dir)
 
-    # Prepare working dataset root
-    work_root = out_dir / "_dataset"
-    if work_root.exists():
-        shutil.rmtree(work_root)
-    _ensure_dir(work_root)
+    dataset_path = Path(args.dataset)
+    dataset_root = _open_dataset(dataset_path, work_dir)
 
-    if dataset_path.is_dir():
-        # use directory directly (copy minimal structure for manifestability)
-        shutil.copytree(dataset_path, work_root / dataset_path.name, dirs_exist_ok=True)
-        data_root = work_root / dataset_path.name
-    else:
-        # zip
-        with zipfile.ZipFile(dataset_path, "r") as z:
-            z.extractall(work_root)
-        # If zip contains a single top folder, use it; else use work_root
-        children = [p for p in work_root.iterdir()]
-        if len(children) == 1 and children[0].is_dir():
-            data_root = children[0]
-        else:
-            data_root = work_root
+    inv_df, _ = build_inventory(dataset_root)
 
-    pairs = _collect_pairs(data_root)
+    # Write inventory + recommendations (global)
+    inv_path = run_dir / "tables" / "inventory.csv"
+    inv_df.to_csv(inv_path, index=False)
 
-    tables_dir = out_dir / "tables"
-    figs_dir = out_dir / "figures"
-    contracts_dir = out_dir / "contracts"
-    _ensure_dir(tables_dir); _ensure_dir(figs_dir); _ensure_dir(contracts_dir)
+    topk = inv_df.head(10).to_dict(orient="records") if not inv_df.empty else []
+    rec = {"topk": topk, "n_combinations": int(len(inv_df))}
+    (run_dir / "tables" / "recommendations.json").write_text(json.dumps(rec, indent=2), encoding="utf-8")
 
-    inv, rec = _write_inventory_and_recs(pairs, tables_dir, topk=10)
-
-    # Decide plan
-    auto_plan = bool(args.auto_plan) and not bool(args.no_auto_plan)
-    selected = {
-        "auto_plan": auto_plan,
-        "algo": None,
-        "device": None,
-        "shots_included": None,
-        "filters": {
-            "algo_arg": args.algo,
-            "device_filter_arg": args.device_filter,
-            "shots_filter_arg": args.shots_filter,
-        },
-    }
-
+    selected_plan = {"auto_plan": bool(args.auto_plan)}
     algo = args.algo.strip() or None
     device = args.device_filter.strip() or None
-    shots_list = None
-    if args.shots_filter.strip():
-        shots_list = [int(x.strip()) for x in args.shots_filter.split(",") if x.strip()]
+    shots = _parse_shots_filter(args.shots_filter)
 
-    if auto_plan:
-        algo, device = _select_auto_plan(inv)
-        selected["algo"] = algo
-        selected["device"] = device
+    if args.auto_plan:
+        plan = pick_autoplan(inv_df)
+        selected_plan.update(plan)
+        algo = plan["algo"]
+        device = plan["device"]
+        # include all shots for selected (algo,device)
+        shots = sorted(inv_df[(inv_df["algo"]==algo) & (inv_df["device"]==device)]["shots"].astype(int).unique().tolist())
+        selected_plan["shots"] = shots
 
-    # If still None -> all
-    filtered_pairs = _filter_pairs(pairs, algo=algo, device=device, shots_list=shots_list)
-    points = _compute_points(filtered_pairs, metric=args.metric, t_axis=args.t_axis)
-    points.to_csv(tables_dir / "ccl_points.csv", index=False)
+    (run_dir / "tables" / "selected_plan.json").write_text(json.dumps(selected_plan, indent=2), encoding="utf-8")
 
-    # Aggregate by (shots, axis)
-    if points.empty:
-        by_shots = pd.DataFrame(columns=["shots","axis","ccl_mean","n_points"])
+    pairs = filter_pairs(dataset_root, algo, device, shots)
+
+    # Build points
+    points_rows = []
+    for k, (sp, ap) in pairs.items():
+        try:
+            df_states = _parse_states_csv(sp)
+            df_attr = _parse_attr_csv(ap)
+            depth_col = "Depth" if "Depth" in df_attr.columns else ("depth" if "depth" in df_attr.columns else None)
+            depth = None
+            if depth_col is not None and len(df_attr) > 0:
+                depth = pd.to_numeric(df_attr.iloc[0][depth_col], errors="coerce")
+                depth = int(depth) if not pd.isna(depth) else None
+            probs = df_states["prob"].to_numpy(dtype=float)
+            ccl = compute_ccl(args.metric, probs)
+            points_rows.append({
+                "algo": k.algo,
+                "device": k.device,
+                "shots": k.shots,
+                "instance": k.instance,
+                "axis": depth,
+                "ccl": ccl,
+            })
+        except Exception:
+            continue
+
+    df_points = pd.DataFrame(points_rows)
+    df_points.to_csv(run_dir / "tables" / "ccl_points.csv", index=False)
+
+    # Aggregate by shots & axis
+    if not df_points.empty:
+        df_agg = (
+            df_points.dropna(subset=["axis","ccl"])
+            .groupby(["shots","axis"], as_index=False)
+            .agg(ccl_mean=("ccl","mean"), ccl_std=("ccl","std"), n=("ccl","count"))
+            .sort_values(["shots","axis"])
+        )
     else:
-        by_shots = points.groupby(["shots","axis"], as_index=False).agg(
-            ccl_mean=("ccl","mean"),
-            n_points=("ccl","size"),
-        ).sort_values(["shots","axis"]).reset_index(drop=True)
-    by_shots.to_csv(tables_dir / "ccl_by_shots.csv", index=False)
+        df_agg = pd.DataFrame(columns=["shots","axis","ccl_mean","ccl_std","n"])
+    df_agg.to_csv(run_dir / "tables" / "ccl_by_shots.csv", index=False)
 
-    # Compute t* per shots
-    tstar_rows=[]
-    for shots, sub in by_shots.groupby("shots"):
-        tstar, ccl_at = _first_crossing(sub["axis"].to_numpy(), sub["ccl_mean"].to_numpy(), args.threshold)
-        tstar_rows.append({"shots": int(shots), "tstar": (np.nan if tstar is None else tstar), "ccl_at_tstar": (np.nan if ccl_at is None else ccl_at)})
-    tstar_df = pd.DataFrame(tstar_rows) if tstar_rows else pd.DataFrame(columns=["shots","tstar","ccl_at_tstar"])
-    tstar_df.to_csv(tables_dir / "tstar_by_shots.csv", index=False)
+    # t* per shots: first axis where ccl_mean >= threshold
+    tstar_rows = []
+    for shots_val, grp in df_agg.groupby("shots"):
+        grp2 = grp.sort_values("axis")
+        hit = grp2[grp2["ccl_mean"] >= float(args.threshold)]
+        if len(hit) > 0:
+            tstar = int(hit.iloc[0]["axis"])
+            c_at = float(hit.iloc[0]["ccl_mean"])
+        else:
+            tstar = None
+            c_at = float("nan")
+        tstar_rows.append({"shots": int(shots_val), "tstar": tstar, "ccl_at_tstar": c_at, "threshold": float(args.threshold)})
+    df_tstar = pd.DataFrame(tstar_rows)
+    df_tstar.to_csv(run_dir / "tables" / "tstar_by_shots.csv", index=False)
 
-    boot = _bootstrap_tstar(by_shots.rename(columns={"ccl_mean":"ccl"}), threshold=args.threshold, n=args.bootstrap_samples, seed=7)
-    boot.to_csv(tables_dir / "bootstrap_tstar_by_shots.csv", index=False)
+    # Bootstrap t* by shots: resample instances within each (shots, axis)
+    bs_rows = []
+    rng = np.random.default_rng(12345)
+    for shots_val, sub in df_points.dropna(subset=["axis","ccl"]).groupby("shots"):
+        # pool by instance
+        instances = sub["instance"].unique().tolist()
+        if not instances:
+            continue
+        axes = sorted(sub["axis"].dropna().unique().astype(int).tolist())
+        for b in range(int(args.bootstrap_samples)):
+            sample_insts = rng.choice(instances, size=len(instances), replace=True)
+            tmp = sub[sub["instance"].isin(sample_insts)]
+            if tmp.empty:
+                bs_rows.append({"shots": int(shots_val), "bootstrap_i": b, "tstar": None})
+                continue
+            agg = tmp.groupby("axis", as_index=False)["ccl"].mean().sort_values("axis")
+            hit = agg[agg["ccl"] >= float(args.threshold)]
+            tstar = int(hit.iloc[0]["axis"]) if len(hit) > 0 else None
+            bs_rows.append({"shots": int(shots_val), "bootstrap_i": b, "tstar": tstar})
+    df_bs = pd.DataFrame(bs_rows)
+    df_bs.to_csv(run_dir / "tables" / "bootstrap_tstar_by_shots.csv", index=False)
 
-    # Always generate figures required by checks
-    _plot_ccl_by_shots(by_shots, figs_dir / "ccl_vs_axis_by_shots.png", axis_name=args.t_axis)
-    _plot_tstar_hist(boot, figs_dir / "tstar_hist.png")
-
-    # contracts
-    mapping = {
-        "dataset_path": str(dataset_path),
-        "metric": args.metric,
-        "t_axis": args.t_axis,
-        "threshold": args.threshold,
-        "bootstrap_samples": args.bootstrap_samples,
-        "notes": "Ccl computed mechanically from state probability distributions; cross-conditions compares shots.",
-    }
-    (contracts_dir / "mapping_cross_conditions.json").write_text(json.dumps(mapping, indent=2, sort_keys=True), encoding="utf-8")
-    (tables_dir / "selected_plan.json").write_text(json.dumps(selected, indent=2, sort_keys=True), encoding="utf-8")
-
+    # Summary
     summary = {
-        "run_kind": "qcc_stateprob_cross_conditions",
-        "timestamp_utc": _now_stamp(),
-        "dataset_root_used": str(data_root),
-        "filters_effective": {"algo": algo or "", "device": device or "", "shots_list": shots_list or []},
-        "counts": {
-            "pairs_total": len(pairs),
-            "pairs_used": len(filtered_pairs),
-            "points_used": int(points.shape[0]),
-            "shots_groups": int(by_shots["shots"].nunique()) if not by_shots.empty else 0,
-        },
+        "dataset": str(dataset_path),
+        "metric": args.metric,
+        "threshold": float(args.threshold),
+        "bootstrap_samples": int(args.bootstrap_samples),
+        "auto_plan": bool(args.auto_plan),
+        "filters": {"algo": algo or "", "device": device or "", "shots": shots or []},
+        "n_pairs": int(len(pairs)),
+        "n_points": int(len(df_points)),
     }
-    (tables_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    (run_dir / "tables" / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
-    # manifest
-    # reuse existing make_manifest.py if present in repo; else inline
-    try:
-        from tools.make_manifest import write_manifest  # type: ignore
-        write_manifest(out_dir, out_dir / "manifest.json")
-    except Exception:
-        import hashlib
-        entries=[]
-        for p in out_dir.rglob("*"):
-            if p.is_file():
-                h=hashlib.sha256()
-                with open(p,"rb") as f:
-                    for chunk in iter(lambda: f.read(1024*1024), b""):
-                        h.update(chunk)
-                entries.append({"path": str(p.relative_to(out_dir)).replace("\\","/"), "sha256": h.hexdigest(), "bytes": p.stat().st_size})
-        (out_dir / "manifest.json").write_text(json.dumps({"files": sorted(entries, key=lambda x: x["path"])}, indent=2), encoding="utf-8")
+    # Figures (always create, even placeholder)
+    fig1 = run_dir / "figures" / "ccl_vs_axis_by_shots.png"
+    plt.figure()
+    if not df_agg.empty:
+        for shots_val, grp in df_agg.groupby("shots"):
+            plt.plot(grp["axis"].to_numpy(), grp["ccl_mean"].to_numpy(), label=f"shots={int(shots_val)}")
+        plt.axhline(float(args.threshold), linestyle="--", linewidth=1.0)
+        plt.xlabel("Depth")
+        plt.ylabel(f"Ccl ({args.metric})")
+        plt.legend()
+        plt.title("Ccl vs Depth by shots")
+    else:
+        plt.text(0.5, 0.5, "No data to plot", ha="center", va="center")
+        plt.axis("off")
+    _safe_savefig(fig1)
 
-    print(f"Wrote run: {out_dir}")
+    fig2 = run_dir / "figures" / "tstar_hist.png"
+    plt.figure()
+    if not df_bs.empty and df_bs["tstar"].notna().any():
+        vals = df_bs["tstar"].dropna().astype(int).to_numpy()
+        plt.hist(vals, bins=min(20, max(1, len(np.unique(vals)))))
+        plt.xlabel("t*")
+        plt.ylabel("count")
+        plt.title("Bootstrap t* distribution (all shots pooled)")
+    else:
+        plt.text(0.5, 0.5, "No t* found", ha="center", va="center")
+        plt.axis("off")
+    _safe_savefig(fig2)
+
+    # Contracts
+    mapping = {
+        "ccl_metric": args.metric,
+        "axis": "Depth",
+        "threshold": float(args.threshold),
+        "auto_plan": bool(args.auto_plan),
+        "notes": "Non-interpretive cross-conditions over (algo, device) comparing shots.",
+    }
+    (run_dir / "contracts" / "mapping_cross_conditions.json").write_text(json.dumps(mapping, indent=2), encoding="utf-8")
+
+    # Manifest
+    write_manifest(run_dir)
+
+    # Print where run is
+    print(f"Wrote run: {run_dir.as_posix()}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
