@@ -145,16 +145,28 @@ def _load_runs_index(path: Path) -> list[RunSpec]:
                 f"Vérifiez l'alignement des colonnes (cq_csv/time_col/cq_col)."
             )
 
-        spectrum_csv = str(row.get("spectrum_csv", "") or "").strip()
+        raw_spectrum = row.get("spectrum_csv", "")
+        if raw_spectrum is None or (isinstance(raw_spectrum, float) and pd.isna(raw_spectrum)):
+            spectrum_csv = ""
+        else:
+            spectrum_csv = str(raw_spectrum).strip()
         if spectrum_csv and (not spectrum_csv.lower().endswith(".csv")):
             raise SystemExit(
                 f"Runs index invalide ({path}). run_id={run_id}: spectrum_csv='{spectrum_csv}' ne ressemble pas à un fichier .csv."
             )
 
-        u_imp = _to_float(row["u_imp"]) if ("u_imp" in row and str(row["u_imp"]).strip() != "") else None
+        u_imp = None
+        if "u_imp" in row:
+            raw_u = row["u_imp"]
+            if raw_u is not None and not (isinstance(raw_u, float) and pd.isna(raw_u)) and str(raw_u).strip() != "":
+                u_imp = _to_float(raw_u)
         o_method = str(row.get("o_method", "bandpower")).strip()
         r_definition = str(row.get("r_definition", "R_constant")).strip()
-        r_value = _to_float(row["r_value"]) if ("r_value" in row and str(row["r_value"]).strip() != "") else None
+        r_value = None
+        if "r_value" in row:
+            raw_rv = row["r_value"]
+            if raw_rv is not None and not (isinstance(raw_rv, float) and pd.isna(raw_rv)) and str(raw_rv).strip() != "":
+                r_value = _to_float(raw_rv)
 
         specs.append(
             RunSpec(
