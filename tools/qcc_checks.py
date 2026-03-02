@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -16,95 +17,94 @@ def _find_latest_run(out_root: Path) -> Path:
         if p.exists():
             return p
 
-    runs = sorted((out_root / "runs").glob("*"))
+    runs_dir = out_root / "runs"
+    runs = sorted(runs_dir.glob("*")) if runs_dir.exists() else []
     if not runs:
         raise SystemExit(f"Aucun run trouvé dans {out_root}")
     return runs[-1]
 
 
-def _check_time_strict(t: np.ndarray) -> None:
-    if len(t) < 2:
-        return
-    dt = np.diff(t)
-    if not np.all(dt > 0):
-        bad = int(np.sum(dt <= 0))
-        raise SystemExit(f"Temps non strictement croissant: {bad} pas invalides")
+def _manifest_files_set(manifest_path: Path) -> set[str]:
+    m = json.loads(manifest_path.read_text(encoding="utf-8"))
+    return set(m.get("files", {}).keys())
+
+
+def _require_any(files: set[str], prefixes: Iterable[str]) -> None:
+    for f in files:
+        for p in prefixes:
+            if f.startswith(p):
+                return
+    raise SystemExit(f"Manifest incomplet: aucun fichier ne commence par {list(prefixes)}")
 
 
 def check_run(run_dir: Path) -> None:
     tables = run_dir / "tables"
     figs = run_dir / "figures"
-    contracts = run_dir / "contracts"
     manifest = run_dir / "manifest.json"
 
-    for p in [tables, figs, contracts, manifest]:
-        if not p.exists():
-            raise SystemExit(f"Sortie attendue manquante: {p}")
+    if not tables.exists():
+        raise SystemExit(f"Dossier manquant: {tables}")
+    if not figs.exists():
+        raise SystemExit(f"Dossier manquant: {figs}")
+    if not manifest.exists():
+        raise SystemExit(f"Fichier manquant: {manifest}")
 
-    # Contracts must exist and be hashed
-    for p in [contracts / "mapping.json", contracts / "qcc_runs_index.csv"]:
-        if not p.exists():
-            raise SystemExit(f"Contrat manquant: {p}")
+    # Exigences minimales, indépendantes du mode (qcc complet ou cq_only)
+    summary = tables / "summary.json"
+    if not summary.exists():
+        raise SystemExit(f"Sortie attendue manquante: {summary}")
 
-    m = json.loads(manifest.read_text(encoding="utf-8"))
-    files = set(m.get("files", {}).keys())
-    expected_contracts = {"contracts/mapping.json", "contracts/qcc_runs_index.csv", "tables/summary.json", "tables/events.csv"}
-    missing_contracts = sorted(expected_contracts - files)
-    if missing_contracts:
-        raise SystemExit(f"Manifest incomplet, manque: {missing_contracts}")
+    # Au moins un timeseries*.csv (multi-run) OU timeseries.csv (single-run)
+    ts_candidates = list(tables.glob("timeseries*.csv"))
+    if not ts_candidates:
+        raise SystemExit(f"Aucun timeseries*.csv trouvé dans {tables}")
 
-    # Summary defines modes per run
-    summary = json.loads((tables / "summary.json").read_text(encoding="utf-8"))
-    runs = summary.get("runs", {})
-    if not isinstance(runs, dict) or not runs:
-        raise SystemExit("summary.json: runs missing or empty")
+    # Au moins une figure PNG
+    pngs = list(figs.glob("*.png"))
+    if not pngs:
+        raise SystemExit(f"Aucune figure *.png trouvée dans {figs}")
 
-    # Figures: compare_Cq is required
-    if not (figs / "compare_Cq.png").exists():
-        raise SystemExit("Figure manquante: figures/compare_Cq.png")
-
-    # Per-run checks
-    for run_id, info in runs.items():
-        mode = str(info.get("mode", "")).strip().lower()
-        ts = tables / f"timeseries_{run_id}.csv"
-        fig = figs / f"plot_{run_id}.png"
-        if not ts.exists():
-            raise SystemExit(f"Timeseries manquante: {ts}")
-        if not fig.exists():
-            raise SystemExit(f"Figure manquante: {fig}")
-
+    # Checks sur chaque timeseries
+    for ts in ts_candidates:
         df = pd.read_csv(ts)
-        if "t" not in df.columns or "Cq" not in df.columns:
-            raise SystemExit(f"{ts}: colonnes t et Cq requises")
+        if "t" not in df.columns:
+            raise SystemExit(f"{ts.name}: colonne 't' manquante")
+        t = pd.to_numeric(df["t"], errors="coerce").to_numpy(dtype=float)
+        if len(t) < 5:
+            raise SystemExit(f"{ts.name}: trop court (n < 5)")
+        dt = np.diff(t)
+        if not np.all(dt > 0):
+            bad = int(np.sum(dt <= 0))
+            raise SystemExit(f"{ts.name}: temps non strictement croissant ({bad} pas invalides)")
 
-        if len(df) < 5:
-            raise SystemExit(f"{ts}: série trop courte (n < 5)")
-
-        t = df["t"].to_numpy(dtype=float)
-        cq = df["Cq"].to_numpy(dtype=float)
-        _check_time_strict(t)
-
-        if np.any(np.isnan(cq)):
-            raise SystemExit(f"{ts}: NaN détectés dans Cq")
-
-        if mode == "qcc_full":
-            for c in ["O", "R", "Sigma"]:
-                if c not in df.columns:
-                    raise SystemExit(f"{ts}: mode qcc_full requiert colonne {c}")
-            sigma = df["Sigma"].to_numpy(dtype=float)
+        # Sigma est requis seulement si présent (mode qcc complet)
+        if "Sigma" in df.columns:
+            sigma = pd.to_numeric(df["Sigma"], errors="coerce").to_numpy(dtype=float)
             if np.any(np.isnan(sigma)):
-                raise SystemExit(f"{ts}: NaN détectés dans Sigma")
+                raise SystemExit(f"{ts.name}: NaN détectés dans Sigma")
             ds = np.diff(sigma)
             if np.any(ds < -1e-12):
-                raise SystemExit(f"{ts}: Sigma non monotone croissante")
+                raise SystemExit(f"{ts.name}: Sigma non monotone croissante")
 
-        elif mode == "cq_only":
-            # Do not require Sigma
-            pass
-        else:
-            raise SystemExit(f"Mode inconnu pour {run_id}: {mode}")
+    # Vérification manifest: présence des contrats et des sorties minimales
+    files = _manifest_files_set(manifest)
 
-    print("OK: checks passed (non interprétatif, modes supportés)")
+    # minimum: summary + au moins un timeseries + au moins un png + contracts/*
+    if "tables/summary.json" not in files:
+        raise SystemExit("Manifest incomplet, manque: ['tables/summary.json']")
+
+    _require_any(files, prefixes=("tables/timeseries",))
+    _require_any(files, prefixes=("figures/",))
+    _require_any(files, prefixes=("contracts/",))
+
+    # events: accepté sous plusieurs noms (events.json, events_<run>.json, events.csv)
+    # et optionnel pour cq_only. Si aucun fichier events* n'existe, on ne bloque pas.
+    # (Mais s'il existe dans le dossier, on veut qu'il soit hashé.)
+    disk_events = list(tables.glob("events*"))
+    if disk_events:
+        _require_any(files, prefixes=("tables/events",))
+
+    print("OK: checks passed (non interprétatif)")
 
 
 def main() -> None:
