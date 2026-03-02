@@ -88,7 +88,11 @@ def _compute_O_from_spectrum(spectrum_csv: Path, u_imp_target: float) -> Dict[st
     a = sub["Amplitude"].to_numpy(dtype=float)
 
     # "Bandpower" simple: intégrale trapézoïdale sur toute la bande disponible
-    O = float(np.trapz(a, f))
+    # NumPy 2.x peut ne plus exposer np.trapz; utiliser np.trapezoid si disponible
+    if hasattr(np, "trapezoid"):
+        O = float(np.trapezoid(a, f))
+    else:
+        O = float(np.trapz(a, f))
     return {"O": O, "u_imp_used": u_imp_used, "u_imp_target": float(u_imp_target), "f_min": float(np.min(f)), "f_max": float(np.max(f))}
 
 
