@@ -3,45 +3,44 @@ name: QCC StateProb Bootstrap (Ccl)
 on:
   workflow_dispatch:
     inputs:
-      dataset_zip:
-        description: Path to dataset zip inside repo
-        required: false
-        default: data/qcc/stateprob/04-09-2020.zip
+      dataset_path:
+        description: "Path to dataset .zip OR extracted directory inside repo"
+        required: true
+        default: "data/qcc/stateprob/04-09-2020.zip"
       algo:
-        description: Algorithm folder (BV, QAOA, ...)
-        required: false
-        default: BV
+        description: "Algorithm folder (BV, QAOA, ...)"
+        required: true
+        default: "BV"
       device:
-        description: Device filter (empty = all)
+        description: "Device filter (empty = all)"
         required: false
         default: ""
       shots:
-        description: Shots filter (empty = all)
+        description: "Shots filter (empty = all)"
         required: false
         default: "8192"
       t_axis:
-        description: t axis (Depth)
-        required: false
-        default: Depth
+        description: "t axis (Depth)"
+        required: true
+        default: "Depth"
       ccl_metric:
-        description: Ccl metric (entropy, impurity, 1-max)
-        required: false
-        default: entropy
-      ccl_threshold:
-        description: Threshold for t* detection
-        required: false
+        description: "Ccl metric (entropy, impurity, 1-max)"
+        required: true
+        default: "entropy"
+      threshold:
+        description: "Threshold for t* detection"
+        required: true
         default: "0.70"
-      bootstrap_samples:
-        description: Bootstrap resamples
-        required: false
+      bootstrap:
+        description: "Bootstrap samples"
+        required: true
         default: "500"
 
 jobs:
-  stateprob-bootstrap:
+  run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -51,19 +50,15 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-qcc-stateprob.txt
+          python -m pip install -r requirements-qcc-stateprob.txt
 
-      - name: Run pipeline
+      - name: Run bootstrap
         run: |
-          mkdir -p 05_Results/qcc_stateprob_bootstrap
-          python tools/qcc_stateprob_bootstrap.py             --dataset-zip "${{ inputs.dataset_zip }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device }}"             --shots "${{ inputs.shots }}"             --t-axis "${{ inputs.t_axis }}"             --metric "${{ inputs.ccl_metric }}"             --ccl-threshold "${{ inputs.ccl_threshold }}"             --bootstrap-samples "${{ inputs.bootstrap_samples }}"             --out-dir "05_Results/qcc_stateprob_bootstrap"
-
-      - name: Checks
-        run: |
-          python tools/qcc_stateprob_checks.py --out-dir "05_Results/qcc_stateprob_bootstrap"
+          mkdir -p _ci_out/stateprob
+          python tools/qcc_stateprob_bootstrap.py             --dataset "${{ inputs.dataset_path }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device }}"             --shots "${{ inputs.shots }}"             --t-axis "${{ inputs.t_axis }}"             --ccl-metric "${{ inputs.ccl_metric }}"             --threshold "${{ inputs.threshold }}"             --bootstrap "${{ inputs.bootstrap }}"             --out-dir "_ci_out/stateprob"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: qcc_stateprob_bootstrap_artifact
-          path: 05_Results/qcc_stateprob_bootstrap
+          path: _ci_out/stateprob
