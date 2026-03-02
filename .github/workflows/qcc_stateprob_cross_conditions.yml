@@ -4,37 +4,45 @@ on:
   workflow_dispatch:
     inputs:
       dataset_path:
-        description: "Path to dataset (.zip or extracted dir) in repo"
+        description: "Path to dataset (.zip or extracted folder) inside repo"
         required: true
         default: "data/qcc/stateprob/04-09-2020.zip"
+        type: string
       auto_plan:
-        description: "Auto-select best (algo,device) and compare all shots"
+        description: "Auto-select best (algo, device) then compare shots"
         required: true
-        default: "true"
+        default: true
+        type: boolean
       algo:
-        description: "Algorithm filter (empty = all; ignored if auto_plan=true)"
+        description: "Algorithm filter (empty = all; ignored when auto_plan=true)"
         required: false
         default: ""
+        type: string
       device_filter:
-        description: "Device filter (empty = all; ignored if auto_plan=true)"
+        description: "Device filter (empty = all; ignored when auto_plan=true)"
         required: false
         default: ""
+        type: string
       shots_filter:
-        description: "Shots filter (empty = all; ignored if auto_plan=true)"
+        description: "Shots filter (empty = all)"
         required: false
         default: ""
+        type: string
       metric:
-        description: "Ccl metric: entropy | one_minus_max | impurity"
+        description: "Ccl metric: entropy | impurity | one_minus_max"
         required: true
         default: "entropy"
+        type: string
       threshold:
-        description: "Ccl threshold for t* detection"
+        description: "Ccl threshold for t*"
         required: true
         default: "0.70"
+        type: string
       bootstrap_samples:
-        description: "Bootstrap resamples"
+        description: "Bootstrap samples"
         required: true
         default: "500"
+        type: string
 
 jobs:
   cross:
@@ -49,7 +57,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
+        shell: bash
         run: |
+          set -euo pipefail
           python -V
           python -m pip install --upgrade pip
           if [ -f requirements-qcc-stateprob.txt ]; then
@@ -61,6 +71,7 @@ jobs:
           fi
 
       - name: Run cross-conditions
+        shell: bash
         env:
           DATASET_PATH: ${{ inputs.dataset_path }}
           AUTO_PLAN: ${{ inputs.auto_plan }}
@@ -81,15 +92,18 @@ jobs:
             EXTRA_PLAN="--no-auto-plan"
           fi
 
-          python tools/qcc_stateprob_cross_conditions.py             --dataset "${DATASET_PATH}"             --out-root "_ci_out/qcc_stateprob_cross"             --algo "${ALGO}"             --device-filter "${DEVICE_FILTER}"             --shots-filter "${SHOTS_FILTER}"             --metric "${METRIC}"             --threshold "${THRESHOLD}"             --bootstrap-samples "${BOOTSTRAP_SAMPLES}"             ${EXTRA_PLAN}
+          # IMPORTANT: run as module so "tools.*" imports work (repo root is on PYTHONPATH)
+          python -m tools.qcc_stateprob_cross_conditions             --dataset "${DATASET_PATH}"             --out-root "_ci_out/qcc_stateprob_cross"             --algo "${ALGO}"             --device-filter "${DEVICE_FILTER}"             --shots-filter "${SHOTS_FILTER}"             --metric "${METRIC}"             --threshold "${THRESHOLD}"             --bootstrap-samples "${BOOTSTRAP_SAMPLES}"             ${EXTRA_PLAN}
 
       - name: Checks
+        shell: bash
         run: |
           set -euo pipefail
-          python tools/qcc_stateprob_cross_checks.py --out-root "_ci_out/qcc_stateprob_cross"
+          python -m tools.qcc_stateprob_cross_checks --out-root "_ci_out/qcc_stateprob_cross"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: qcc_stateprob_cross_artifact
           path: _ci_out/qcc_stateprob_cross
+          if-no-files-found: error
