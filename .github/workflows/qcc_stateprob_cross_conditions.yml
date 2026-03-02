@@ -4,45 +4,37 @@ on:
   workflow_dispatch:
     inputs:
       dataset_path:
-        description: "Path to dataset (.zip or extracted folder) inside repo"
+        description: "Path to dataset (.zip or extracted dir) inside repo"
         required: true
         default: "data/qcc/stateprob/04-09-2020.zip"
-        type: string
       auto_plan:
-        description: "Auto-select best (algo, device) then compare shots"
+        description: "Auto select best (algo, device) then compare shots"
         required: true
-        default: true
-        type: boolean
+        default: "true"
       algo:
-        description: "Algorithm filter (empty = all; ignored when auto_plan=true)"
+        description: "Algo filter (optional if auto_plan=true)"
         required: false
         default: ""
-        type: string
       device_filter:
-        description: "Device filter (empty = all; ignored when auto_plan=true)"
+        description: "Device filter (optional)"
         required: false
         default: ""
-        type: string
       shots_filter:
-        description: "Shots filter (empty = all)"
+        description: "Shots filter (optional)"
         required: false
         default: ""
-        type: string
       metric:
-        description: "Ccl metric: entropy | impurity | one_minus_max"
+        description: "Ccl metric"
         required: true
         default: "entropy"
-        type: string
       threshold:
         description: "Ccl threshold for t*"
         required: true
         default: "0.70"
-        type: string
       bootstrap_samples:
         description: "Bootstrap samples"
         required: true
         default: "500"
-        type: string
 
 jobs:
   cross:
@@ -57,21 +49,15 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        shell: bash
         run: |
-          set -euo pipefail
-          python -V
           python -m pip install --upgrade pip
           if [ -f requirements-qcc-stateprob.txt ]; then
-            python -m pip install -r requirements-qcc-stateprob.txt
-          elif [ -f requirements-qcc-stateprob-cross.txt ]; then
-            python -m pip install -r requirements-qcc-stateprob-cross.txt
+            pip install -r requirements-qcc-stateprob.txt
           else
-            python -m pip install numpy pandas matplotlib
+            pip install numpy pandas matplotlib
           fi
 
       - name: Run cross-conditions
-        shell: bash
         env:
           DATASET_PATH: ${{ inputs.dataset_path }}
           AUTO_PLAN: ${{ inputs.auto_plan }}
@@ -83,22 +69,33 @@ jobs:
           BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
         run: |
           set -euo pipefail
-          mkdir -p _ci_out/qcc_stateprob_cross
+          OUT="_ci_out/qcc_stateprob_cross"
+          mkdir -p "$OUT"
 
-          EXTRA_PLAN=""
-          if [ "${AUTO_PLAN}" = "true" ]; then
-            EXTRA_PLAN="--auto-plan"
+          ARGS=(--dataset "$DATASET_PATH" --out-root "$OUT" --metric "$METRIC" --threshold "$THRESHOLD" --bootstrap-samples "$BOOTSTRAP_SAMPLES")
+
+          # auto-plan flag handling
+          if [ "${AUTO_PLAN,,}" = "true" ]; then
+            ARGS+=(--auto-plan)
           else
-            EXTRA_PLAN="--no-auto-plan"
+            ARGS+=(--no-auto-plan)
           fi
 
-          # IMPORTANT: run as module so "tools.*" imports work (repo root is on PYTHONPATH)
-          python -m tools.qcc_stateprob_cross_conditions             --dataset "${DATASET_PATH}"             --out-root "_ci_out/qcc_stateprob_cross"             --algo "${ALGO}"             --device-filter "${DEVICE_FILTER}"             --shots-filter "${SHOTS_FILTER}"             --metric "${METRIC}"             --threshold "${THRESHOLD}"             --bootstrap-samples "${BOOTSTRAP_SAMPLES}"             ${EXTRA_PLAN}
+          # optional filters (only add if non-empty)
+          if [ -n "$ALGO" ]; then
+            ARGS+=(--algo "$ALGO")
+          fi
+          if [ -n "$DEVICE_FILTER" ]; then
+            ARGS+=(--device "$DEVICE_FILTER")
+          fi
+          if [ -n "$SHOTS_FILTER" ]; then
+            ARGS+=(--shots "$SHOTS_FILTER")
+          fi
+
+          python -m tools.qcc_stateprob_cross_conditions "${ARGS[@]}"
 
       - name: Checks
-        shell: bash
         run: |
-          set -euo pipefail
           python -m tools.qcc_stateprob_cross_checks --out-root "_ci_out/qcc_stateprob_cross"
 
       - name: Upload artifact
@@ -106,4 +103,3 @@ jobs:
         with:
           name: qcc_stateprob_cross_artifact
           path: _ci_out/qcc_stateprob_cross
-          if-no-files-found: error
