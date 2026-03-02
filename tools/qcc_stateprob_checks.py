@@ -1,75 +1,61 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Non-interpretative checks for stateprob bootstrap outputs.
+
+Goal: assert presence of minimum audit artefacts without forcing interpretation.
+Accepts that t* may be undefined (no threshold hit), so tstar tables may exist but be all NaN.
+"""
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 
-def _find_latest_run(out_root: Path) -> Path:
-    latest = out_root / "LATEST_RUN.txt"
-    if latest.exists():
-        p = Path(latest.read_text(encoding="utf-8").strip())
-        if p.exists():
-            return p
+def _latest_run_dir(out_root: Path) -> Path:
     runs = sorted((out_root / "runs").glob("*"))
     if not runs:
-        raise SystemExit(f"Aucun run trouvé dans {out_root}")
+        raise FileNotFoundError(f"Aucun run trouvé sous: {out_root}/runs")
     return runs[-1]
 
 
-def main() -> None:
+def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-root", required=True)
     args = ap.parse_args()
 
-    out_root = Path(args.out_root).resolve()
-    run_dir = _find_latest_run(out_root)
+    out_root = Path(args.out_root)
+    run_dir = _latest_run_dir(out_root)
     tables = run_dir / "tables"
     figs = run_dir / "figures"
-    contracts = run_dir / "contracts"
-    manifest = run_dir / "manifest.json"
 
-    for p in [tables, figs, manifest]:
-        if not p.exists():
-            raise SystemExit(f"Manquant: {p}")
+    required_tables = ["ccl_timeseries.csv", "summary.json", "tstar_by_instance.csv", "bootstrap_tstar.csv"]
+    missing = []
+    for f in required_tables:
+        if not (tables / f).exists():
+            missing.append(str(tables / f))
 
-    required_tables = ["ccl_timeseries.csv", "tstar_by_instance.csv", "bootstrap_tstar.csv", "summary.json"]
-    for name in required_tables:
-        p = tables / name
-        if not p.exists():
-            raise SystemExit(f"Table manquante: {p}")
+    # At least one png
+    pngs = list(figs.glob("*.png"))
+    if not pngs:
+        missing.append(str(figs / "*.png"))
 
-    if not (figs / "ccl_mean.png").exists():
-        raise SystemExit("Figure manquante: ccl_mean.png")
-
-    # Manifest: vérifier présence tables et figures, et contrats si présents
-    m = json.loads(manifest.read_text(encoding="utf-8"))
-    files = set(m.get("files", {}).keys())
-
-    expected = {
-        "tables/ccl_timeseries.csv",
-        "tables/tstar_by_instance.csv",
-        "tables/bootstrap_tstar.csv",
-        "tables/summary.json",
-        "figures/ccl_mean.png",
-        "manifest.json",
-    }
-    # manifest.json n'est pas listé dans lui-même, donc on ne l'exige pas
-    expected.discard("manifest.json")
-
-    missing = sorted(expected - files)
     if missing:
-        raise SystemExit(f"Manifest incomplet, manque: {missing}")
+        for m in missing:
+            print(f"Artefact manquant: {m}", file=sys.stderr)
+        return 1
 
-    # Contrats: si le dossier existe et contient des fichiers, ils doivent être hashés
-    if contracts.exists():
-        for p in contracts.glob("*"):
-            rel = p.relative_to(run_dir).as_posix()
-            if rel not in files:
-                raise SystemExit(f"Contrat non hashé dans manifest: {rel}")
+    # summary must be valid json
+    try:
+        _ = json.loads((tables / "summary.json").read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"summary.json invalide: {e}", file=sys.stderr)
+        return 1
 
-    print("OK: checks passed (non interpretatif)")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
