@@ -79,6 +79,16 @@ def main() -> int:
         return 1
 
     entries = manifest.get("entries")
+    # Support qcc.manifest.v1 schema written by qcc_stateprob_write_manifest
+    # (uses "files" list instead of "entries" dict)
+    if entries is None and "files" in manifest:
+        files_list = manifest.get("files", [])
+        if isinstance(files_list, list):
+            entries = {
+                item["path"]: item.get("sha256")
+                for item in files_list
+                if isinstance(item, dict) and "path" in item
+            }
     if not isinstance(entries, dict) or not entries:
         print("manifest.json missing or invalid 'entries' dict", file=sys.stderr)
         return 1

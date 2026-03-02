@@ -36,7 +36,7 @@ jobs:
   cross:
     runs-on: ubuntu-latest
     env:
-      DATASET_PATH: data/04-09-2020.zip
+      DATASET_PATH: data/qcc/stateprob/04-09-2020.zip
       METRIC: ${{ inputs.metric }}
       THRESHOLD: ${{ inputs.threshold }}
       BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
