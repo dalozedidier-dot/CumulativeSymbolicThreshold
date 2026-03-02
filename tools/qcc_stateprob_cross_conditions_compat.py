@@ -82,7 +82,11 @@ def _rename_impurity_to_ccl(run_dir: Path) -> None:
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(prog="qcc_stateprob_cross_conditions_compat")
-    ap.add_argument("--dataset", required=True, help="Path to StateProb dataset zip/folder")
+    ap.add_argument("--dataset", default="", help="Path to a single StateProb dataset zip/folder")
+    ap.add_argument("--dataset-paths", dest="dataset_paths", nargs="*", default=None,
+                    help="One or more dataset paths (merged before analysis)")
+    ap.add_argument("--dataset-glob", dest="dataset_glob", default="",
+                    help="Glob pattern matching multiple dataset paths")
     ap.add_argument("--out-dir", default=None, help="Optional legacy single-run output directory")
     ap.add_argument("--out-root", default=None, help="Output root, expected to contain runs/<timestamp>/")
     ap.add_argument("--auto-plan", action="store_true", help="Enable auto-plan selection")
@@ -127,8 +131,6 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Build argv for the delegate module
     delegate_argv: List[str] = [
-        "--dataset",
-        args.dataset,
         "--out-root",
         str(out_root),
         "--metric",
@@ -140,6 +142,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--seed",
         str(args.seed),
     ]
+    # Dataset source(s)
+    if args.dataset:
+        delegate_argv += ["--dataset", args.dataset]
+    if args.dataset_paths:
+        delegate_argv += ["--dataset-paths"] + list(args.dataset_paths)
+    if args.dataset_glob:
+        delegate_argv += ["--dataset-glob", args.dataset_glob]
 
     # auto-plan flags
     if args.auto_plan and args.no_auto_plan:
