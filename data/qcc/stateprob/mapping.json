@@ -1,0 +1,12 @@
+{
+  "t_axis": "Depth",
+  "ccl_metric": "entropy",
+  "ccl_threshold": 0.7,
+  "bootstrap_samples_default": 500,
+  "group_keys": [
+    "algo",
+    "device",
+    "shots"
+  ],
+  "notes": "Pipeline Ccl uniquement, sans Cq ni Sigma."
+}

@@ -22,9 +22,12 @@ def write_manifest_sha256(root_dir: Path, out_path: Path) -> None:
         if p.is_dir():
             continue
         rel = p.relative_to(root_dir).as_posix()
-        if out_path.exists() and rel == out_path.relative_to(root_dir).as_posix():
+        if rel == out_path.relative_to(root_dir).as_posix():
             continue
         files[rel] = sha256_file(p)
 
-    payload = {"root": root_dir.as_posix(), "files": files}
+    payload = {
+        "root": root_dir.as_posix(),
+        "files": files,
+    }
     out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
