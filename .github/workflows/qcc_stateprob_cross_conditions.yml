@@ -4,37 +4,37 @@ on:
   workflow_dispatch:
     inputs:
       dataset_path:
-        description: "Path to dataset (.zip or extracted dir) inside repo"
-        required: true
-        default: "data/qcc/stateprob/04-09-2020.zip"
-      auto_plan:
-        description: "Auto select best (algo, device) then compare shots"
-        required: true
-        default: "true"
-      algo:
-        description: "Algo filter (optional if auto_plan=true)"
+        description: "Path to StateProb dataset zip (repo path)"
         required: false
-        default: ""
-      device_filter:
-        description: "Device filter (optional)"
-        required: false
-        default: ""
-      shots_filter:
-        description: "Shots filter (optional)"
-        required: false
-        default: ""
+        default: "data/04-09-2020.zip"
       metric:
-        description: "Ccl metric"
-        required: true
-        default: "entropy"
+        description: "Metric name (passed through to tool)"
+        required: false
+        default: "ccl"
       threshold:
-        description: "Ccl threshold for t*"
-        required: true
-        default: "0.70"
+        description: "Threshold (passed through to tool)"
+        required: false
+        default: "0.35"
       bootstrap_samples:
         description: "Bootstrap samples"
-        required: true
+        required: false
         default: "500"
+      auto_plan:
+        description: "Use autoplan"
+        required: false
+        default: "true"
+      algo:
+        description: "Optional algo filter"
+        required: false
+        default: ""
+      device:
+        description: "Optional device filter"
+        required: false
+        default: ""
+      shots:
+        description: "Optional shots filter"
+        required: false
+        default: ""
 
 jobs:
   cross:
@@ -49,6 +49,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements-qcc-stateprob.txt ]; then
@@ -58,15 +59,16 @@ jobs:
           fi
 
       - name: Run cross-conditions
+        shell: bash
         env:
           DATASET_PATH: ${{ inputs.dataset_path }}
-          AUTO_PLAN: ${{ inputs.auto_plan }}
-          ALGO: ${{ inputs.algo }}
-          DEVICE_FILTER: ${{ inputs.device_filter }}
-          SHOTS_FILTER: ${{ inputs.shots_filter }}
           METRIC: ${{ inputs.metric }}
           THRESHOLD: ${{ inputs.threshold }}
           BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
+          AUTO_PLAN: ${{ inputs.auto_plan }}
+          ALGO: ${{ inputs.algo }}
+          DEVICE: ${{ inputs.device }}
+          SHOTS: ${{ inputs.shots }}
         run: |
           set -euo pipefail
           OUT="_ci_out/qcc_stateprob_cross"
@@ -85,16 +87,23 @@ jobs:
           if [ -n "$ALGO" ]; then
             ARGS+=(--algo "$ALGO")
           fi
-          if [ -n "$DEVICE_FILTER" ]; then
-            ARGS+=(--device "$DEVICE_FILTER")
+          if [ -n "$DEVICE" ]; then
+            ARGS+=(--device "$DEVICE")
           fi
-          if [ -n "$SHOTS_FILTER" ]; then
-            ARGS+=(--shots "$SHOTS_FILTER")
+          if [ -n "$SHOTS" ]; then
+            ARGS+=(--shots "$SHOTS")
           fi
 
           python -m tools.qcc_stateprob_cross_conditions "${ARGS[@]}"
 
+      - name: Write manifest.json into latest run dir
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_write_manifest --out-root "_ci_out/qcc_stateprob_cross"
+
       - name: Checks
+        shell: bash
         run: |
           python -m tools.qcc_stateprob_cross_checks --out-root "_ci_out/qcc_stateprob_cross"
 
@@ -103,3 +112,4 @@ jobs:
         with:
           name: qcc_stateprob_cross_artifact
           path: _ci_out/qcc_stateprob_cross
+          if-no-files-found: error
