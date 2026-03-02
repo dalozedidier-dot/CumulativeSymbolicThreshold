@@ -4,46 +4,37 @@ on:
   workflow_dispatch:
     inputs:
       dataset_path:
-        description: "Path to dataset (.zip or extracted dir) inside repo"
+        description: "Path to dataset (.zip or extracted dir) in repo"
         required: true
         default: "data/qcc/stateprob/04-09-2020.zip"
-        type: string
       auto_plan:
-        description: "Auto-select best (algo, device) and compare all available shots"
+        description: "Auto-select best (algo,device) and compare all shots"
         required: true
-        default: true
-        type: boolean
+        default: "true"
       algo:
-        description: "Algo filter (empty = all or autoplan)"
+        description: "Algorithm filter (empty = all; ignored if auto_plan=true)"
         required: false
         default: ""
-        type: string
       device_filter:
-        description: "Device filter (empty = all or autoplan)"
+        description: "Device filter (empty = all; ignored if auto_plan=true)"
         required: false
         default: ""
-        type: string
       shots_filter:
-        description: "Shots filter (empty = all shots)"
+        description: "Shots filter (empty = all; ignored if auto_plan=true)"
         required: false
         default: ""
-        type: string
       metric:
-        description: "Ccl metric"
+        description: "Ccl metric: entropy | one_minus_max | impurity"
         required: true
         default: "entropy"
-        type: choice
-        options: ["entropy", "impurity", "one_minus_max"]
       threshold:
         description: "Ccl threshold for t* detection"
         required: true
         default: "0.70"
-        type: string
       bootstrap_samples:
-        description: "Bootstrap samples"
+        description: "Bootstrap resamples"
         required: true
         default: "500"
-        type: string
 
 jobs:
   cross:
@@ -58,20 +49,18 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        shell: bash
         run: |
-          set -euo pipefail
+          python -V
           python -m pip install --upgrade pip
           if [ -f requirements-qcc-stateprob.txt ]; then
-            pip install -r requirements-qcc-stateprob.txt
-          elif [ -f requirements-qcc.txt ]; then
-            pip install -r requirements-qcc.txt
+            python -m pip install -r requirements-qcc-stateprob.txt
+          elif [ -f requirements-qcc-stateprob-cross.txt ]; then
+            python -m pip install -r requirements-qcc-stateprob-cross.txt
           else
-            pip install numpy pandas matplotlib
+            python -m pip install numpy pandas matplotlib
           fi
 
       - name: Run cross-conditions
-        shell: bash
         env:
           DATASET_PATH: ${{ inputs.dataset_path }}
           AUTO_PLAN: ${{ inputs.auto_plan }}
@@ -92,10 +81,9 @@ jobs:
             EXTRA_PLAN="--no-auto-plan"
           fi
 
-          python tools/qcc_stateprob_cross_conditions.py             --dataset-path "${DATASET_PATH}"             --out-root "_ci_out/qcc_stateprob_cross"             --algo "${ALGO}"             --device-filter "${DEVICE_FILTER}"             --shots-filter "${SHOTS_FILTER}"             --metric "${METRIC}"             --threshold "${THRESHOLD}"             --bootstrap-samples "${BOOTSTRAP_SAMPLES}"             ${EXTRA_PLAN}
+          python tools/qcc_stateprob_cross_conditions.py             --dataset "${DATASET_PATH}"             --out-root "_ci_out/qcc_stateprob_cross"             --algo "${ALGO}"             --device-filter "${DEVICE_FILTER}"             --shots-filter "${SHOTS_FILTER}"             --metric "${METRIC}"             --threshold "${THRESHOLD}"             --bootstrap-samples "${BOOTSTRAP_SAMPLES}"             ${EXTRA_PLAN}
 
       - name: Checks
-        shell: bash
         run: |
           set -euo pipefail
           python tools/qcc_stateprob_cross_checks.py --out-root "_ci_out/qcc_stateprob_cross"
