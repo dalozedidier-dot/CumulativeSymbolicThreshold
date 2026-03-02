@@ -645,6 +645,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "n_points": int(len(points)),
         "shots_included": sorted([int(s) for s in points["shots"].unique().tolist()]) if not points.empty else [],
         "tstar_found_shots_count": int(tstar_df["tstar"].notna().sum()) if not tstar_df.empty else 0,
+        "evidence_strength": evidence_strength,
         "power_diagnostic": {
             "evidence_strength": evidence_strength,
             "details": power_diag,
