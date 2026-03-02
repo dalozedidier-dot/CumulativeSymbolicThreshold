@@ -99,6 +99,11 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     ap.add_argument("--threshold", type=float, default=0.35)
     ap.add_argument("--bootstrap-samples", type=int, default=500)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument(
+        "--pooling", default="by-instance",
+        choices=["by-instance", "pooled-by-depth", "multi-device"],
+        help="Pooling strategy forwarded to qcc_stateprob_cross_conditions",
+    )
     return ap.parse_args(argv)
 
 
@@ -152,6 +157,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         delegate_argv += ["--device", args.device]
     if args.shots:
         delegate_argv += ["--shots", str(args.shots)]
+
+    # pooling
+    delegate_argv += ["--pooling", args.pooling]
 
     # Delegate execution
     from tools import qcc_stateprob_cross_conditions as delegate  # type: ignore

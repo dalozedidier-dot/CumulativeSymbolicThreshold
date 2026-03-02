@@ -1,0 +1,146 @@
+name: QCC StateProb Densify + Stability
+
+on:
+  workflow_dispatch:
+    inputs:
+      metric:
+        description: "Metric (ccl | entropy | impurity | one_minus_max)"
+        required: false
+        default: "ccl"
+      threshold:
+        description: "Ccl threshold (c-min)"
+        required: false
+        default: "0.35"
+      pooling:
+        description: "Pooling mode (by-instance | pooled-by-depth | multi-device)"
+        required: false
+        default: "pooled-by-depth"
+      bootstrap_samples:
+        description: "Bootstrap samples"
+        required: false
+        default: "500"
+      resamples:
+        description: "Resampling iterations for stability battery"
+        required: false
+        default: "50"
+      subsample_frac:
+        description: "Subsample fraction for resampling"
+        required: false
+        default: "0.7"
+      window_sizes:
+        description: "Comma-separated depth-point window sizes"
+        required: false
+        default: "3,5,7"
+
+jobs:
+
+  # ── Job 1: densify + cross-conditions ──────────────────────────────────────
+  densify:
+    runs-on: ubuntu-latest
+    env:
+      DATASET_PATH: data/qcc/stateprob/04-09-2020.zip
+      METRIC:            ${{ inputs.metric }}
+      THRESHOLD:         ${{ inputs.threshold }}
+      POOLING:           ${{ inputs.pooling }}
+      BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          set -euo pipefail
+          pip install --upgrade pip
+          pip install -r requirements-qcc-stateprob.txt
+
+      - name: Run densify + cross-conditions
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_cross_conditions_compat \
+            --dataset        "$DATASET_PATH" \
+            --out-root       _ci_out/qcc_stateprob_cross \
+            --metric         "$METRIC" \
+            --threshold      "$THRESHOLD" \
+            --bootstrap-samples "$BOOTSTRAP_SAMPLES" \
+            --auto-plan \
+            --pooling        "$POOLING"
+
+      - name: Write manifest
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_write_manifest \
+            --out-root _ci_out/qcc_stateprob_cross
+
+      - name: Checks
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_cross_checks \
+            --out-root _ci_out/qcc_stateprob_cross
+
+      - name: Upload densify artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcc_stateprob_densify_artifact
+          path: _ci_out/qcc_stateprob_cross
+
+  # ── Job 2: stability battery (runs after densify) ─────────────────────────
+  stability:
+    runs-on: ubuntu-latest
+    needs: densify
+    env:
+      THRESHOLD:       ${{ inputs.threshold }}
+      RESAMPLES:       ${{ inputs.resamples }}
+      SUBSAMPLE_FRAC:  ${{ inputs.subsample_frac }}
+      WINDOW_SIZES:    ${{ inputs.window_sizes }}
+      BOOTSTRAPS:      ${{ inputs.bootstrap_samples }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          set -euo pipefail
+          pip install --upgrade pip
+          pip install -r requirements-qcc-stateprob.txt
+
+      - name: Download densify artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: qcc_stateprob_densify_artifact
+          path: _ci_out/qcc_stateprob_cross
+
+      - name: Run stability battery
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_stability_battery \
+            --out-root          _ci_out/qcc_stateprob_cross \
+            --threshold         "$THRESHOLD" \
+            --resamples         "$RESAMPLES" \
+            --subsample-frac    "$SUBSAMPLE_FRAC" \
+            --window-sizes      "$WINDOW_SIZES" \
+            --bootstraps        "$BOOTSTRAPS" \
+            --stability-criteria contracts/STABILITY_CRITERIA.json
+
+      - name: Re-write manifest with stability outputs
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_write_manifest \
+            --out-root _ci_out/qcc_stateprob_cross
+
+      - name: Upload stability artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcc_stateprob_stability_artifact
+          path: _ci_out/qcc_stateprob_cross
