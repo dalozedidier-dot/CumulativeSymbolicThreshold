@@ -4,82 +4,78 @@ on:
   workflow_dispatch:
     inputs:
       dataset_zip:
-        description: "Chemin du zip dataset (ex: data/qcc/stateprob/04-09-2020.zip)"
-        required: true
-        default: "data/qcc/stateprob/04-09-2020.zip"
-      algo:
-        description: "Filtre algo (ex: BV, QAOA, QFT). Laisser vide pour tous."
+        description: Path to the 04-09-2020.zip dataset inside the repo (or just the filename). If missing, the job will search the repo.
         required: false
-        default: "BV"
+        default: data/qcc/stateprob/04-09-2020.zip
+      algo:
+        description: Algorithm folder (e.g. BV, DJ, QAOA)
+        required: false
+        default: BV
       device:
-        description: "Filtre device (substring). Laisser vide pour tous."
+        description: Optional device filter (empty = all devices)
         required: false
         default: ""
       shots:
-        description: "Filtre shots (ex: 8192). Laisser vide pour tous."
+        description: Shots filter (e.g. 8192). Empty = any.
         required: false
         default: "8192"
       t_axis:
-        description: "Axe t (Depth ou Runtime si disponible dans ATTR)"
-        required: true
-        default: "Depth"
+        description: Axis for t (Depth or Runtime)
+        required: false
+        default: Depth
       ccl_metric:
-        description: "Metric Ccl (entropy, one_minus_maxprob, one_minus_purity)"
-        required: true
-        default: "entropy"
+        description: Ccl metric (entropy, one_minus_maxprob, one_minus_purity)
+        required: false
+        default: entropy
       ccl_threshold:
-        description: "Seuil Ccl pour t* (float)"
-        required: true
+        description: Threshold for t* detection (0-1)
+        required: false
         default: "0.70"
       bootstrap_samples:
-        description: "Nombre bootstrap (int)"
-        required: true
+        description: Bootstrap samples
+        required: false
         default: "500"
-      out_dir:
-        description: "Répertoire résultats"
-        required: true
-        default: "05_Results/qcc_stateprob_bootstrap"
-
-  pull_request:
-    paths:
-      - ".github/workflows/qcc_stateprob_bootstrap.yml"
-      - "tools/qcc_stateprob_bootstrap.py"
-      - "tools/qcc_stateprob_checks.py"
-      - "tools/make_manifest.py"
-      - "requirements-qcc-stateprob.txt"
-      - "data/qcc/stateprob/**"
 
 jobs:
   stateprob-bootstrap:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Show dataset hints
+        shell: bash
+        run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "Input dataset_zip: ${{ inputs.dataset_zip }}"
+          echo "Listing data/qcc/stateprob (if exists)"
+          ls -la data/qcc/stateprob || true
+          echo "Searching for 04-09-2020.zip (max 20 results)"
+          find . -maxdepth 5 -type f -name "04-09-2020.zip" | head -n 20 || true
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
       - name: Install deps
+        shell: bash
         run: |
-          python -V
-          pip -V
+          python -m pip install --upgrade pip
           pip install -r requirements-qcc-stateprob.txt
 
       - name: Run pipeline
+        shell: bash
         run: |
-          python tools/qcc_stateprob_bootstrap.py             --dataset-zip "${{ inputs.dataset_zip }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device }}"             --shots "${{ inputs.shots }}"             --t-axis "${{ inputs.t_axis }}"             --ccl-metric "${{ inputs.ccl_metric }}"             --ccl-threshold "${{ inputs.ccl_threshold }}"             --bootstrap-samples "${{ inputs.bootstrap_samples }}"             --out-root "${{ inputs.out_dir }}"
+          python tools/qcc_stateprob_bootstrap.py             --dataset-zip "${{ inputs.dataset_zip }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device }}"             --shots "${{ inputs.shots }}"             --t-axis "${{ inputs.t_axis }}"             --ccl-metric "${{ inputs.ccl_metric }}"             --ccl-threshold "${{ inputs.ccl_threshold }}"             --bootstrap-samples "${{ inputs.bootstrap_samples }}"             --out-root "05_Results/qcc_stateprob_bootstrap"
 
       - name: Checks (non interpretatif)
+        shell: bash
         run: |
-          python tools/qcc_stateprob_checks.py --out-root "${{ inputs.out_dir }}"
+          python tools/qcc_stateprob_checks.py --out-root "05_Results/qcc_stateprob_bootstrap"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: qcc_stateprob_bootstrap_artifact
-          path: ${{ inputs.out_dir }}
-          if-no-files-found: error
+          path: 05_Results/qcc_stateprob_bootstrap
