@@ -1,58 +1,66 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Non-interpretative checks for stateprob bootstrap outputs.
+Non-interpretive checks for QCC StateProb Bootstrap.
 
-Goal: assert presence of minimum audit artefacts without forcing interpretation.
-Accepts that t* may be undefined (no threshold hit), so tstar tables may exist but be all NaN.
+We enforce:
+- presence of core outputs
+- presence of inventory + recommendations (requested)
+- basic CSV sanity (non-empty headers)
+No verdicts.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
+import pandas as pd
 
-def _latest_run_dir(out_root: Path) -> Path:
-    runs = sorted((out_root / "runs").glob("*"))
-    if not runs:
-        raise FileNotFoundError(f"Aucun run trouvé sous: {out_root}/runs")
-    return runs[-1]
+
+REQUIRED_TABLES = [
+    "tables/ccl_timeseries.csv",
+    "tables/tstar_by_instance.csv",
+    "tables/bootstrap_tstar.csv",
+    "tables/summary.json",
+    "tables/inventory.csv",
+    "tables/recommendations.json",
+]
+
+
+REQUIRED_FIGURES_ANY = [
+    "figures/ccl_mean.png",
+    "figures/tstar_hist.png",
+]
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out-root", required=True)
+    ap.add_argument("--run-dir", required=True)
     args = ap.parse_args()
 
-    out_root = Path(args.out_root)
-    run_dir = _latest_run_dir(out_root)
-    tables = run_dir / "tables"
-    figs = run_dir / "figures"
-
-    required_tables = ["ccl_timeseries.csv", "summary.json", "tstar_by_instance.csv", "bootstrap_tstar.csv"]
+    run_dir = Path(args.run_dir)
     missing = []
-    for f in required_tables:
-        if not (tables / f).exists():
-            missing.append(str(tables / f))
-
-    # At least one png
-    pngs = list(figs.glob("*.png"))
-    if not pngs:
-        missing.append(str(figs / "*.png"))
+    for rel in REQUIRED_TABLES:
+        if not (run_dir / rel).exists():
+            missing.append(rel)
 
     if missing:
-        for m in missing:
-            print(f"Artefact manquant: {m}", file=sys.stderr)
-        return 1
+        raise SystemExit(f"Missing required outputs: {missing}")
 
-    # summary must be valid json
-    try:
-        _ = json.loads((tables / "summary.json").read_text(encoding="utf-8"))
-    except Exception as e:
-        print(f"summary.json invalide: {e}", file=sys.stderr)
-        return 1
+    # At least one figure should exist (some runs may not generate hist if no t* values)
+    if not any((run_dir / p).exists() for p in REQUIRED_FIGURES_ANY):
+        raise SystemExit(f"Missing figures; expected at least one of: {REQUIRED_FIGURES_ANY}")
+
+    # Sanity: inventory has expected columns
+    inv = pd.read_csv(run_dir / "tables/inventory.csv")
+    for c in ["algo", "device", "shots", "n_pairs", "n_instances", "depth_distinct_median"]:
+        if c not in inv.columns:
+            raise SystemExit(f"inventory.csv missing column: {c}")
+
+    # recommendations is valid json with top10 list
+    rec = json.loads((run_dir / "tables/recommendations.json").read_text(encoding="utf-8"))
+    if "top10" not in rec or not isinstance(rec["top10"], list):
+        raise SystemExit("recommendations.json invalid structure: expected key top10 as list")
 
     return 0
 
