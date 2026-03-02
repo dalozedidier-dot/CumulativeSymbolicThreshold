@@ -1,4 +1,4 @@
-name: QCC StateProb Cross-Conditions (Ccl vs Depth by shots)
+name: QCC StateProb Cross-Conditions
 
 on:
   workflow_dispatch:
@@ -7,28 +7,28 @@ on:
         description: "Path to dataset (.zip or extracted dir) inside repo"
         required: true
         default: "data/qcc/stateprob/04-09-2020.zip"
+      auto_plan:
+        description: "Auto-pick best (algo, device) and compare all shots"
+        required: true
+        default: "true"
       algo:
-        description: "Algorithm folder (BV, QAOA, ...). Empty = all"
-        required: false
-        default: "SIMON"
-      device_filter:
-        description: "Device filter (empty = all)"
-        required: false
-        default: "ibmqx2"
-      shots_filter:
-        description: "Shots filter (empty = all)"
+        description: "Filter algo (e.g. SIMON). Ignored if auto_plan=true. Empty=all"
         required: false
         default: ""
-      t_axis:
-        description: "t axis (Depth or Runtime)"
-        required: true
-        default: "Depth"
-      ccl_metric:
-        description: "Ccl metric (entropy, impurity, 1-max)"
+      device_filter:
+        description: "Filter device (e.g. ibmqx2). Ignored if auto_plan=true. Empty=all"
+        required: false
+        default: ""
+      shots_filter:
+        description: "Comma-separated shots (e.g. 1024,2048,8192). Empty=all"
+        required: false
+        default: ""
+      metric:
+        description: "Ccl metric: entropy|one_minus_max|one_minus_purity"
         required: true
         default: "entropy"
-      ccl_threshold:
-        description: "Threshold for t* detection"
+      threshold:
+        description: "Ccl threshold for t*"
         required: true
         default: "0.70"
       bootstrap_samples:
@@ -39,26 +39,35 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-qcc-stateprob.txt
+          python -m pip install numpy matplotlib
 
       - name: Run cross-conditions
+        env:
+          DATASET_PATH: ${{ github.event.inputs.dataset_path }}
+          AUTO_PLAN: ${{ github.event.inputs.auto_plan }}
+          ALGO: ${{ github.event.inputs.algo }}
+          DEVICE_FILTER: ${{ github.event.inputs.device_filter }}
+          SHOTS_FILTER: ${{ github.event.inputs.shots_filter }}
+          METRIC: ${{ github.event.inputs.metric }}
+          THRESHOLD: ${{ github.event.inputs.threshold }}
+          BOOTSTRAP_SAMPLES: ${{ github.event.inputs.bootstrap_samples }}
         run: |
           mkdir -p _ci_out/qcc_stateprob_cross
-          python tools/qcc_stateprob_cross_conditions.py             --dataset "${{ inputs.dataset_path }}"             --algo "${{ inputs.algo }}"             --device "${{ inputs.device_filter }}"             --shots "${{ inputs.shots_filter }}"             --t-axis "${{ inputs.t_axis }}"             --metric "${{ inputs.ccl_metric }}"             --threshold "${{ inputs.ccl_threshold }}"             --bootstrap "${{ inputs.bootstrap_samples }}"             --out-dir "_ci_out/qcc_stateprob_cross"
-
-      - name: Checks
-        run: |
-          python tools/qcc_stateprob_cross_checks.py --out-root "_ci_out/qcc_stateprob_cross"
+          python tools/qcc_stateprob_cross_conditions.py             --dataset "$DATASET_PATH"             --auto-plan "$AUTO_PLAN"             --algo "$ALGO"             --device-filter "$DEVICE_FILTER"             --shots-filter "$SHOTS_FILTER"             --metric "$METRIC"             --threshold "$THRESHOLD"             --bootstrap-samples "$BOOTSTRAP_SAMPLES"             --out-dir "_ci_out/qcc_stateprob_cross"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
