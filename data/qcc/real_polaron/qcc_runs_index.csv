@@ -1,5 +1,5 @@
-run_id,cq_csv,time_col,cq_col,spectrum_csv,u_imp,o_method,o_fmin,o_fmax,r_definition,r_value,mode,notes
-polaron_N6,data/qcc/real_polaron/raw/dynamics_N6.csv,Time,S(t),data/qcc/real_polaron/raw/spectrum_N6.csv,2.5,bandpower,0.0,2.851666666666667,R_constant,0.0,qcc_full,Polaron scaling N6 with spectral O at u_imp≈2.5, R fixed
-polaron_N8,data/qcc/real_polaron/raw/dynamics_N8.csv,Time,S(t),data/qcc/real_polaron/raw/spectrum_N8.csv,2.5,bandpower,0.0,2.851666666666667,R_constant,0.0,qcc_full,Polaron scaling N8 with spectral O at u_imp≈2.5, R fixed
-polaron_N10,data/qcc/real_polaron/raw/dynamics_N10.csv,Time,S(t),data/qcc/real_polaron/raw/spectrum_N10.csv,2.5,bandpower,0.0,2.851666666666667,R_constant,0.0,qcc_full,Polaron scaling N10 with spectral O at u_imp≈2.5, R fixed
-ramsey_baseline,data/qcc/real_polaron/raw/ramsey signal data.csv,Tiempo,S(t),,,none,,,R_constant,0.0,cq_only,Ramsey baseline Cq only (no independent O available yet)
+run_id,mode,cq_csv,time_col,cq_col,spectrum_csv,u_imp,o_method,r_definition,r_value,notes
+polaron_N6,qcc,dynamics_N6.csv,Time,S(t),spectrum_N6.csv,2.5,bandpower_integral,R_constant,0.0,Polaron scaling N6
+polaron_N8,qcc,dynamics_N8.csv,Time,S(t),spectrum_N8.csv,2.5,bandpower_integral,R_constant,0.0,Polaron scaling N8
+polaron_N10,qcc,dynamics_N10.csv,Time,S(t),spectrum_N10.csv,2.5,bandpower_integral,R_constant,0.0,Polaron scaling N10
+ramsey_baseline,cq_only,"ramsey signal data.csv",Tiempo,"S(t)",,,,"R_constant",0.0,Ramsey baseline (Cq only)

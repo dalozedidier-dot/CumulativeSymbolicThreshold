@@ -125,23 +125,53 @@ class RunSpec:
 
 def _load_runs_index(path: Path) -> list[RunSpec]:
     df = pd.read_csv(path)
+    required = ["run_id", "cq_csv", "time_col", "cq_col"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise SystemExit(f"Runs index invalide ({path}) colonnes manquantes: {missing}. Colonnes présentes: {list(df.columns)}")
+
     specs: list[RunSpec] = []
     for _, row in df.iterrows():
+        run_id = str(row["run_id"])
+        mode = str(row.get("mode", "qcc")).strip().lower()
+        cq_csv = str(row["cq_csv"]).strip()
+        time_col = str(row["time_col"]).strip()
+        cq_col = str(row["cq_col"]).strip()
+
+        # Validation légère pour éviter les décalages de colonnes silencieux
+        if not cq_csv.lower().endswith(".csv"):
+            raise SystemExit(
+                f"Runs index invalide ({path}). run_id={run_id}: cq_csv='{cq_csv}' ne ressemble pas à un fichier .csv. "
+                f"Vérifiez l'alignement des colonnes (cq_csv/time_col/cq_col)."
+            )
+
+        spectrum_csv = str(row.get("spectrum_csv", "") or "").strip()
+        if spectrum_csv and (not spectrum_csv.lower().endswith(".csv")):
+            raise SystemExit(
+                f"Runs index invalide ({path}). run_id={run_id}: spectrum_csv='{spectrum_csv}' ne ressemble pas à un fichier .csv."
+            )
+
+        u_imp = _to_float(row["u_imp"]) if ("u_imp" in row and str(row["u_imp"]).strip() != "") else None
+        o_method = str(row.get("o_method", "bandpower")).strip()
+        r_definition = str(row.get("r_definition", "R_constant")).strip()
+        r_value = _to_float(row["r_value"]) if ("r_value" in row and str(row["r_value"]).strip() != "") else None
+
         specs.append(
             RunSpec(
-                run_id=str(row["run_id"]),
-                mode=str(row.get("mode", "qcc")).strip(),
-                cq_csv=str(row["cq_csv"]),
-                time_col=str(row["time_col"]),
-                cq_col=str(row["cq_col"]),
-                spectrum_csv=str(row.get("spectrum_csv", "") or ""),
-                u_imp=_to_float(row["u_imp"]) if "u_imp" in row and str(row["u_imp"]) != "" else None,
-                o_method=str(row.get("o_method", "bandpower")),
-                r_definition=str(row.get("r_definition", "R_constant")),
-                r_value=_to_float(row["r_value"]) if "r_value" in row and str(row["r_value"]) != "" else None,
+                run_id=run_id,
+                mode=mode,
+                cq_csv=cq_csv,
+                time_col=time_col,
+                cq_col=cq_col,
+                spectrum_csv=spectrum_csv,
+                u_imp=u_imp,
+                o_method=o_method,
+                r_definition=r_definition,
+                r_value=r_value,
             )
         )
     return specs
+
 
 
 def main() -> None:
