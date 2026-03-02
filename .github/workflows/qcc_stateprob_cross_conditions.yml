@@ -4,27 +4,27 @@ on:
   workflow_dispatch:
     inputs:
       dataset_path:
-        description: "Path to dataset (.zip or extracted dir) inside repo"
+        description: "Path to dataset (.zip or directory)"
         required: true
         default: "data/qcc/stateprob/04-09-2020.zip"
       auto_plan:
-        description: "Auto-pick best (algo, device) and compare all shots"
+        description: "Auto select best (algo, device) then compare all shots"
         required: true
         default: "true"
       algo:
-        description: "Filter algo (e.g. SIMON). Ignored if auto_plan=true. Empty=all"
+        description: "Optional algo filter (empty=all; ignored if auto_plan=true)"
         required: false
         default: ""
       device_filter:
-        description: "Filter device (e.g. ibmqx2). Ignored if auto_plan=true. Empty=all"
+        description: "Optional device filter (empty=all; ignored if auto_plan=true)"
         required: false
         default: ""
       shots_filter:
-        description: "Comma-separated shots (e.g. 1024,2048,8192). Empty=all"
+        description: "Optional shots filter (empty=all; ignored if auto_plan=true)"
         required: false
         default: ""
       metric:
-        description: "Ccl metric: entropy|one_minus_max|one_minus_purity"
+        description: "Ccl metric: entropy | one_minus_max | impurity"
         required: true
         default: "entropy"
       threshold:
@@ -32,15 +32,13 @@ on:
         required: true
         default: "0.70"
       bootstrap_samples:
-        description: "Bootstrap resamples"
+        description: "Bootstrap samples"
         required: true
         default: "500"
 
 jobs:
-  run:
+  cross:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,21 +51,31 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install numpy matplotlib
+          if [ -f requirements-qcc-stateprob.txt ]; then
+            pip install -r requirements-qcc-stateprob.txt
+          elif [ -f requirements-qcc-stateprob-cross.txt ]; then
+            pip install -r requirements-qcc-stateprob-cross.txt
+          else
+            pip install numpy pandas matplotlib
+          fi
 
       - name: Run cross-conditions
         env:
-          DATASET_PATH: ${{ github.event.inputs.dataset_path }}
-          AUTO_PLAN: ${{ github.event.inputs.auto_plan }}
-          ALGO: ${{ github.event.inputs.algo }}
-          DEVICE_FILTER: ${{ github.event.inputs.device_filter }}
-          SHOTS_FILTER: ${{ github.event.inputs.shots_filter }}
-          METRIC: ${{ github.event.inputs.metric }}
-          THRESHOLD: ${{ github.event.inputs.threshold }}
-          BOOTSTRAP_SAMPLES: ${{ github.event.inputs.bootstrap_samples }}
+          DATASET_PATH: ${{ inputs.dataset_path }}
+          AUTO_PLAN: ${{ inputs.auto_plan }}
+          ALGO: ${{ inputs.algo }}
+          DEVICE_FILTER: ${{ inputs.device_filter }}
+          SHOTS_FILTER: ${{ inputs.shots_filter }}
+          METRIC: ${{ inputs.metric }}
+          THRESHOLD: ${{ inputs.threshold }}
+          BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
         run: |
           mkdir -p _ci_out/qcc_stateprob_cross
           python tools/qcc_stateprob_cross_conditions.py             --dataset "$DATASET_PATH"             --auto-plan "$AUTO_PLAN"             --algo "$ALGO"             --device-filter "$DEVICE_FILTER"             --shots-filter "$SHOTS_FILTER"             --metric "$METRIC"             --threshold "$THRESHOLD"             --bootstrap-samples "$BOOTSTRAP_SAMPLES"             --out-dir "_ci_out/qcc_stateprob_cross"
+
+      - name: Checks
+        run: |
+          python tools/qcc_stateprob_cross_checks.py --out-root "_ci_out/qcc_stateprob_cross"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
