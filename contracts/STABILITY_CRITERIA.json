@@ -1,0 +1,10 @@
+{
+  "schema": "qcc.stability_criteria.v1",
+  "note": "Mechanical stability thresholds. No ORI-C verdict. Never adjusted post-hoc.",
+  "resample_found_rate_min": 0.5,
+  "relative_variation_max": 0.30,
+  "rationale": {
+    "resample_found_rate_min": "At least 50% of resampling runs must locate a finite t*. Below this, the signature is not robustly detectable under subsampling.",
+    "relative_variation_max": "CCL mean relative variation across sliding windows must stay below 30%. Above this, the profile is not stable across depth ranges."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "qcc.power_criteria.v1",
+  "note": "Frozen thresholds. Never adjusted post-hoc to match observed data.",
+  "thresholds": {
+    "high": {
+      "total_points": 200,
+      "depth_distinct_total": 10,
+      "instances_count": 20
+    },
+    "medium": {
+      "total_points": 60,
+      "depth_distinct_total": 6,
+      "instances_count": 8
+    }
+  },
+  "rationale": {
+    "high": "Sufficient for full bootstrap + stability battery with narrow confidence intervals.",
+    "medium": "Sufficient for exploratory analysis; results should be treated as preliminary.",
+    "low": "Below medium — evidence strength is insufficient; densification required."
+  }
+}

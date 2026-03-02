@@ -1,0 +1,33 @@
+{
+  "schema": "qcc.plan_schema.v1",
+  "note": "Describes the structure of a selected_plan.json produced per run.",
+  "fields": {
+    "mode": {
+      "type": "string",
+      "enum": ["auto_plan", "explicit", "fallback", "empty"],
+      "description": "How the plan was selected."
+    },
+    "algo": {
+      "type": ["string", "null"],
+      "description": "Selected algorithm identifier."
+    },
+    "device": {
+      "type": ["string", "null"],
+      "description": "Selected device identifier. 'pooled' when multi-device pooling is active."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable explanation of the selection."
+    }
+  },
+  "required": ["mode", "algo", "device", "reason"],
+  "pooling_modes": {
+    "by-instance": "Default. Each (algo, device, shots, instance) is one unit.",
+    "pooled-by-depth": "Groups all instances sharing the same (shots, depth) into a pool. pool_membership.csv is written for audit.",
+    "multi-device": "Aggregates points across devices for the same (algo, shots). device relabelled 'pooled'. pool_membership.csv written. Only valid when devices are comparable."
+  },
+  "independence_assertions": [
+    "No derived proxy from the same state distribution may be used as an independent predictor of Σ.",
+    "source_map entries must reference distinct raw files."
+  ]
+}

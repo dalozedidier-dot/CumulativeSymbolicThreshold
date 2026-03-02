@@ -456,22 +456,45 @@ def _plot_tstar_hist(df: pd.DataFrame, out_png: Path) -> None:
     plt.close()
 
 
-def _evidence_strength(points_per_shot: Dict[int, int], depth_distinct_total: int, instances_count: int) -> Tuple[str, Dict[str, Any]]:
+def _load_power_criteria(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _evidence_strength(
+    points_per_shot: Dict[int, int],
+    depth_distinct_total: int,
+    instances_count: int,
+    criteria: Optional[Dict[str, Any]] = None,
+) -> Tuple[str, Dict[str, Any]]:
     """
     Mechanical "power" diagnostic based purely on counts (no ORI-C verdict).
-    Heuristic thresholds (conservative):
-      - high: >= 30 total points AND >= 10 depth distinct AND >= 10 instances
-      - medium: >= 12 total points AND >= 6 depth distinct AND >= 6 instances
-      - low: otherwise
+    Thresholds are loaded from POWER_CRITERIA.json when criteria is provided;
+    fallback to conservative defaults otherwise.
     """
     total_points = int(sum(points_per_shot.values()))
-    # For depth distinct, we use the plan's total distinct depths
     d = int(depth_distinct_total)
     inst = int(instances_count)
 
-    if total_points >= 30 and d >= 10 and inst >= 10:
+    _default_high = {"total_points": 200, "depth_distinct_total": 10, "instances_count": 20}
+    _default_med  = {"total_points": 60,  "depth_distinct_total": 6,  "instances_count": 8}
+
+    thresholds = criteria.get("thresholds", {}) if isinstance(criteria, dict) else {}
+    h = thresholds.get("high", _default_high)
+    m = thresholds.get("medium", _default_med)
+    criteria_source = (
+        "POWER_CRITERIA.json"
+        if isinstance(criteria, dict) and "thresholds" in criteria
+        else "defaults"
+    )
+
+    if total_points >= h["total_points"] and d >= h["depth_distinct_total"] and inst >= h["instances_count"]:
         strength = "high"
-    elif total_points >= 12 and d >= 6 and inst >= 6:
+    elif total_points >= m["total_points"] and d >= m["depth_distinct_total"] and inst >= m["instances_count"]:
         strength = "medium"
     else:
         strength = "low"
@@ -481,10 +504,8 @@ def _evidence_strength(points_per_shot: Dict[int, int], depth_distinct_total: in
         "total_points": total_points,
         "depth_distinct_total": d,
         "instances_count": inst,
-        "thresholds": {
-            "high": {"total_points": 30, "depth_distinct_total": 10, "instances_count": 10},
-            "medium": {"total_points": 12, "depth_distinct_total": 6, "instances_count": 6},
-        },
+        "thresholds": {"high": h, "medium": m},
+        "criteria_source": criteria_source,
         "note": "Purely mechanical diagnostic based on counts only; not an ORI-C verdict.",
     }
     return strength, diag
@@ -506,6 +527,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--threshold", type=float, default=0.70, help="Ccl threshold for t*")
     ap.add_argument("--bootstrap-samples", type=int, default=500, help="Bootstrap samples")
     ap.add_argument("--seed", type=int, default=1337, help="RNG seed")
+    ap.add_argument(
+        "--pooling", default="by-instance",
+        choices=["by-instance", "pooled-by-depth", "multi-device"],
+        help="Pooling strategy for cross-conditions analysis",
+    )
+    ap.add_argument(
+        "--power-criteria", default="contracts/POWER_CRITERIA.json",
+        help="Path to POWER_CRITERIA.json (frozen thresholds for evidence_strength)",
+    )
     args = ap.parse_args(argv)
 
     out_root = Path(args.out_root) if args.out_root else Path(args.out_dir)
@@ -520,6 +550,35 @@ def main(argv: Optional[List[str]] = None) -> int:
     figs_dir = run_dir / "figures"
     contracts_dir = run_dir / "contracts"
     _ensure_dir(tables_dir); _ensure_dir(figs_dir); _ensure_dir(contracts_dir)
+
+    # params.txt — written early so it exists even on early-return paths
+    _git_sha = "unknown"
+    try:
+        import subprocess as _sp
+        _r = _sp.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5)
+        if _r.returncode == 0:
+            _git_sha = _r.stdout.strip()
+    except Exception:
+        pass
+    import platform as _platform
+    _params_lines = [
+        f"generated_utc: {datetime.utcnow().isoformat(timespec='seconds')}Z",
+        f"argv: {' '.join(sys.argv)}",
+        f"python_version: {sys.version.splitlines()[0]}",
+        f"platform: {_platform.platform()}",
+        f"pooling_mode: {args.pooling}",
+        f"power_criteria: {args.power_criteria}",
+        f"git_sha: {_git_sha}",
+    ]
+    (run_dir / "params.txt").write_text("\n".join(_params_lines) + "\n", encoding="utf-8")
+
+    # Load power criteria from versioned JSON (fallback to defaults if missing)
+    power_criteria = _load_power_criteria(Path(args.power_criteria))
+    # Copy criteria into run's contracts/ for self-contained auditability
+    _criteria_src = Path(args.power_criteria)
+    if _criteria_src.exists():
+        import shutil as _shutil
+        _shutil.copy2(_criteria_src, contracts_dir / "POWER_CRITERIA.json")
 
     # Inventory and recommendations (global, regardless of filters)
     inv = _build_inventory(pairs)
@@ -565,6 +624,16 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Compute points
     points = _compute_points(sel_pairs, metric=args.metric)
+
+    # Pooling (by-instance is default/no-op; others call the pooling module)
+    pool_membership = None
+    if args.pooling == "pooled-by-depth":
+        from tools import qcc_stateprob_pooling as _pooling  # type: ignore
+        points, pool_membership = _pooling.pool_by_depth(points, out_dir=tables_dir)
+    elif args.pooling == "multi-device":
+        from tools import qcc_stateprob_pooling as _pooling  # type: ignore
+        points, pool_membership = _pooling.multi_device_pool(points, out_dir=tables_dir)
+
     points_path = tables_dir / "ccl_points.csv"
     points.to_csv(points_path, index=False)
 
@@ -631,7 +700,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     # depth distinct total (within selected plan)
     depth_distinct_total = int(points["depth"].nunique()) if not points.empty else 0
     instances_count = int(points["instance"].nunique()) if not points.empty else 0
-    evidence_strength, power_diag = _evidence_strength(points_per_shot, depth_distinct_total, instances_count)
+    evidence_strength, power_diag = _evidence_strength(
+        points_per_shot, depth_distinct_total, instances_count, criteria=power_criteria
+    )
 
     summary = {
         "generated_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
@@ -640,6 +711,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "threshold": float(args.threshold),
         "bootstrap_samples": int(args.bootstrap_samples),
         "seed": int(args.seed),
+        "pooling_mode": args.pooling,
         "n_pairs_total": int(len(pairs)),
         "n_pairs_selected": int(len(sel_pairs)),
         "n_points": int(len(points)),

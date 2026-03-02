@@ -29,6 +29,7 @@ REQUIRED_RELATIVE = [
     "figures/ccl_vs_axis_by_shots.png",
     "figures/tstar_hist.png",
     "contracts/mapping_cross_conditions.json",
+    "params.txt",
     "manifest.json",
 ]
 
