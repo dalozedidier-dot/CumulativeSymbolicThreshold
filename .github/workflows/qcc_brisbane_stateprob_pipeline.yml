@@ -183,6 +183,12 @@ jobs:
             --power-criteria  contracts/POWER_CRITERIA.json \
             --auto-plan
 
+      - name: Write manifest
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_write_manifest \
+            --out-root _ci_out/brisbane_stateprob
+
       - name: Checks + evidence_strength
         run: |
           set -euo pipefail
