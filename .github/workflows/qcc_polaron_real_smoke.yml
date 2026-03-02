@@ -1,12 +1,13 @@
+# .github/workflows/qcc_polaron_real_smoke.yml
 name: QCC Polaron Real Smoke
 
 on:
   workflow_dispatch:
     inputs:
-      out_dir:
-        description: "Répertoire résultats"
+      c_min:
+        description: "Seuil C_min pour l'événement t* (float)"
         required: true
-        default: "05_Results/qcc_polaron_real_smoke"
+        default: "0.35"
   pull_request:
     paths:
       - ".github/workflows/qcc_polaron_real_smoke.yml"
@@ -19,7 +20,7 @@ on:
 jobs:
   run-polaron-real:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,15 +43,16 @@ jobs:
             --runs-index data/qcc/real_polaron/qcc_runs_index.csv \
             --mapping data/qcc/real_polaron/mapping.json \
             --data-root data/qcc/real_polaron \
-            --out-root "${{ inputs.out_dir }}"
+            --c-min "${{ inputs.c_min }}" \
+            --out-root "05_Results/qcc_polaron_real_smoke"
 
-      - name: Check outputs (non interprétatif)
+      - name: Checks (non interpretatif)
         run: |
-          python tools/qcc_checks.py --out-root "${{ inputs.out_dir }}"
+          python tools/qcc_checks.py --out-root "05_Results/qcc_polaron_real_smoke"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: qcc_polaron_real_smoke_artifact
-          path: ${{ inputs.out_dir }}
+          path: 05_Results/qcc_polaron_real_smoke
           if-no-files-found: error
