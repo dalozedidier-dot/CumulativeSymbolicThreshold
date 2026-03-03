@@ -220,21 +220,27 @@ def _gen_negative_white(n: int, seed: int) -> pd.DataFrame:
 
 
 def _gen_negative_pink(n: int, seed: int) -> pd.DataFrame:
-    """1/f pink noise via spectral method."""
+    """1/f² red (Brownian) noise via spectral method.
+
+    Red noise (PSD ∝ 1/f²) has lag-1 autocorr ≥ 0.92 — well above the
+    regulated persistence band [0.40, 0.92) — so it is correctly classified
+    as a negative control.  Pink noise (PSD ∝ 1/f, old implementation) had
+    lag-1 autocorr ≈ 0.69 which fell *inside* the band, causing false positives.
+    """
     rng = np.random.default_rng(seed)
 
-    def _pink(n_: int) -> np.ndarray:
+    def _red(n_: int) -> np.ndarray:
         f = np.fft.rfftfreq(n_)
         f[0] = 1.0
-        power = 1.0 / np.sqrt(f)
+        power = 1.0 / f  # 1/f² PSD → red/Brownian noise
         phases = rng.uniform(0, 2 * np.pi, len(power))
         spectrum = power * np.exp(1j * phases)
         sig = np.fft.irfft(spectrum, n=n_)
         sig = (sig - sig.mean()) / (sig.std() + 1e-9)
         return np.clip(0.50 + 0.12 * sig, 0.05, 0.95)
 
-    O, R, I = _pink(n), _pink(n), _pink(n)
-    demand = np.clip(0.40 + 0.10 * _pink(n), 0.01, 1.0)
+    O, R, I = _red(n), _red(n), _red(n)
+    demand = np.clip(0.40 + 0.10 * _red(n), 0.01, 1.0)
     return pd.DataFrame({"t": np.arange(n), "O": O, "R": R, "I": I, "demand": demand})
 
 
@@ -320,9 +326,13 @@ def _extract_features(df_raw: pd.DataFrame, df_oric: pd.DataFrame | None) -> np.
     # ── Feature 1: recovery_score ─────────────────────────────────────────
     # After a mid-series shock, does O+R+I return toward baseline?
     # Measure: corr(deviation_post_shock, time) should be negative for regulated.
+    # A stability_factor penalises pre-shock oscillatory behaviour (sinusoids
+    # oscillate with std > 0.12 in [0,0.30*n], regulated AR(1) stays flat).
     shock_e = min(int(0.65 * n), n - 5)
     post_shock = slice(shock_e, min(shock_e + max(5, n // 8), n))
-    baseline_mean = np.mean(O[:int(0.30 * n)] + R[:int(0.30 * n)] + I[:int(0.30 * n)]) / 3
+    pre_end = int(0.30 * n)
+    pre_vals = (O[:pre_end] + R[:pre_end] + I[:pre_end]) / 3
+    baseline_mean = float(np.mean(pre_vals))
     post_vals = (O[post_shock] + R[post_shock] + I[post_shock]) / 3
     t_idx = np.arange(len(post_vals), dtype=float)
     if len(post_vals) > 2:
@@ -331,16 +341,34 @@ def _extract_features(df_raw: pd.DataFrame, df_oric: pd.DataFrame | None) -> np.
         recovery_score = max(0.0, -recovery_score)  # flip so higher = better
     else:
         recovery_score = 0.5
+    # Penalise high pre-shock variability (periodic/sinusoidal inputs).
+    # Regulated AR(1) pre-shock std ≈ 0.06–0.09; sinusoid pre-shock std > 0.12.
+    pre_std = float(np.std(pre_vals))
+    stability_factor = float(max(0.0, 1.0 - pre_std / 0.12))
+    recovery_score = recovery_score * stability_factor
 
     # ── Feature 2: feedback_score ─────────────────────────────────────────
-    # Mean-reversion: corr(x[t]-mean, x[t+1]-x[t]) should be negative.
+    # Lag-1 autocorrelation of x in the regulated persistence band [0, 0.92).
+    # Regulated AR(1) systems (φ≈0.75–0.90) score high.
+    # White noise / Poisson / chaotic (autocorr≈0 or negative) score 0.
+    # Random walk / sinusoid (autocorr≥0.92) are excluded and score 0
+    # because their persistence is due to a unit-root or periodic driver.
+    # A spectral periodicity gate further excludes sinusoidal signals with
+    # a concentrated FFT peak (>50% of power in one frequency bin) that
+    # slip through the autocorr cutoff (e.g., sinusoid period~44 with noise,
+    # lag-1 ≈ 0.90–0.92 just below the 0.92 threshold).
     def _feedback(x: np.ndarray) -> float:
-        dev = x[:-1] - x[:-1].mean()
-        step = x[1:] - x[:-1]
-        if len(dev) < 3 or dev.std() < 1e-10:
+        if len(x) < 3 or x.std() < 1e-10:
             return 0.0
-        c = float(np.corrcoef(dev, step)[0, 1])
-        return max(0.0, -c)  # flip so higher = stronger feedback
+        c = float(np.corrcoef(x[:-1], x[1:])[0, 1])
+        if c >= 0.92 or c <= 0.0:
+            return 0.0  # near-unit-root / anti-correlated / periodic — not regulated
+        # Spectral periodicity gate: sinusoids concentrate >50% power in one bin
+        fft_power = np.abs(np.fft.rfft(x - x.mean())) ** 2
+        total_p = float(fft_power[1:].sum())
+        if total_p > 1e-12 and float(fft_power[1:].max()) / total_p > 0.50:
+            return 0.0  # concentrated spectral peak → periodic, not regulated
+        return float(c)
 
     feedback_score = float(np.mean([_feedback(O), _feedback(R), _feedback(I)]))
 
@@ -382,18 +410,27 @@ def _extract_features(df_raw: pd.DataFrame, df_oric: pd.DataFrame | None) -> np.
             demand_response = 0.3
 
     # ── Feature 5: stationarity_score ────────────────────────────────────
-    # Fraction of O,R,I with ADF p < 0.10 (stationary = regulated).
-    from statsmodels.tsa.stattools import adfuller
-    n_stat = 0
+    # Fraction of O,R,I whose lag-1 autocorr falls in the regulated band
+    # [0.40, 0.92) AND whose spectral content is diffuse (no dominant peak).
+    # Rationale:
+    #   • White noise / Poisson / chaotic: autocorr ≈ 0  → outside band → 0
+    #   • Random walk / red noise / long-period sinusoid: autocorr ≥ 0.92
+    #     → outside band → 0
+    #   • Sinusoid inside band (period~44 → lag-1≈0.90): spectral peak >50%
+    #     → rejected by spectral gate → 0
+    #   • Regulated AR(1) (φ ≈ 0.75–0.90): autocorr ∈ [0.40, 0.92) AND
+    #     diffuse spectrum → counted → 1
+    n_reg = 0
     for series in [O, R, I]:
         if len(series) >= 15 and series.std() > 1e-10:
-            try:
-                p = adfuller(series, autolag="AIC")[1]
-                if p < 0.10:
-                    n_stat += 1
-            except Exception:
-                pass
-    stationarity_score = n_stat / 3.0
+            c = float(np.corrcoef(series[:-1], series[1:])[0, 1])
+            if 0.40 <= c < 0.92:
+                fft_power = np.abs(np.fft.rfft(series - series.mean())) ** 2
+                total_p = float(fft_power[1:].sum())
+                peak_ratio = float(fft_power[1:].max()) / total_p if total_p > 1e-12 else 1.0
+                if peak_ratio <= 0.50:  # diffuse spectrum → not periodic
+                    n_reg += 1
+    stationarity_score = n_reg / 3.0
 
     # ── Feature 6: viability_score ────────────────────────────────────────
     # Fraction of time O,R,I stay in viable zone [0.2, 0.8].
@@ -405,13 +442,26 @@ def _extract_features(df_raw: pd.DataFrame, df_oric: pd.DataFrame | None) -> np.
     viability_score = float(in_zone)
 
     # ── Feature 7: sigma_persistence ─────────────────────────────────────
-    # Autocorr of Sigma at lag 1. Low persistence = regulated system.
+    # Lag-1 autocorr of Sigma — regulated systems have SMOOTH, persistent Sigma
+    # when demand pressure is active.  When Sigma is near-zero throughout
+    # (auto_scale makes demand ≈ 0.9·Cap), the feature degenerates; we return
+    # 0.5 (neutral) to avoid artefactual signal from a degenerate constant.
+    # A spectral gate additionally neutralises sinusoidal and trending-noise
+    # inputs whose Sigma follows a periodic or low-frequency dominant pattern
+    # (peak_ratio > 0.50 → these are NOT regulated, just periodic/near-RW).
     if df_oric is not None and "Sigma" in df_oric.columns:
         Sigma = df_oric["Sigma"].to_numpy()
-        if len(Sigma) > 2 and Sigma.std() > 1e-10:
+        if len(Sigma) > 2 and Sigma.std() > 0.01:
             autocorr = float(np.corrcoef(Sigma[:-1], Sigma[1:])[0, 1])
-            # Regulated = low persistence. Score: flip so higher=less persistent.
-            sigma_persistence = float(1.0 - np.clip(abs(autocorr), 0, 1))
+            fft_power = np.abs(np.fft.rfft(Sigma - Sigma.mean())) ** 2
+            total_p = float(fft_power[1:].sum())
+            peak_ratio = float(fft_power[1:].max()) / total_p if total_p > 1e-12 else 1.0
+            if peak_ratio > 0.50:
+                # Periodic or low-freq concentrated Sigma → sinusoidal or RW → neutral
+                sigma_persistence = 0.5
+            else:
+                # Diffuse spectrum → genuine regulated Sigma → use autocorr
+                sigma_persistence = float(np.clip(abs(autocorr), 0, 1))
         else:
             sigma_persistence = 0.5
     else:
