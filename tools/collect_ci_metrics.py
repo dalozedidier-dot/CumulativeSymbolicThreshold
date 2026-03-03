@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-Collect metrics from downloaded artifacts and append to ci_metrics CSVs.
+Append-only CI metrics collector.
 
-Input layout (expected):
-  <in-dir>/
-    run_<runid>/... (downloaded via `gh run download`)
-      (one or more artifacts unpacked)
-      .../runs/<timestamp>/tables/summary.json
-      .../runs/<timestamp>/stability/stability_summary.json (optional)
-      .../runs/<timestamp>/manifest.json
+Scans downloaded artifacts for summary files and extracts:
+- dataset_id, sector, run_mode
+- evidence_strength, stability all_pass
+- manifest sha256, stability criteria sha256
+- github_run_id (inferred from path run_<id>)
+- commit_sha (optional, from run_meta.json if present)
 
-This tool:
-- scans recursively for runs/<ts>/tables/summary.json
-- for each run_dir, reads:
-    - summary.json (required)
-    - manifest.json (optional but recommended)
-    - stability_summary.json (optional)
-- writes/append-only:
-    - <out-dir>/runs_index.csv
-    - <out-dir>/history.csv  (one row per run, same schema; kept for compatibility)
+Supported layouts:
+A) QCC/QCC-like:
+  .../runs/<ts>/tables/summary.json
+  .../runs/<ts>/stability/stability_summary.json (optional)
+  .../runs/<ts>/manifest.json (optional)
 
-It is FAIL-SOFT:
-- if no runs found, ensures CSV files exist with headers and exits 0.
+B) ORI-C real-data smoke:
+  .../<some_run_root>/tables/summary.json
+  .../<some_run_root>/manifest.json (optional)
+  .../<some_run_root>/stability/stability_summary.json (optional)
+
+FAIL-SOFT:
+- If nothing found, ensures CSV headers exist and exits 0.
 """
 from __future__ import annotations
 
@@ -29,68 +29,32 @@ import argparse
 import csv
 import json
 import os
-from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+import re
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 
-RUNS_INDEX_FIELDS = [
-    "run_dir",
-    "run_id",
-    "sector",
+FIELDS = [
+    "github_run_id",
+    "run_dir_name",
     "dataset_id",
-    "run_mode",
+    "sector",
+    "commit_sha",
     "evidence_strength",
-    "stability_all_pass",
-    "stability_criteria_sha256",
+    "all_pass",
+    "run_mode",
     "manifest_sha256",
+    "stability_criteria_sha256",
+    "timestamp",
 ]
 
-HISTORY_FIELDS = ["ts_utc"] + RUNS_INDEX_FIELDS
 
-
-def _safe_get(d: Dict, path: List[str], default=None):
-    cur = d
-    for k in path:
-        if not isinstance(cur, dict) or k not in cur:
-            return default
-        cur = cur[k]
-    return cur
-
-
-def _read_json(path: str) -> Optional[Dict]:
+def _read_json(path: str) -> Optional[Dict[str, Any]]:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
-    except FileNotFoundError:
+    except Exception:
         return None
-    except json.JSONDecodeError:
-        return None
-
-
-def _find_run_dirs(in_dir: str) -> List[str]:
-    # We look for .../runs/<ts>/tables/summary.json
-    matches: List[str] = []
-    for root, _, files in os.walk(in_dir):
-        if "summary.json" not in files:
-            continue
-        if os.path.basename(root) != "tables":
-            continue
-        # root = .../runs/<ts>/tables
-        run_dir = os.path.dirname(root)  # .../runs/<ts>
-        if os.path.basename(os.path.dirname(run_dir)) != "runs":
-            # ensure path segment
-            continue
-        matches.append(run_dir)
-    return sorted(set(matches))
-
-
-def _infer_run_id_from_path(run_dir: str) -> str:
-    # Best-effort: if the path includes /run_<id>/, use that.
-    parts = run_dir.split(os.sep)
-    for p in parts:
-        if p.startswith("run_") and p[4:].isdigit():
-            return p[4:]
-    return ""
 
 
 def _ensure_csv(path: str, fieldnames: List[str]) -> None:
@@ -98,99 +62,178 @@ def _ensure_csv(path: str, fieldnames: List[str]) -> None:
         return
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
-        w.writeheader()
+        csv.DictWriter(f, fieldnames=fieldnames).writeheader()
 
 
-def _load_existing_keys(path: str) -> set:
-    # key is run_dir
+def _existing_keys(path: str) -> set:
     keys = set()
     if not os.path.exists(path):
         return keys
     with open(path, "r", newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
         for row in r:
-            if row.get("run_dir"):
-                keys.add(row["run_dir"])
+            k = (row.get("github_run_id",""), row.get("run_dir_name",""))
+            if any(k):
+                keys.add(k)
     return keys
 
 
-def _append_rows(path: str, fieldnames: List[str], rows: List[Dict]) -> None:
+def _append_rows(path: str, fieldnames: List[str], rows: List[Dict[str, Any]]) -> None:
     if not rows:
         return
     _ensure_csv(path, fieldnames)
     with open(path, "a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)
         for row in rows:
-            # only keep known fields
-            cleaned = {k: row.get(k, "") for k in fieldnames}
-            w.writerow(cleaned)
+            w.writerow({k: row.get(k, "") for k in fieldnames})
+
+
+def _infer_github_run_id(path: str) -> str:
+    # look for /run_<id>/
+    parts = path.split(os.sep)
+    for p in parts:
+        if p.startswith("run_") and p[4:].isdigit():
+            return p[4:]
+    return ""
+
+
+def _run_dir_name(run_root: str) -> str:
+    return os.path.basename(run_root.rstrip(os.sep))
+
+
+def _infer_dataset_id(summary: Dict[str, Any]) -> str:
+    if isinstance(summary.get("dataset_id"), str) and summary["dataset_id"].strip():
+        return summary["dataset_id"].strip()
+    # ORI-C real-data smoke uses input_csv
+    ic = summary.get("input_csv")
+    if isinstance(ic, str) and ic.strip():
+        base = os.path.basename(ic.strip())
+        return os.path.splitext(base)[0]
+    return "unknown"
+
+
+def _infer_run_mode(summary: Dict[str, Any], dataset_id: str) -> str:
+    for k in ("run_mode", "mode"):
+        v = summary.get(k)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    # fallbacks
+    if dataset_id.startswith("qcc_"):
+        return "full"
+    if "real_data" in dataset_id or isinstance(summary.get("input_csv"), str):
+        return "real_data"
+    return ""
+
+
+def _infer_sector(summary: Dict[str, Any], dataset_id: str, run_mode: str) -> str:
+    v = summary.get("sector")
+    if isinstance(v, str) and v.strip():
+        return v.strip()
+    # infer from run_mode / dataset_id
+    did = (dataset_id or "").lower()
+    rm = (run_mode or "").lower()
+    if "qcc" in did or did.startswith("stateprob") or did.startswith("qcc_"):
+        return "qcc"
+    if "real_data" in rm or isinstance(summary.get("input_csv"), str):
+        return "real_data"
+    # sector smoke packs (non-qcc)
+    for s in ("finance", "climate", "psych", "social", "ai_tech", "bio"):
+        if s in did or s in rm:
+            return s
+    return "unknown"
+
+
+def _extract_evidence(summary: Dict[str, Any]) -> str:
+    v = summary.get("evidence_strength")
+    if isinstance(v, str) and v.strip():
+        return v.strip()
+    pd = summary.get("power_diagnostic")
+    if isinstance(pd, dict):
+        v2 = pd.get("evidence_strength")
+        if isinstance(v2, str) and v2.strip():
+            return v2.strip()
+    return ""
+
+
+def _extract_all_pass(stability: Dict[str, Any]) -> str:
+    sc = stability.get("stability_check")
+    if isinstance(sc, dict) and "all_pass" in sc:
+        return str(sc["all_pass"])
+    if "all_pass" in stability:
+        return str(stability["all_pass"])
+    return ""
+
+
+def _find_run_roots(in_dir: str) -> List[str]:
+    # Find any tables/summary.json, treat its parent as run_root
+    run_roots = set()
+    for root, _, files in os.walk(in_dir):
+        if os.path.basename(root) != "tables":
+            continue
+        if "summary.json" not in files:
+            continue
+        run_root = os.path.dirname(root)
+        run_roots.add(run_root)
+    return sorted(run_roots)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--in-dir", required=True)
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--append", action="store_true", help="Append-only; skip existing run_dir rows.")
+    ap.add_argument("--append", action="store_true")
     args = ap.parse_args()
 
-    in_dir = args.in_dir
     out_dir = args.out_dir
+    runs_index = os.path.join(out_dir, "runs_index.csv")
+    history = os.path.join(out_dir, "history.csv")
 
-    runs_index_path = os.path.join(out_dir, "runs_index.csv")
-    history_path = os.path.join(out_dir, "history.csv")
+    _ensure_csv(runs_index, FIELDS)
+    _ensure_csv(history, FIELDS)
 
-    _ensure_csv(runs_index_path, RUNS_INDEX_FIELDS)
-    _ensure_csv(history_path, HISTORY_FIELDS)
-
-    run_dirs = _find_run_dirs(in_dir)
-    if not run_dirs:
-        print(f"[INFO] No run dirs found under {in_dir}. CSVs ensured, nothing to append.")
+    roots = _find_run_roots(args.in_dir)
+    if not roots:
+        print(f"[INFO] No tables/summary.json found under {args.in_dir}.")
         return
 
-    existing = _load_existing_keys(runs_index_path) if args.append else set()
+    existing = _existing_keys(runs_index) if args.append else set()
+    ts = datetime.now(timezone.utc).isoformat()
 
-    rows_index: List[Dict] = []
-    rows_history: List[Dict] = []
-
-    ts_utc = __import__("datetime").datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-
-    for run_dir in run_dirs:
-        if args.append and run_dir in existing:
+    rows: List[Dict[str, Any]] = []
+    for run_root in roots:
+        gid = _infer_github_run_id(run_root)
+        rname = _run_dir_name(run_root)
+        key = (gid, rname)
+        if args.append and key in existing:
             continue
 
-        summary = _read_json(os.path.join(run_dir, "tables", "summary.json")) or {}
-        stability = _read_json(os.path.join(run_dir, "stability", "stability_summary.json")) or {}
-        manifest = _read_json(os.path.join(run_dir, "manifest.json")) or {}
+        summary = _read_json(os.path.join(run_root, "tables", "summary.json")) or {}
+        stability = _read_json(os.path.join(run_root, "stability", "stability_summary.json")) or {}
+        manifest = _read_json(os.path.join(run_root, "manifest.json")) or {}
+        run_meta = _read_json(os.path.join(run_root, "run_meta.json")) or _read_json(os.path.join(os.path.dirname(run_root), "run_meta.json")) or {}
 
-        sector = summary.get("sector", "")
-        dataset_id = summary.get("dataset_id", "")
-        run_mode = summary.get("run_mode", summary.get("mode", ""))
-        evidence_strength = summary.get("evidence_strength", _safe_get(summary, ["power_diagnostic", "evidence_strength"], ""))
-        stability_all_pass = _safe_get(stability, ["stability_check", "all_pass"], "")
-        # Criteria sha may be in stability_summary; prefer explicit
-        stability_criteria_sha256 = stability.get("criteria_sha256", "")
-        manifest_sha256 = manifest.get("manifest_sha256", "") or manifest.get("sha256", "")
+        dataset_id = _infer_dataset_id(summary)
+        run_mode = _infer_run_mode(summary, dataset_id)
+        sector = _infer_sector(summary, dataset_id, run_mode)
 
         row = {
-            "run_dir": run_dir,
-            "run_id": _infer_run_id_from_path(run_dir),
-            "sector": sector,
+            "github_run_id": gid,
+            "run_dir_name": rname,
             "dataset_id": dataset_id,
+            "sector": sector,
+            "commit_sha": run_meta.get("headSha","") or run_meta.get("commit_sha","") or "",
+            "evidence_strength": _extract_evidence(summary),
+            "all_pass": _extract_all_pass(stability),
             "run_mode": run_mode,
-            "evidence_strength": evidence_strength,
-            "stability_all_pass": str(stability_all_pass),
-            "stability_criteria_sha256": stability_criteria_sha256,
-            "manifest_sha256": manifest_sha256,
+            "manifest_sha256": manifest.get("manifest_sha256","") or manifest.get("sha256","") or "",
+            "stability_criteria_sha256": stability.get("criteria_sha256","") or "",
+            "timestamp": ts,
         }
-        rows_index.append(row)
-        rows_history.append({"ts_utc": ts_utc, **row})
+        rows.append(row)
 
-    _append_rows(runs_index_path, RUNS_INDEX_FIELDS, rows_index)
-    _append_rows(history_path, HISTORY_FIELDS, rows_history)
-
-    print(f"[INFO] Appended {len(rows_index)} runs into {runs_index_path} and {history_path}.")
-
+    _append_rows(runs_index, FIELDS, rows)
+    _append_rows(history, FIELDS, rows)
+    print(f"[INFO] Appended {len(rows)} rows.")
 
 if __name__ == "__main__":
     main()
