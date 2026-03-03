@@ -31,6 +31,8 @@ jobs:
 
       - name: Download artifacts from triggering run (workflow_run)
         if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _collected_artifacts
@@ -45,23 +47,14 @@ jobs:
           set -euo pipefail
           mkdir -p _collected_artifacts
           echo "Fetching latest successful runs for canonical workflows (fuzzy patterns)..."
-          python -m tools.collector_download_artifacts \
-            --out _collected_artifacts \
-            --workflows \
-              "QCC Brisbane StateProb" \
-              "QCC StateProb Densify" \
-              "Real Data Matrix" \
-              "Real Data Canonical"
+          python -m tools.collector_download_artifacts             --out _collected_artifacts             --workflows               "QCC Brisbane StateProb"               "QCC StateProb Densify"               "Real Data Matrix"               "Real Data Canonical"
 
       - name: Collect and append metrics
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          python -m tools.collect_ci_metrics \
-            --in-dir _collected_artifacts \
-            --out-dir ci_metrics \
-            --append
+          python -m tools.collect_ci_metrics             --in-dir _collected_artifacts             --out-dir ci_metrics             --append
 
       - name: Commit metrics (append-only)
         run: |
