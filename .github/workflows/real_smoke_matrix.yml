@@ -1,0 +1,197 @@
+name: Real Data Smoke Matrix (1 dataset per sector)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SMOKE level: always green, fast, 1 dataset per sector max.
+# Reads from data/real_datasets_index.csv (smoke_candidate=yes).
+# Produces auditable run_dirs with contracts + manifest (no full stability).
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    paths:
+      - "data/**"
+      - "tools/**"
+      - "src/**"
+      - "contracts/**"
+      - ".github/workflows/real_smoke_matrix.yml"
+  push:
+    branches: [main]
+    paths:
+      - "data/**"
+      - "tools/**"
+      - "src/**"
+      - "contracts/**"
+  workflow_dispatch:
+
+jobs:
+  resolve_matrix:
+    name: "Resolve smoke datasets from index"
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Resolve smoke candidates
+        id: resolve
+        run: |
+          python - <<'PYEOF'
+          import csv, json, sys
+          from pathlib import Path
+
+          index_path = Path("data/real_datasets_index.csv")
+          if not index_path.exists():
+              print("ERROR: data/real_datasets_index.csv not found", file=sys.stderr)
+              sys.exit(1)
+
+          seen_sectors = set()
+          includes = []
+          with open(index_path) as f:
+              reader = csv.DictReader(f)
+              for row in reader:
+                  if row.get("smoke_candidate", "").strip().lower() != "yes":
+                      continue
+                  sector = row["sector"].strip()
+                  if sector in seen_sectors:
+                      continue  # 1 per sector max
+                  seen_sectors.add(sector)
+                  includes.append({
+                      "dataset_id": row["dataset_id"].strip(),
+                      "sector": sector,
+                      "path": row["path"].strip(),
+                      "format": row.get("format", "csv").strip(),
+                  })
+
+          if not includes:
+              print("ERROR: no smoke candidates found in index", file=sys.stderr)
+              sys.exit(1)
+
+          matrix = {"include": includes}
+          import os
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"matrix={json.dumps(matrix)}\n")
+          print(f"Smoke matrix: {len(includes)} datasets from {len(seen_sectors)} sectors")
+          for inc in includes:
+              print(f"  {inc['sector']}/{inc['dataset_id']}: {inc['path']}")
+          PYEOF
+
+  smoke_run:
+    name: "Smoke ${{ matrix.sector }}/${{ matrix.dataset_id }}"
+    runs-on: ubuntu-latest
+    needs: resolve_matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve_matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: "Smoke run: ${{ matrix.dataset_id }}"
+        run: |
+          set -euo pipefail
+          DATASET_PATH="${{ matrix.path }}"
+          OUT_DIR="_ci_out/real_smoke/${{ matrix.sector }}/${{ matrix.dataset_id }}"
+
+          # Check dataset exists
+          if [ ! -e "$DATASET_PATH" ]; then
+            echo "ERROR: dataset not found: $DATASET_PATH"
+            exit 1
+          fi
+
+          echo "Running smoke scan for ${{ matrix.dataset_id }} (${{ matrix.sector }})"
+          echo "Dataset: $DATASET_PATH"
+          echo "Output: $OUT_DIR"
+
+          # Create run structure
+          TS=$(date -u +%Y%m%d_%H%M%S)
+          RUN_DIR="${OUT_DIR}/runs/${TS}"
+          mkdir -p "${RUN_DIR}/tables" "${RUN_DIR}/figures" "${RUN_DIR}/contracts"
+
+          # Stage contracts
+          cp contracts/POWER_CRITERIA.json "${RUN_DIR}/contracts/"
+          cp contracts/STABILITY_CRITERIA.json "${RUN_DIR}/contracts/"
+
+          # Generate input inventory
+          python - <<PYEOF
+          import csv, os, hashlib
+          from pathlib import Path
+
+          dataset = Path("$DATASET_PATH")
+          inventory = []
+          if dataset.is_file():
+              h = hashlib.sha256(dataset.read_bytes()).hexdigest()
+              inventory.append({
+                  "file": str(dataset),
+                  "sha256": h,
+                  "size_bytes": dataset.stat().st_size,
+              })
+          elif dataset.is_dir():
+              for f in sorted(dataset.rglob("*.csv")):
+                  h = hashlib.sha256(f.read_bytes()).hexdigest()
+                  inventory.append({
+                      "file": str(f),
+                      "sha256": h,
+                      "size_bytes": f.stat().st_size,
+                  })
+
+          out_path = Path("${RUN_DIR}/contracts/input_inventory.csv")
+          with open(out_path, "w", newline="") as fout:
+              w = csv.DictWriter(fout, fieldnames=["file", "sha256", "size_bytes"])
+              w.writeheader()
+              w.writerows(inventory)
+          print(f"Input inventory: {len(inventory)} files")
+          PYEOF
+
+          # Write scan summary
+          python - <<PYEOF
+          import json
+          from pathlib import Path
+
+          summary = {
+              "dataset_id": "${{ matrix.dataset_id }}",
+              "sector": "${{ matrix.sector }}",
+              "run_mode": "smoke",
+              "dataset_path": "$DATASET_PATH",
+          }
+          Path("${RUN_DIR}/tables/summary.json").write_text(
+              json.dumps(summary, indent=2), encoding="utf-8"
+          )
+          PYEOF
+
+          # Create placeholder figures
+          python - <<PYEOF
+          try:
+              import matplotlib
+              matplotlib.use("Agg")
+              import matplotlib.pyplot as plt
+              fig, ax = plt.subplots()
+              ax.text(0.5, 0.5, "Smoke placeholder: ${{ matrix.dataset_id }}",
+                      ha="center", va="center", fontsize=12)
+              ax.set_title("${{ matrix.sector }} / ${{ matrix.dataset_id }}")
+              fig.savefig("${RUN_DIR}/figures/smoke_overview.png", dpi=100)
+              plt.close()
+          except ImportError:
+              from pathlib import Path
+              Path("${RUN_DIR}/figures/smoke_placeholder.txt").write_text(
+                  "matplotlib not available for figure generation"
+              )
+          PYEOF
+
+          # Write manifest
+          python -m tools.make_manifest \
+            --root "${RUN_DIR}" \
+            --out "${RUN_DIR}/manifest.json"
+
+          echo "Smoke run complete: ${RUN_DIR}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke_${{ matrix.sector }}_${{ matrix.dataset_id }}
+          path: _ci_out/real_smoke/${{ matrix.sector }}/${{ matrix.dataset_id }}
+          retention-days: 7

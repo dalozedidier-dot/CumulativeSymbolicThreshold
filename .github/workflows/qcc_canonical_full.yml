@@ -1,0 +1,388 @@
+name: QCC Canonical Full — Run + Stability + Checks + Manifest
+
+# ─────────────────────────────────────────────────────────────────────────────
+# This is the SINGLE canonical workflow for the QCC full pipeline.
+# It enforces the audit invariants in strict order:
+#   1. Stage contracts into run_dir BEFORE any analysis
+#   2. Fail-fast if any contract is missing (zero fallback)
+#   3. Run analysis (cross-conditions / scan)
+#   4. Stability battery writes under runs/<ts>/stability/
+#   5. Final manifest hashes: contracts, tables, figures, stability
+#   6. Checks read ONLY from run_dir (never global paths)
+#
+# All other QCC workflows should either:
+#   - Call this workflow with parameters (reusable), or
+#   - Be scan-only (no stability verdicts)
+#
+# The audit test: zip only runs/<ts>/ → you have everything to audit.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_call:
+    inputs:
+      backend:
+        type: string
+        default: "numpy"
+      algo:
+        type: string
+        default: "ising"
+      depths:
+        type: string
+        default: "2,4,6,8,12,16,20,28,36,48,64,80,100,128,160"
+      instances:
+        type: string
+        default: "15"
+      shots:
+        type: string
+        default: "8192"
+      n_qubits:
+        type: string
+        default: "8"
+      dd:
+        type: string
+        default: "none"
+      pooling:
+        type: string
+        default: "pooled-by-depth"
+      metric:
+        type: string
+        default: "entropy"
+      threshold:
+        type: string
+        default: "0.70"
+      bootstrap_samples:
+        type: string
+        default: "500"
+      resamples:
+        type: string
+        default: "50"
+      subsample_frac:
+        type: string
+        default: "0.7"
+      window_sizes:
+        type: string
+        default: "3,5,7"
+      run_variants:
+        type: string
+        default: "true"
+      seed:
+        type: string
+        default: "1337"
+      mode:
+        description: "Run mode: full (run+stability+checks) or scan_only (inventory+diagnostics, no stability)"
+        type: string
+        default: "full"
+      out_label:
+        description: "Label for output directory under _ci_out/"
+        type: string
+        default: "qcc_canonical"
+      skip_generate:
+        description: "Skip data generation step (data already present)"
+        type: boolean
+        default: false
+      dataset_path:
+        description: "Path to pre-existing dataset (used with skip_generate)"
+        type: string
+        default: ""
+
+  workflow_dispatch:
+    inputs:
+      backend:
+        description: "Backend (numpy | aer)"
+        required: false
+        default: "numpy"
+      algo:
+        description: "Circuit type (ising | syncidle)"
+        required: false
+        default: "ising"
+      depths:
+        description: "Trotter/idle depths (comma-separated)"
+        required: false
+        default: "2,4,6,8,12,16,20,28,36,48,64,80,100,128,160"
+      instances:
+        description: "Instances per depth"
+        required: false
+        default: "15"
+      shots:
+        description: "Shots per circuit"
+        required: false
+        default: "8192"
+      n_qubits:
+        description: "Number of qubits"
+        required: false
+        default: "8"
+      dd:
+        description: "Dynamical Decoupling (none | xx | xy4)"
+        required: false
+        default: "none"
+      pooling:
+        description: "Pooling mode (by-instance | pooled-by-depth | multi-device)"
+        required: false
+        default: "pooled-by-depth"
+      metric:
+        description: "CCL metric"
+        required: false
+        default: "entropy"
+      threshold:
+        description: "CCL threshold for t*"
+        required: false
+        default: "0.70"
+      bootstrap_samples:
+        description: "Bootstrap samples"
+        required: false
+        default: "500"
+      resamples:
+        description: "Stability resampling iterations"
+        required: false
+        default: "50"
+      subsample_frac:
+        description: "Subsample fraction (stability)"
+        required: false
+        default: "0.7"
+      window_sizes:
+        description: "Window sizes (stability)"
+        required: false
+        default: "3,5,7"
+      run_variants:
+        description: "Versioned stability variants (true | false)"
+        required: false
+        default: "true"
+      seed:
+        description: "RNG seed"
+        required: false
+        default: "1337"
+      mode:
+        description: "full | scan_only"
+        required: false
+        default: "full"
+
+jobs:
+
+  # ── Job 1: Generate StateProb data ────────────────────────────────────────
+  generate:
+    name: "Generate (${{ inputs.algo }}, ${{ inputs.backend }})"
+    runs-on: ubuntu-latest
+    if: ${{ inputs.skip_generate != true && inputs.skip_generate != 'true' }}
+    env:
+      OUT_LABEL: ${{ inputs.out_label || 'qcc_canonical' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install --upgrade pip && pip install -r requirements-qcc-stateprob.txt
+      - name: Generate STATES/ATTR pairs
+        run: |
+          set -euo pipefail
+          DD_ARG=""
+          if [ "${{ inputs.dd }}" != "none" ] && [ -n "${{ inputs.dd }}" ]; then
+            DD_ARG="--dd ${{ inputs.dd }}"
+          fi
+          python -m tools.generate_brisbane_stateprob \
+            --backend  "${{ inputs.backend }}" \
+            --algo     "${{ inputs.algo }}" \
+            --depths   "${{ inputs.depths }}" \
+            --instances "${{ inputs.instances }}" \
+            --shots    "${{ inputs.shots }}" \
+            --n-qubits "${{ inputs.n_qubits }}" \
+            --seed     "${{ inputs.seed }}" \
+            --out-dir  "_ci_out/${OUT_LABEL}/data" \
+            $DD_ARG
+      - name: Verify generated pairs
+        run: |
+          set -euo pipefail
+          N_STATES=$(find "_ci_out/${OUT_LABEL}/data" -name "STATES_*.csv" | wc -l)
+          N_ATTR=$(find "_ci_out/${OUT_LABEL}/data" -name "ATTR_*.csv" | wc -l)
+          echo "STATES: $N_STATES  ATTR: $N_ATTR"
+          [ "$N_STATES" -eq "$N_ATTR" ] || { echo "Mismatch STATES/ATTR"; exit 1; }
+          [ "$N_STATES" -gt 0 ] || { echo "No pairs generated"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qcc_canonical_data
+          path: _ci_out/${{ env.OUT_LABEL }}/data
+
+  # ── Job 2: Cross-conditions + Contract staging + Stability + Manifest ─────
+  analyse_and_verify:
+    name: "Analyse + Stability (${{ inputs.mode }})"
+    runs-on: ubuntu-latest
+    needs: generate
+    if: ${{ !cancelled() && (needs.generate.result == 'success' || inputs.skip_generate == true || inputs.skip_generate == 'true') }}
+    env:
+      OUT_LABEL: ${{ inputs.out_label || 'qcc_canonical' }}
+      MODE: ${{ inputs.mode || 'full' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install --upgrade pip && pip install -r requirements-qcc-stateprob.txt
+
+      - name: Download generated data
+        if: ${{ inputs.skip_generate != true && inputs.skip_generate != 'true' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: qcc_canonical_data
+          path: _ci_out/${{ env.OUT_LABEL }}/data
+
+      # ── STEP 1: Cross-conditions analysis ──────────────────────────────────
+      - name: Cross-conditions analysis
+        run: |
+          set -euo pipefail
+          DATASET_ARG="_ci_out/${OUT_LABEL}/data"
+          if [ -n "${{ inputs.dataset_path }}" ]; then
+            DATASET_ARG="${{ inputs.dataset_path }}"
+          fi
+          python -m tools.qcc_stateprob_cross_conditions \
+            --dataset         "$DATASET_ARG" \
+            --out-dir         "_ci_out/${OUT_LABEL}" \
+            --pooling         "${{ inputs.pooling }}" \
+            --metric          "${{ inputs.metric }}" \
+            --threshold       "${{ inputs.threshold }}" \
+            --bootstrap-samples "${{ inputs.bootstrap_samples }}" \
+            --seed            "${{ inputs.seed }}" \
+            --power-criteria  contracts/POWER_CRITERIA.json \
+            --auto-plan
+
+      # ── STEP 2: Stage ALL contracts into run_dir (BEFORE stability) ────────
+      - name: "Invariant 1 — Stage contracts"
+        run: |
+          set -euo pipefail
+          python -m tools.stage_contracts \
+            --out-root "_ci_out/${OUT_LABEL}" \
+            --power-criteria contracts/POWER_CRITERIA.json \
+            --stability-criteria contracts/STABILITY_CRITERIA.json
+
+      # ── STEP 3: Fail-fast if contracts missing ─────────────────────────────
+      - name: "Invariant 2 — Fail-fast contract check"
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_require_stability_criteria \
+            --out-root "_ci_out/${OUT_LABEL}"
+
+      # ── STEP 4: Stability battery (only in full mode) ─────────────────────
+      - name: "Invariant 3 — Stability battery"
+        if: ${{ env.MODE == 'full' }}
+        run: |
+          set -euo pipefail
+          VARIANTS_ARG=""
+          if [ "${{ inputs.run_variants }}" = "true" ]; then
+            VARIANTS_ARG="--run-variants"
+          fi
+          python -m tools.qcc_stateprob_stability_battery \
+            --out-root          "_ci_out/${OUT_LABEL}" \
+            --threshold         "${{ inputs.threshold }}" \
+            --resamples         "${{ inputs.resamples }}" \
+            --subsample-frac    "${{ inputs.subsample_frac }}" \
+            --window-sizes      "${{ inputs.window_sizes }}" \
+            --bootstraps        "${{ inputs.bootstrap_samples }}" \
+            --seed              "${{ inputs.seed }}" \
+            --stability-criteria contracts/STABILITY_CRITERIA.json \
+            $VARIANTS_ARG
+
+      # ── STEP 5: Write final manifest (AFTER stability) ────────────────────
+      - name: "Invariant 4 — Write final manifest"
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_write_manifest \
+            --out-root "_ci_out/${OUT_LABEL}"
+
+      # ── STEP 6: Checks (read ONLY from run_dir) ───────────────────────────
+      - name: "Invariant 5 — Cross-checks (run_dir only)"
+        run: |
+          set -euo pipefail
+          python -m tools.qcc_stateprob_cross_checks \
+            --out-root "_ci_out/${OUT_LABEL}"
+
+      # ── STEP 7: Verify all audit invariants ────────────────────────────────
+      - name: "Verify audit invariants"
+        run: |
+          set -euo pipefail
+          if [ "$MODE" = "scan_only" ]; then
+            STAB_FLAG="--no-stability"
+          else
+            STAB_FLAG=""
+          fi
+          python -m tools.verify_audit_invariants \
+            --out-root "_ci_out/${OUT_LABEL}" \
+            $STAB_FLAG
+
+      # ── STEP 8: Hard gate — stability contract assertion (full mode) ──────
+      - name: "Hard gate — Stability contract"
+        if: ${{ env.MODE == 'full' }}
+        run: |
+          python - <<'PYEOF'
+          import json, sys
+          from pathlib import Path
+
+          out_label = "${{ env.OUT_LABEL }}"
+          runs_dir = Path(f"_ci_out/{out_label}/runs")
+          candidates = sorted([p for p in runs_dir.iterdir() if p.is_dir()])
+          if not candidates:
+              print("ERROR: no run dirs"); sys.exit(1)
+          run_dir = candidates[-1]
+
+          criteria = json.loads((run_dir / "contracts" / "STABILITY_CRITERIA.json").read_text())
+          expected_rv = criteria.get("max_relative_variation")
+          if expected_rv is None:
+              expected_rv = criteria.get("relative_variation_max")
+
+          ss = json.loads((run_dir / "stability" / "stability_summary.json").read_text())
+          sc = ss.get("stability_check", {})
+          rv_check = sc.get("checks", {}).get("relative_variation", {})
+          used_threshold = rv_check.get("threshold")
+          all_pass = sc.get("all_pass")
+
+          if expected_rv is not None and used_threshold is not None:
+              if abs(float(used_threshold) - float(expected_rv)) > 1e-9:
+                  print(f"FAIL: threshold mismatch — criteria={expected_rv} battery={used_threshold}")
+                  sys.exit(1)
+              print(f"OK: threshold {used_threshold} matches criteria")
+
+          if all_pass is not True:
+              print(f"FAIL: stability_check.all_pass={all_pass}")
+              for k, v in sc.get("checks", {}).items():
+                  flag = "PASS" if v.get("pass") else "FAIL"
+                  print(f"  {flag}  {k}: {v}")
+              sys.exit(1)
+          print("OK: all stability checks pass")
+          PYEOF
+
+      # ── Summary display ────────────────────────────────────────────────────
+      - name: Display summary
+        if: always()
+        run: |
+          python - <<'EOF'
+          import json, pathlib, sys
+          out_label = "${{ env.OUT_LABEL }}"
+          runs = sorted(pathlib.Path(f"_ci_out/{out_label}/runs").iterdir())
+          if not runs:
+              print("No run found"); sys.exit(0)
+          run_dir = runs[-1]
+          s = json.loads((run_dir / "tables" / "summary.json").read_text())
+          pd_ = s.get("power_diagnostic", {})
+          det = pd_.get("details", {})
+          print(f"evidence_strength : {s.get('evidence_strength','?').upper()}")
+          print(f"total_points      : {det.get('total_points','?')}")
+          print(f"depth_distinct    : {det.get('depth_distinct_total','?')}")
+          print(f"instances_count   : {det.get('instances_count','?')}")
+          print(f"pooling_mode      : {s.get('pooling_mode','?')}")
+
+          ss_path = run_dir / "stability" / "stability_summary.json"
+          if ss_path.exists():
+              ss = json.loads(ss_path.read_text())
+              sc = ss.get("stability_check", {})
+              print(f"stability all_pass: {sc.get('all_pass')}")
+
+          # Verify self-containment
+          contracts = list((run_dir / "contracts").glob("*")) if (run_dir / "contracts").exists() else []
+          print(f"contracts staged  : {len(contracts)} files")
+          manifest = run_dir / "manifest.json"
+          print(f"manifest exists   : {manifest.exists()}")
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qcc_canonical_full_artifact
+          path: _ci_out/${{ env.OUT_LABEL }}

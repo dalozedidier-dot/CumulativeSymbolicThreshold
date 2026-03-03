@@ -1,0 +1,17 @@
+dataset_id,sector,path,format,frequency,notes,requires_account,license_note,smoke_candidate,canon_candidate
+co2_mauna_loa,climate,data/climate/co2_mm_mlo.csv,csv,monthly,Mauna Loa CO2 monthly mean — NOAA/Scripps,no,public_domain,yes,yes
+gistemp,climate,data/climate/GLB.Ts+dSST.csv,csv,monthly,NASA GISS global temperature anomaly,no,public_domain,no,yes
+sp500_monthly,finance,data/finance/^spx_m.csv,csv,monthly,S&P 500 monthly close,no,public_domain,yes,yes
+stateprob_brisbane,qcc,data/qcc/stateprob/runs_index_stateprob.csv,csv,irregular,Brisbane StateProb CCL cross-conditions,no,public_domain,yes,yes
+polaron_real,qcc,data/qcc/real_polaron/qcc_runs_index.csv,csv,irregular,Polaron dynamics real hardware data,no,public_domain,no,yes
+eurobarometer_99,survey,data/survey/eurobarometer/Eurobarometer_Standard_99_Spring_2023_volume_A.xlsx,xlsx,irregular,Eurobarometer wave 99 Spring 2023,no,EU_open_data,no,yes
+parlemeter,survey,data/survey/parlemeter,xlsx,irregular,Parlemeter survey waves,no,EU_open_data,no,no
+twitter_amzn,social,data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/synth_data/real.csv,csv,daily,Twitter sentiment AMZN,no,research_use,no,yes
+twitter_fb,social,data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/synth_data/real.csv,csv,daily,Twitter sentiment FB,no,research_use,yes,yes
+llm_scaling,ai_tech,data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/synth_data/real.csv,csv,irregular,LLM scaling laws benchmark,no,research_use,yes,yes
+mlperf,ai_tech,data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/synth_data/real.csv,csv,irregular,MLPerf training benchmark,no,research_use,no,yes
+btc,finance,data/bundles_extracted/sector-finance-btc-4/pilot_btc/synth_data/real.csv,csv,daily,Bitcoin price daily,no,public_domain,no,yes
+google_trends,psych,data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/synth_data/real.csv,csv,monthly,Google Trends index,no,public_domain,yes,yes
+wvs_synthetic,psych,data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/synth_data/real.csv,csv,irregular,World Values Survey synthetic proxy,no,research_use,no,yes
+epidemic_ecdc,bio,03_Data/sector_bio/real/pilot_epidemic_ecdc,csv,daily,ECDC epidemic surveillance multi-country,no,public_domain,yes,yes
+ecology_pelt,bio,03_Data/sector_bio/real/pilot_ecology_pelt,csv,irregular,Ecology change-point datasets,no,public_domain,no,yes

@@ -1,5 +1,10 @@
 name: QCC StateProb Bootstrap (Ccl)
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SCAN-ONLY: bootstrap analysis, no stability verdicts.
+# For full pipeline with stability, use qcc_canonical_full.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+
 on:
   workflow_dispatch:
     inputs:
