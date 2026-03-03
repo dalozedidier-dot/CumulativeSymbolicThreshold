@@ -27,8 +27,10 @@ Exit code 0 on success, 1 on error.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -76,6 +78,14 @@ def _load_json(path: Path) -> Dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _tstar(depths: List[float], ccls: List[float], threshold: float) -> Optional[float]:
@@ -568,7 +578,27 @@ def main() -> int:
     window_sizes = [
         int(x.strip()) for x in args.window_sizes.split(",") if x.strip().isdigit()
     ]
-    criteria = _load_json(Path(args.stability_criteria))
+
+    # ── Load stability criteria — hard failure if file missing ────────────────
+    # Never use silent fallback: if the criteria file is absent the run must
+    # abort, not continue with empty/default thresholds.
+    criteria_src = Path(args.stability_criteria)
+    if not criteria_src.exists():
+        print(
+            f"ERROR: --stability-criteria file not found: {criteria_src}\n"
+            "The stability battery requires an explicit, versioned criteria file.\n"
+            "Pass --stability-criteria contracts/STABILITY_CRITERIA.json (or equivalent).",
+            file=sys.stderr,
+        )
+        return 1
+    criteria = json.loads(criteria_src.read_text(encoding="utf-8"))
+
+    # Copy criteria into run_dir/contracts/ for self-contained auditability
+    # (mirrors the POWER_CRITERIA pattern in qcc_stateprob_cross_conditions).
+    criteria_dst = run_dir / "contracts" / "STABILITY_CRITERIA.json"
+    _ensure_dir(criteria_dst.parent)
+    shutil.copy2(criteria_src, criteria_dst)
+    criteria_sha256 = _sha256_file(criteria_src)
 
     stab_dir = run_dir / "stability"
     _ensure_dir(stab_dir / "resampling")
@@ -674,7 +704,14 @@ def main() -> int:
             ],
         },
         "stability_check": stab_check,
-        "criteria_path": args.stability_criteria,
+        # criteria traceability (Levels 1–3 + bonus):
+        # - file is embedded at run_dir/contracts/STABILITY_CRITERIA.json (Level 1)
+        # - sha256 here + in manifest.json (Level 2 / bonus)
+        # - criteria_path is relative to run_dir so the run is self-contained (Level 3)
+        "criteria_path": "contracts/STABILITY_CRITERIA.json",
+        "criteria_sha256": criteria_sha256,
+        "criteria_schema": criteria.get("schema", ""),
+        "criteria_version": criteria.get("criteria_version", ""),
         "note": "Mechanical stability battery. No ORI-C verdict.",
     }
     (stab_dir / "stability_summary.json").write_text(
