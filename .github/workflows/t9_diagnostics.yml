@@ -1,4 +1,8 @@
-name: T9 - Cross-domain Diagnostics (non-blocking)
+name: T9 - Cross-domain Diagnostics (blocking)
+
+# T9 est un test "proof_only" de discrimination vivant-like vs contrôles négatifs.
+# Ce workflow exécute T9 en mode bloquant : un REJECT arrête le run.
+# Lancer manuellement ou via full_statistical.yml (T9 y est automatiquement inclus).
 
 on:
   workflow_dispatch:
@@ -32,27 +36,50 @@ jobs:
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
 
-      - name: Run T9 (diagnostic only, never blocks)
-        continue-on-error: true
+      - name: Run T9 cross-domain discrimination test
         run: |
-          set +e
-          echo "Running T9 cross-domain as DIAGNOSTIC ONLY."
-          echo "Rule: T9 must not emit ACCEPT/REJECT or influence any global verdict." > _ci_out/t9_diagnostics/t9_status.txt
-          echo "STATUS: START" >> _ci_out/t9_diagnostics/t9_status.txt
+          set -eo pipefail
+          PYTHONPATH=src python 04_Code/pipeline/run_T9_cross_domain.py \
+            --outdir _ci_out/t9_diagnostics \
+            --seed 1242 \
+            2>&1 | tee _ci_out/t9_diagnostics/t9_run.log
 
-          if [ -f 04_Code/pipeline/run_T9_cross_domain.py ]; then
-            PYTHONPATH=src python 04_Code/pipeline/run_T9_cross_domain.py --seed 1234               2>&1 | tee _ci_out/t9_diagnostics/t9_run.log
-            EXIT_CODE=${PIPESTATUS[0]}
-          else
-            echo "ERROR: missing 04_Code/pipeline/run_T9_cross_domain.py" | tee _ci_out/t9_diagnostics/t9_run.log
-            EXIT_CODE=2
-          fi
+      - name: Assert T9 verdict (hard gate)
+        run: |
+          python - <<'PYEOF'
+          import json
+          import sys
+          from pathlib import Path
 
-          echo "STATUS: DONE" >> _ci_out/t9_diagnostics/t9_status.txt
-          echo "EXIT_CODE: ${EXIT_CODE}" >> _ci_out/t9_diagnostics/t9_status.txt
+          verdict_path = Path("_ci_out/t9_diagnostics/tables/verdict.json")
+          if not verdict_path.exists():
+              print("ERROR: verdict.json introuvable — T9 n'a pas produit de sortie.")
+              sys.exit(1)
 
-          # Never block
-          exit 0
+          v = json.loads(verdict_path.read_text(encoding="utf-8"))
+          global_verdict = v.get("global", "UNKNOWN")
+          blocks         = v.get("blocks", {})
+          values         = v.get("values", {})
+
+          print(f"T9 global       : {global_verdict}")
+          print(f"  discrimination: {blocks.get('discrimination', '?')}")
+          print(f"  robustness    : {blocks.get('robustness', '?')}")
+          print(f"  anti_gaming   : {blocks.get('anti_gaming', '?')}")
+          print(f"  balanced_acc  : {values.get('balanced_accuracy', '?')}")
+          print(f"  fpr_negatives : {values.get('fpr_negatives', '?')}")
+          print(f"  spearman_med  : {values.get('spearman_median', '?')}")
+          print(f"  jaccard_med   : {values.get('jaccard_median', '?')}")
+          print(f"  flip_rate_med : {values.get('flip_rate_median', '?')}")
+
+          if global_verdict == "REJECT":
+              print("\nFAIL: T9 verdict = REJECT — les critères de discrimination cross-domaine ne sont pas satisfaits.")
+              sys.exit(1)
+          elif global_verdict == "INDETERMINATE":
+              print("\nWARN: T9 verdict = INDETERMINATE — résultat non concluant.")
+              # INDETERMINATE n'est pas un REJECT ; on ne bloque pas.
+          else:
+              print(f"\nOK: T9 verdict = {global_verdict}")
+          PYEOF
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
