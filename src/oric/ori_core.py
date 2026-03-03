@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 
 
-def compute_cap_projection(O: pd.Series, R: pd.Series, I: pd.Series, form: str = "product") -> pd.Series:
+def compute_cap_projection(  # noqa: E741
+    O: pd.Series, R: pd.Series, I: pd.Series, form: str = "product"  # noqa: E741
+) -> pd.Series:
     """Compute Cap(t) from O, R, I using a fixed ex ante projection.
 
     Supported forms:

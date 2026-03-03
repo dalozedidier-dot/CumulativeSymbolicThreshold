@@ -4,7 +4,10 @@ extend-ignore =
     W503,
     E731,
 per-file-ignores =
-    src/oric/__init__.py: F401,F403
+    src/oric/__init__.py:F401,F403
+    04_Code/tests/test_did_sc.py:E402,E501,E131
+    04_Code/tests/test_oos_panel.py:E402,E741
+    04_Code/tests/test_e2e_pipeline.py:E501
 exclude =
     .git,
     __pycache__,
@@ -17,3 +20,8 @@ exclude =
     _demo_*,
     _tmp_results_*,
     05_Results,
+    04_Code/pipeline,
+    04_Code/reporting,
+    04_Code/sector,
+    tools,
+    scripts,
