@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  oric:
+    build: .
+    image: oric:latest
+    volumes:
+      - ./05_Results:/app/05_Results
+      - ./03_Data:/app/03_Data:ro
+    environment:
+      - PYTHONPATH=/app/src
+    command: >
+      python 04_Code/pipeline/run_ori_c_demo.py
+      --outdir 05_Results/demo
+      --seed 42
+
+  oric-tests:
+    build: .
+    image: oric:latest
+    volumes:
+      - ./05_Results:/app/05_Results
+    environment:
+      - PYTHONPATH=/app/src
+    command: >
+      python -m pytest src/oric/tests 04_Code/tests -q --tb=short
+
+  oric-real:
+    build: .
+    image: oric:latest
+    volumes:
+      - ./05_Results:/app/05_Results
+      - ./03_Data:/app/03_Data:ro
+    environment:
+      - PYTHONPATH=/app/src
+    command: >
+      python 04_Code/pipeline/run_real_data_demo.py
+      --input 03_Data/real/fred_monthly/real.csv
+      --outdir 05_Results/real/fred/run_001
+      --time-mode index
+      --normalize robust_minmax
+      --control-mode no_symbolic
