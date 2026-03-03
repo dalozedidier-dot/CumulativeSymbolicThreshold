@@ -36,6 +36,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 RUNS_INDEX_FIELDS = [
     "run_dir",
     "run_id",
+    "workflow",
     "sector",
     "dataset_id",
     "run_mode",
@@ -46,6 +47,48 @@ RUNS_INDEX_FIELDS = [
 ]
 
 HISTORY_FIELDS = ["ts_utc"] + RUNS_INDEX_FIELDS
+
+# ── Workflow name → sector / run_mode fallback maps ───────────────────────────
+# Ordered: more specific patterns first
+_WORKFLOW_SECTOR_MAP = [
+    ("qcc",         "qcc"),
+    ("real data",   "real_data"),
+    ("real_data",   "real_data"),
+    ("bio",         "bio"),
+    ("cosmo",       "cosmo"),
+    ("infra_cloud", "infra_cloud"),
+    ("infra",       "infra"),
+    ("finance",     "finance"),
+    ("climate",     "climate"),
+    ("ai",          "ai_tech"),
+    ("psych",       "psych"),
+    ("social",      "social"),
+    ("stress",      "stress"),
+]
+_WORKFLOW_MODE_MAP = [
+    ("scan only",  "scan_only"),
+    ("scan_only",  "scan_only"),
+    ("full",       "full"),
+    ("nightly",    "full"),
+    ("weekly",     "full"),
+    ("smoke",      "smoke_ci"),
+]
+
+
+def _infer_sector_from_workflow(wf_name: str) -> str:
+    n = wf_name.lower()
+    for kw, val in _WORKFLOW_SECTOR_MAP:
+        if kw in n:
+            return val
+    return "unknown"
+
+
+def _infer_run_mode_from_workflow(wf_name: str) -> str:
+    n = wf_name.lower()
+    for kw, val in _WORKFLOW_MODE_MAP:
+        if kw in n:
+            return val
+    return ""
 
 
 def _safe_get(d: Dict, path: List[str], default=None):
@@ -91,6 +134,25 @@ def _infer_run_id_from_path(run_dir: str) -> str:
         if p.startswith("run_") and p[4:].isdigit():
             return p[4:]
     return ""
+
+
+def _read_run_meta(run_dir: str, in_dir: str) -> Dict:
+    """Read run_meta.json from the top-level run_<id> directory."""
+    # Walk up from run_dir until we find the run_<id> segment under in_dir
+    path = run_dir
+    while True:
+        parent = os.path.dirname(path)
+        if parent == path:
+            break
+        basename = os.path.basename(path)
+        if basename.startswith("run_") and basename[4:].isdigit():
+            meta_path = os.path.join(path, "run_meta.json")
+            result = _read_json(meta_path)
+            return result if result else {}
+        if os.path.abspath(path) == os.path.abspath(in_dir):
+            break
+        path = parent
+    return {}
 
 
 def _ensure_csv(path: str, fieldnames: List[str]) -> None:
@@ -162,10 +224,28 @@ def main() -> None:
         summary = _read_json(os.path.join(run_dir, "tables", "summary.json")) or {}
         stability = _read_json(os.path.join(run_dir, "stability", "stability_summary.json")) or {}
         manifest = _read_json(os.path.join(run_dir, "manifest.json")) or {}
+        run_meta = _read_run_meta(run_dir, in_dir)
 
-        sector = summary.get("sector", "")
-        dataset_id = summary.get("dataset_id", "")
-        run_mode = summary.get("run_mode", summary.get("mode", ""))
+        wf_name = run_meta.get("workflowName", "")
+
+        sector = (
+            summary.get("sector")
+            or summary.get("domain")
+            or _safe_get(summary, ["meta", "sector"])
+            or _safe_get(summary, ["dataset", "sector"])
+            or (wf_name and _infer_sector_from_workflow(wf_name))
+            or "unknown"
+        )
+        dataset_id = summary.get("dataset_id", "") or summary.get("label", "")
+        run_mode = (
+            summary.get("run_mode")
+            or summary.get("mode")
+            or summary.get("pooling_mode")
+            or _safe_get(summary, ["meta", "run_mode"])
+            or _safe_get(summary, ["meta", "mode"])
+            or (wf_name and _infer_run_mode_from_workflow(wf_name))
+            or ""
+        )
         evidence_strength = summary.get("evidence_strength", _safe_get(summary, ["power_diagnostic", "evidence_strength"], ""))
         stability_all_pass = _safe_get(stability, ["stability_check", "all_pass"], "")
         # Criteria sha may be in stability_summary; prefer explicit
@@ -175,6 +255,7 @@ def main() -> None:
         row = {
             "run_dir": run_dir,
             "run_id": _infer_run_id_from_path(run_dir),
+            "workflow": wf_name,
             "sector": sector,
             "dataset_id": dataset_id,
             "run_mode": run_mode,
