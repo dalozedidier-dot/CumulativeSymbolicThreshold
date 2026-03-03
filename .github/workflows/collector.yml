@@ -63,6 +63,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: _collected_artifacts/run_${{ github.event.workflow_run.id }}/
 
+      # ── Mode A: write run_meta.json for source workflow tracking ───────────
+      - name: "[workflow_run] Write run_meta.json for source run"
+        if: github.event_name == 'workflow_run'
+        run: |
+          mkdir -p _collected_artifacts/run_${{ github.event.workflow_run.id }}
+          printf '{"workflowName":"%s","runId":"%s","headSha":"%s"}\n' \
+            "${{ github.event.workflow_run.name }}" \
+            "${{ github.event.workflow_run.id }}" \
+            "${{ github.event.workflow_run.head_sha }}" \
+            > _collected_artifacts/run_${{ github.event.workflow_run.id }}/run_meta.json
+
       # ── Mode B: scan recent canonical runs via gh API ──────────────────────
       - name: "[schedule/dispatch] Download artifacts from recent canonical runs"
         if: github.event_name != 'workflow_run'
@@ -97,11 +108,22 @@ jobs:
               fi
               echo "  Downloading run $run_id → $out_dir"
               mkdir -p "$out_dir"
-              gh run download "$run_id" \
+              if gh run download "$run_id" \
                 --repo "$REPO" \
                 --dir "$out_dir/" \
-                2>/dev/null && echo "  OK: run $run_id" \
-                || echo "  WARNING: no downloadable artifacts for run $run_id"
+                2>/dev/null; then
+                echo "  OK: run $run_id"
+              else
+                echo "  WARNING: no downloadable artifacts for run $run_id"
+              fi
+              # Capture source workflow metadata for accurate reporting
+              wf_name=$(gh run view "$run_id" --json workflowName \
+                --jq '.workflowName' 2>/dev/null || echo "unknown")
+              head_sha=$(gh run view "$run_id" --json headSha \
+                --jq '.headSha' 2>/dev/null || echo "unknown")
+              printf '{"workflowName":"%s","runId":"%s","headSha":"%s"}\n' \
+                "$wf_name" "$run_id" "$head_sha" \
+                > "${out_dir}/run_meta.json"
             done
           done
 
@@ -210,6 +232,18 @@ jobs:
                   pass
               return os.environ.get("GITHUB_TRIGGERING_RUN_ID", "unknown")
 
+          def read_run_meta(run_dir: Path, collected_root: Path) -> dict:
+              """Read run_meta.json from the top-level run_<id> directory."""
+              try:
+                  rel = run_dir.relative_to(collected_root)
+                  run_root = collected_root / rel.parts[0]
+                  meta_path = run_root / "run_meta.json"
+                  if meta_path.exists():
+                      return json.loads(meta_path.read_text(encoding="utf-8"))
+              except Exception:
+                  pass
+              return {}
+
           def extract_metrics(run_dir: Path) -> dict:
               """Extract key metrics from a run directory."""
               summary_path = run_dir / "tables" / "summary.json"
@@ -224,6 +258,8 @@ jobs:
               sector = (
                   summary.get("sector")
                   or summary.get("domain")
+                  or (summary.get("meta") or {}).get("sector")
+                  or (summary.get("dataset") or {}).get("sector")
                   or "unknown"
               )
               evidence_strength = (
@@ -231,7 +267,14 @@ jobs:
                   or summary.get("power_level")
                   or summary.get("power_diagnostic", {}).get("evidence_strength", "")
               )
-              run_mode = summary.get("run_mode") or summary.get("mode") or ""
+              run_mode = (
+                  summary.get("run_mode")
+                  or summary.get("mode")
+                  or summary.get("pooling_mode")
+                  or (summary.get("meta") or {}).get("run_mode")
+                  or (summary.get("meta") or {}).get("mode")
+                  or ""
+              )
 
               # Stability
               all_pass = None
@@ -288,6 +331,9 @@ jobs:
 
           for run_dir in all_run_dirs:
               github_run_id = extract_github_run_id(run_dir, collected_root)
+              run_meta = read_run_meta(run_dir, collected_root)
+              per_run_workflow = run_meta.get("workflowName") or workflow_name
+              per_run_sha = run_meta.get("headSha") or commit_sha
               try:
                   metrics = extract_metrics(run_dir)
               except Exception as e:
@@ -302,13 +348,13 @@ jobs:
               history_row = {
                   "timestamp": now,
                   "github_run_id": github_run_id,
-                  "commit_sha": commit_sha,
-                  "workflow": workflow_name,
+                  "commit_sha": per_run_sha,
+                  "workflow": per_run_workflow,
                   **metrics,
               }
               index_row = {
                   "github_run_id": github_run_id,
-                  "commit_sha": commit_sha,
+                  "commit_sha": per_run_sha,
                   "timestamp": now,
                   **metrics,
               }
