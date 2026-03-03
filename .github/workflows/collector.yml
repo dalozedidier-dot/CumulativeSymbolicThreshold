@@ -403,7 +403,7 @@ jobs:
           fi
 
       # ── Upload snapshot ────────────────────────────────────────────────────
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ci_metrics_snapshot_${{ github.run_id }}

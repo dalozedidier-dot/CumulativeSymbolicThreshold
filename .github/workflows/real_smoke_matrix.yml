@@ -190,7 +190,7 @@ jobs:
 
           echo "Smoke run complete: ${RUN_DIR}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: smoke_${{ matrix.sector }}_${{ matrix.dataset_id }}
           path: _ci_out/real_smoke/${{ matrix.sector }}/${{ matrix.dataset_id }}

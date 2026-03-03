@@ -60,7 +60,7 @@ jobs:
             --mode     ${{ github.event.inputs.mode || 'smoke_ci' }}
 
       - name: Upload artifacts · ${{ matrix.pilot }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sector_infra_cloud_${{ matrix.pilot }}_${{ github.run_id }}
           path: |

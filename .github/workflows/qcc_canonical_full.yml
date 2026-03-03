@@ -197,7 +197,7 @@ jobs:
           echo "STATES: $N_STATES  ATTR: $N_ATTR"
           [ "$N_STATES" -eq "$N_ATTR" ] || { echo "Mismatch STATES/ATTR"; exit 1; }
           [ "$N_STATES" -gt 0 ] || { echo "No pairs generated"; exit 1; }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: qcc_canonical_data
           path: _ci_out/${{ env.OUT_LABEL }}/data
@@ -382,7 +382,7 @@ jobs:
           print(f"manifest exists   : {manifest.exists()}")
           EOF
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: qcc_canonical_full_artifact
           path: _ci_out/${{ env.OUT_LABEL }}

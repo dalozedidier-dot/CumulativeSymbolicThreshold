@@ -40,7 +40,7 @@ jobs:
           python tools/qcc/check_qcc_outputs.py --out-root 05_Results/qcc_real
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qcc_real_data_smoke_artifacts
           path: 05_Results/qcc_real

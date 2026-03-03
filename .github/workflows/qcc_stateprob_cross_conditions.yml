@@ -107,7 +107,7 @@ jobs:
           python -m tools.qcc_stateprob_cross_checks --out-root "_ci_out/qcc_stateprob_cross"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qcc_stateprob_cross_artifact
           path: _ci_out/qcc_stateprob_cross

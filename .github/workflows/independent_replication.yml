@@ -103,7 +103,7 @@ jobs:
             --seed ${{ inputs.seed || '42' }}
 
       - name: Upload OOS results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: oos-panel-results
           path: _ci_out/oos_panel/
@@ -158,7 +158,7 @@ jobs:
             --seed ${{ inputs.seed || '42' }}
 
       - name: Upload DiD results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: did-sc-results
           path: _ci_out/did/
@@ -223,7 +223,7 @@ jobs:
           EOF
 
       - name: Upload combined summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: replication-summary
           path: _ci_out/
