@@ -1,0 +1,80 @@
+{
+  "dataset_id": "sector_ai_tech.pilot_mlperf.real.v1",
+  "spec_version": "2.1",
+  "sector": "ai_tech",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "MLPerf Training Benchmark Results (calibrated synthetic)",
+    "url": "https://mlcommons.org/benchmarks/training/",
+    "reference": "https://github.com/mlcommons/training_results_v3.1",
+    "license": "MLCommons public results — Apache 2.0 / CC-BY 4.0",
+    "period": "2018 to present (benchmark rounds)",
+    "time_step": "monthly (interpolated from bi-annual benchmark rounds)"
+  },
+  "data_status": "SYNTHETIC_CALIBRATED — MLPerf real parsing requires post-processing of GitHub results. See fetch_real_data.py for upgrade path.",
+  "real_data_upgrade_path": {
+    "step1": "Download MLPerf Training v3.x results from https://github.com/mlcommons/training_results_v3.1",
+    "step2": "Extract ImageNet/ResNet-50 training time to accuracy per hardware submission",
+    "step3": "Build monthly series via cubic interpolation between benchmark rounds",
+    "step4": "Replace real.csv and update dataset_id → 'sector_ai_tech.pilot_mlperf.real.v2'"
+  },
+  "prereg_note": "Pré-enregistrement requis. Voir 02_Protocol/PREREG_TEMPLATE.md. Seuil ORI-C attendu : transition symbolique quand l'efficacité algorithmique devient auto-renforçante (co-optimisation matériel × logiciel).",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Efficacité matérielle normalisée (log1p(1/training_time)) — capacité d'organisation : plus l'entraînement est rapide, plus l'écosystème est organisé.",
+      "fragility_note": "Sensible aux changements de benchmark (version MLPerf). Robustesse testée sur normalisation min-max.",
+      "manipulability_note": "Résultats publiés et reproductibles par des équipes indépendantes."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Reproductibilité : 1 − CV_glissant des gains d'efficacité (stabilité des améliorations = résilience de l'écosystème).",
+      "fragility_note": "CV peut être élevé lors des transitions de versions MLPerf.",
+      "manipulability_note": "Calculé sur historique de résultats publiés."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cohérence inter-architectures : corrélation glissante entre efficacité GPU et TPU — intégration de l'écosystème matériel.",
+      "fragility_note": "Proxy indirect ; dépend de la disponibilité des résultats multi-architectures.",
+      "manipulability_note": "Comparaison de benchmarks indépendants."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Coût de calcul normalisé (log1p(training_time)) — pression exogène : les coûts de compute représentent la contrainte matérielle externe.",
+      "fragility_note": "Coût en dollars réel nécessiterait des données de prix AWS/GCP.",
+      "manipulability_note": "Dérivé des temps d'entraînement publiés."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Stock de progrès algorithmique cumulé (somme des gains log-efficiency positifs) — mémoire symbolique de l'innovation.",
+      "fragility_note": "Cumulatif depuis 2018 ; sensible au point de départ.",
+      "manipulability_note": "Construit sur historique de benchmarks publics."
+    }
+  ]
+}

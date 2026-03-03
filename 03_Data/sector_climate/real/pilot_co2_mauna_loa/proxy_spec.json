@@ -1,0 +1,72 @@
+{
+  "dataset_id": "sector_climate.pilot_co2_mauna_loa.real.v1",
+  "spec_version": "2.1",
+  "sector": "climate",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "NOAA ESRL Mauna Loa CO2 Monthly Means",
+    "url": "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv",
+    "license": "Public domain (US government)",
+    "period": "1958-03 to present",
+    "time_step": "monthly"
+  },
+  "prereg_note": "Pré-enregistrement requis avant analyse. Voir 02_Protocol/PREREG_TEMPLATE.md. Proxy_spec scellé ici ; aucune modification post-observation.",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − CO2_acceleration_norm : inverse de l'accélération mensuelle du CO₂. Une faible accélération indique une capacité d'organisation des puits de carbone.",
+      "fragility_note": "Sensible aux discontinuités instrumentales (changements d'équipement). Robustesse vérifiée par variante window_short.",
+      "manipulability_note": "CO₂ atmosphérique mesuré in situ ; impossible à manipuler sans modifier les émissions mondiales."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − rolling_std_24m_norm : inverse de la volatilité sur 24 mois. Une faible volatilité indique un système climatique résilient.",
+      "fragility_note": "Fenêtre de 24 mois testée en robustesse (window_short = 12m, window_medium = 36m).",
+      "manipulability_note": "Calculé sur données observées ; insensible aux manipulations ponctuelles."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Amplitude du cycle saisonnier désaisonnalisé — régularité du couplage biosphère-atmosphère.",
+      "fragility_note": "Dépend de la méthode de détrending (moyenne mobile 13 mois).",
+      "manipulability_note": "Cycle saisonnier déterminé par la biosphère terrestre ; stable à court terme."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "(CO2_ppm − 280) / 280 — excès de CO₂ par rapport au niveau pré-industriel, normalisé sur doublement.",
+      "fragility_note": "Dépend du niveau pré-industriel de référence (280 ppm). Robuste aux variations de ±5 ppm.",
+      "manipulability_note": "Mesure physique directe ; non manipulable."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Fraction cumulée du temps sous 380 ppm — stock symbolique de 'sécurité climatique' accumulée historiquement.",
+      "fragility_note": "Seuil de 380 ppm représente la borne Kyoto-era ; robustesse testée à 350 ppm et 400 ppm.",
+      "manipulability_note": "Construit cumulativement ; résistant aux manipulations ponctuelles."
+    }
+  ]
+}

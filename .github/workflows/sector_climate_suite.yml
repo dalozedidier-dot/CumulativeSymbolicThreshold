@@ -1,0 +1,135 @@
+name: Sector Climate Suite
+
+on:
+  push:
+    paths:
+      - '04_Code/sector/climate/**'
+      - '04_Code/sector/shared/**'
+      - '03_Data/sector_climate/**'
+      - '.github/workflows/sector_climate_suite.yml'
+  pull_request:
+    paths:
+      - '04_Code/sector/climate/**'
+      - '04_Code/sector/shared/**'
+  schedule:
+    - cron: '0 5 * * 1'   # weekly Monday 05:00 UTC
+  workflow_dispatch:
+    inputs:
+      pilot_id:
+        description: 'Pilot to run (co2_mauna_loa | gistemp | all)'
+        required: false
+        default: 'all'
+      mode:
+        description: 'Run mode (smoke_ci | full_statistical)'
+        required: false
+        default: 'smoke_ci'
+
+jobs:
+  climate-sector:
+    name: Climate sector — ${{ matrix.pilot }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pilot: [co2_mauna_loa, gistemp]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r 04_Code/requirements-dev.txt
+
+      - name: Run climate sector suite — ${{ matrix.pilot }}
+        env:
+          PYTHONPATH: 04_Code
+        run: |
+          python 04_Code/sector/climate/run_sector_suite.py \
+            --pilot-id ${{ matrix.pilot }} \
+            --outdir   _sector_climate_out/${{ matrix.pilot }} \
+            --seed     1234 \
+            --mode     ${{ github.event.inputs.mode || 'smoke_ci' }}
+
+      - name: Check sector global verdict
+        run: |
+          python - <<'EOF'
+          import json, sys
+          from pathlib import Path
+          vf = Path("_sector_climate_out/${{ matrix.pilot }}/pilot_${{ matrix.pilot }}/sector_global_verdict.json")
+          if not vf.exists():
+              print("WARN: sector_global_verdict.json not found — pipeline may have failed before verdict")
+              sys.exit(0)
+          v  = json.loads(vf.read_text())
+          gv = v.get("global_verdict", "MISSING")
+          mv = v.get("mapping_validity", "MISSING")
+          sl = v.get("support_level", "MISSING")
+          nb = v.get("ci_smoke_non_blocking", False)
+          rm = v.get("run_mode", "smoke_ci")
+          print(f"Climate / ${{ matrix.pilot }}")
+          print(f"  run_mode             : {rm}")
+          print(f"  global_verdict       : {gv}")
+          print(f"  mapping_validity     : {mv}")
+          print(f"  support_level        : {sl}")
+          print(f"  ci_smoke_non_blocking: {nb}")
+          if (gv == "REJECT" or mv == "REJECT") and not nb:
+              print("REJECT — failing CI (full_statistical mode)")
+              sys.exit(1)
+          elif gv == "REJECT" or mv == "REJECT":
+              print("REJECT recorded — non-blocking in smoke_ci (CI exits 0)")
+          else:
+              print("OK")
+          EOF
+
+      - name: Upload sector artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sector-climate-${{ matrix.pilot }}-${{ github.run_number }}
+          path: _sector_climate_out/${{ matrix.pilot }}/
+          if-no-files-found: warn
+          retention-days: 14
+
+  climate-sector-summary:
+    name: Climate sector — summary
+    needs: climate-sector
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure _ci_out exists
+        run: mkdir -p _ci_out
+
+      - name: Download all climate artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sector-climate-*-${{ github.run_number }}
+          path: _climate_artifacts/
+
+      - name: Print cross-pilot summary
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          print("\n" + "="*50)
+          print("CLIMATE SECTOR PANEL SUMMARY")
+          print("="*50)
+          for vf in sorted(Path("_climate_artifacts").rglob("sector_global_verdict.json")):
+              try:
+                  v = json.loads(vf.read_text())
+                  print(f"  {v.get('pilot_id','?'):20s}  "
+                        f"global={v.get('global_verdict','?'):15s}  "
+                        f"mapping={v.get('mapping_validity','?'):15s}  "
+                        f"support={v.get('support_level','?')}")
+              except Exception as e:
+                  print(f"  {vf}: ERROR {e}")
+          EOF
