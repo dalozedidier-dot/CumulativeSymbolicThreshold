@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "oric"
+version = "1.3.0"
+description = "Cumulative Symbolic Threshold — ORI-C framework for phase-transition detection in symbolic systems"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Didier Daloze", email = "" }
+]
+keywords = ["symbolic threshold", "ORI-C", "causal testing", "phase transition", "reproducibility"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
+requires-python = ">=3.12"
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.0",
+  "matplotlib>=3.8",
+  "scipy>=1.11",
+  "statsmodels>=0.14",
+  "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4",
+  "pytest-cov>=4.1",
+  "flake8>=6.1",
+  "black>=23.0",
+  "mypy>=1.5",
+  "isort>=5.12",
+]
+notebooks = [
+  "jupyter>=1.0",
+  "ipykernel>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"
+Repository = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"
+DOI = "https://doi.org/10.17605/OSF.IO/G62PZ"
+Issues = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+skip-magic-trailing-comma = false
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["src/oric/tests", "04_Code/tests"]
+addopts = "--tb=short -q"
