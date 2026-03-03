@@ -1,0 +1,31 @@
+{
+  "sector_id": "social",
+  "pilot_id": "twitter_amzn",
+  "global_verdict": "INDETERMINATE",
+  "mapping_validity": "ACCEPT",
+  "support_level": "smoke_ci_indeterminate",
+  "run_mode": "smoke_ci",
+  "ci_smoke_non_blocking": true,
+  "sub_verdicts": {
+    "pipeline": "INDETERMINATE",
+    "mapping": "ACCEPT"
+  },
+  "robustness_summary": {
+    "n_variants": 6,
+    "n_accept": 1,
+    "n_indeterminate": 5,
+    "n_reject": 0,
+    "accept_fraction": 0.167,
+    "robust_note": "not_robust",
+    "verdicts": {
+      "window_short": "INDETERMINATE",
+      "window_medium": "INDETERMINATE",
+      "window_long": "INDETERMINATE",
+      "norm_minmax": "ACCEPT",
+      "resample_80": "INDETERMINATE",
+      "resample_60": "INDETERMINATE"
+    }
+  },
+  "forbidden_labels": [],
+  "protocol_note": "smoke_ci: verdict is informational; CI exits 0 regardless of REJECT. Use full_statistical for auditable results."
+}

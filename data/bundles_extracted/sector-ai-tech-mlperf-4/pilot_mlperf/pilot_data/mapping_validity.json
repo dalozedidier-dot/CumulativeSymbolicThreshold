@@ -1,0 +1,21 @@
+{
+  "verdict": "ACCEPT",
+  "hard_errors": [],
+  "soft_warnings": [],
+  "info_notes": [
+    "proxy 'O' (role O): ADF p=0.944 > 0.1 \u2014 non-stationary series; use normalized/differenced proxies",
+    "proxy 'R' (role R): ADF p=0.337 > 0.1 \u2014 non-stationary series; use normalized/differenced proxies",
+    "proxy 'I' (role I): ADF p=0.332 > 0.1 \u2014 non-stationary series; use normalized/differenced proxies"
+  ],
+  "spec_dataset_id": "sector_ai_tech.pilot_mlperf.synth.v1",
+  "spec_version": "2.1",
+  "n_rows": 80,
+  "correlation_table": {
+    "O_R": -0.4077,
+    "O_I": 0.7449,
+    "R_I": -0.1625
+  },
+  "canonical_validate_ok": true,
+  "canonical_validate_stdout": "OK  _sector_ai_tech_out/mlperf/pilot_mlperf/synth_data/proxy_spec.json\n",
+  "canonical_validate_stderr": ""
+}

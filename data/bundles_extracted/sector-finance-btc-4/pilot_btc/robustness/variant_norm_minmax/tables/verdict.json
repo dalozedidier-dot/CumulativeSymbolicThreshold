@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_finance_out/btc/pilot_btc/robustness/variant_norm_minmax",
+  "verdict": "non_detecte",
+  "binary_detected": false,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 80,
+  "post_horizon": 80,
+  "baseline_n": 50,
+  "series_short": false,
+  "threshold_hit_t": 76,
+  "threshold_value": 0.0126272511909243,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 22.731148065102737,
+  "C_mean_post": 24.281015025839533,
+  "C_mean_post_minus_pre": 1.5498669607367965,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": 1.5432174672500175e-06,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": false,
+  "sigma_gate_note": null,
+  "boot_mean_diff_C": 1.331256613181787,
+  "boot_ci_low_C": -0.5202950239285984,
+  "boot_ci_high_C": 3.3372422041479224,
+  "granger_S_to_deltaC_p": {
+    "1": 4.279627469344407e-08,
+    "2": 4.530555355543221e-07,
+    "3": 1.0121119918378996e-05,
+    "4": 2.147337784311029e-05,
+    "5": 1.1939701835591248e-05
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 0.7342022237921565,
+    "2": 0.15886725369824786,
+    "3": 0.12162697076800771,
+    "4": 0.1739157589958102,
+    "5": 0.07431404322020255
+  },
+  "min_granger_S_to_deltaC_p": 4.279627469344407e-08,
+  "min_granger_deltaC_to_S_p": 0.07431404322020255,
+  "reverse_warning": false,
+  "granger_diagnostic_only": false,
+  "var_S_to_deltaC_p": 1.5506295605732506e-05,
+  "var_lag_used": 4,
+  "cointegration_p": 0.881275136501098,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": true,
+    "ok_p_source": "welch",
+    "ok_boot": false,
+    "ok_granger": true,
+    "granger_diagnostic_only": false
+  }
+}

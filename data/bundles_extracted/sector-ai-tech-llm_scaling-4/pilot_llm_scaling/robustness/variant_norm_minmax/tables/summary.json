@@ -1,0 +1,23 @@
+{
+  "input_csv": "_sector_ai_tech_out/llm_scaling/pilot_llm_scaling/synth_data/real.csv",
+  "n_steps": 80,
+  "threshold_hit_idx": 61,
+  "threshold_hit_t": 61,
+  "threshold_value": 0.1686531344810257,
+  "C_mean": 7.937184738888948,
+  "C_positive_frac": 1.0,
+  "C_positive_frac_last_quarter": 1.0,
+  "cap_scale_used": 1000.0,
+  "S_is_observed": true,
+  "control_mode": "no_symbolic",
+  "time_mode": "index",
+  "col_time": "t",
+  "c_offset": 7.440000000000006,
+  "verdict": "ACCEPT",
+  "run_mode": "real_data_canonical",
+  "proxy_spec_path": null,
+  "proxy_spec_sha256": null,
+  "split_frac": null,
+  "split_calibration_n": null,
+  "split_test_n": null
+}

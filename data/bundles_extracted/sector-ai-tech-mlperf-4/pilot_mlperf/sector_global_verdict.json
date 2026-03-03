@@ -1,0 +1,29 @@
+{
+  "sector_id": "ai_tech",
+  "pilot_id": "mlperf",
+  "global_verdict": "INDETERMINATE",
+  "mapping_validity": "ACCEPT",
+  "support_level": "smoke_ci_indeterminate",
+  "run_mode": "smoke_ci",
+  "ci_smoke_non_blocking": true,
+  "sub_verdicts": {
+    "pipeline": "INDETERMINATE",
+    "mapping": "ACCEPT"
+  },
+  "robustness_summary": {
+    "n_variants": 4,
+    "n_accept": 1,
+    "n_indeterminate": 3,
+    "n_reject": 0,
+    "accept_fraction": 0.25,
+    "robust_note": "not_robust",
+    "verdicts": {
+      "window_short": "INDETERMINATE",
+      "window_medium": "INDETERMINATE",
+      "norm_minmax": "ACCEPT",
+      "resample_80": "INDETERMINATE"
+    }
+  },
+  "forbidden_labels": [],
+  "protocol_note": "smoke_ci: verdict is informational; CI exits 0 regardless of REJECT. Use full_statistical for auditable results."
+}

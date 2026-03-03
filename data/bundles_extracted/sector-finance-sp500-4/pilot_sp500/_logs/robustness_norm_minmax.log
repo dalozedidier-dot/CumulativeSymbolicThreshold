@@ -1,0 +1,10 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/run_real_data_demo.py --input _sector_finance_out/sp500/pilot_sp500/synth_data/real.csv --outdir _sector_finance_out/sp500/pilot_sp500/robustness/variant_norm_minmax --time-mode index --normalize minmax --control-mode no_symbolic --seed 1234
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      0
+ELAPSED: 1.3s
+
+=== STDOUT ===
+(empty)
+
+=== STDERR ===
+(empty)

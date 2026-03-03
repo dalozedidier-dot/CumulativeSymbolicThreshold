@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_finance_out/sp500/pilot_sp500/robustness/variant_norm_minmax",
+  "verdict": "seuil_detecte",
+  "binary_detected": true,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 80,
+  "post_horizon": 80,
+  "baseline_n": 50,
+  "series_short": false,
+  "threshold_hit_t": 164,
+  "threshold_value": 0.3464296732718225,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 36.20019572731736,
+  "C_mean_post": 63.062206640469824,
+  "C_mean_post_minus_pre": 26.862010913152467,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": 2.3284263612686242e-48,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": false,
+  "sigma_gate_note": null,
+  "boot_mean_diff_C": 26.595182769670746,
+  "boot_ci_low_C": 18.625777791216223,
+  "boot_ci_high_C": 35.062677339888005,
+  "granger_S_to_deltaC_p": {
+    "1": 8.120828470954431e-13,
+    "2": 9.148094984870855e-07,
+    "3": 5.262859419249978e-06,
+    "4": 1.5390140549942426e-05,
+    "5": 0.00012499723920305126
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 0.4358616363138107,
+    "2": 0.8290155482187433,
+    "3": 0.9214457114116309,
+    "4": 0.7118042321362202,
+    "5": 0.8309281968979179
+  },
+  "min_granger_S_to_deltaC_p": 8.120828470954431e-13,
+  "min_granger_deltaC_to_S_p": 0.4358616363138107,
+  "reverse_warning": false,
+  "granger_diagnostic_only": false,
+  "var_S_to_deltaC_p": 2.029347856041244e-13,
+  "var_lag_used": 1,
+  "cointegration_p": 0.9730662958347445,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": true,
+    "ok_p_source": "welch",
+    "ok_boot": true,
+    "ok_granger": true,
+    "granger_diagnostic_only": false
+  }
+}

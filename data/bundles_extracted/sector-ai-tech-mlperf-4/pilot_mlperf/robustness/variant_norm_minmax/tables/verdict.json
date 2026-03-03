@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_ai_tech_out/mlperf/pilot_mlperf/robustness/variant_norm_minmax",
+  "verdict": "indetermine_sigma_nul",
+  "binary_detected": false,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 40,
+  "post_horizon": 40,
+  "baseline_n": 50,
+  "series_short": true,
+  "threshold_hit_t": 65,
+  "threshold_value": 0.0428019650018152,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 5.225690523031046,
+  "C_mean_post": 5.542167894188435,
+  "C_mean_post_minus_pre": 0.31647737115738916,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": 0.17267667937251635,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": true,
+  "sigma_gate_note": "Sigma(t)=0 throughout post-threshold window: symbolic canal inoperable, cannot falsify H.",
+  "boot_mean_diff_C": 0.25460364204121083,
+  "boot_ci_low_C": -0.3327644973002509,
+  "boot_ci_high_C": 0.805098453197138,
+  "granger_S_to_deltaC_p": {
+    "1": 0.00030526150321752275,
+    "2": 0.0015516633869435347,
+    "3": 0.00021590505425671806,
+    "4": 0.0005302916423423025,
+    "5": 0.0009565527606467746
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 0.8954827157128541,
+    "2": 0.9927147232883503,
+    "3": 0.9996123936249235,
+    "4": 0.9988261736400814,
+    "5": 0.9947734711799817
+  },
+  "min_granger_S_to_deltaC_p": 0.00021590505425671806,
+  "min_granger_deltaC_to_S_p": 0.8954827157128541,
+  "reverse_warning": false,
+  "granger_diagnostic_only": true,
+  "var_S_to_deltaC_p": 0.0005252455498243978,
+  "var_lag_used": 5,
+  "cointegration_p": 0.8075705074738214,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": false,
+    "ok_p_source": "welch",
+    "ok_boot": false,
+    "ok_granger": true,
+    "granger_diagnostic_only": true
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_social_out/twitter_fb/pilot_twitter_fb/robustness/variant_norm_minmax",
+  "verdict": "seuil_detecte",
+  "binary_detected": true,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 100,
+  "post_horizon": 100,
+  "baseline_n": 50,
+  "series_short": false,
+  "threshold_hit_t": 64,
+  "threshold_value": 0.0400684516720409,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 1897.7843311420693,
+  "C_mean_post": 1911.3418412983249,
+  "C_mean_post_minus_pre": 13.557510156255603,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": 1.1248520873262087e-30,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": true,
+  "sigma_gate_note": null,
+  "boot_mean_diff_C": 13.485231931265453,
+  "boot_ci_low_C": 7.664497486457248,
+  "boot_ci_high_C": 19.429384468080542,
+  "granger_S_to_deltaC_p": {
+    "1": 0.0,
+    "2": 0.0,
+    "3": 0.0,
+    "4": 0.0,
+    "5": 0.0
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 6.397035466257214e-16,
+    "2": 3.8585973584103945e-47,
+    "3": 0.4835785888204094,
+    "4": 0.9999999926652249,
+    "5": 0.921778475865102
+  },
+  "min_granger_S_to_deltaC_p": 0.0,
+  "min_granger_deltaC_to_S_p": 3.8585973584103945e-47,
+  "reverse_warning": true,
+  "granger_diagnostic_only": false,
+  "var_S_to_deltaC_p": 0.0,
+  "var_lag_used": 10,
+  "cointegration_p": 0.9682233407790874,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": true,
+    "ok_p_source": "welch",
+    "ok_boot": true,
+    "ok_granger": true,
+    "granger_diagnostic_only": false
+  }
+}

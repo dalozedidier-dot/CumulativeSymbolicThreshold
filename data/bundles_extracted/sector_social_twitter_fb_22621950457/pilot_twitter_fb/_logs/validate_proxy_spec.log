@@ -1,0 +1,10 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/validate_proxy_spec.py --spec /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/03_Data/sector_social/real/pilot_twitter_fb/proxy_spec.json --csv /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/03_Data/sector_social/real/pilot_twitter_fb/real.csv
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      0
+ELAPSED: 0.0s
+
+=== STDOUT ===
+OK  /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/03_Data/sector_social/real/pilot_twitter_fb/proxy_spec.json
+
+=== STDERR ===
+(empty)

@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_social_out/twitter_amzn/pilot_twitter_amzn/robustness/variant_norm_minmax",
+  "verdict": "indetermine_stats_indisponibles",
+  "binary_detected": false,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 100,
+  "post_horizon": 100,
+  "baseline_n": 50,
+  "series_short": false,
+  "threshold_hit_t": 1,
+  "threshold_value": 0.5196257433522047,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 1899.5237686668688,
+  "C_mean_post": 1911.424884311756,
+  "C_mean_post_minus_pre": 11.901115644887113,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": NaN,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": true,
+  "sigma_gate_note": "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): INDETERMINATE per WELCH_NAN_FALLBACK_POLICY.",
+  "boot_mean_diff_C": NaN,
+  "boot_ci_low_C": NaN,
+  "boot_ci_high_C": NaN,
+  "granger_S_to_deltaC_p": {
+    "1": 0.0,
+    "2": 0.0,
+    "3": 0.0,
+    "4": 0.0,
+    "5": 0.0
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 0.0,
+    "2": 0.0,
+    "3": 0.0,
+    "4": 3.1550443924007264e-186,
+    "5": 4.207698888765305e-92
+  },
+  "min_granger_S_to_deltaC_p": 0.0,
+  "min_granger_deltaC_to_S_p": 0.0,
+  "reverse_warning": true,
+  "granger_diagnostic_only": false,
+  "var_S_to_deltaC_p": 4.7315577429230125e-14,
+  "var_lag_used": 10,
+  "cointegration_p": 0.9858053483972881,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": false,
+    "ok_p_source": "unavailable",
+    "ok_boot": false,
+    "ok_granger": true,
+    "granger_diagnostic_only": false
+  }
+}

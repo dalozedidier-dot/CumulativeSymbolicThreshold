@@ -1,0 +1,20 @@
+{
+  "verdict": "REJECT",
+  "hard_errors": [
+    "proxy 'O' (role O) has near-zero variance (nan) \u2014 proxy is uninformative",
+    "proxy 'R' (role R) has near-zero variance (nan) \u2014 proxy is uninformative"
+  ],
+  "soft_warnings": [
+    "too few observations (0) to compute O/R correlation",
+    "too few observations (0) to compute O/I correlation",
+    "too few observations (0) to compute R/I correlation"
+  ],
+  "info_notes": [],
+  "spec_dataset_id": "sector_finance.pilot_sp500.synth.v1",
+  "spec_version": "2.1",
+  "n_rows": 250,
+  "correlation_table": {},
+  "canonical_validate_ok": true,
+  "canonical_validate_stdout": "OK  _sector_finance_out/sp500/pilot_sp500/synth_data/proxy_spec.json\n",
+  "canonical_validate_stderr": ""
+}

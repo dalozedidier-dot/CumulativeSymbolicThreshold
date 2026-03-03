@@ -1,0 +1,17 @@
+{
+  "verdict": "ACCEPT",
+  "hard_errors": [],
+  "soft_warnings": [],
+  "info_notes": [],
+  "spec_dataset_id": "pilot_twitter_amzn",
+  "spec_version": "1.0",
+  "n_rows": 15831,
+  "correlation_table": {
+    "O_R": 0.0663,
+    "O_I": -0.1543,
+    "R_I": -0.0742
+  },
+  "canonical_validate_ok": true,
+  "canonical_validate_stdout": "OK  /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/03_Data/sector_social/real/pilot_twitter_amzn/proxy_spec.json\n",
+  "canonical_validate_stderr": ""
+}

@@ -1,0 +1,20 @@
+{
+  "verdict": "REJECT",
+  "hard_errors": [
+    "proxy 'I' (role I) has near-zero variance (nan) \u2014 proxy is uninformative"
+  ],
+  "soft_warnings": [
+    "too few observations (0) to compute O/I correlation",
+    "too few observations (0) to compute R/I correlation"
+  ],
+  "info_notes": [],
+  "spec_dataset_id": "sector_climate.pilot_co2_mauna_loa.synth.v1",
+  "spec_version": "2.1",
+  "n_rows": 300,
+  "correlation_table": {
+    "O_R": -0.0411
+  },
+  "canonical_validate_ok": true,
+  "canonical_validate_stdout": "OK  _sector_climate_out/co2_mauna_loa/pilot_co2_mauna_loa/synth_data/proxy_spec.json\n",
+  "canonical_validate_stderr": ""
+}

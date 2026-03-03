@@ -1,0 +1,1300 @@
+{
+  "generated_utc": "2026-03-03T12:15:44.898884Z",
+  "entries": [
+    {
+      "path": "data/bundles/sector-ai-tech-llm_scaling-4.zip",
+      "sha256": "604bfde216738abb56f6dc616f1d92236757c792e0b23aeb6dc4563452dba4ff",
+      "bytes": 155295
+    },
+    {
+      "path": "data/bundles/sector-ai-tech-mlperf-4.zip",
+      "sha256": "0ae1139cfb89151dc79e9d6bb61ba3ceaa908af20a5a9048c40535721378c8f1",
+      "bytes": 161172
+    },
+    {
+      "path": "data/bundles/sector-climate-co2_mauna_loa-4.zip",
+      "sha256": "5da0ae894a97e73e4e2cfdb8f952e97790f31917a66561b2a89cc054504d65e8",
+      "bytes": 221042
+    },
+    {
+      "path": "data/bundles/sector-climate-gistemp-4.zip",
+      "sha256": "271e2c379169536afd8d5a8672ee87ba8e014466e4de84cde923d8da90e1fcf5",
+      "bytes": 184242
+    },
+    {
+      "path": "data/bundles/sector-finance-btc-4.zip",
+      "sha256": "ed274acb7bc11f089f99409bdb46ff6730e4eeb8e94c14c8237e7975751ca183",
+      "bytes": 191779
+    },
+    {
+      "path": "data/bundles/sector-finance-sp500-4.zip",
+      "sha256": "b284ecb193e9149228067318311eebe6f9d82d358f88c0547d088fdd94cec173",
+      "bytes": 155624
+    },
+    {
+      "path": "data/bundles/sector-psych-google_trends-4.zip",
+      "sha256": "e1295298267a684bd4267e7d9f449a31996101679dcfde626a1d58ba664f408a",
+      "bytes": 182395
+    },
+    {
+      "path": "data/bundles/sector-psych-wvs_synthetic-4.zip",
+      "sha256": "a874ab57be89ce6c84b684c2f603d48b59554953ca2390c741ee01e8c9f8c729",
+      "bytes": 171844
+    },
+    {
+      "path": "data/bundles/sector_social_twitter_amzn_22621950457.zip",
+      "sha256": "d4d07c60a7cfd570d429f3f6edeca43e108b8b1407f82ebf1f52187a0155bc10",
+      "bytes": 2259701
+    },
+    {
+      "path": "data/bundles/sector_social_twitter_fb_22621950457.zip",
+      "sha256": "93f4b6ef8417e0b4c5b3aa9a8baa283ead5f7a7e82ece93a592538c895d10908",
+      "bytes": 2223922
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/causal_norm_minmax.log",
+      "sha256": "2bff3272ce163ab796583a915f50b04060e816bdf96a6665de779c3df16c6c95",
+      "bytes": 677
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/robustness_norm_minmax.log",
+      "sha256": "2641ec0a85bf5023eddc4770972eb08faa054c2769ca3cc90332340828e14408",
+      "bytes": 573
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/robustness_resample_80.log",
+      "sha256": "011ecddc792d6842dc79e80f69eca2f1d32be66b168e583decbd5bc6287d9299",
+      "bytes": 1658
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/robustness_window_medium.log",
+      "sha256": "74c083e4b8ebe3fdd6c4f427688a9da069669b6b58f899fb0ee3ec1fd859e4f6",
+      "bytes": 1660
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/robustness_window_short.log",
+      "sha256": "09c73dac76fd6585cd12085dcba71391ef1f36553f7b87d2f55a63fa015af5d4",
+      "bytes": 1659
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/run_real_data_demo.log",
+      "sha256": "a2ee0d295db76d0377274a2d559c9ad70e051632846b5f17ed7593f7845e298e",
+      "bytes": 1632
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/tests_causaux.log",
+      "sha256": "cea204de2ba0773b34236ee66c14904ef351478f094d750e59c395989d10314f",
+      "bytes": 2078
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/_logs/validate_proxy_spec.log",
+      "sha256": "9890c02737686a0e5438f4abc891b2ee5180446b1818334cedf487e0870c4b49",
+      "bytes": 563
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/pilot_data/mapping_validity.json",
+      "sha256": "a7a30adb9153e844cb2fc603ed01b3495419a2a91dd3fc3bb0cdbe55fcb15aa4",
+      "bytes": 1106
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "7c5c1247a6263cf2c761ebe08084ff85073dd650429a17d9ead31e417db68897",
+      "bytes": 49600
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "ffb6fc40821381bcf4d81588f5849f66eae5b389f9dc745ddf76c866e6683b1c",
+      "bytes": 58995
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "41298fcb82e0aa716beefb2779f4db5be8a48d9733fc8234f59868f85d7b9fbd",
+      "bytes": 40825
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/params.txt",
+      "sha256": "4adbebe611f1f2ac265b50a91c3658b293df45f1a628f3ce2dd4df6a669d6cf4",
+      "bytes": 529
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "488c8391461fc13f06fd35583c992d843fbb7d85c5a36facbd14612d45f1a3ca",
+      "bytes": 1182
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "0560af7335c5e6fb40f0cdcec1da3bd660f643c7beefee27bf630ac9d98d49c8",
+      "bytes": 526
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "333bd9d201e6b0acb57bcbed274c86807021f4d2daf62d5939b8bd6584c9d5b5",
+      "bytes": 14999
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "e826964f0c682390aba1d43e32d3282fa254782688614668041abf085b1e3480",
+      "bytes": 651
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "958826f7c029aba7cc434997a9e7773129d9b619248004e882d20e80c7c9c8a2",
+      "bytes": 16495
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "0d3dc367b61877f94233bec846a534ffb1cc9c5c078f9478a6b2bff3ffe1ac48",
+      "bytes": 1700
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/sector_global_verdict.json",
+      "sha256": "efbbd8acf65d66d8f2842ae937601b103c3667f7867de742819402282d43d077",
+      "bytes": 852
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/synth_data/proxy_spec.json",
+      "sha256": "22acfda5d07225d152c88f3fe6ba5230b7ea33eff49b01cb4afa674a09786e8d",
+      "bytes": 1761
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-llm_scaling-4/pilot_llm_scaling/synth_data/real.csv",
+      "sha256": "9061d6feea3ba99f0e230f7a18e8e0aef13dcd8befd1b56dfb9befcf79366a1c",
+      "bytes": 7300
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/causal_norm_minmax.log",
+      "sha256": "c416ebbc5d8a6e18c03ec8b748a5bc50808b3f1f1f72c19e6dc907a4b6b19c51",
+      "bytes": 667
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/robustness_norm_minmax.log",
+      "sha256": "12b1b3c3ca38a3a714ab5651570db28c64d476cf0cf701011d8911db3f1b9c16",
+      "bytes": 553
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/robustness_resample_80.log",
+      "sha256": "4bed3ac854dc79ad2000a5a3bf7cc95e9232ab183add5272198832a403c52a21",
+      "bytes": 1638
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/robustness_window_medium.log",
+      "sha256": "f0d88eb51834fbe5d1903fce56423b66a6f986931bd37e0708ced7b72cb5d55a",
+      "bytes": 1640
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/robustness_window_short.log",
+      "sha256": "2c97657817e8b9991a1df01d24922b6a20add5e9aa2e22cc74848b4b6ee93e87",
+      "bytes": 1639
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/run_real_data_demo.log",
+      "sha256": "f65122a5b05ef7272c49a77267dfd5f8bb62064bbf5237ae007febf99c4ff60e",
+      "bytes": 1612
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/tests_causaux.log",
+      "sha256": "59f1b2c91148adefa38c4e7f9bc1a3334431fe384eefc127c598942021f494dd",
+      "bytes": 2058
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/_logs/validate_proxy_spec.log",
+      "sha256": "443dba747df0176018e90f8f1ef3fb0b047d769ed51d79d59374cc594adc6214",
+      "bytes": 533
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/pilot_data/mapping_validity.json",
+      "sha256": "c84fe242fb8161572bdbc8d86b08cc324a76927ab9cb27cffb6f9a8107d3c884",
+      "bytes": 786
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "bfa788e35da368f32868e597a64193dd3c30c340f19e52f236c23eb8386a2f59",
+      "bytes": 59089
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "94e784ea5ff5cc169461551e89a7a1157441d5df3016de3cd2b2c04881bac5e0",
+      "bytes": 55691
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "7f6477ae984d5cdc8f63a6907403d715d1778c121e053c706ac481c30e90347b",
+      "bytes": 41070
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/params.txt",
+      "sha256": "aad329693e2b49b22ea49b62a8570beced94462989bfef5e2d9b32f65d597653",
+      "bytes": 509
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "21d06ffb02e2c9b800fe6840ca04f5a1457c1b3eb31113474e0e63dce99e7995",
+      "bytes": 1286
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "86de79f6baee1e9d06031b8e51189027e01eee14462f5e6fa8b0e9c06bffd19f",
+      "bytes": 534
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "5cf482786dce0364f71e0a27d117ef3a8829c9212c5187b5988bd8ce2e48fecd",
+      "bytes": 15230
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "322b4f70373a65c336d11bf59fcabc153fde986855f3495902099a5860596879",
+      "bytes": 642
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "6ecdd4f9a26a77c9556b743e9421433858f89aea24025a34555d10754165cf1b",
+      "bytes": 16648
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "736947c87d33ba35651ada3ce02e90ce6a0f45e73fd2a3724582d8cfa7880b1c",
+      "bytes": 1779
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/sector_global_verdict.json",
+      "sha256": "c6709670cf6b0d3470e168f00d0c6a3efbd637ab62a8827da29945d3e77e05d2",
+      "bytes": 817
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/synth_data/proxy_spec.json",
+      "sha256": "04636cd231e6d3bfc9d849a85b98c053bf73e3f737819ba52113c90001ee925a",
+      "bytes": 1756
+    },
+    {
+      "path": "data/bundles_extracted/sector-ai-tech-mlperf-4/pilot_mlperf/synth_data/real.csv",
+      "sha256": "7c8f1fc5b16f11ad96e2c4d5f78b131703743a35ec2e0ec0837e0cc207898132",
+      "bytes": 7360
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/causal_norm_minmax.log",
+      "sha256": "47b616f7083571d7ebe919984faf0b6dc34cff6750fa8122178a9f8517121c4a",
+      "bytes": 681
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/robustness_norm_minmax.log",
+      "sha256": "64dd7358e44f87210b2bf9f30a9abb448369d7546d66b3ce257aed03ce116aee",
+      "bytes": 581
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/robustness_resample_80.log",
+      "sha256": "4dd0c69dee203b9bc41a888d0be417b30df8c28cdaff5594947cbd7b6da22ce0",
+      "bytes": 1666
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/robustness_window_medium.log",
+      "sha256": "149d6b807fdf5773acabd1dd81e81cab071ca715328dce381a349c83046d3adf",
+      "bytes": 1668
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/robustness_window_short.log",
+      "sha256": "d063b9c7bf615004afedcf303f1bf98ddf52511a30092d503ff3de0091c0dbb0",
+      "bytes": 1667
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/run_real_data_demo.log",
+      "sha256": "29ee36d4d6096f27725e6bfb70ec35a26e0b7d31007f42bc19343a8b02329a1b",
+      "bytes": 1640
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/tests_causaux.log",
+      "sha256": "82f6e7775f3ab1de07e870277f6f372f4b1394074aadcd0985323800ac6c39c3",
+      "bytes": 2086
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/_logs/validate_proxy_spec.log",
+      "sha256": "c02023117d1959a51f06f766b6fa132f83110f0c764a1b52c2ed8f19b12c4c39",
+      "bytes": 575
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/pilot_data/mapping_validity.json",
+      "sha256": "f9d00deb494152d176e321582f55405c9bdd34cdc79eff51603a27b0620a7c0f",
+      "bytes": 644
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "75395d3543a9f7506348346565b810f9e5c265c78359581cf5f1c59ab954ac8d",
+      "bytes": 48160
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "7a68d15196d28efbbdd12ac9fb1e5f2d4817db6fc9893f8942ce36fef7729992",
+      "bytes": 119178
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "3cc710cb03daa285670056e2f4a76de365091f12e3eca48efc5c2cfa6409221d",
+      "bytes": 26906
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/params.txt",
+      "sha256": "b444ce04921d9fee0f84adefff3d85e3e69bf93dc8b9fcec433ab84bd70412ae",
+      "bytes": 537
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "1f912626bfedb7a4fc669059782ed1172142ed186f3a383630259cf407c3a41e",
+      "bytes": 974
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "31db947fac7a7e560a9294a67b4f1225c5b49b87bfb36cf1de7eacb414462602",
+      "bytes": 488
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "f12a31d1e77cdfc603b07c9323ee8a090df0149a4a837169faec70bbbae8ba55",
+      "bytes": 53805
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "6356dd012c2e9b48be5ed50cf94c29973fdea068c911bdef093372f7f68a2509",
+      "bytes": 691
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "f12a31d1e77cdfc603b07c9323ee8a090df0149a4a837169faec70bbbae8ba55",
+      "bytes": 53805
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "6f6f1b46a2132e8fcd76eda0177207b883767d400102eb5bdb3e00131f0da10e",
+      "bytes": 1341
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/sector_global_verdict.json",
+      "sha256": "198e84cd5e4630a66e92915d41fcef9b1aa11355176cdc6d8d89009c68c49e57",
+      "bytes": 854
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/synth_data/proxy_spec.json",
+      "sha256": "f920629c33db88d2bfad56e9a3fa004fc1ff31eed2e15f07052d7981747421ba",
+      "bytes": 1833
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-co2_mauna_loa-4/pilot_co2_mauna_loa/synth_data/real.csv",
+      "sha256": "6a8b1aaee449632aeebbb13d8aaef970b15d67f2bd25f0b96cfb4ddf08699b30",
+      "bytes": 16972
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/causal_norm_minmax.log",
+      "sha256": "0198dbd931e29b20b769a2ad312df4f2188fb70a3afecc5144930c806f0cbadd",
+      "bytes": 669
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/robustness_norm_minmax.log",
+      "sha256": "be3c4422fb462d24c69ee7854992f774f4fbbe988aee1b8b5aed2816657f7989",
+      "bytes": 557
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/robustness_resample_80.log",
+      "sha256": "6ff6c464f0cdda5a8209753da8c6af4b5c29d1c6e364bb7806cbdc9293f73b34",
+      "bytes": 1642
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/robustness_window_medium.log",
+      "sha256": "9f500c0ade279a84b77b1a90a15ab72c04cfc74567f5b045e67443e7f0bd6dae",
+      "bytes": 1644
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/robustness_window_short.log",
+      "sha256": "1b233a30854592b83748a115a9240c79c03fda2c7996a4278df497c83d45cc8f",
+      "bytes": 1643
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/run_real_data_demo.log",
+      "sha256": "196cdc262afa007f61053d87dda0028f24ffebfa35db758b2d9fd515ed8173e9",
+      "bytes": 1616
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/tests_causaux.log",
+      "sha256": "cd059574dd5a0025559f356d5caf96e8d5f5fc60726b3c3d96c9963874eff9a7",
+      "bytes": 2062
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/_logs/validate_proxy_spec.log",
+      "sha256": "1ecb2fd39b495af55f45e422558f0d89892afa351229bc9eadefbeab10364924",
+      "bytes": 539
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/pilot_data/mapping_validity.json",
+      "sha256": "6b802c5a9499e57eb1a49ff32f0f903f35e2d4cd187278c31168e838712cd0c5",
+      "bytes": 790
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "edbfa0721fc59f5f41ace53bc8910b313353ece4d7ee212d15c3dfddd1efaa12",
+      "bytes": 47808
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "85e09b67598f2df09151ff4630056e375abcff6146282dc6d202fca17ac22920",
+      "bytes": 58285
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "0efe5839461f6332712aa0b5a8a4c77ffee3ecd47f0b9a8a238533b958f8c11b",
+      "bytes": 42152
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/params.txt",
+      "sha256": "81e89bff6821f67491ebdd6d8adcec64e6c06fa0747a9edb0b3e9cc22f62ed5b",
+      "bytes": 513
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "d2c6644e80acfb60984b81c5e6b0a33aafb0f69f12aec5f6b65ff1709b22442e",
+      "bytes": 1312
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "fda1fa95da31ad49af736db459b936c8c4b3dcc9bff70325b7ba06737b6d2429",
+      "bytes": 495
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "66bd2eb21fad21bfed8b49525a5ae0023183732b3d3a050be7f6280fd7f57111",
+      "bytes": 55165
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "e32509f5e2209f05fdace02dafc44890aa2ed590f1cd8b7dcff8322c6c844ff0",
+      "bytes": 643
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "47ccd8b987c388f8554d3a2d740dc8ae3924c76e75f0ce7d8f02c096e433f5f6",
+      "bytes": 59330
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "6097b33d2964b2e0c44b40102b1408fc861442172e84ea1951c9bc555cf1966f",
+      "bytes": 1767
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/sector_global_verdict.json",
+      "sha256": "c85533c0dde42b6ce3436df9a48bf71374c38228932c1cb7f8c43f2458f29b1d",
+      "bytes": 818
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/synth_data/proxy_spec.json",
+      "sha256": "b45bebb33d256d765009f0267a12ab1911e6bf4980656a0b4918fa801952fe28",
+      "bytes": 1827
+    },
+    {
+      "path": "data/bundles_extracted/sector-climate-gistemp-4/pilot_gistemp/synth_data/real.csv",
+      "sha256": "6a7d04bdb1b6429ede9c181e68999c0a764293fd2a4058f46b4605279f42dc04",
+      "bytes": 25222
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/causal_norm_minmax.log",
+      "sha256": "11fa53b09e7c88f63c3df9390aa12e9cab819ec06295d08557e6ce2e47e5ebb3",
+      "bytes": 661
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/robustness_norm_minmax.log",
+      "sha256": "e17fb73979bcb6aa05ea57dfec4252304652cbe3ffb77804350f4390d3485e26",
+      "bytes": 541
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/robustness_resample_80.log",
+      "sha256": "f845eb022873de9b4c62584bdf1ad5e826f0f87f2e5fab4d9ed0bc1bfb80c1d5",
+      "bytes": 1626
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/robustness_window_medium.log",
+      "sha256": "f8a25b3f8970a904a8dced7763fe991fdfb130081250bd8e96a8c1006be2b7b0",
+      "bytes": 1628
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/robustness_window_short.log",
+      "sha256": "6a382ca0a3d67a5374057ab21744e7f7275cbfad5a7b9245d041d4b59eaff739",
+      "bytes": 1627
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/run_real_data_demo.log",
+      "sha256": "ac4d5e60a74e532a11beb8dd0f155944561ff1a5c7c29bdbd40b5c7b69432538",
+      "bytes": 1600
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/tests_causaux.log",
+      "sha256": "738f59f36979857713284c30dadcf24864693e06dbabd13429c6e847662cfec3",
+      "bytes": 2046
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/_logs/validate_proxy_spec.log",
+      "sha256": "e320814a1e269be44e06d5df1d5b1b9ac6a9654cecc2572e6514f4196038ea84",
+      "bytes": 515
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/pilot_data/mapping_validity.json",
+      "sha256": "6bdbc227aa2bd3495552d42d9ef5b1bf583ebda18b17a37efc1452a04a99b918",
+      "bytes": 666
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "876a84d08d64aff523d77dfce13126be54a092b3287efa410be7b3abb693e0d8",
+      "bytes": 49750
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "bf18e7f440ecda69399095d98c4c83014672de5dca3b90e7c9456c4a7b387452",
+      "bytes": 71406
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "4f69b05e4f0200239cba3761185db7f0e2f3cc578acaa5e20e4e00a74aba29be",
+      "bytes": 40670
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/params.txt",
+      "sha256": "0408cb67719709c4cd91355b938a2ba719e7dd319dfcba04b4be49a112f0133f",
+      "bytes": 497
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "28880428aa738d87fab71249cc4c52109deb755b8bae3ee6c0ea0a564480f159",
+      "bytes": 1165
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "950a6c3e849af9cd9d4937307791ca007cd3b568b88af6feaad8bd403ba2664f",
+      "bytes": 530
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "b130f7f3f3fc4d61ab1dfbdb9bd9bbda3926bcc0997fa0db8452414b4b76d1bf",
+      "bytes": 46944
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "8442e669c0c84ed2847ac005807ab9f715b917236f53232ceba645bbc206edff",
+      "bytes": 639
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "a0dc410775c0733fae4229770a674b78bbbac891fcb5837bf5bb5fcc0eab3c44",
+      "bytes": 51225
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "6d3badb0bc7de27ffc1fdc744bfd1fc7fe30c324b24677caf87d953ae4617e0c",
+      "bytes": 1685
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/sector_global_verdict.json",
+      "sha256": "e1638db319586d84304311165746c42cf7b2f43f5d4c0fd552b49122dd7d1134",
+      "bytes": 814
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/synth_data/proxy_spec.json",
+      "sha256": "4d4d0c3a7617987f79412d8b10348aaa290a961fc2c16dc3ff11b5ed27b90106",
+      "bytes": 1718
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-btc-4/pilot_btc/synth_data/real.csv",
+      "sha256": "eb4220de8f5e888c1653a4dcc17a013ffe15d4f243937176ecf34804f17cf176",
+      "bytes": 21176
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/causal_norm_minmax.log",
+      "sha256": "141e07669090951bdf03975cb89efbc097d28d108291009251d3b0242e5e85e0",
+      "bytes": 665
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/robustness_norm_minmax.log",
+      "sha256": "3780310d1eb43e3053fc61d98074f3ce3179232c75f2f6c4eca85b7da5f9e54d",
+      "bytes": 549
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/robustness_resample_80.log",
+      "sha256": "bed2a66e72ffe83b6c9ef6406e376f2636f423933cff883b51adbbf42b51b035",
+      "bytes": 1634
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/robustness_window_medium.log",
+      "sha256": "c3bee996b6d0d903f3a4dd795751c2f74f57b1e4f9f5a8f93b2bfc6c8283d64e",
+      "bytes": 1636
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/robustness_window_short.log",
+      "sha256": "b4f765f371f9d5420f759c8a03600b8d31eec27d3994f54dbafa117dd47c7034",
+      "bytes": 1635
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/run_real_data_demo.log",
+      "sha256": "e3f4edd652149fa7945dd86ddf70f9ec68efb314ea434ee1b9e29bba0429c1df",
+      "bytes": 1608
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/tests_causaux.log",
+      "sha256": "df36b2305fd339c7f7f58edd56a30f29334dccf13dcad04d494b8f720d186206",
+      "bytes": 2054
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/_logs/validate_proxy_spec.log",
+      "sha256": "1036204ac2b6a4eb356055d37fe0a8fe8bc5714c72d8688ad4e3ec8889a967e7",
+      "bytes": 527
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/pilot_data/mapping_validity.json",
+      "sha256": "4811d10214db8330ee04797238a2a08b40d0499f43622de43b73c6fbbfffd9b3",
+      "bytes": 742
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "276a211eca48d328950274dff67210d24bf48b951a4ee6b0581349c95dbef634",
+      "bytes": 45617
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "f6ab654222c9b020572baca30580d988b49a25d389c6f20f220eb6cd20448a9b",
+      "bytes": 56368
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "4a03495877bc3fd15fef5a353d8a6a3bc2ad55d8f00887da7ea5dc8d46fd6f4e",
+      "bytes": 34213
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/params.txt",
+      "sha256": "1ce1d84e79c335411c9860b791d523fb06652fe445465dc8e156015ba7688f7d",
+      "bytes": 505
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "92c3dd36ddf72f271f48a0068fe8c61ba449638277f0f4669a8b90ea3d9924a8",
+      "bytes": 1169
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "be78afffbffd03429cf86d1e7bdfd4d25210850574e7d1f70fa20aa72ef0d7a6",
+      "bytes": 530
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "ada4f9a5c8e582b5d4008850e3cbdcb516d91b0029014578e0c743d20db14fcc",
+      "bytes": 43608
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "e12dd4b1f388a960f86be9c10f1c5bb19a65d112bd45b054e24d903bae2828d9",
+      "bytes": 644
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "131899e1b30843132c842f9cb2936d73b57a0571d30f10f43c23c657a659e190",
+      "bytes": 51096
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "9cba903cf46d43747b36bf058980d6075710aac951947bc7e845b55623954a8b",
+      "bytes": 1685
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/sector_global_verdict.json",
+      "sha256": "0ecfc06f73fe41c3775fe402523d2532c6214ab7d778185cb072387427320354",
+      "bytes": 846
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/synth_data/proxy_spec.json",
+      "sha256": "5cb51d130541a72bb4c4561cd23fe8f3b84fd2b517a53b730a16d981966bdacd",
+      "bytes": 1720
+    },
+    {
+      "path": "data/bundles_extracted/sector-finance-sp500-4/pilot_sp500/synth_data/real.csv",
+      "sha256": "410cac8af7f0c572ed3f561a204ed496c90d413013f1b02879980fcff2a30b95",
+      "bytes": 13073
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/causal_norm_minmax.log",
+      "sha256": "c3bbe0c607ee1795782a0b8b283c2c02b5dae8e5ec6f370e1ae064f075f1a7a8",
+      "bytes": 679
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/robustness_norm_minmax.log",
+      "sha256": "28e83dab54a0151742d7358654f3c832f718f8e51069e7ae4fdb27c4b8574268",
+      "bytes": 577
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/robustness_resample_80.log",
+      "sha256": "17362cd5003dff02349bab83e9ba0c08ab747dfbf6def4bb3735f03e599ff66d",
+      "bytes": 1662
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/robustness_window_medium.log",
+      "sha256": "934834dd357db2638070127ded7b539d75d6417cbbf4f518aa3b264b172a21de",
+      "bytes": 1664
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/robustness_window_short.log",
+      "sha256": "94e70c974770ac5f13807377465d798c6e381e195be4412f71bb23ae3113e7de",
+      "bytes": 1663
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/run_real_data_demo.log",
+      "sha256": "87eed768aed4fbff102f437e167c5799cd1e2890a6779397b30948ae9db87843",
+      "bytes": 1636
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/tests_causaux.log",
+      "sha256": "3a4a10e11c5114f66136096bc51cbd62ae51863f829b19e937333e48855963db",
+      "bytes": 2082
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/_logs/validate_proxy_spec.log",
+      "sha256": "48e94f8a01e46546167a13ce1ea6abacf2a85d40ccc13abf4f11c69f377e111f",
+      "bytes": 569
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/pilot_data/mapping_validity.json",
+      "sha256": "d2d7507e73ca4d06666caf6217ad8390faa0a4c403e017ba535d7ebe403379f1",
+      "bytes": 803
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "4fdb06b4f299e6e8e64593ed4bec622fc21c62d0aca6e0d9c9117b023595d8c6",
+      "bytes": 50160
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "98b4dc53ae900d424122d075985cb4c14020d088c03979a4155fd09a270a9d25",
+      "bytes": 61324
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "cdfc99ae260065d0dbbcf4c9cd4e2238677ba408649b5d08c38a9b0d9836ef2b",
+      "bytes": 39751
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/params.txt",
+      "sha256": "51ea3c648d70940c5a2f9a028593856afcd0d9030f84532f5b8a9fe5258f47bc",
+      "bytes": 533
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "5c565206d17ce22fe18ea9a14084037d99de8f175ce4680fd075eab849495157",
+      "bytes": 1175
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "68a6da73665544d8189656b68629bfa826084486c17855d3225606490b27cd06",
+      "bytes": 526
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "bb72c8afb86826f5616d393f34e64b79e05478bd3bafcd70d80ebbdd5d8a4e41",
+      "bytes": 45772
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "22250ee694acea71b4331b4a52cfc3d0afd50be58f3adadee77199d95695c61a",
+      "bytes": 656
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "b0d1491922b94f1e63b94c3e54448867017bc521c4c701ff039f7d83ff71cc9b",
+      "bytes": 49843
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "92deb8b4a2b121d7873eb5d5912481a4791a7d7ae7e8c629d2c68eee4e94b3b7",
+      "bytes": 1690
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/sector_global_verdict.json",
+      "sha256": "683f1915f7c0bb69dacfeb298bfed230790cd92e9d818a0e894ca4e022884f57",
+      "bytes": 852
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/synth_data/proxy_spec.json",
+      "sha256": "9ed5a7271d5d2c0838b71be2af6dc869887ca15581c9f38f98ef0c274dfc226a",
+      "bytes": 1739
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-google_trends-4/pilot_google_trends/synth_data/real.csv",
+      "sha256": "278769edd943ca1dbacfaeba7e46da87e5a7aff8c0a98f21d8801cad802627d9",
+      "bytes": 21340
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/causal_norm_minmax.log",
+      "sha256": "000ba9351b53e81ac8ba3a5bf0052d37e4e4a34f24fc1c1e30e279cdb4f62cff",
+      "bytes": 679
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/robustness_norm_minmax.log",
+      "sha256": "529a9202a0a77500afa27a90e046ee8e4bb055188009e87a93ae0feb297686d6",
+      "bytes": 577
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/robustness_resample_80.log",
+      "sha256": "1a022fa38cdbfab2c2a919beacef8e634806fd7bb995bb1d659472b607593841",
+      "bytes": 1662
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/robustness_window_medium.log",
+      "sha256": "ab54c2bc56491ef793447349fa0499d788b1e9c8ec997c746c739ff8a5c81eed",
+      "bytes": 1664
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/robustness_window_short.log",
+      "sha256": "72b35d3757dfa0a530eb7b6c6644d6a60a23ec974724ce12b93012046a53fb11",
+      "bytes": 1663
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/run_real_data_demo.log",
+      "sha256": "3a6843cf473009929a3dffe1810fcd8f0aa889ca12522e0d5a34b0447a9c5813",
+      "bytes": 1636
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/tests_causaux.log",
+      "sha256": "7bf8343562e954995a243a926934c32c295e4c91be315b815b73e9a826aed752",
+      "bytes": 2082
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/_logs/validate_proxy_spec.log",
+      "sha256": "027b278ce6017a3b22474e6ef39aab470746933c401aef461e3eb2d9ff453165",
+      "bytes": 569
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/pilot_data/mapping_validity.json",
+      "sha256": "23d7c8a2661eec9bc6b40ce81839057cf089c89c91a63cc6f1538666c8606c79",
+      "bytes": 1109
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "d8f3420506aed93b6b53095d4ab83ee1885e75001b8e3f7a008beaa400829638",
+      "bytes": 51212
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "2b308c1977d812c04c3daaa1933440cb8bece12643040dd87c52f01818da3940",
+      "bytes": 52163
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "6a169432f320ff0c8beb9d04f722cb4e228f1b05dc9d1f5e959b06db9c704a40",
+      "bytes": 38749
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/params.txt",
+      "sha256": "1932cde48447899abe0d761bb4447a5e72afb522b2400067a550bca6a77364ae",
+      "bytes": 533
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "2f2fbe75ab1a0b1290a9cc8fee2104a5e89d67113b7fa730613c1f3f8c9bc540",
+      "bytes": 1181
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "286d436b39653d14d9f0d3c0cccdaf26d9fdb78bea91a053f68e007a814c232e",
+      "bytes": 531
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "f5e2129951ade032d46cf3cf604994f21af1468e37db266dc2a7da2bbb7ef50f",
+      "bytes": 45249
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "3fa6a624ed84d44ac0cff7d4ac643aff7f9e0c2923d630576ace32c0c7042150",
+      "bytes": 660
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "b461a40f65005d9ca3e1b1d7bfb839212ad8216c668211a339fe8b17eccd9c19",
+      "bytes": 49366
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "ec7ef356048d4364184c27a58b6c6eaabf4a3edd710b9ce5b30a9304becbbaa0",
+      "bytes": 1699
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/sector_global_verdict.json",
+      "sha256": "f9b74c86a6cb707a50f0c88985d0bf3ca7639272c5e4d51ba417d4df09888d64",
+      "bytes": 852
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/synth_data/proxy_spec.json",
+      "sha256": "815e944a7b00a17374634c5688f65117ca1df846599a7adda0cb410149d2fe64",
+      "bytes": 1739
+    },
+    {
+      "path": "data/bundles_extracted/sector-psych-wvs_synthetic-4/pilot_wvs_synthetic/synth_data/real.csv",
+      "sha256": "8a5c77f392d58758b5485c521ef4e26a025954f6507bac10a301f4a7cc6aef45",
+      "bytes": 21394
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/causal_norm_minmax.log",
+      "sha256": "1d896b41bb029babada908ca6be3e709bb664299baaf1834134b3f687313ba36",
+      "bytes": 680
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/robustness_norm_minmax.log",
+      "sha256": "7a1cd13592a7d7836899129c565709a8bfd25f8af94e7ccc5db55250e75a96b3",
+      "bytes": 633
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/robustness_resample_60.log",
+      "sha256": "56eaf0bd510bbc986af5f3be3c8d342574581bfe24d7daaf713e748cec0027d4",
+      "bytes": 1718
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/robustness_resample_80.log",
+      "sha256": "b67e0901ca791fb233ebdbcfc56ff5d01061446cafcd7dfc4af37e1a7977271b",
+      "bytes": 1718
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/robustness_window_long.log",
+      "sha256": "d5b61fcaa4978dbbeba50532cb115156109c0cd1d917a1606da774cf50dac73c",
+      "bytes": 1718
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/robustness_window_medium.log",
+      "sha256": "113126646dfa0ab9582f3ca5146a2706c66ef52baaf405c0723837f636363e62",
+      "bytes": 1720
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/robustness_window_short.log",
+      "sha256": "e755469a8c5a724b770ec9b8bbd2ce072f0166727600991eba8f9e3c44adb53c",
+      "bytes": 1719
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/run_real_data_demo.log",
+      "sha256": "c2388ce8cd6a25bde0424fc4275af5a9e6036f3bc516e078664252a5e0360f3c",
+      "bytes": 1692
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/tests_causaux.log",
+      "sha256": "d3740745b9c899651b256054abdb3945585f6124f98bb1c20df06d8a57e39a01",
+      "bytes": 2080
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/_logs/validate_proxy_spec.log",
+      "sha256": "cf7afe5522bfbe41f0dfc98c11adc009584b9223e025f3e872defae43f986c4d",
+      "bytes": 740
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/pilot_data/mapping_validity.json",
+      "sha256": "97079f6d0f29eff70e4c632c90ac8a53220b3768a3283ba357246b63fb699540",
+      "bytes": 508
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "6e18857fab30f88f8aec79e88be53e185c18ce1eb033e5a49ad38b6966da0627",
+      "bytes": 53405
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "36667d1b9b9aeee52b4f744aceb07e1a8b142eff48135637a468b618db80c9d6",
+      "bytes": 31005
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "a121009db89a643aafb2c3ca395885dfe1e7f9cd37a1c3a0493d2ad4c6b4fadf",
+      "bytes": 29838
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/params.txt",
+      "sha256": "d29d3ef6906a793566827a70c9875dd8d9bbce3021afd7084bc14df6237ba4ea",
+      "bytes": 589
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "b333357704f0f6e6b68b1108c7bdfae96909029526c0c482f6faffc5fb29935d",
+      "bytes": 1259
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "aacfa6c32a32226f9f39d3db60eb9e3edde84c5bdd562a1bb42204c1f82c15be",
+      "bytes": 476
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "8f1fc041d8f5fc24ade0dee1a6a4fb7ad7032861671cf1758d526e46908d68f5",
+      "bytes": 3226950
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "7327a9349102760ccbddacb358a21909fa7013f8fb5182445092b4002ebe8ee0",
+      "bytes": 712
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "0e68f070bca10f4fd37fd40d487061d540580e052765e6afa141d0aa083bdd4b",
+      "bytes": 3163164
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "a2db6564c995d0b52d87fe7910303fb8760f6b7b7ece1c7558e5bc421ab374ba",
+      "bytes": 1610
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/sector_global_verdict.json",
+      "sha256": "d3ed1d5c7309da3a016f73353cd73da02b25b9a0657fbf05559aa939552288aa",
+      "bytes": 899
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/synth_data/proxy_spec.json",
+      "sha256": "ffbb434e33e7ab85e6b072591cf10a1eda908535e22bba082e61f56577f35f16",
+      "bytes": 2768
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_amzn_22621950457/pilot_twitter_amzn/synth_data/real.csv",
+      "sha256": "48ef7b8b324dfafa86d72015204d3ca525716bab562419d1c4505e1ee733db8a",
+      "bytes": 1845959
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/causal_norm_minmax.log",
+      "sha256": "0fbd201bbb33e5bd2e22b2af2c4716dd1c8a150f987f84891f9ef86d73fb24e1",
+      "bytes": 676
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/robustness_norm_minmax.log",
+      "sha256": "6229e8248bc76dd5a068dc1aeafd1d9718bac4656c9006d10a7a63134e9ab57f",
+      "bytes": 627
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/robustness_resample_60.log",
+      "sha256": "3cb1de417ce32aa0b94f3dae8369629f624e6aa41645955eb3fa1be59634636a",
+      "bytes": 1712
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/robustness_resample_80.log",
+      "sha256": "64a4225f5579708f7f75a6294f36ce8de0bcb3a35ee9195c323b7adc519e5194",
+      "bytes": 1712
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/robustness_window_long.log",
+      "sha256": "37f1d09b66d107fb3e9d81dbd89a630b6d00bf20e9a6859a47dc92206d676d4b",
+      "bytes": 1712
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/robustness_window_medium.log",
+      "sha256": "7c3d462dddd45acefd9c5641828278b7a34559c4f09cd458937d72bbc977a991",
+      "bytes": 1714
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/robustness_window_short.log",
+      "sha256": "09f3d3299027c43395718a3e328f13d76f3f421ec857266b7a1be47ff2da1630",
+      "bytes": 1713
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/run_real_data_demo.log",
+      "sha256": "fd84a7bb215dbe48a04b00d05bb6b1f211506e7b6d4a4a512cdfdcffd3046a25",
+      "bytes": 1686
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/tests_causaux.log",
+      "sha256": "51331e58c673da01468f14024030766fbff5beb918f104f0ff34847f58e6d20b",
+      "bytes": 2072
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/_logs/validate_proxy_spec.log",
+      "sha256": "c617f75ab7208bf2577e2c18be871a90d44d3f07785bc5618a8a5746dbc1dfc6",
+      "bytes": 734
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/pilot_data/mapping_validity.json",
+      "sha256": "b3e803e505ed4055bafed7b5a3379c662dd2cfb11274d114220ea9e11e606d07",
+      "bytes": 502
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/figures/c_t.png",
+      "sha256": "f91bed5e0eded4b3448257e5484e3fd40bf92f4db4751849708b8a36fd897161",
+      "bytes": 56139
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/figures/delta_c_t.png",
+      "sha256": "75052ba38f1e6af29cfdfa5e107fc2fbbe97d68baf9328ca479b23ba0d510247",
+      "bytes": 32376
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/figures/s_t.png",
+      "sha256": "d33726d1f1891dda668fbcac3e1b9c63c6a67bfaa85cd87a254b9c64e305a54d",
+      "bytes": 29889
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/params.txt",
+      "sha256": "9f1297613143c5f33d267c6a45106b83a9d7c41c91c92e7dfcf9732d709afd6e",
+      "bytes": 583
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/tables/causal_report.md",
+      "sha256": "94ae01a9fd5ec93d56728d0de3a87801cb599e71c0f6b093a3f0a833a4d660c2",
+      "bytes": 1118
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/tables/causal_tests_summary.csv",
+      "sha256": "ed2b1f26085c4ef79801db80b98ace50ed39631bba0f0656bc2c7177a980373e",
+      "bytes": 491
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/tables/control_timeseries.csv",
+      "sha256": "236333e2420e05b6b1937bbe2f299541342267c44e06671ced4a1848aad0762f",
+      "bytes": 3232957
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/tables/summary.json",
+      "sha256": "ce92478ca195a583405a9ea87ee6d5c764ca4fa15dd86c18073026ea29ae5048",
+      "bytes": 714
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/tables/test_timeseries.csv",
+      "sha256": "93c44725472873950980c2625895fead985161e643a0cb9489991f18e37393d0",
+      "bytes": 3201580
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/tables/verdict.json",
+      "sha256": "528e170e1cf99a7caef54fba63b31395cda1b2d6091dbc7359aaf0fb2f6b5426",
+      "bytes": 1576
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/robustness/variant_norm_minmax/verdict.txt",
+      "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "bytes": 7
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/sector_global_verdict.json",
+      "sha256": "2b686508f619e2e5e7edd95b22f3b83282d1d26ca00ed216525a9f2f86d95868",
+      "bytes": 897
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/synth_data/proxy_spec.json",
+      "sha256": "82ddb057cd73104cde7fc0241048c0877da01a7f7469ed3bb81c816f2f012f88",
+      "bytes": 2764
+    },
+    {
+      "path": "data/bundles_extracted/sector_social_twitter_fb_22621950457/pilot_twitter_fb/synth_data/real.csv",
+      "sha256": "e385fe4a56c6155d7b16c338500b10dbf87b7246e8bc40186788f1f34c113755",
+      "bytes": 1847412
+    },
+    {
+      "path": "data/climate/GLB.Ts+dSST.csv",
+      "sha256": "29ba41d96a289d168b6321790b354aaa28982d733b1eb593d4505673d852f540",
+      "bytes": 12878
+    },
+    {
+      "path": "data/climate/co2_mm_mlo.csv",
+      "sha256": "f5fcfcfea8baeadf759604bfb718c82a15ba005695c3e9e8c71379474b820ca6",
+      "bytes": 38424
+    },
+    {
+      "path": "data/finance/^spx_m.csv",
+      "sha256": "a1b74ccc6d73189a4ec9bee39f7ee84a4919d0944b941e0960054a62943a6e9f",
+      "bytes": 111476
+    },
+    {
+      "path": "data/qcc/QCC_Brisbane_StateProb_Report.pdf",
+      "sha256": "1e6d01761d7a4689ccd342f2be03ac1340fa72b2d430cfe326d6f71e72c7bcfc",
+      "bytes": 11717
+    },
+    {
+      "path": "data/qcc/brisbane_cross_conditions_artifact_(6).zip",
+      "sha256": "eb2b14416a6288f0e24244754c55cfaba1e1891ab8f2b689579121fe3383b06b",
+      "bytes": 403809
+    },
+    {
+      "path": "data/qcc/brisbane_stateprob_data_(6).zip",
+      "sha256": "7096c147ba549ad14522f135f660bc5843985c52d73eee7dfabea308758028ab",
+      "bytes": 321925
+    },
+    {
+      "path": "data/survey/eurobarometer/Eurobarometer_Standard_99_Spring_2023_volume_A.xlsx",
+      "sha256": "8e4fabb1a32c4ef1b3f335a93c7486495c59cfd66977d3c5b9bab5b6486c352d",
+      "bytes": 916098
+    },
+    {
+      "path": "data/survey/eurobarometer/Eurobarometer_Standard_99_Spring_2023_volume_AA.xlsx",
+      "sha256": "7413de363d8a11d72010f559451137f88d060f07ad1a7abdaa51b8fb1eb88c80",
+      "bytes": 639325
+    },
+    {
+      "path": "data/survey/eurobarometer/Eurobarometer_Standard_99_Spring_2023_volume_AAP.xlsx",
+      "sha256": "dab0b5b2d11dd2b09b55660ba5d8734eec6126b112ea5c59c7b6403b967a7f8d",
+      "bytes": 843376
+    },
+    {
+      "path": "data/survey/eurobarometer/Eurobarometer_Standard_99_Spring_2023_volume_AP.xlsx",
+      "sha256": "30f2390e74089c2da15b2effae2ce828b2f98d1f9bf22e50723fb6f2b3e673e5",
+      "bytes": 1381045
+    },
+    {
+      "path": "data/survey/parlemeter/parlemeter_78.2_2012_Volume_A.zip",
+      "sha256": "375e82b2c0f35ae7daf90efb5821077085a7aafc012f167ab5dc18f2710c609f",
+      "bytes": 78870
+    },
+    {
+      "path": "data/survey/parlemeter/parlemeter_78.2_2012_Volume_AA.zip",
+      "sha256": "25bddf7d2386bdca7cee87a58c7587c3e7dace5a2322d7860a3c0494b235e377",
+      "bytes": 53282
+    },
+    {
+      "path": "data/survey/parlemeter/parlemeter_78.2_2012_Volume_AA_(1).zip",
+      "sha256": "25bddf7d2386bdca7cee87a58c7587c3e7dace5a2322d7860a3c0494b235e377",
+      "bytes": 53282
+    },
+    {
+      "path": "data/survey/parlemeter/parlemeter_78.2_2012_Volume_AP.zip",
+      "sha256": "8ef5ae93d51e99ae34e2f6b41492379615b9c445dcafd1ed53147251bc4c12d6",
+      "bytes": 393383
+    },
+    {
+      "path": "data/survey/parlemeter/parlemeter_78.2_2012_Volume_A_(1).zip",
+      "sha256": "375e82b2c0f35ae7daf90efb5821077085a7aafc012f167ab5dc18f2710c609f",
+      "bytes": 78870
+    }
+  ]
+}

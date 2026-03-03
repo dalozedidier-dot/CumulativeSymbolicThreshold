@@ -1,0 +1,59 @@
+{
+  "dataset_id": "sector_climate.pilot_co2_mauna_loa.synth.v1",
+  "spec_version": "2.1",
+  "sector": "climate",
+  "time_column": "t",
+  "time_mode": "index",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "O proxy for climate sector.",
+      "manipulability_note": "Physical or cumulative construct."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "R proxy for climate sector.",
+      "manipulability_note": "Physical or cumulative construct."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "I proxy for climate sector.",
+      "manipulability_note": "Physical or cumulative construct."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "demand proxy for climate sector.",
+      "manipulability_note": "Physical or cumulative construct."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "fragility_note": "S proxy for climate sector.",
+      "manipulability_note": "Physical or cumulative construct."
+    }
+  ]
+}

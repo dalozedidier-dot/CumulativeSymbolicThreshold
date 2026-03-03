@@ -1,0 +1,24 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/run_real_data_demo.py --input _sector_ai_tech_out/mlperf/pilot_mlperf/synth_data/real.csv --outdir _sector_ai_tech_out/mlperf/pilot_mlperf/robustness/variant_resample_80 --time-mode index --normalize robust_minmax --control-mode no_symbolic --seed 1234
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      2
+ELAPSED: 0.7s
+
+=== STDOUT ===
+(empty)
+
+=== STDERR ===
+usage: run_real_data_demo.py [-h] --input INPUT --outdir OUTDIR
+                             [--col-time COL_TIME] [--time-mode {index,value}]
+                             [--col-O COL_O] [--col-R COL_R] [--col-I COL_I]
+                             [--col-demand COL_DEMAND] [--col-S COL_S]
+                             [--normalize {none,minmax,robust}] [--auto-scale]
+                             [--cap-scale CAP_SCALE]
+                             [--demand-to-cap-ratio DEMAND_TO_CAP_RATIO]
+                             [--sigma-star SIGMA_STAR] [--tau TAU]
+                             [--sigma-to-S-alpha SIGMA_TO_S_ALPHA] [--S0 S0]
+                             [--C-beta C_BETA] [--C-gamma C_GAMMA] [--k K]
+                             [--m M] [--baseline-n BASELINE_N]
+                             [--control-mode {same,no_symbolic}]
+                             [--proxy-spec PROXY_SPEC]
+                             [--split-frac SPLIT_FRAC] [--seed SEED]
+run_real_data_demo.py: error: argument --normalize: invalid choice: 'robust_minmax' (choose from none, minmax, robust)

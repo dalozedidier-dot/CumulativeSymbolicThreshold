@@ -1,0 +1,32 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/tests_causaux.py --run-dir _sector_psych_out/google_trends/pilot_google_trends/real --alpha 0.01 --lags 1-5 --pre-horizon 100 --post-horizon 100 --seed 1234
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      1
+ELAPSED: 1.1s
+
+=== STDOUT ===
+(empty)
+
+=== STDERR ===
+Traceback (most recent call last):
+  File "/home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/tests_causaux.py", line 638, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/tests_causaux.py", line 362, in main
+    df_t = pd.read_csv(test_csv)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 873, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 300, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1645, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1904, in _make_engine
+    self.handles = get_handle(
+                   ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/pandas/io/common.py", line 926, in get_handle
+    handle = open(
+             ^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '_sector_psych_out/google_trends/pilot_google_trends/real/tables/test_timeseries.csv'

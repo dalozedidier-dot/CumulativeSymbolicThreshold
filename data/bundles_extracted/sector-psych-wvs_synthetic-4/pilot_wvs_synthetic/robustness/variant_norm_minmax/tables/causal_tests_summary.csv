@@ -1,0 +1,2 @@
+verdict,binary_detected,threshold_hit_t,threshold_value,no_false_positives_pre,C_mean_pre,C_mean_post,C_positive_frac_post,p_value_mean_shift_C,p_value_mannwhitney_C,sigma_zero_post,ok_p_source,boot_ci_low_C,boot_ci_high_C,min_granger_S_to_deltaC_p,var_S_to_deltaC_p,cointegration_p,reverse_warning
+seuil_detecte,True,70,-0.0005091326151813,True,26.054020399182424,29.073987653389405,1.0,3.3697551509686804e-11,,False,welch,0.16386321126280173,5.22134675725918,4.4667450745069913e-54,4.517080903014894e-64,0.9522598356622657,False

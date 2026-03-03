@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_psych_out/wvs_synthetic/pilot_wvs_synthetic/robustness/variant_norm_minmax",
+  "verdict": "seuil_detecte",
+  "binary_detected": true,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 80,
+  "post_horizon": 80,
+  "baseline_n": 50,
+  "series_short": false,
+  "threshold_hit_t": 70,
+  "threshold_value": -0.0005091326151813,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 26.054020399182424,
+  "C_mean_post": 29.073987653389405,
+  "C_mean_post_minus_pre": 3.019967254206982,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": 3.3697551509686804e-11,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": false,
+  "sigma_gate_note": null,
+  "boot_mean_diff_C": 2.66023056639695,
+  "boot_ci_low_C": 0.16386321126280173,
+  "boot_ci_high_C": 5.22134675725918,
+  "granger_S_to_deltaC_p": {
+    "1": 4.4667450745069913e-54,
+    "2": 6.540413502137717e-37,
+    "3": 1.9974727792613612e-28,
+    "4": 4.9488653649030986e-51,
+    "5": 2.874097960985866e-46
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 0.5323210066939937,
+    "2": 0.2926586432388406,
+    "3": 0.7232291347895807,
+    "4": 0.2613343299792342,
+    "5": 0.31124567820730925
+  },
+  "min_granger_S_to_deltaC_p": 4.4667450745069913e-54,
+  "min_granger_deltaC_to_S_p": 0.2613343299792342,
+  "reverse_warning": false,
+  "granger_diagnostic_only": false,
+  "var_S_to_deltaC_p": 4.517080903014894e-64,
+  "var_lag_used": 4,
+  "cointegration_p": 0.9522598356622657,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": true,
+    "ok_p_source": "welch",
+    "ok_boot": true,
+    "ok_granger": true,
+    "granger_diagnostic_only": false
+  }
+}

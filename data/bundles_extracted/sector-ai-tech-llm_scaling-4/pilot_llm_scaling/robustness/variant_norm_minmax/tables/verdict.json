@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_ai_tech_out/llm_scaling/pilot_llm_scaling/robustness/variant_norm_minmax",
+  "verdict": "seuil_detecte",
+  "binary_detected": true,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 40,
+  "post_horizon": 40,
+  "baseline_n": 50,
+  "series_short": true,
+  "threshold_hit_t": 61,
+  "threshold_value": 0.1686531344810257,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 6.988104013723108,
+  "C_mean_post": 11.075895455920985,
+  "C_mean_post_minus_pre": 4.087791442197878,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": 5.274677279904046e-12,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": true,
+  "sigma_gate_note": null,
+  "boot_mean_diff_C": 4.503066218782248,
+  "boot_ci_low_C": 3.8292390866722643,
+  "boot_ci_high_C": 5.138397548734765,
+  "granger_S_to_deltaC_p": {
+    "1": 4.8394402356515345e-05,
+    "2": 0.002085514599379251,
+    "3": 0.0014915454029674952,
+    "4": 0.0019037691012548062,
+    "5": 0.008662045073754917
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 0.006554346911552853,
+    "2": 0.0049606209709039785,
+    "3": 0.0009261703079240218,
+    "4": 0.019030890185699714,
+    "5": 0.026197677627917786
+  },
+  "min_granger_S_to_deltaC_p": 4.8394402356515345e-05,
+  "min_granger_deltaC_to_S_p": 0.0009261703079240218,
+  "reverse_warning": true,
+  "granger_diagnostic_only": true,
+  "var_S_to_deltaC_p": 0.0010294726668660852,
+  "var_lag_used": 3,
+  "cointegration_p": 0.7577881220117593,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": true,
+    "ok_p_source": "welch",
+    "ok_boot": true,
+    "ok_granger": true,
+    "granger_diagnostic_only": true
+  }
+}

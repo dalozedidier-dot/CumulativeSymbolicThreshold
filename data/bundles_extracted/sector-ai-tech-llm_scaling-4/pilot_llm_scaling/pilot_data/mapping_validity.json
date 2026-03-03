@@ -1,0 +1,26 @@
+{
+  "verdict": "REJECT",
+  "hard_errors": [
+    "|r(O,R)| = 0.963 \u2265 0.9 \u2014 proxies are near-collinear; ORI independence assumption violated"
+  ],
+  "soft_warnings": [
+    "|r(O,I)| = 0.879 \u2208 [0.75, 0.9) \u2014 borderline independence; interpret with caution",
+    "|r(R,I)| = 0.829 \u2208 [0.75, 0.9) \u2014 borderline independence; interpret with caution"
+  ],
+  "info_notes": [
+    "proxy 'O' (role O): ADF p=0.850 > 0.1 \u2014 non-stationary series; use normalized/differenced proxies",
+    "proxy 'R' (role R): ADF p=0.995 > 0.1 \u2014 non-stationary series; use normalized/differenced proxies",
+    "proxy 'I' (role I): ADF p=0.666 > 0.1 \u2014 non-stationary series; use normalized/differenced proxies"
+  ],
+  "spec_dataset_id": "sector_ai_tech.pilot_llm_scaling.synth.v1",
+  "spec_version": "2.1",
+  "n_rows": 80,
+  "correlation_table": {
+    "O_R": 0.9632,
+    "O_I": 0.8791,
+    "R_I": 0.8295
+  },
+  "canonical_validate_ok": true,
+  "canonical_validate_stdout": "OK  _sector_ai_tech_out/llm_scaling/pilot_llm_scaling/synth_data/proxy_spec.json\n",
+  "canonical_validate_stderr": ""
+}

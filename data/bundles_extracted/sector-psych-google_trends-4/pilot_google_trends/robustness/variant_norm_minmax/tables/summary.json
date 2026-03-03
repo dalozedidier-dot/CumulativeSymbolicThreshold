@@ -1,0 +1,23 @@
+{
+  "input_csv": "_sector_psych_out/google_trends/pilot_google_trends/synth_data/real.csv",
+  "n_steps": 240,
+  "threshold_hit_idx": 78,
+  "threshold_hit_t": 78,
+  "threshold_value": 0.001992530688686628,
+  "C_mean": 28.69748420818536,
+  "C_positive_frac": 1.0,
+  "C_positive_frac_last_quarter": 1.0,
+  "cap_scale_used": 1000.0,
+  "S_is_observed": true,
+  "control_mode": "no_symbolic",
+  "time_mode": "index",
+  "col_time": "t",
+  "c_offset": 26.50098789469007,
+  "verdict": "ACCEPT",
+  "run_mode": "real_data_canonical",
+  "proxy_spec_path": null,
+  "proxy_spec_sha256": null,
+  "split_frac": null,
+  "split_calibration_n": null,
+  "split_test_n": null
+}

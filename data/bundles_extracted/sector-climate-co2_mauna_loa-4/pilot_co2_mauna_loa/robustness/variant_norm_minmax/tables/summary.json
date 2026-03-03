@@ -1,0 +1,23 @@
+{
+  "input_csv": "_sector_climate_out/co2_mauna_loa/pilot_co2_mauna_loa/synth_data/real.csv",
+  "n_steps": 300,
+  "threshold_hit_idx": 101,
+  "threshold_hit_t": 101,
+  "threshold_value": -0.04634210756667259,
+  "C_mean": 16.202316517985853,
+  "C_positive_frac": 0.9966666666666667,
+  "C_positive_frac_last_quarter": 0.9866666666666667,
+  "cap_scale_used": 1000.0,
+  "S_is_observed": true,
+  "control_mode": "no_symbolic",
+  "time_mode": "index",
+  "col_time": "t",
+  "c_offset": 31.97045979947093,
+  "verdict": "ACCEPT",
+  "run_mode": "real_data_canonical",
+  "proxy_spec_path": null,
+  "proxy_spec_sha256": null,
+  "split_frac": null,
+  "split_calibration_n": null,
+  "split_test_n": null
+}

@@ -1,0 +1,62 @@
+{
+  "run_dir": "_sector_climate_out/gistemp/pilot_gistemp/robustness/variant_norm_minmax",
+  "verdict": "indetermine_stats_indisponibles",
+  "binary_detected": false,
+  "alpha": 0.01,
+  "c_mean_post_min": 0.1,
+  "lags": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "pre_horizon": 80,
+  "post_horizon": 80,
+  "baseline_n": 50,
+  "series_short": false,
+  "threshold_hit_t": 1,
+  "threshold_value": 0.3723999981223534,
+  "no_false_positives_pre": true,
+  "C_mean_pre": 34.674796477179555,
+  "C_mean_post": 46.014796420003094,
+  "C_mean_post_minus_pre": 11.339999942823539,
+  "C_positive_frac_post": 1.0,
+  "p_value_mean_shift_C": NaN,
+  "p_value_mannwhitney_C": NaN,
+  "sigma_zero_post": true,
+  "sigma_gate_note": "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): INDETERMINATE per WELCH_NAN_FALLBACK_POLICY.",
+  "boot_mean_diff_C": NaN,
+  "boot_ci_low_C": NaN,
+  "boot_ci_high_C": NaN,
+  "granger_S_to_deltaC_p": {
+    "1": 4.377009043681624e-30,
+    "2": 4.57838753382839e-08,
+    "3": 1.6473092051713915e-06,
+    "4": 5.97839078234919e-06,
+    "5": 1.6117537050354537e-05
+  },
+  "granger_deltaC_to_S_p": {
+    "1": 4.0722706359637645e-05,
+    "2": 0.5010435602041204,
+    "3": 0.7976077441874138,
+    "4": 0.9705857986999867,
+    "5": 0.9850509213346993
+  },
+  "min_granger_S_to_deltaC_p": 4.377009043681624e-30,
+  "min_granger_deltaC_to_S_p": 4.0722706359637645e-05,
+  "reverse_warning": true,
+  "granger_diagnostic_only": false,
+  "var_S_to_deltaC_p": 4.2921696318837135e-06,
+  "var_lag_used": 4,
+  "cointegration_p": 0.6656604504842047,
+  "criteria": {
+    "has_threshold": true,
+    "ok_c_level": true,
+    "ok_p": false,
+    "ok_p_source": "unavailable",
+    "ok_boot": false,
+    "ok_granger": true,
+    "granger_diagnostic_only": false
+  }
+}

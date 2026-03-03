@@ -1,0 +1,11 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/tests_causaux.py --run-dir _sector_psych_out/google_trends/pilot_google_trends/robustness/variant_norm_minmax --alpha 0.01 --lags 1-5 --pre-horizon 80 --post-horizon 80 --seed 1234
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      0
+ELAPSED: 1.3s
+
+=== STDOUT ===
+(empty)
+
+=== STDERR ===
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/statsmodels/tsa/stattools.py:1556: FutureWarning: verbose is deprecated since functions should not print results
+  warnings.warn(

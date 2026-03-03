@@ -1,0 +1,10 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/run_real_data_demo.py --input _sector_climate_out/gistemp/pilot_gistemp/synth_data/real.csv --outdir _sector_climate_out/gistemp/pilot_gistemp/robustness/variant_norm_minmax --time-mode index --normalize minmax --control-mode no_symbolic --seed 1234
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      0
+ELAPSED: 1.1s
+
+=== STDOUT ===
+(empty)
+
+=== STDERR ===
+(empty)

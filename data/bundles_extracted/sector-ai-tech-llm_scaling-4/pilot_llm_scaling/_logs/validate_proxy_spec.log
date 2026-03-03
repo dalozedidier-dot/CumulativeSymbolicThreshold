@@ -1,0 +1,10 @@
+CMD:     /opt/hostedtoolcache/Python/3.12.12/x64/bin/python /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold/04_Code/pipeline/validate_proxy_spec.py --spec _sector_ai_tech_out/llm_scaling/pilot_llm_scaling/synth_data/proxy_spec.json --csv _sector_ai_tech_out/llm_scaling/pilot_llm_scaling/synth_data/real.csv
+CWD:     /home/runner/work/CumulativeSymbolicThreshold/CumulativeSymbolicThreshold
+RC:      0
+ELAPSED: 0.0s
+
+=== STDOUT ===
+OK  _sector_ai_tech_out/llm_scaling/pilot_llm_scaling/synth_data/proxy_spec.json
+
+=== STDERR ===
+(empty)
