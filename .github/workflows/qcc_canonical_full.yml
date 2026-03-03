@@ -166,7 +166,7 @@ jobs:
     env:
       OUT_LABEL: ${{ inputs.out_label || 'qcc_canonical' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -212,7 +212,7 @@ jobs:
       OUT_LABEL: ${{ inputs.out_label || 'qcc_canonical' }}
       MODE: ${{ inputs.mode || 'full' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

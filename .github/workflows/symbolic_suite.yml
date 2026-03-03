@@ -23,7 +23,7 @@ jobs:
       SEED: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.seed || '42' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
         uses: actions/setup-python@v5

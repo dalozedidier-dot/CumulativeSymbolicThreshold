@@ -34,7 +34,7 @@ jobs:
         pilot: [ec2_cpu_825cc2, ec2_cpu_24ae8d, ec2_disk_c0d644, ec2_net_in_a2eb1cd9]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
