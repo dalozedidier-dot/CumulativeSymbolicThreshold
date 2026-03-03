@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from oric.ori_core import compute_cap_projection, compute_sigma, compute_viability

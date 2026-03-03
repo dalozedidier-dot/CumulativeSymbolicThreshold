@@ -99,7 +99,9 @@ class ProxySpec:
         Canonical = sorted keys, ASCII-safe, no extra whitespace.
         Embed this in every run manifest to detect post-hoc spec modifications.
         """
-        canonical = json.dumps(self.to_dict(), sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        canonical = json.dumps(
+            self.to_dict(), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        )
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     def to_json_file(self, path: str | Path) -> None:

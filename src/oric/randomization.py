@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 import random
 
 
@@ -27,7 +27,9 @@ class RandomizationEngine:
     def seeds(self, n: int) -> List[int]:
         return [self._rng.randrange(1, 2**31 - 1) for _ in range(n)]
 
-    def assign_conditions(self, seeds: Sequence[int], conditions: Sequence[Condition]) -> List[Tuple[int, str]]:
+    def assign_conditions(
+        self, seeds: Sequence[int], conditions: Sequence[Condition]
+    ) -> List[Tuple[int, str]]:
         """Assign each seed to a condition, round-robin then shuffled deterministically."""
         if not conditions:
             raise ValueError("conditions must be non-empty")

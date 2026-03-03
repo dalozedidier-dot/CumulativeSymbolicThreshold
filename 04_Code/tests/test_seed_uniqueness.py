@@ -27,7 +27,9 @@ def test_offsets_unique_and_sequential() -> None:
     offsets = [d["offset"] for d in _seed_offsets()]
     assert len(offsets) == 9, f"Expected 9 offsets, got {len(offsets)}: {offsets}"
     assert len(set(offsets)) == 9, f"Offsets must be unique: {offsets}"
-    assert set(offsets) == set(range(9)), f"Offsets must be exactly 0..8, got: {sorted(set(offsets))}"
+    assert set(offsets) == set(range(9)), (
+        f"Offsets must be exactly 0..8, got: {sorted(set(offsets))}"
+    )
 
 
 def test_seeds_distinct_for_any_base() -> None:

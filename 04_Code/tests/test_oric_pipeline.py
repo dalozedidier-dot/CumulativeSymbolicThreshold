@@ -1,11 +1,12 @@
-import pandas as pd
-
 from pipeline.ori_c_pipeline import ORICConfig, run_oric
 
 
 def test_oric_runs_and_outputs_columns():
     df = run_oric(ORICConfig(seed=1, n_steps=20, intervention="none"))
-    expected = {"t", "O", "R", "I", "demand", "Cap", "Sigma", "S", "C", "delta_C", "V", "intervention", "threshold_hit"}
+    expected = {
+        "t", "O", "R", "I", "demand", "Cap", "Sigma", "S", "C", "delta_C", "V",
+        "intervention", "threshold_hit",
+    }
     assert expected.issubset(set(df.columns))
     assert len(df) == 20
 
@@ -20,7 +21,9 @@ def test_symbolic_cut_reduces_post_C_vs_control():
     df_control = run_oric(cfg_control)
     df_cut = run_oric(cfg_cut)
 
-    C_post_control = float(df_control[(df_control["t"] >= 80) & (df_control["t"] <= 95)]["C"].mean())
-    C_post_cut = float(df_cut[(df_cut["t"] >= 80) & (df_cut["t"] <= 95)]["C"].mean())
+    mask_ctrl = (df_control["t"] >= 80) & (df_control["t"] <= 95)
+    mask_cut = (df_cut["t"] >= 80) & (df_cut["t"] <= 95)
+    C_post_control = float(df_control[mask_ctrl]["C"].mean())
+    C_post_cut = float(df_cut[mask_cut]["C"].mean())
 
     assert C_post_cut < C_post_control
