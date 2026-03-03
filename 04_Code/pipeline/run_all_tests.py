@@ -352,7 +352,19 @@ def main() -> int:
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / "run.log"
 
-        _run_script(t["script"], test_dir, t["args"], log_path)
+        if t.get("test_type") == "proof_only":
+            # proof_only tests (e.g. T9) exit 1 when verdict = REJECT; this is
+            # by design and must NOT abort the suite (the aggregator only reads
+            # T1–T8 and T9 is never a blocking gate for the global verdict).
+            try:
+                _run_script(t["script"], test_dir, t["args"], log_path)
+            except subprocess.CalledProcessError as exc:
+                print(
+                    f"[WARNING] {t['id']} (proof_only) exited {exc.returncode}. "
+                    "Verdict captured in test dir; not blocking the suite."
+                )
+        else:
+            _run_script(t["script"], test_dir, t["args"], log_path)
 
         sj = _maybe_summary_json(test_dir)
         vt = test_dir / "verdict.txt"

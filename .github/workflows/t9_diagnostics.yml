@@ -38,11 +38,16 @@ jobs:
 
       - name: Run T9 cross-domain discrimination test
         run: |
-          set -eo pipefail
+          # set +e : run_T9_cross_domain.py exits 1 when verdict = REJECT (by design).
+          # We capture the verdict in verdict.json and let the "Assert T9 verdict" step
+          # be the hard gate, so we don't lose the output on a non-zero exit.
+          set +e
           PYTHONPATH=src python 04_Code/pipeline/run_T9_cross_domain.py \
             --outdir _ci_out/t9_diagnostics \
             --seed 1242 \
             2>&1 | tee _ci_out/t9_diagnostics/t9_run.log
+          echo "T9 python exit code: ${PIPESTATUS[0]}" >> _ci_out/t9_diagnostics/t9_run.log
+          exit 0  # gate is handled by the verdict check step below
 
       - name: Assert T9 verdict (hard gate)
         run: |
