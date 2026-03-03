@@ -53,6 +53,10 @@ notebooks = [
 ]
 all = ["oric[dev,notebooks]"]
 
+[project.scripts]
+oric-run-all = "oric._entrypoints:run_all"
+oric-run-tests = "oric._entrypoints:run_all_tests"
+
 [project.urls]
 Homepage = "https://www.ori-c.be"
 Repository = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"

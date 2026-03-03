@@ -20,7 +20,7 @@ def run(cmd: list[str]) -> None:
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parent
+    root = Path(__file__).resolve().parent.parent
     out_oric = root / "05_Results" / "ori_c_demo"
     out_oric.mkdir(parents=True, exist_ok=True)
 

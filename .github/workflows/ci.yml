@@ -32,14 +32,20 @@ jobs:
         run: |
           set -e
           python -m pip install --upgrade pip
-          python -m pip install             "numpy>=1.26"             "pandas>=2.0"             "scipy>=1.11"             "statsmodels>=0.14"             "matplotlib>=3.8"             "pytest>=8.0"
+          python -m pip install             "numpy>=1.26"             "pandas>=2.0"             "scipy>=1.11"             "statsmodels>=0.14"             "matplotlib>=3.8"             "pytest>=8.0"             "pytest-cov>=4.1"
 
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
           if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
-      - name: Run pytest
-        run: pytest -q 04_Code/tests 2>&1
+      - name: Run pytest with coverage
+        run: pytest -q --cov=src/oric --cov-report=xml --cov-report=term-missing 04_Code/tests 2>&1
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ github.run_id }}
+          path: coverage.xml
+          if-no-files-found: warn
 
   canonical_suite:
     needs: unit_tests
