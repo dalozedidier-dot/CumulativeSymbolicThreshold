@@ -1,0 +1,72 @@
+{
+  "dataset_id": "sector_climate.pilot_gistemp.real.v1",
+  "spec_version": "2.1",
+  "sector": "climate",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "NASA GISS Surface Temperature Analysis v4 (GISTEMP)",
+    "url": "https://data.giss.nasa.gov/gistemp/tabledata_v4/GLB.Ts+dSST.csv",
+    "license": "Public domain (US government / NASA)",
+    "period": "1880-01 to present",
+    "time_step": "monthly anomaly (°C relative to 1951–1980 mean)"
+  },
+  "prereg_note": "Pré-enregistrement requis avant analyse. Voir 02_Protocol/PREREG_TEMPLATE.md.",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − T_anomaly_pos_norm : capacité des écosystèmes sous le seuil critique. Plus l'anomalie est faible, plus la capacité d'organisation est élevée.",
+      "fragility_note": "Dépend du niveau de référence 1951–1980. Stable pour comparaisons tendancielles.",
+      "manipulability_note": "Anomalie de température mesurée par stations météo mondiales + satellites ; non manipulable."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − rolling_std_10y_norm : inverse de la variabilité décennale — résilience thermique du système Terre.",
+      "fragility_note": "Fenêtre de 10 ans (120 mois) testée en variantes 5y et 20y.",
+      "manipulability_note": "Calculé sur observations agrégées mondiales."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Corrélation glissante lag-12 — cohérence du cycle annuel (couplage terres-océans-atmosphère).",
+      "fragility_note": "Proxy indirect du couplage ; dépend de la fenêtre glissante (60 mois).",
+      "manipulability_note": "Calculé sur série de températures globales ; robuste aux données régionales."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Anomalie thermique positive normalisée — pression exogène sur les écosystèmes.",
+      "fragility_note": "Zero-clipé : seules les anomalies positives contribuent à la demande.",
+      "manipulability_note": "Mesure physique ; non manipulable."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Fraction cumulée du temps sous +1°C d'anomalie — stock symbolique d'histoire climatique 'sûre'.",
+      "fragility_note": "Seuil +1°C issu de l'Accord de Paris. Robustesse testée à +1.5°C et +2°C.",
+      "manipulability_note": "Construit cumulativement sur série historique ; résistant aux manipulations ponctuelles."
+    }
+  ]
+}

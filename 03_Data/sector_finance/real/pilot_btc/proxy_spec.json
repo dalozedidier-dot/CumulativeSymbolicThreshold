@@ -1,0 +1,72 @@
+{
+  "dataset_id": "sector_finance.pilot_btc.real.v1",
+  "spec_version": "2.1",
+  "sector": "finance",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "Bitcoin monthly OHLCV — CoinGecko public API",
+    "url": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=max&interval=monthly",
+    "license": "Public API (CoinGecko), free tier",
+    "period": "2013-04 to present",
+    "time_step": "monthly close"
+  },
+  "prereg_note": "Pré-enregistrement requis avant analyse. Voir 02_Protocol/PREREG_TEMPLATE.md. BTC est un test de robustesse sur système très volatil (U élevé).",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − drawdown_from_ATH_norm : inverse du drawdown depuis l'ATH. Capacité d'organisation du réseau.",
+      "fragility_note": "L'ATH est très sensible aux phases bull. Fenêtres testées à 3m et 12m lissage.",
+      "manipulability_note": "Calculé sur prix agrégés de multiples exchanges ; résistant aux manipulations d'un seul exchange."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − volatilité_réalisée_6m_norm : inverse de la volatilité — résilience. BTC résilient = phase à faible vol.",
+      "fragility_note": "Fenêtre 6m testée à 3m et 12m.",
+      "manipulability_note": "Volatilité agrégée sur marché mondial."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cohérence log-volume × |log-retours| sur 12m — intégration : volume suit les mouvements de prix.",
+      "fragility_note": "Volume CoinGecko peut inclure du wash trading sur certaines périodes.",
+      "manipulability_note": "Agrégé sur marché mondial ; robuste aux anomalies locales."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Volatilité réalisée 6m — pression/incertitude : forte volatilité = forte contrainte exogène.",
+      "fragility_note": "BTC est structurellement plus volatil que les actifs traditionnels.",
+      "manipulability_note": "Mesure de marché agrégée."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "HODL proxy cumulatif : fraction cumulée des mois à retour positif — stock symbolique de conviction long-terme.",
+      "fragility_note": "Proxy indirect du HODL ; corrélé au sentiment de marché.",
+      "manipulability_note": "Cumulatif historique ; non manipulable à court terme."
+    }
+  ]
+}

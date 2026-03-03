@@ -1,0 +1,72 @@
+{
+  "dataset_id": "sector_finance.pilot_sp500.real.v1",
+  "spec_version": "2.1",
+  "sector": "finance",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "S&P 500 Monthly OHLCV — stooq.com",
+    "url": "https://stooq.com/q/d/l/?s=%5Espx&i=m",
+    "license": "Public data (stooq.com), free for non-commercial use",
+    "period": "1950 to present",
+    "time_step": "monthly close"
+  },
+  "prereg_note": "Pré-enregistrement requis avant analyse. Voir 02_Protocol/PREREG_TEMPLATE.md. POWER_CRITERIA: evidence >= medium (60 pts), N_min=50 runs, k=2.5, m=3, CI=99%.",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Breadth du marché : fraction glissante des mois où le prix est supérieur à la MA-10. Proxy d'organisation — large participation = organisation solide.",
+      "fragility_note": "Sensible aux conditions de momentum général. Fenêtre MA testée à 5m et 20m.",
+      "manipulability_note": "Calculé sur données agrégées d'un indice ; résistant aux manipulations ponctuelles."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − drawdown_norm lissé 12m : inverse du drawdown depuis le plus haut. Un faible drawdown = marché résilient.",
+      "fragility_note": "Lissage 12m peut retarder la détection des récupérations rapides.",
+      "manipulability_note": "Drawdown mesuré sur données de prix publiques ; non manipulable par un acteur unique."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cohérence glissante prix-volume (corrélation des log-retours × volume log-norm sur 24m) — intégration du marché.",
+      "fragility_note": "Volume S&P 500 agrégé peut être biaisé par changements structurels (ETFs, HFT).",
+      "manipulability_note": "Corrélation sur fenêtre glissante ; résistante aux anomalies ponctuelles."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Volatilité réalisée 6m des log-retours — pression/incertitude exogène sur le marché.",
+      "fragility_note": "Fenêtre 6m testée en robustesse à 3m et 12m.",
+      "manipulability_note": "Calculé sur prix observés ; reflète l'état collectif du marché."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Momentum cumulatif normalisé (somme des log-retours positifs) — stock symbolique de confiance investisseur.",
+      "fragility_note": "Construit cumulativement ; sensible à la date de début de série.",
+      "manipulability_note": "Cumulatif sur historique long ; résistant aux manipulations ponctuelles."
+    }
+  ]
+}

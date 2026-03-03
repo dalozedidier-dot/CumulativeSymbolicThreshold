@@ -1,0 +1,80 @@
+{
+  "dataset_id": "sector_psych.pilot_wvs_synthetic.real.v1",
+  "spec_version": "2.1",
+  "sector": "psych",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "World Values Survey — proxy synthétique calibré WVS Wave 4–7",
+    "url": "https://www.worldvaluessurvey.org/WVSDocumentationWV7.jsp",
+    "license": "WVS microdata nécessite enregistrement. Ce pilot utilise une simulation calibrée sur les statistiques publiques des vagues WVS 4-7.",
+    "period": "Simulation de 240 pas (≈ 20 ans mensuel)",
+    "time_step": "mensuel (simulé)"
+  },
+  "prereg_note": "Pré-enregistrement requis. Ce pilot est SYNTHÉTIQUE calibré WVS — résultat préliminaire. Remplacer par données WVS réelles après obtention de l'accès. Voir 02_Protocol/PREREG_TEMPLATE.md.",
+  "data_status": "SYNTHETIC_CALIBRATED — NOT real WVS microdata",
+  "real_data_access_instructions": {
+    "step1": "Créer un compte sur https://www.worldvaluessurvey.org/",
+    "step2": "Télécharger WVS Wave 7 (2017–2022) country-level data (CSV format)",
+    "step3": "Extraire les variables : trust (Q57-Q64), inequality perception (Q106), cultural values (Q238-Q240)",
+    "step4": "Remplacer 03_Data/sector_psych/real/pilot_wvs_synthetic/real.csv par données réelles",
+    "step5": "Mettre à jour dataset_id → 'sector_psych.pilot_wvs.real.v1' et recommitter"
+  },
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Confiance institutionnelle normalisée (WVS Q57: confiance dans le gouvernement, parlement, institutions). Capacité d'organisation sociale.",
+      "fragility_note": "WVS mesure à intervalles de 5 ans — interpolation nécessaire pour séries mensuelles.",
+      "manipulability_note": "Mesure d'enquête agrégée sur N > 1000 répondants par pays ; non manipulable."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − indice_inégalités_norm (proxy Gini WVS) — résilience : sociétés plus égalitaires sont plus résilientes aux chocs.",
+      "fragility_note": "Gini WVS est une mesure perceptuelle, pas le Gini officiel.",
+      "manipulability_note": "Données d'enquête agrégées."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cohésion culturelle intra-société (variance interne des valeurs normatives WVS) — intégration : cohérence des normes partagées.",
+      "fragility_note": "Proxy indirect ; dépend de l'interprétation des questions WVS.",
+      "manipulability_note": "Agrégé sur échantillon représentatif."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Stress social normalisé (combinaison : insécurité économique + instabilité perçue) — pression exogène.",
+      "fragility_note": "Construit composite ; sensible à la pondération des indicateurs.",
+      "manipulability_note": "Données d'enquête agrégées."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Diffusion cumulée d'une norme (fraction cumulée de la croissance d'adoption normative) — stock symbolique : mémoire de la transmission culturelle.",
+      "fragility_note": "Modèle logistique calibré sur taux WVS inter-vagues ; dépend des hypothèses de calibration.",
+      "manipulability_note": "Cumulatif sur simulation multi-vagues ; robuste aux ajustements ponctuels."
+    }
+  ]
+}

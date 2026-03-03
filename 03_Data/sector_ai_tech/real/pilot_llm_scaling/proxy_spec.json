@@ -1,0 +1,92 @@
+{
+  "dataset_id": "sector_ai_tech.pilot_llm_scaling.real.v1",
+  "spec_version": "2.1",
+  "sector": "ai_tech",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "LLM Emergent Capability Scaling — Chinchilla/GPT law calibrated synthetic",
+    "references": [
+      "Hoffmann et al. (2022) Training Compute-Optimal Large Language Models. arXiv:2203.15556",
+      "Brown et al. (2020) Language Models are Few-Shot Learners. arXiv:2005.14165",
+      "Wei et al. (2022) Emergent Abilities of Large Language Models. arXiv:2206.07682"
+    ],
+    "license": "Synthetic data calibrated to published public results",
+    "period": "Simulation calibrée 2020–2026 (80 pas mensuels)",
+    "time_step": "mensuel (simulé)"
+  },
+  "data_status": "SYNTHETIC_CALIBRATED — calibré sur lois de scaling publiées. Pour données réelles : voir EleutherAI Eval Harness ou Artificial Analysis leaderboard.",
+  "real_data_upgrade_path": {
+    "step1": "Installer lm-evaluation-harness : https://github.com/EleutherAI/lm-evaluation-harness",
+    "step2": "Télécharger les résultats Open LLM Leaderboard de HuggingFace",
+    "step3": "Extraire les scores MMLU, HellaSwag, ARC, TruthfulQA par modèle et date",
+    "step4": "Construire la série temporelle par date de sortie des modèles (mensuel)",
+    "step5": "Remplacer real.csv et mettre à jour dataset_id → 'sector_ai_tech.pilot_llm_scaling.real.v2'"
+  },
+  "prereg_note": "Pré-enregistrement requis. Voir 02_Protocol/PREREG_TEMPLATE.md. Hypothèse testée : les capacités émergentes créent une boucle symbolique auto-renforçante — analogie avec le seuil C* de l'ORI-C.",
+  "theoretical_link": {
+    "O": "Breadth de capacité = organisation de l'écosystème IA",
+    "R": "Taux de succès = résilience aux tâches difficiles",
+    "I": "Cohérence inter-benchmarks = intégration des capacités",
+    "S": "Stock cumulatif de capacités émergentes = stock symbolique",
+    "demand": "Nombre de paramètres (pression de scaling) = contrainte exogène U(t)",
+    "threshold_prediction": "Seuil C* = point d'émergence (Wei et al. ~10^23 FLOP)"
+  },
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Fraction de tâches benchmark résolues (breadth) — capacité d'organisation de l'écosystème IA.",
+      "fragility_note": "Dépend du choix des benchmarks. Sensible aux benchmarks saturés (GPT-4 sur MMLU).",
+      "manipulability_note": "Scores publiés et vérifiables ; difficile à manipuler sur un panel large."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − taux_d_échec_norm (inverse du taux d'échec sur benchmarks difficiles) — résilience : les modèles solides échouent moins.",
+      "fragility_note": "Taux d'échec dépend de la difficulté des benchmarks choisis.",
+      "manipulability_note": "Calculé sur ensemble de benchmarks publics standardisés."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cohérence inter-benchmarks glissante — intégration : les capacités se renforcent mutuellement quand le modèle est réellement capable.",
+      "fragility_note": "Cohérence calculée sur fenêtre de 10 modèles. Sensible au rythme de sorties.",
+      "manipulability_note": "Corrélation cross-benchmark ; difficile à artificiellement gonfler sur plusieurs tâches distinctes."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Nombre de paramètres normalisé (log-scale) — pression de scaling comme contrainte exogène U(t). Plus le modèle est grand, plus la pression de ressources est forte.",
+      "fragility_note": "Le nombre de paramètres n'est pas toujours la contrainte principale (données > compute à grande échelle).",
+      "manipulability_note": "Paramètre physique déclaré à la publication ; non manipulable ex post."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Stock cumulatif de capacités émergentes (somme des gains de tâches positifs) — mémoire symbolique : les capacités acquises s'accumulent et permettent d'en acquérir de nouvelles.",
+      "fragility_note": "Cumulatif ; dépend du point de départ de la série.",
+      "manipulability_note": "Construit sur historique de benchmarks publics."
+    }
+  ]
+}

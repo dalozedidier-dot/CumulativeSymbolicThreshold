@@ -1,0 +1,79 @@
+{
+  "dataset_id": "sector_psych.pilot_google_trends.real.v1",
+  "spec_version": "2.1",
+  "sector": "psych",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "Google Trends — Social Trust & Collective Behaviour keywords",
+    "url": "https://trends.google.com (via pytrends unofficial API)",
+    "license": "Google Terms of Service — public interest data, non-commercial use",
+    "period": "2004-01 to present",
+    "time_step": "monthly (resampled from weekly)"
+  },
+  "prereg_note": "Pré-enregistrement requis avant analyse. Voir 02_Protocol/PREREG_TEMPLATE.md. Keywords figés ex ante : ['social trust', 'community solidarity', 'civic engagement', 'volunteering']. Aucun ajustement post-observation des mots-clés.",
+  "keyword_declaration": {
+    "O_proxy":      ["social trust", "community solidarity"],
+    "R_inverse":    ["collective anxiety", "social crisis", "mental health crisis"],
+    "I_proxy":      ["civic engagement", "volunteering"],
+    "demand_proxy": ["social unrest", "political crisis", "economic crisis"],
+    "S_proxy":      ["community action", "civic engagement"]
+  },
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Intérêt Google Trends normalisé pour 'social trust' + 'community solidarity' — confiance sociale = capacité d'organisation collective.",
+      "fragility_note": "Google Trends reflète l'intérêt médiatique, pas directement le niveau de confiance. Biais géographique (US, EN).",
+      "manipulability_note": "Peut être biaisé par événements médiatiques ; agrégé mondialement donc difficile à manipuler."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − anxiété_collective_norm : inverse de l'intérêt pour les crises de santé mentale/anxiété collective.",
+      "fragility_note": "Sensible aux événements médiatiques (COVID, conflits). Robustesse testée sur sous-périodes.",
+      "manipulability_note": "Reflet de l'intérêt public agrégé ; non manipulable par un acteur isolé."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cohérence glissante 12m entre 'social trust' et 'civic engagement' — intégration : co-évolution des indicateurs civiques.",
+      "fragility_note": "Cohérence calculée sur fenêtre 12m ; sensible aux changements de formulations de recherche.",
+      "manipulability_note": "Corrélation sur fenêtre ; insensible aux pics ponctuels."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Intérêt cumulé pour 'social unrest' + 'political crisis' + 'economic crisis' — pression exogène sur la cohésion sociale.",
+      "fragility_note": "Biaisé par les langues/géographies où Google est dominant.",
+      "manipulability_note": "Agrégé mondiallement ; non manipulable localement."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Momentum cumulatif de l'engagement civique (somme des croissances positives) — stock symbolique de mobilisation collective.",
+      "fragility_note": "Cumulatif sur série 2004+ ; point de départ influe sur les valeurs absolues.",
+      "manipulability_note": "Construit cumulativement ; résistant aux perturbations ponctuelles."
+    }
+  ]
+}
