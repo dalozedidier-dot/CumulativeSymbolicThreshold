@@ -112,7 +112,7 @@ jobs:
         run: mkdir -p _ci_out
 
       - name: Download all psych artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sector-psych-*-${{ github.run_number }}
           path: _psych_artifacts/

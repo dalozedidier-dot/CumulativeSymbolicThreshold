@@ -221,7 +221,7 @@ jobs:
 
       - name: Download generated data
         if: ${{ inputs.skip_generate != true && inputs.skip_generate != 'true' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: qcc_canonical_data
           path: _ci_out/${{ env.OUT_LABEL }}/data

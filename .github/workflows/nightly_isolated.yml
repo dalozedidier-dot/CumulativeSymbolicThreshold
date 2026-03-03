@@ -374,7 +374,7 @@ jobs:
           elif [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
 
       - name: Download all isolated test artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: isolated_*_${{ github.run_id }}
           path: _isolated

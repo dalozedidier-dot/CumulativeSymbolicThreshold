@@ -281,14 +281,14 @@ jobs:
 
     steps:
       - name: Download synthetic artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nightly_synthetic_${{ github.run_id }}
           path: _combined/synthetic
         continue-on-error: true
 
       - name: Download real data artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nightly_real_fred_${{ github.run_id }}
           path: _combined/real_fred
