@@ -593,12 +593,25 @@ def main() -> int:
         return 1
     criteria = json.loads(criteria_src.read_text(encoding="utf-8"))
 
+    # ── Log exact thresholds — visible in CI logs for instant auditability ────
+    # If threshold ever shows as 0.3 (the code default), this print would show
+    # criteria_src path + sha256 + loaded value so the mismatch is traceable.
+    criteria_sha256 = _sha256_file(criteria_src)
+    print(
+        f"[stability] criteria loaded: {criteria_src}  "
+        f"sha256={criteria_sha256[:16]}…\n"
+        f"[stability]   schema={criteria.get('schema','')}  "
+        f"version={criteria.get('criteria_version','')}\n"
+        f"[stability]   resample_found_rate_min={criteria.get('resample_found_rate_min')}"
+        f"  relative_variation_max={criteria.get('relative_variation_max')}"
+        f"  window_min_size_for_check={criteria.get('window_min_size_for_check')}"
+    )
+
     # Copy criteria into run_dir/contracts/ for self-contained auditability
     # (mirrors the POWER_CRITERIA pattern in qcc_stateprob_cross_conditions).
     criteria_dst = run_dir / "contracts" / "STABILITY_CRITERIA.json"
     _ensure_dir(criteria_dst.parent)
     shutil.copy2(criteria_src, criteria_dst)
-    criteria_sha256 = _sha256_file(criteria_src)
 
     stab_dir = run_dir / "stability"
     _ensure_dir(stab_dir / "resampling")

@@ -296,6 +296,72 @@ jobs:
                   print(f"  {flag}  {var['variant']}  thr={var['threshold']:.3f}  frac={var['subsample_frac']:.2f}")
           EOF
 
+      - name: Assert contrat stabilité (hard gate)
+        run: |
+          python - <<'PYEOF'
+          import json
+          import sys
+          from pathlib import Path
+
+          # ── find latest run dir ────────────────────────────────────────────
+          runs_dir = Path("_ci_out/brisbane_stateprob/runs")
+          candidates = sorted([p for p in runs_dir.iterdir() if p.is_dir()])
+          if not candidates:
+              print("ERROR: no run dirs under _ci_out/brisbane_stateprob/runs")
+              sys.exit(1)
+          run_dir = candidates[-1]
+          print(f"run_dir: {run_dir}")
+
+          # ── load contracts criteria (embedded copy inside run dir) ─────────
+          criteria_path = run_dir / "contracts" / "STABILITY_CRITERIA.json"
+          if not criteria_path.exists():
+              print(f"ERROR: {criteria_path} absent — criteria were not embedded by the battery")
+              sys.exit(1)
+          criteria = json.loads(criteria_path.read_text(encoding="utf-8"))
+          expected_rv = criteria.get("relative_variation_max")
+          print(f"contracts/STABILITY_CRITERIA.json  relative_variation_max = {expected_rv}")
+          print(f"  schema={criteria.get('schema','')}  version={criteria.get('criteria_version','')}")
+
+          # ── load stability summary ─────────────────────────────────────────
+          ss_path = run_dir / "stability" / "stability_summary.json"
+          if not ss_path.exists():
+              print(f"ERROR: {ss_path} absent")
+              sys.exit(1)
+          ss = json.loads(ss_path.read_text(encoding="utf-8"))
+          sc = ss.get("stability_check", {})
+          rv_check = sc.get("checks", {}).get("relative_variation", {})
+          used_threshold = rv_check.get("threshold")
+          all_pass = sc.get("all_pass")
+
+          print(f"stability_summary  relative_variation.threshold = {used_threshold}")
+          print(f"stability_summary  all_pass = {all_pass}")
+
+          # ── gate 1 : threshold must match the versioned criteria ───────────
+          if expected_rv is None:
+              print("ERROR: relative_variation_max absent from criteria file")
+              sys.exit(1)
+          if used_threshold is None:
+              print("ERROR: stability_check.checks.relative_variation.threshold absent from summary")
+              sys.exit(1)
+          if abs(float(used_threshold) - float(expected_rv)) > 1e-9:
+              print(
+                  f"\nFAIL: threshold mismatch — "
+                  f"criteria file says {expected_rv} but battery used {used_threshold}.\n"
+                  "The battery did NOT load the versioned criteria file correctly."
+              )
+              sys.exit(1)
+          print(f"\nOK gate 1: threshold {used_threshold} matches criteria {expected_rv}")
+
+          # ── gate 2 : all stability checks must pass ────────────────────────
+          if all_pass is not True:
+              print(f"\nFAIL: stability_check.all_pass={all_pass} — at least one stability check failed.")
+              for k, v in sc.get("checks", {}).items():
+                  flag = "PASS" if v.get("pass") else "FAIL"
+                  print(f"  {flag}  {k}: value={v.get('value')} threshold={v.get('threshold')}")
+              sys.exit(1)
+          print("OK gate 2: all stability checks pass")
+          PYEOF
+
       - name: Re-écrire le manifest final
         run: |
           set -euo pipefail
