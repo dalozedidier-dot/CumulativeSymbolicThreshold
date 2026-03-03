@@ -42,7 +42,7 @@ jobs:
     outputs:
       integrity_passed: ${{ steps.check.outputs.passed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -65,7 +65,7 @@ jobs:
     if: needs.integrity-check.outputs.integrity_passed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -115,7 +115,7 @@ jobs:
     if: needs.integrity-check.outputs.integrity_passed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -168,7 +168,7 @@ jobs:
     needs: [oos-panel, did-synthetic-control]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 

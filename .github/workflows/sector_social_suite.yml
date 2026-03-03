@@ -34,7 +34,7 @@ jobs:
         pilot: [twitter_amzn, twitter_fb]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
