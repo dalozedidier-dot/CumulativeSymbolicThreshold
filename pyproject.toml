@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "oric"
@@ -9,7 +9,7 @@ description = "Cumulative Symbolic Threshold — ORI-C framework for phase-trans
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
-  { name = "Didier Daloze", email = "" }
+  { name = "Didier Daloze" }
 ]
 keywords = ["symbolic threshold", "ORI-C", "causal testing", "phase transition", "reproducibility"]
 classifiers = [
