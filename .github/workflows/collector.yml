@@ -1,240 +1,77 @@
-name: Collector — Append-only CI Metrics History
-
-# Collects run results from CI artifacts and appends to:
-#   ci_metrics/history.csv       (append-only run log)
-#   ci_metrics/runs_index.csv    (run_id, dataset_id, sector, commit_sha, etc.)
-#
-# IMPORTANT: This workflow must download artifacts from OTHER workflow runs.
-# actions/download-artifact without run-id only downloads artifacts from *this* run.
+name: Collect and append metrics
 
 on:
   workflow_run:
     workflows:
-      - "QCC Canonical Full — Run + Stability + Checks + Manifest"
-      - "Real Data Canonical (Nightly/Weekly)"
+      - "QCC Brisbane StateProb — Generate + Cross-conditions + Stability"
+      - "QCC StateProb Densify + Stability"
+      - "Real Data Matrix (ORI-C)"
+      - "Real Data Canonical T1–T8 (ORI-C)"
     types: [completed]
-  schedule:
-    - cron: "0 6 * * *"  # Daily 06:00 UTC
   workflow_dispatch:
+  schedule:
+    - cron: "23 2 * * *"
 
 permissions:
-  contents: write
   actions: read
+  contents: write
 
 jobs:
   collect:
-    name: "Collect and append metrics"
+    if: |
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Download artifacts
-      #
-      # Case A: workflow_run trigger -> download artifacts from the triggering run.
-      # Case B: schedule / workflow_dispatch -> download artifacts from the latest
-      #         successful run of the canonical workflows.
-      # ─────────────────────────────────────────────────────────────────────
-
       - name: Download artifacts from triggering run (workflow_run)
-        if: ${{ github.event_name == 'workflow_run' }}
-        uses: actions/download-artifact@v4
-        with:
-          path: _collected_artifacts/
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-        continue-on-error: false
+        if: github.event_name == 'workflow_run'
+        run: |
+          set -euo pipefail
+          mkdir -p _collected_artifacts
+          echo "Downloading artifacts from triggering run: ${{ github.event.workflow_run.id }}"
+          gh run download "${{ github.event.workflow_run.id }}" --dir _collected_artifacts/run_${{ github.event.workflow_run.id }}
 
       - name: Download artifacts from latest successful canonical runs (schedule/manual)
-        if: ${{ github.event_name != 'workflow_run' }}
+        if: github.event_name != 'workflow_run'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _collected_artifacts
-          echo "Fetching latest successful runs for canonical workflows..."
-          python -m tools.collector_download_artifacts             --out _collected_artifacts             --workflows "QCC Canonical Full — Run + Stability + Checks + Manifest" "Real Data Canonical (Nightly/Weekly)"
+          echo "Fetching latest successful runs for canonical workflows (fuzzy patterns)..."
+          python -m tools.collector_download_artifacts \
+            --out _collected_artifacts \
+            --workflows \
+              "QCC Brisbane StateProb" \
+              "QCC StateProb Densify" \
+              "Real Data Matrix" \
+              "Real Data Canonical"
 
-      - name: Collect metrics from artifacts
-        run: |
-          python - <<'PYEOF'
-          import csv
-          import hashlib
-          import json
-          import os
-          import sys
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          METRICS_DIR = Path("ci_metrics")
-          METRICS_DIR.mkdir(exist_ok=True)
-
-          HISTORY_PATH = METRICS_DIR / "history.csv"
-          RUNS_INDEX_PATH = METRICS_DIR / "runs_index.csv"
-
-          HISTORY_FIELDS = [
-              "timestamp", "run_id", "dataset_id", "sector", "commit_sha",
-              "evidence_strength", "all_pass", "stability_criteria_sha256",
-              "run_mode", "workflow",
-          ]
-
-          RUNS_INDEX_FIELDS = [
-              "run_id", "dataset_id", "sector", "commit_sha",
-              "evidence_strength", "all_pass", "run_mode",
-              "manifest_sha256", "stability_criteria_sha256",
-              "timestamp",
-          ]
-
-          def sha256_file(path: Path) -> str:
-              h = hashlib.sha256()
-              with path.open("rb") as f:
-                  for chunk in iter(lambda: f.read(1024 * 1024), b""):
-                      h.update(chunk)
-              return h.hexdigest()
-
-          def load_existing_run_ids() -> set:
-              if not RUNS_INDEX_PATH.exists():
-                  return set()
-              ids = set()
-              with open(RUNS_INDEX_PATH) as f:
-                  reader = csv.DictReader(f)
-                  for row in reader:
-                      rid = (row.get("run_id") or "").strip()
-                      if rid:
-                          ids.add(rid)
-              return ids
-
-          def find_run_dirs(root: Path) -> list:
-              results = []
-              for manifest in root.rglob("manifest.json"):
-                  run_dir = manifest.parent
-                  if (run_dir / "tables" / "summary.json").exists():
-                      results.append(run_dir)
-              return sorted(set(results))
-
-          def extract_metrics(run_dir: Path) -> dict:
-              summary_path = run_dir / "tables" / "summary.json"
-              summary = json.loads(summary_path.read_text(encoding="utf-8"))
-
-              dataset_id = summary.get("dataset_id", run_dir.name)
-              sector = summary.get("sector", "unknown")
-              evidence_strength = summary.get("evidence_strength", "")
-              run_mode = summary.get("run_mode", "")
-
-              all_pass = ""
-              stab_path = run_dir / "stability" / "stability_summary.json"
-              if stab_path.exists():
-                  stab = json.loads(stab_path.read_text(encoding="utf-8"))
-                  ap = stab.get("stability_check", {}).get("all_pass")
-                  all_pass = "" if ap is None else str(ap)
-
-              stab_sha = ""
-              criteria_path = run_dir / "contracts" / "STABILITY_CRITERIA.json"
-              if criteria_path.exists():
-                  stab_sha = sha256_file(criteria_path)
-
-              manifest_path = run_dir / "manifest.json"
-              manifest_sha = sha256_file(manifest_path) if manifest_path.exists() else ""
-
-              return {
-                  "run_id": run_dir.name,
-                  "dataset_id": str(dataset_id),
-                  "sector": str(sector),
-                  "evidence_strength": str(evidence_strength),
-                  "all_pass": str(all_pass),
-                  "run_mode": str(run_mode),
-                  "manifest_sha256": manifest_sha,
-                  "stability_criteria_sha256": stab_sha,
-              }
-
-          commit_sha = os.environ.get("GITHUB_SHA", "unknown")
-          workflow_name = os.environ.get("GITHUB_WORKFLOW", "collector")
-          now = datetime.now(timezone.utc).isoformat()
-
-          collected_root = Path("_collected_artifacts")
-          if not collected_root.exists():
-              print("No artifacts to collect")
-              sys.exit(0)
-
-          existing_ids = load_existing_run_ids()
-          run_dirs = find_run_dirs(collected_root)
-
-          if not run_dirs:
-              print("No run directories found in collected artifacts")
-              sys.exit(0)
-
-          new_history = []
-          new_index = []
-
-          for run_dir in run_dirs:
-              try:
-                  metrics = extract_metrics(run_dir)
-              except Exception as e:
-                  print(f"WARNING: failed to extract metrics from {run_dir}: {e}")
-                  continue
-
-              if metrics["run_id"] in existing_ids:
-                  print(f"SKIP (already collected): {metrics['run_id']}")
-                  continue
-
-              history_row = {
-                  "timestamp": now,
-                  "commit_sha": commit_sha,
-                  "workflow": workflow_name,
-                  **metrics,
-              }
-              new_history.append(history_row)
-
-              index_row = {
-                  "timestamp": now,
-                  "commit_sha": commit_sha,
-                  **metrics,
-              }
-              new_index.append(index_row)
-
-              print(f"COLLECTED: {metrics['run_id']} ({metrics['sector']}/{metrics['dataset_id']})")
-
-          history_exists = HISTORY_PATH.exists()
-          with open(HISTORY_PATH, "a", newline="") as f:
-              writer = csv.DictWriter(f, fieldnames=HISTORY_FIELDS, extrasaction="ignore")
-              if not history_exists:
-                  writer.writeheader()
-              writer.writerows(new_history)
-
-          index_exists = RUNS_INDEX_PATH.exists()
-          with open(RUNS_INDEX_PATH, "a", newline="") as f:
-              writer = csv.DictWriter(f, fieldnames=RUNS_INDEX_FIELDS, extrasaction="ignore")
-              if not index_exists:
-                  writer.writeheader()
-              writer.writerows(new_index)
-
-          print(f"\nCollected {len(new_history)} new runs")
-          print(f"Total in history: {len(existing_ids) + len(new_history)}")
-          PYEOF
-
-      - name: Commit metrics (if changed)
+      - name: Collect and append metrics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ci_metrics/history.csv ci_metrics/runs_index.csv
-          if git diff --cached --quiet; then
-            echo "No new metrics to commit"
-          else
-            git commit -m "ci: append metrics from $(date -u +%Y-%m-%d) [collector]"
-            git push
-          fi
+          python -m tools.collect_ci_metrics \
+            --in-dir _collected_artifacts \
+            --out-dir ci_metrics \
+            --append
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ci_metrics_snapshot
-          path: ci_metrics/
-          retention-days: 90
+      - name: Commit metrics (append-only)
+        run: |
+          set -euo pipefail
+          git config user.name "ori-c-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ci_metrics/history.csv ci_metrics/runs_index.csv || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "ci_metrics: append collected runs"
+          git push
