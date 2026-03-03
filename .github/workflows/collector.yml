@@ -5,8 +5,11 @@ name: Collector — Append-only CI Metrics History
 #   ci_metrics/history.csv       (append-only run log)
 #   ci_metrics/runs_index.csv    (run_id, dataset_id, sector, commit_sha, etc.)
 #
-# Triggered after canonical workflows complete.
-# Also runs on schedule to catch any missed runs.
+# Two modes:
+#   - workflow_run : downloads artifacts from the TRIGGERING run (run-id required)
+#   - schedule / workflow_dispatch : scans recent successful canonical runs via gh API
+#
+# Deduplication key: github_actions_run_id (stable, unique per GH Actions run)
 # ─────────────────────────────────────────────────────────────────────────────
 
 on:
@@ -16,14 +19,31 @@ on:
       - "Real Data Canonical (Nightly/Weekly)"
     types: [completed]
   schedule:
-    - cron: "0 6 * * *"  # Daily 06:00 UTC
+    - cron: "0 6 * * *"   # Daily 06:00 UTC — catch any missed runs
   workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: "Days of history to scan (schedule/dispatch only)"
+        required: false
+        default: "3"
+
+permissions:
+  contents: write   # needed to commit ci_metrics/ back to main
+  actions: read     # needed to read artifacts from other workflow runs
 
 jobs:
   collect:
     name: "Collect and append metrics"
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name != 'workflow_run' }}
+    # For workflow_run: only run if the triggering workflow succeeded
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,13 +54,82 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Download latest artifacts
+      # ── Mode A: download from the TRIGGERING workflow_run ──────────────────
+      - name: "[workflow_run] Download artifacts from triggering run"
+        if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
         with:
-          path: _collected_artifacts/
-        continue-on-error: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: _collected_artifacts/run_${{ github.event.workflow_run.id }}/
 
-      - name: Collect metrics from artifacts
+      # ── Mode B: scan recent canonical runs via gh API ──────────────────────
+      - name: "[schedule/dispatch] Download artifacts from recent canonical runs"
+        if: github.event_name != 'workflow_run'
+        run: |
+          set -euo pipefail
+          mkdir -p _collected_artifacts
+
+          LOOKBACK="${{ inputs.lookback_days || '3' }}"
+          SINCE=$(date -u -d "${LOOKBACK} days ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+                  || date -u -v-${LOOKBACK}d +%Y-%m-%dT%H:%M:%SZ)
+
+          echo "Scanning canonical workflows since $SINCE"
+
+          for workflow_file in qcc_canonical_full.yml real_canonical_schedule.yml; do
+            echo "── Workflow: $workflow_file"
+
+            # List recent successful runs
+            run_ids=$(gh api \
+              "repos/${REPO}/actions/workflows/${workflow_file}/runs?status=success&per_page=20&created=>=${SINCE}" \
+              --jq '.workflow_runs[].id' 2>/dev/null || true)
+
+            if [ -z "$run_ids" ]; then
+              echo "  No successful runs found for ${workflow_file}"
+              continue
+            fi
+
+            for run_id in $run_ids; do
+              out_dir="_collected_artifacts/run_${run_id}"
+              if [ -d "$out_dir" ]; then
+                echo "  SKIP (already downloaded): run $run_id"
+                continue
+              fi
+              echo "  Downloading run $run_id → $out_dir"
+              mkdir -p "$out_dir"
+              gh run download "$run_id" \
+                --repo "$REPO" \
+                --dir "$out_dir/" \
+                2>/dev/null && echo "  OK: run $run_id" \
+                || echo "  WARNING: no downloadable artifacts for run $run_id"
+            done
+          done
+
+          echo ""
+          echo "Downloaded directories:"
+          find _collected_artifacts -maxdepth 2 -type d | sort || true
+
+      # ── Verify something was downloaded ────────────────────────────────────
+      - name: Check downloaded artifacts
+        run: |
+          set -euo pipefail
+          if [ ! -d _collected_artifacts ] || [ -z "$(ls -A _collected_artifacts)" ]; then
+            echo "WARNING: no artifacts were downloaded — nothing to collect"
+            echo "SKIP=true" >> $GITHUB_ENV
+          else
+            echo "Artifact tree:"
+            find _collected_artifacts -name "summary.json" -o -name "manifest.json" | \
+              sort | head -30 || true
+            echo "SKIP=false" >> $GITHUB_ENV
+          fi
+
+      # ── Extract metrics from artifacts ─────────────────────────────────────
+      - name: Extract metrics and append to CSV files
+        if: env.SKIP != 'true'
+        env:
+          GITHUB_TRIGGERING_RUN_ID: ${{ github.event.workflow_run.id || '' }}
+          GITHUB_TRIGGERING_RUN_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          GITHUB_TRIGGERING_WORKFLOW: ${{ github.event.workflow_run.name || github.workflow }}
         run: |
           python - <<'PYEOF'
           import csv
@@ -58,17 +147,18 @@ jobs:
           RUNS_INDEX_PATH = METRICS_DIR / "runs_index.csv"
 
           HISTORY_FIELDS = [
-              "timestamp", "run_id", "dataset_id", "sector", "commit_sha",
+              "timestamp", "github_run_id", "run_dir_name",
+              "dataset_id", "sector", "commit_sha",
               "evidence_strength", "all_pass", "stability_criteria_sha256",
               "run_mode", "workflow",
           ]
-
           RUNS_INDEX_FIELDS = [
-              "run_id", "dataset_id", "sector", "commit_sha",
+              "github_run_id", "run_dir_name", "dataset_id", "sector", "commit_sha",
               "evidence_strength", "all_pass", "run_mode",
-              "manifest_sha256", "stability_criteria_sha256",
-              "timestamp",
+              "manifest_sha256", "stability_criteria_sha256", "timestamp",
           ]
+
+          # ── Helpers ──────────────────────────────────────────────────────
 
           def sha256_file(path: Path) -> str:
               h = hashlib.sha256()
@@ -77,54 +167,92 @@ jobs:
                       h.update(chunk)
               return h.hexdigest()
 
-          def load_existing_run_ids() -> set:
-              if not RUNS_INDEX_PATH.exists():
-                  return set()
-              ids = set()
-              with open(RUNS_INDEX_PATH) as f:
-                  reader = csv.DictReader(f)
-                  for row in reader:
-                      ids.add(row.get("run_id", ""))
-              return ids
+          def load_existing_keys() -> set:
+              """Return set of (github_run_id, run_dir_name) already recorded."""
+              keys = set()
+              for path in (HISTORY_PATH, RUNS_INDEX_PATH):
+                  if not path.exists():
+                      continue
+                  with open(path) as f:
+                      reader = csv.DictReader(f)
+                      for row in reader:
+                          gid = row.get("github_run_id", "")
+                          rdn = row.get("run_dir_name", "")
+                          if gid or rdn:
+                              keys.add((gid, rdn))
+              return keys
 
-          def find_run_dirs(root: Path) -> list:
-              """Find all run directories (contain manifest.json)."""
+          def find_run_dirs(artifact_dir: Path) -> list:
+              """Find all run directories inside downloaded artifacts.
+
+              Searches for directories that contain both:
+                manifest.json AND tables/summary.json
+              """
               results = []
-              for manifest in root.rglob("manifest.json"):
+              for manifest in artifact_dir.rglob("manifest.json"):
                   run_dir = manifest.parent
                   if (run_dir / "tables" / "summary.json").exists():
                       results.append(run_dir)
               return sorted(results)
+
+          def extract_github_run_id(run_dir: Path, collected_root: Path) -> str:
+              """Extract github run_id from the directory structure.
+
+              Artifact dirs are structured as:
+                _collected_artifacts/run_<GITHUB_RUN_ID>/<artifact_name>/...
+              """
+              try:
+                  rel = run_dir.relative_to(collected_root)
+                  parts = rel.parts
+                  if parts and parts[0].startswith("run_"):
+                      return parts[0][len("run_"):]
+              except ValueError:
+                  pass
+              return os.environ.get("GITHUB_TRIGGERING_RUN_ID", "unknown")
 
           def extract_metrics(run_dir: Path) -> dict:
               """Extract key metrics from a run directory."""
               summary_path = run_dir / "tables" / "summary.json"
               summary = json.loads(summary_path.read_text(encoding="utf-8"))
 
-              # Extract fields
-              dataset_id = summary.get("dataset_id", run_dir.name)
-              sector = summary.get("sector", "unknown")
-              evidence_strength = summary.get("evidence_strength", "")
-              run_mode = summary.get("run_mode", "")
+              # Normalize field names across different workflow formats
+              dataset_id = (
+                  summary.get("dataset_id")
+                  or summary.get("label")
+                  or run_dir.parent.parent.name   # fallback: artifact dir name
+              )
+              sector = (
+                  summary.get("sector")
+                  or summary.get("domain")
+                  or "unknown"
+              )
+              evidence_strength = (
+                  summary.get("evidence_strength")
+                  or summary.get("power_level")
+                  or summary.get("power_diagnostic", {}).get("evidence_strength", "")
+              )
+              run_mode = summary.get("run_mode") or summary.get("mode") or ""
 
               # Stability
               all_pass = None
               stab_sha = ""
               stab_path = run_dir / "stability" / "stability_summary.json"
               if stab_path.exists():
-                  stab = json.loads(stab_path.read_text(encoding="utf-8"))
-                  all_pass = stab.get("stability_check", {}).get("all_pass")
+                  try:
+                      stab = json.loads(stab_path.read_text(encoding="utf-8"))
+                      all_pass = stab.get("stability_check", {}).get("all_pass")
+                  except Exception:
+                      pass
 
               criteria_path = run_dir / "contracts" / "STABILITY_CRITERIA.json"
               if criteria_path.exists():
                   stab_sha = sha256_file(criteria_path)
 
-              # Manifest hash
               manifest_path = run_dir / "manifest.json"
               manifest_sha = sha256_file(manifest_path) if manifest_path.exists() else ""
 
               return {
-                  "run_id": run_dir.name,
+                  "run_dir_name": run_dir.name,
                   "dataset_id": str(dataset_id),
                   "sector": str(sector),
                   "evidence_strength": str(evidence_strength),
@@ -134,90 +262,104 @@ jobs:
                   "stability_criteria_sha256": stab_sha,
               }
 
-          # ── Main collection ──────────────────────────────────────────────
+          # ── Main ─────────────────────────────────────────────────────────
 
-          commit_sha = os.environ.get("GITHUB_SHA", "unknown")
-          workflow_name = os.environ.get("GITHUB_WORKFLOW", "collector")
+          commit_sha = os.environ.get("GITHUB_TRIGGERING_RUN_SHA") or os.environ.get("GITHUB_SHA", "unknown")
+          workflow_name = os.environ.get("GITHUB_TRIGGERING_WORKFLOW") or os.environ.get("GITHUB_WORKFLOW", "collector")
           now = datetime.now(timezone.utc).isoformat()
 
           collected_root = Path("_collected_artifacts")
-          if not collected_root.exists():
-              print("No artifacts to collect")
-              sys.exit(0)
+          existing_keys = load_existing_keys()
 
-          existing_ids = load_existing_run_ids()
-          run_dirs = find_run_dirs(collected_root)
+          print(f"Already recorded: {len(existing_keys)} entries")
 
-          if not run_dirs:
-              print("No run directories found in artifacts")
-              sys.exit(0)
+          all_run_dirs = find_run_dirs(collected_root)
+          print(f"Run dirs found in artifacts: {len(all_run_dirs)}")
+
+          if not all_run_dirs:
+              print("ERROR: no run directories with manifest + summary found")
+              print("Searched under:", collected_root)
+              for p in sorted(collected_root.rglob("*"))[:20]:
+                  print(" ", p)
+              sys.exit(1)
 
           new_history = []
           new_index = []
 
-          for run_dir in run_dirs:
+          for run_dir in all_run_dirs:
+              github_run_id = extract_github_run_id(run_dir, collected_root)
               try:
                   metrics = extract_metrics(run_dir)
               except Exception as e:
                   print(f"WARNING: failed to extract metrics from {run_dir}: {e}")
                   continue
 
-              if metrics["run_id"] in existing_ids:
-                  print(f"SKIP (already collected): {metrics['run_id']}")
+              key = (github_run_id, metrics["run_dir_name"])
+              if key in existing_keys:
+                  print(f"SKIP (already collected): {key}")
                   continue
 
               history_row = {
                   "timestamp": now,
+                  "github_run_id": github_run_id,
                   "commit_sha": commit_sha,
                   "workflow": workflow_name,
                   **metrics,
               }
-              new_history.append(history_row)
-
               index_row = {
-                  "timestamp": now,
+                  "github_run_id": github_run_id,
                   "commit_sha": commit_sha,
+                  "timestamp": now,
                   **metrics,
               }
+              new_history.append(history_row)
               new_index.append(index_row)
 
-              print(f"COLLECTED: {metrics['run_id']} ({metrics['sector']}/{metrics['dataset_id']})")
+              print(f"COLLECTED: {github_run_id}/{metrics['run_dir_name']} "
+                    f"({metrics['sector']}/{metrics['dataset_id']}) "
+                    f"strength={metrics['evidence_strength']} "
+                    f"all_pass={metrics['all_pass']}")
 
-          # Append to history.csv
-          history_exists = HISTORY_PATH.exists()
-          with open(HISTORY_PATH, "a", newline="") as f:
-              writer = csv.DictWriter(f, fieldnames=HISTORY_FIELDS, extrasaction="ignore")
-              if not history_exists:
-                  writer.writeheader()
-              writer.writerows(new_history)
+          # Append (or create with header)
+          def append_csv(path: Path, rows: list, fields: list) -> None:
+              write_header = not path.exists() or path.stat().st_size == 0
+              with open(path, "a", newline="", encoding="utf-8") as f:
+                  writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+                  if write_header:
+                      writer.writeheader()
+                  writer.writerows(rows)
 
-          # Append to runs_index.csv
-          index_exists = RUNS_INDEX_PATH.exists()
-          with open(RUNS_INDEX_PATH, "a", newline="") as f:
-              writer = csv.DictWriter(f, fieldnames=RUNS_INDEX_FIELDS, extrasaction="ignore")
-              if not index_exists:
-                  writer.writeheader()
-              writer.writerows(new_index)
+          append_csv(HISTORY_PATH, new_history, HISTORY_FIELDS)
+          append_csv(RUNS_INDEX_PATH, new_index, RUNS_INDEX_FIELDS)
 
-          print(f"\nCollected {len(new_history)} new runs")
-          print(f"Total in history: {len(existing_ids) + len(new_history)}")
+          print(f"\nNew entries appended: {len(new_history)}")
+          print(f"Total recorded:       {len(existing_keys) + len(new_history)}")
+
+          if len(new_history) == 0 and len(all_run_dirs) > 0:
+              print("All found run_dirs were already collected — nothing new to commit")
           PYEOF
 
-      - name: Commit metrics (if changed)
+      # ── Commit metrics back to main ────────────────────────────────────────
+      - name: Commit metrics to main (if changed)
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add ci_metrics/history.csv ci_metrics/runs_index.csv
+
           if git diff --cached --quiet; then
-            echo "No new metrics to commit"
+            echo "No new metrics — nothing to commit"
           else
-            git commit -m "ci: append metrics from $(date -u +%Y-%m-%d) [collector]"
-            git push
+            LINES_ADDED=$(git diff --cached --stat | grep -oP '\d+(?= insertion)' || echo "?")
+            git commit -m "ci(collector): append ${LINES_ADDED} metric row(s) [$(date -u +%Y-%m-%d)]"
+            git push origin main
           fi
 
+      # ── Upload snapshot ────────────────────────────────────────────────────
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: ci_metrics_snapshot
+          name: ci_metrics_snapshot_${{ github.run_id }}
           path: ci_metrics/
           retention-days: 90
