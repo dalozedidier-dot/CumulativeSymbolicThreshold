@@ -113,7 +113,7 @@ jobs:
         run: mkdir -p _ci_out
 
       - name: Download all cosmo artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sector-cosmo-*-${{ github.run_number }}
           path: _cosmo_artifacts/

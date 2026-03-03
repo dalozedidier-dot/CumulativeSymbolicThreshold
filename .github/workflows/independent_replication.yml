@@ -173,13 +173,13 @@ jobs:
         run: mkdir -p _ci_out
 
       - name: Download OOS results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: oos-panel-results
           path: _ci_out/oos_panel/
 
       - name: Download DiD results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: did-sc-results
           path: _ci_out/did/
