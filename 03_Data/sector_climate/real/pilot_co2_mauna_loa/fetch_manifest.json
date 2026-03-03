@@ -1,0 +1,12 @@
+{
+  "sector": "climate",
+  "pilot": "co2_mauna_loa",
+  "processed_at": "2026-03-03T12:47:28.403108+00:00",
+  "n_rows": 733,
+  "date_range": {
+    "start": "1965-01",
+    "end": "2026-01"
+  },
+  "source": "data/climate/co2_mm_mlo.csv",
+  "method": "build_real_from_local.py"
+}
