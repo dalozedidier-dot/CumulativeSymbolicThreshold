@@ -1,5 +1,11 @@
 name: QCC StateProb Cross-Conditions
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SCAN-ONLY workflow: produces cross-conditions analysis with manifest
+# but does NOT run stability battery or produce stability verdicts.
+# For full pipeline with stability, use qcc_canonical_full.yml instead.
+# ─────────────────────────────────────────────────────────────────────────────
+
 on:
   workflow_dispatch:
     inputs:
