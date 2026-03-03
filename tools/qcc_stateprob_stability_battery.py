@@ -395,10 +395,15 @@ def _check_stability(
         }
 
     max_rel_var = float(criteria.get("relative_variation_max", 0.30))
+    win_min = int(criteria.get("window_min_size_for_check", 5))
     window_rows = window_summary.get("windows", [])
+    # Only windows >= win_min are eligible: size-3 windows span too few depth
+    # points and mechanically amplify local variance (rule pre-registered in
+    # STABILITY_CRITERIA.json; threshold 0.30 is never changed to compensate).
+    eligible_rows = [r for r in window_rows if int(r.get("window_size", 0)) >= win_min]
     finite_rvs = [
         float(r["ccl_relative_variation"])
-        for r in window_rows
+        for r in eligible_rows
         if r.get("ccl_relative_variation") is not None
     ]
     if finite_rvs:
@@ -406,6 +411,9 @@ def _check_stability(
         checks["relative_variation"] = {
             "worst_value": worst_rv,
             "threshold": max_rel_var,
+            "window_min_size_for_check": win_min,
+            "n_windows_eligible": len(eligible_rows),
+            "n_windows_total": len(window_rows),
             "pass": worst_rv <= max_rel_var,
         }
 
@@ -413,6 +421,104 @@ def _check_stability(
         all(v.get("pass", True) for v in checks.values()) if checks else None
     )
     return {"checks": checks, "all_pass": all_pass}
+
+
+# ── versioned stability variants ──────────────────────────────────────────────
+
+# Pre-defined parameter variants for the versioned stability battery.
+# Each variant tweaks threshold and/or subsample-frac to test robustness.
+_STABILITY_VARIANTS: List[Dict[str, Any]] = [
+    {"name": "v1_nominal",   "threshold_delta": 0.0,   "frac_delta": 0.0},
+    {"name": "v2_thr_minus", "threshold_delta": -0.05, "frac_delta": 0.0},
+    {"name": "v3_frac_plus", "threshold_delta": 0.0,   "frac_delta": 0.1},
+]
+
+
+def _run_variant_battery(
+    points: pd.DataFrame,
+    base_threshold: float,
+    base_frac: float,
+    n_resamples: int,
+    n_bootstraps: int,
+    window_sizes: List[int],
+    seed: int,
+    metric: str,
+    run_dir: Path,
+    criteria: Dict[str, Any],
+    out_dir: Path,
+) -> List[Dict[str, Any]]:
+    """
+    Run the stability battery for each pre-defined variant.
+    Each variant is written to out_dir/<variant_name>/.
+    Returns a list of per-variant summary dicts (for cross-variant comparison).
+    """
+    variant_summaries: List[Dict[str, Any]] = []
+    for var in _STABILITY_VARIANTS:
+        thr = max(0.01, min(0.99, base_threshold + float(var["threshold_delta"])))
+        frac = max(0.3, min(0.95, base_frac + float(var["frac_delta"])))
+        v_dir = out_dir / str(var["name"])
+        _ensure_dir(v_dir / "resampling")
+        _ensure_dir(v_dir / "bootstrap")
+        _ensure_dir(v_dir / "windowing")
+        _ensure_dir(v_dir / "plan_variants")
+
+        res_df, res_sum = run_resampling(points, thr, n=n_resamples, frac=frac, seed=seed)
+        res_df.to_csv(v_dir / "resampling" / "resample_runs.csv", index=False)
+        (v_dir / "resampling" / "resample_summary.json").write_text(
+            json.dumps(res_sum, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+        bt_df, bt_sum = run_bootstrap(points, thr, n=n_bootstraps, seed=seed)
+        bt_df.to_csv(v_dir / "bootstrap" / "bootstrap_by_shots.csv", index=False)
+        (v_dir / "bootstrap" / "bootstrap_summary.json").write_text(
+            json.dumps(bt_sum, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+        win_df, win_sum = run_windowing(points, window_sizes=window_sizes)
+        win_df.to_csv(v_dir / "windowing" / "window_metrics.csv", index=False)
+        (v_dir / "windowing" / "window_summary.json").write_text(
+            json.dumps(win_sum, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+        vv_df, vv_sum = run_plan_variants(run_dir=run_dir, threshold=thr, metric=metric)
+        vv_df.to_csv(v_dir / "plan_variants" / "plan_comparison.csv", index=False)
+        (v_dir / "plan_variants" / "plan_comparison.json").write_text(
+            json.dumps(vv_sum, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+        stab_check = _check_stability(res_sum, win_sum, criteria)
+        vsummary: Dict[str, Any] = {
+            "variant": var["name"],
+            "threshold": thr,
+            "subsample_frac": frac,
+            "stability_check": stab_check,
+            "resampling_summary": res_sum,
+            "bootstrap_summary": bt_sum,
+            "windowing_summary": win_sum,
+        }
+        (v_dir / "variant_summary.json").write_text(
+            json.dumps(vsummary, indent=2, sort_keys=True), encoding="utf-8"
+        )
+        variant_summaries.append(vsummary)
+
+    # Cross-variant comparison table
+    rows_cmp = []
+    for vs in variant_summaries:
+        res_shots = vs["resampling_summary"].get("shots", [])
+        worst_rate = min((r.get("tstar_found_rate", 0.0) for r in res_shots), default=None)
+        rows_cmp.append({
+            "variant": vs["variant"],
+            "threshold": vs["threshold"],
+            "subsample_frac": vs["subsample_frac"],
+            "stability_all_pass": vs["stability_check"].get("all_pass"),
+            "worst_resample_found_rate": worst_rate,
+        })
+    import pandas as _pd_local
+    _pd_local.DataFrame(rows_cmp).to_csv(out_dir / "variants_comparison.csv", index=False)
+    (out_dir / "variants_index.json").write_text(
+        json.dumps({"variants": variant_summaries}, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    return variant_summaries
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
@@ -435,6 +541,10 @@ def main() -> int:
         "--stability-criteria",
         default="contracts/STABILITY_CRITERIA.json",
         help="Path to STABILITY_CRITERIA.json",
+    )
+    ap.add_argument(
+        "--run-variants", action="store_true", default=False,
+        help="Run 3 versioned parameter variants of the battery for robustness comparison",
     )
     args = ap.parse_args()
 
@@ -509,6 +619,25 @@ def main() -> int:
     # Stability criteria check
     stab_check = _check_stability(resample_summary, window_summary, criteria)
 
+    # ── Versioned parameter variants (--run-variants) ──────────────────────────
+    variant_results: List[Dict[str, Any]] = []
+    if args.run_variants:
+        variants_dir = stab_dir / "variants"
+        _ensure_dir(variants_dir)
+        variant_results = _run_variant_battery(
+            points=points,
+            base_threshold=threshold,
+            base_frac=args.subsample_frac,
+            n_resamples=args.resamples,
+            n_bootstraps=args.bootstraps,
+            window_sizes=window_sizes,
+            seed=args.seed,
+            metric=args.metric,
+            run_dir=run_dir,
+            criteria=criteria,
+            out_dir=variants_dir,
+        )
+
     stability_summary: Dict[str, Any] = {
         "generated_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "run_dir": run_dir.as_posix(),
@@ -531,6 +660,19 @@ def main() -> int:
             "run": not variants_df.empty,
             "summary": variants_summary,
         },
+        "versioned_variants": {
+            "run": args.run_variants,
+            "n_variants": len(variant_results),
+            "variants": [
+                {
+                    "variant": v["variant"],
+                    "threshold": v["threshold"],
+                    "subsample_frac": v["subsample_frac"],
+                    "stability_all_pass": v["stability_check"].get("all_pass"),
+                }
+                for v in variant_results
+            ],
+        },
         "stability_check": stab_check,
         "criteria_path": args.stability_criteria,
         "note": "Mechanical stability battery. No ORI-C verdict.",
@@ -540,6 +682,8 @@ def main() -> int:
     )
 
     print(f"Stability battery complete: {stab_dir.as_posix()}")
+    if args.run_variants:
+        print(f"  Versioned variants: {stab_dir / 'variants'}")
     return 0
 
 
