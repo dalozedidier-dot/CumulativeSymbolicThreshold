@@ -1,0 +1,12 @@
+{
+  "sector": "finance",
+  "pilot": "sp500",
+  "processed_at": "2026-03-03T12:47:28.547100+00:00",
+  "n_rows": 795,
+  "date_range": {
+    "start": "1960-01",
+    "end": "2026-03"
+  },
+  "source": "data/finance/^spx_m.csv",
+  "method": "build_real_from_local.py"
+}
