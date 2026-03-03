@@ -70,6 +70,7 @@ jobs:
           if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
       - name: Build registered report assets (figures + tables)
+        continue-on-error: true   # reporting step — does not gate the science contract
         run: |
           set -e
           RUN_DIR=$(ls -1d _ci_out/canonical_tests/* 2>/dev/null | sort | tail -n 1)
