@@ -404,12 +404,12 @@ def _check_stability(
             "pass": worst_rate >= min_found_rate,
         }
 
-    max_rel_var = float(criteria.get("relative_variation_max", 0.30))
+    max_rel_var = float(criteria.get("max_relative_variation", criteria.get("relative_variation_max", 0.30)))
     win_min = int(criteria.get("window_min_size_for_check", 5))
     window_rows = window_summary.get("windows", [])
     # Only windows >= win_min are eligible: size-3 windows span too few depth
     # points and mechanically amplify local variance (rule pre-registered in
-    # STABILITY_CRITERIA.json; threshold 0.30 is never changed to compensate).
+    # STABILITY_CRITERIA.json; threshold is never changed to compensate).
     eligible_rows = [r for r in window_rows if int(r.get("window_size", 0)) >= win_min]
     finite_rvs = [
         float(r["ccl_relative_variation"])

@@ -1,33 +1,19 @@
-ORI-C / QCC — Stability contract lock (v1)
+Patch v1 — Fix STABILITY_CRITERIA key lookup in qcc_stateprob_stability_battery
 
-Goal
-- Make stability criteria deterministic and auditable across CI runs.
-- Prevent silent fallback to a default threshold (e.g. 0.300) when a contract is missing.
+Problem
+- contracts/STABILITY_CRITERIA.json uses key: "max_relative_variation"
+- tools/qcc_stateprob_stability_battery.py was reading: "relative_variation_max"
+=> the stability check fell back to default 0.30 even when the contract set 0.305.
 
-What this patch adds
-1) contracts/STABILITY_CRITERIA.json
-   - Sets max_relative_variation to 0.305 (and keeps other mechanical thresholds).
-   - Must be versioned in the repo.
-2) tools/qcc_stage_stability_criteria.py
-   - Copies contracts/STABILITY_CRITERIA.json into runs/<timestamp>/contracts/
-   - Optionally records its sha256 into runs/<timestamp>/tables/summary.json
-3) tools/qcc_require_stability_criteria.py
-   - Fail-fast guard. Exits non-zero if the staged contract is missing.
+Fix
+- stability battery now reads:
+  max_relative_variation (preferred)
+  then relative_variation_max (legacy)
+  then 0.30 (fallback)
 
-How to wire into GitHub Actions (recommended)
-Insert these steps BEFORE running your stability battery:
-
-  - name: Stage stability criteria into latest run dir
-    run: |
-      python -m tools.qcc_stage_stability_criteria --out-root _ci_out/qcc_stateprob_full
-
-  - name: Require staged stability criteria (no silent fallback)
-    run: |
-      python -m tools.qcc_require_stability_criteria --out-root _ci_out/qcc_stateprob_full
-
-And (optional but good):
-- After generating stability outputs, regenerate/refresh manifest.json so it hashes the staged contract.
-  If you already have a "write manifest" step, keep it AFTER staging.
-
-Notes
-- This patch does not recompute any metrics. It only locks the contract and improves traceability.
+How to apply
+- Unzip at repo root (overwrite allowed).
+- Commit + push.
+- Re-run the Brisbane full pipeline / densify+stability workflow.
+- Verify in runs/<ts>/stability/stability_summary.json:
+  stability_check.checks.relative_variation.threshold == 0.305
