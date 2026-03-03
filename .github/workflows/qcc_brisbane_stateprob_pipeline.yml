@@ -43,10 +43,6 @@ on:
         description: "Seuil CCL pour t* (cross-conditions)"
         required: false
         default: "0.70"
-      stab_threshold:
-        description: "Seuil CCL pour t* (stabilité)"
-        required: false
-        default: "0.35"
       bootstrap_samples:
         description: "Bootstrap samples (cross-conditions)"
         required: false
@@ -225,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: cross_conditions
     env:
-      STAB_THRESHOLD:  ${{ inputs.stab_threshold }}
+      STAB_THRESHOLD:  ${{ inputs.threshold }}
       RESAMPLES:       ${{ inputs.resamples }}
       SUBSAMPLE_FRAC:  ${{ inputs.subsample_frac }}
       WINDOW_SIZES:    ${{ inputs.window_sizes }}
@@ -341,7 +337,19 @@ jobs:
               print("ERROR: relative_variation_max absent from criteria file")
               sys.exit(1)
           if used_threshold is None:
-              print("ERROR: stability_check.checks.relative_variation.threshold absent from summary")
+              # relative_variation check was not performed: no eligible windows
+              # with more than one position (len(means)==1) or all finite_rvs empty.
+              # This is INDETERMINATE — the stability battery could not assess
+              # CCL profile stability (too few depth points or all windows degenerate).
+              # Treat as a hard gate failure so runs with insufficient depth coverage
+              # do not silently pass.
+              print(
+                  "\nFAIL (INDETERMINATE): relative_variation check was not performed.\n"
+                  "No eligible windows produced a finite ccl_relative_variation value.\n"
+                  "Possible cause: fewer depth points than window_min_size_for_check,\n"
+                  "or all eligible windows contained only 1 position (len(means)==1).\n"
+                  "Increase --depths coverage or decrease --window-sizes."
+              )
               sys.exit(1)
           if abs(float(used_threshold) - float(expected_rv)) > 1e-9:
               print(
