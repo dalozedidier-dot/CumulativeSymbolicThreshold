@@ -380,7 +380,7 @@ jobs:
 
       - name: Upload artifact (${{ matrix.label }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: canonical_real_${{ matrix.label }}_${{ github.run_id }}
           path: _ci_out/canonical_real/${{ matrix.label }}

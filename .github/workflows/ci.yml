@@ -138,7 +138,7 @@ jobs:
           python 04_Code/reporting/build_ci_summary.py --ci-out _ci_out --canonical-root _ci_out/canonical_tests
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci_canonical_${{ github.run_id }}
           path: _ci_out

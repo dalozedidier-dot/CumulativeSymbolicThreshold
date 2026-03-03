@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload infra artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sector-infra-${{ matrix.pilot }}-${{ github.run_number }}
           path: _sector_infra_out/${{ matrix.pilot }}/
