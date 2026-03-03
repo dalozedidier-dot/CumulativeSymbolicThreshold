@@ -12,5 +12,5 @@ from __future__ import annotations
 import runpy
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent.parent
 runpy.run_path(str(HERE / "04_Code" / "pipeline" / "run_all_tests.py"), run_name="__main__")

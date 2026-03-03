@@ -44,6 +44,10 @@ notebooks = [
   "ipykernel>=6.0",
 ]
 
+[project.scripts]
+oric-run-all = "oric._entrypoints:run_all"
+oric-run-tests = "oric._entrypoints:run_all_tests"
+
 [project.urls]
 Homepage = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"
 Repository = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"
