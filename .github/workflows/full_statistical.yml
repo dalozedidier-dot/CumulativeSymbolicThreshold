@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Clean CI output directory
         run: |
@@ -136,7 +136,7 @@ jobs:
             --canonical-root _ci_out/canonical_tests
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: full_statistical_${{ github.run_id }}
           path: _ci_out

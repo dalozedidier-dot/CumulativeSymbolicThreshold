@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -74,7 +74,7 @@ jobs:
           python 04_Code/reporting/build_real_data_ci_summary.py --ci-out _ci_out --real-root _ci_out/real_data_smoke
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci_real_data_${{ github.run_id }}
           path: _ci_out

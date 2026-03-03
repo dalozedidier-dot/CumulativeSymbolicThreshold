@@ -34,7 +34,7 @@ jobs:
         pilot: [co2_mauna_loa, gistemp]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload sector artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sector-climate-${{ matrix.pilot }}-${{ github.run_number }}
           path: _sector_climate_out/${{ matrix.pilot }}/
@@ -105,12 +105,12 @@ jobs:
     if: always()
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
       - name: Download all climate artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sector-climate-*-${{ github.run_number }}
           path: _climate_artifacts/

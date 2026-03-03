@@ -54,7 +54,7 @@ from typing import Literal
 WELCH_NAN_FALLBACK_POLICY: tuple[str, ...] = (
     "welch",               # Priority 1 — parametric, if finite
     "bootstrap_fallback",  # Priority 2 — CI excludes zero (direction-sensitive)
-    "mannwhitney_fallback",# Priority 3 — rank-based non-parametric
+    "mannwhitney_fallback",  # Priority 3 — rank-based non-parametric
     "unavailable",         # Priority 4 — INDETERMINATE, never a hard failure
 )
 #

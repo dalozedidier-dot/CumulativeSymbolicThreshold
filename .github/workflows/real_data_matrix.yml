@@ -153,7 +153,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -287,7 +287,7 @@ jobs:
 
       - name: Upload artefact (${{ matrix.label }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: real_matrix_${{ matrix.label }}_${{ github.run_id }}
           path: _ci_out/real_matrix/${{ matrix.label }}
@@ -322,7 +322,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -367,7 +367,7 @@ jobs:
 
       - name: Upload artefact (${{ matrix.label }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: real_matrix_${{ matrix.label }}_${{ github.run_id }}
           path: _ci_out/real_matrix/${{ matrix.label }}
@@ -380,7 +380,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -425,7 +425,7 @@ jobs:
 
       - name: Upload T9 artefact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: real_matrix_t9_fred_real_${{ github.run_id }}
           path: _ci_out/real_matrix/t9_fred_real

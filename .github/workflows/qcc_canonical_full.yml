@@ -166,7 +166,7 @@ jobs:
     env:
       OUT_LABEL: ${{ inputs.out_label || 'qcc_canonical' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -197,7 +197,7 @@ jobs:
           echo "STATES: $N_STATES  ATTR: $N_ATTR"
           [ "$N_STATES" -eq "$N_ATTR" ] || { echo "Mismatch STATES/ATTR"; exit 1; }
           [ "$N_STATES" -gt 0 ] || { echo "No pairs generated"; exit 1; }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: qcc_canonical_data
           path: _ci_out/${{ env.OUT_LABEL }}/data
@@ -212,7 +212,7 @@ jobs:
       OUT_LABEL: ${{ inputs.out_label || 'qcc_canonical' }}
       MODE: ${{ inputs.mode || 'full' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -221,7 +221,7 @@ jobs:
 
       - name: Download generated data
         if: ${{ inputs.skip_generate != true && inputs.skip_generate != 'true' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: qcc_canonical_data
           path: _ci_out/${{ env.OUT_LABEL }}/data
@@ -382,7 +382,7 @@ jobs:
           print(f"manifest exists   : {manifest.exists()}")
           EOF
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: qcc_canonical_full_artifact
           path: _ci_out/${{ env.OUT_LABEL }}

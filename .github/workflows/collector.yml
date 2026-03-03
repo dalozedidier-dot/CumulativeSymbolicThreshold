@@ -45,7 +45,7 @@ jobs:
       REPO: ${{ github.repository }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
@@ -57,7 +57,7 @@ jobs:
       # ── Mode A: download from the TRIGGERING workflow_run ──────────────────
       - name: "[workflow_run] Download artifacts from triggering run"
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,10 +68,11 @@ jobs:
         if: github.event_name == 'workflow_run'
         run: |
           mkdir -p _collected_artifacts/run_${{ github.event.workflow_run.id }}
-          printf '{"workflowName":"%s","runId":"%s","headSha":"%s"}\n' \
+          printf '{"workflowName":"%s","runId":"%s","headSha":"%s","createdAt":"%s"}\n' \
             "${{ github.event.workflow_run.name }}" \
             "${{ github.event.workflow_run.id }}" \
             "${{ github.event.workflow_run.head_sha }}" \
+            "${{ github.event.workflow_run.created_at }}" \
             > _collected_artifacts/run_${{ github.event.workflow_run.id }}/run_meta.json
 
       # ── Mode B: scan recent canonical runs via gh API ──────────────────────
@@ -117,12 +118,13 @@ jobs:
                 echo "  WARNING: no downloadable artifacts for run $run_id"
               fi
               # Capture source workflow metadata for accurate reporting
-              wf_name=$(gh run view "$run_id" --json workflowName \
-                --jq '.workflowName' 2>/dev/null || echo "unknown")
-              head_sha=$(gh run view "$run_id" --json headSha \
-                --jq '.headSha' 2>/dev/null || echo "unknown")
-              printf '{"workflowName":"%s","runId":"%s","headSha":"%s"}\n' \
-                "$wf_name" "$run_id" "$head_sha" \
+              run_json=$(gh run view "$run_id" \
+                --json workflowName,headSha,createdAt 2>/dev/null || echo '{}')
+              wf_name=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('workflowName','unknown'))")
+              head_sha=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('headSha','unknown'))")
+              created_at=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('createdAt',''))")
+              printf '{"workflowName":"%s","runId":"%s","headSha":"%s","createdAt":"%s"}\n' \
+                "$wf_name" "$run_id" "$head_sha" "$created_at" \
                 > "${out_dir}/run_meta.json"
             done
           done
@@ -244,8 +246,52 @@ jobs:
                   pass
               return {}
 
-          def extract_metrics(run_dir: Path) -> dict:
-              """Extract key metrics from a run directory."""
+          # ── Workflow name → sector / run_mode fallback maps ──────────────────
+          # Ordered: more specific patterns first
+          _WORKFLOW_SECTOR_MAP = [
+              ("qcc",         "qcc"),
+              ("real data",   "real_data"),
+              ("real_data",   "real_data"),
+              ("bio",         "bio"),
+              ("cosmo",       "cosmo"),
+              ("infra_cloud", "infra_cloud"),
+              ("infra",       "infra"),
+              ("finance",     "finance"),
+              ("climate",     "climate"),
+              ("ai",          "ai_tech"),
+              ("psych",       "psych"),
+              ("social",      "social"),
+              ("stress",      "stress"),
+          ]
+          _WORKFLOW_MODE_MAP = [
+              ("scan only",  "scan_only"),
+              ("scan_only",  "scan_only"),
+              ("full",       "full"),
+              ("nightly",    "full"),
+              ("weekly",     "full"),
+              ("smoke",      "smoke_ci"),
+          ]
+
+          def _infer_sector(wf_name: str) -> str:
+              n = wf_name.lower()
+              for kw, val in _WORKFLOW_SECTOR_MAP:
+                  if kw in n:
+                      return val
+              return "unknown"
+
+          def _infer_run_mode(wf_name: str) -> str:
+              n = wf_name.lower()
+              for kw, val in _WORKFLOW_MODE_MAP:
+                  if kw in n:
+                      return val
+              return ""
+
+          def extract_metrics(run_dir: Path, wf_name: str = "") -> dict:
+              """Extract key metrics from a run directory.
+
+              wf_name: source workflow name (from run_meta.json), used as
+              deterministic fallback when summary.json omits sector/run_mode.
+              """
               summary_path = run_dir / "tables" / "summary.json"
               summary = json.loads(summary_path.read_text(encoding="utf-8"))
 
@@ -260,6 +306,7 @@ jobs:
                   or summary.get("domain")
                   or (summary.get("meta") or {}).get("sector")
                   or (summary.get("dataset") or {}).get("sector")
+                  or (wf_name and _infer_sector(wf_name))
                   or "unknown"
               )
               evidence_strength = (
@@ -273,6 +320,7 @@ jobs:
                   or summary.get("pooling_mode")
                   or (summary.get("meta") or {}).get("run_mode")
                   or (summary.get("meta") or {}).get("mode")
+                  or (wf_name and _infer_run_mode(wf_name))
                   or ""
               )
 
@@ -335,7 +383,7 @@ jobs:
               per_run_workflow = run_meta.get("workflowName") or workflow_name
               per_run_sha = run_meta.get("headSha") or commit_sha
               try:
-                  metrics = extract_metrics(run_dir)
+                  metrics = extract_metrics(run_dir, wf_name=per_run_workflow)
               except Exception as e:
                   print(f"WARNING: failed to extract metrics from {run_dir}: {e}")
                   continue
@@ -403,7 +451,7 @@ jobs:
           fi
 
       # ── Upload snapshot ────────────────────────────────────────────────────
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ci_metrics_snapshot_${{ github.run_id }}

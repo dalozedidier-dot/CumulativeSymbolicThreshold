@@ -51,7 +51,7 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -161,7 +161,7 @@ jobs:
           if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: manual_${{ inputs.suite }}_${{ github.run_id }}
           path: _ci_out
