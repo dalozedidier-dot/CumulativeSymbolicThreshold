@@ -1,17 +1,28 @@
+# ── Results & CI outputs (never committed) ──────────────────────────────────
 05_Results/
 _ci_out/
 
-# Scratch / temp directories (never committed)
+# ── Extracted bundles — currently tracked because real_datasets_index references them.
+# TODO: Once datasets are migrated to canonical paths under data/<sector>/,
+# un-track with: git rm -r --cached data/bundles_extracted/
+# data/bundles_extracted/
+
+# ── Local runs (generated, not versioned) ────────────────────────────────────
+runs/
+
+# ── Scratch / temp directories ───────────────────────────────────────────────
 _demo_out/
 _demo_oric_out*/
 _demo_robust_out*/
 _tmp_results_ci/
+_tmp_results/
 _tmp*/
 _cache/
 _scratch*/
 _sector_*/
+_collected_artifacts/
 
-# Python caches
+# ── Python caches ────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
@@ -21,27 +32,28 @@ __pycache__/
 dist/
 build/
 
-# Test / linter caches
+# ── Test / linter caches ────────────────────────────────────────────────────
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
-# Environment files
+# ── Environment files ────────────────────────────────────────────────────────
 .venv/
 .env
 venv/
 
-# OS artifacts
+# ── OS artifacts ─────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# --- Ephemeral / local outputs (do not version) ---
-_ci_out/
-_demo_out/
-_tmp_results_ci/
-_tmp_results/
-.cache/
-__pycache__/
-*.pyc
+# ── Jupyter ──────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
-.DS_Store
+
+# ── Keep (explicitly tracked) ───────────────────────────────────────────────
+# data/real_datasets_index.csv  — canonical dataset inventory
+# ci_metrics/                   — append-only metrics (tracked)
+# contracts/                    — frozen audit contracts (tracked)
+# data/climate/                 — small reference datasets (tracked)
+# data/finance/                 — small reference datasets (tracked)
+# data/survey/                  — survey datasets (tracked)
+# data/qcc/                     — QCC reference data (tracked)

@@ -1,5 +1,11 @@
 name: QCC Brisbane StateProb — Generate + Cross-conditions + Stability
 
+# ─────────────────────────────────────────────────────────────────────────────
+# VARIANT: delegates to the canonical workflow (qcc_canonical_full.yml)
+# with Brisbane-specific defaults. This workflow exists for backward
+# compatibility; the canonical workflow is the reference.
+# ─────────────────────────────────────────────────────────────────────────────
+
 on:
   workflow_dispatch:
     inputs:
@@ -43,10 +49,6 @@ on:
         description: "Seuil CCL pour t* (cross-conditions)"
         required: false
         default: "0.70"
-      stab_threshold:
-        description: "Seuil CCL pour t* (stabilité)"
-        required: false
-        default: "0.35"
       bootstrap_samples:
         description: "Bootstrap samples (cross-conditions)"
         required: false
@@ -73,303 +75,25 @@ on:
         default: "1337"
 
 jobs:
-
-  # ── Job 1 : génération des données StateProb ───────────────────────────────
-  generate:
-    name: "Génération StateProb (${{ inputs.algo }}, ${{ inputs.backend }})"
-    runs-on: ubuntu-latest
-    env:
-      BACKEND:    ${{ inputs.backend }}
-      ALGO:       ${{ inputs.algo }}
-      DEPTHS:     ${{ inputs.depths }}
-      INSTANCES:  ${{ inputs.instances }}
-      SHOTS:      ${{ inputs.shots }}
-      N_QUBITS:   ${{ inputs.n_qubits }}
-      DD:         ${{ inputs.dd }}
-      SEED:       ${{ inputs.seed }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps
-        run: |
-          set -euo pipefail
-          pip install --upgrade pip
-          pip install -r requirements-qcc-stateprob.txt
-
-      - name: Générer les paires STATES/ATTR
-        run: |
-          set -euo pipefail
-          DD_ARG=""
-          if [ "$DD" != "none" ] && [ -n "$DD" ]; then
-            DD_ARG="--dd $DD"
-          fi
-          python -m tools.generate_brisbane_stateprob \
-            --backend  "$BACKEND" \
-            --algo     "$ALGO" \
-            --depths   "$DEPTHS" \
-            --instances "$INSTANCES" \
-            --shots    "$SHOTS" \
-            --n-qubits "$N_QUBITS" \
-            --seed     "$SEED" \
-            --out-dir  _ci_out/brisbane_stateprob/data \
-            $DD_ARG
-
-      - name: Vérifier le nombre de paires générées
-        run: |
-          set -euo pipefail
-          N_STATES=$(find _ci_out/brisbane_stateprob/data -name "STATES_*.csv" | wc -l)
-          N_ATTR=$(find _ci_out/brisbane_stateprob/data -name "ATTR_*.csv" | wc -l)
-          echo "STATES: $N_STATES  ATTR: $N_ATTR"
-          [ "$N_STATES" -eq "$N_ATTR" ] || (echo "Mismatch STATES/ATTR" && exit 1)
-          [ "$N_STATES" -gt 0 ] || (echo "Aucune paire générée" && exit 1)
-
-      - name: Upload données générées
-        uses: actions/upload-artifact@v4
-        with:
-          name: brisbane_stateprob_data
-          path: _ci_out/brisbane_stateprob/data
-
-  # ── Job 2 : cross-conditions (CCL vs Depth) ───────────────────────────────
-  cross_conditions:
-    name: "Cross-conditions (pooling=${{ inputs.pooling }})"
-    runs-on: ubuntu-latest
-    needs: generate
-    env:
-      POOLING:           ${{ inputs.pooling }}
-      METRIC:            ${{ inputs.metric }}
-      THRESHOLD:         ${{ inputs.threshold }}
-      BOOTSTRAP_SAMPLES: ${{ inputs.bootstrap_samples }}
-      SEED:              ${{ inputs.seed }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps
-        run: |
-          set -euo pipefail
-          pip install --upgrade pip
-          pip install -r requirements-qcc-stateprob.txt
-
-      - name: Download données générées
-        uses: actions/download-artifact@v4
-        with:
-          name: brisbane_stateprob_data
-          path: _ci_out/brisbane_stateprob/data
-
-      - name: Analyse cross-conditions
-        run: |
-          set -euo pipefail
-          python -m tools.qcc_stateprob_cross_conditions \
-            --dataset         _ci_out/brisbane_stateprob/data \
-            --out-dir         _ci_out/brisbane_stateprob \
-            --pooling         "$POOLING" \
-            --metric          "$METRIC" \
-            --threshold       "$THRESHOLD" \
-            --bootstrap-samples "$BOOTSTRAP_SAMPLES" \
-            --seed            "$SEED" \
-            --power-criteria  contracts/POWER_CRITERIA.json \
-            --auto-plan
-
-      - name: Write manifest
-        run: |
-          set -euo pipefail
-          python -m tools.qcc_stateprob_write_manifest \
-            --out-root _ci_out/brisbane_stateprob
-
-      - name: Checks + evidence_strength
-        run: |
-          set -euo pipefail
-          python -m tools.qcc_stateprob_cross_checks \
-            --out-root _ci_out/brisbane_stateprob
-
-      - name: Afficher le résumé
-        run: |
-          python - <<'EOF'
-          import json, pathlib, sys
-          runs = sorted(pathlib.Path("_ci_out/brisbane_stateprob/runs").iterdir())
-          if not runs:
-              print("Aucun run trouvé"); sys.exit(1)
-          s = json.loads((runs[-1] / "tables" / "summary.json").read_text())
-          pd_ = s.get("power_diagnostic", {})
-          det = pd_.get("details", {})
-          thr = det.get("thresholds", {})
-          print(f"evidence_strength : {s.get('evidence_strength','?').upper()}")
-          print(f"total_points      : {det.get('total_points','?')}  (high>={thr.get('high',{}).get('total_points','?')})")
-          print(f"depth_distinct    : {det.get('depth_distinct_total','?')}  (high>={thr.get('high',{}).get('depth_distinct_total','?')})")
-          print(f"instances_count   : {det.get('instances_count','?')}  (high>={thr.get('high',{}).get('instances_count','?')})")
-          print(f"pooling_mode      : {s.get('pooling_mode','?')}")
-          EOF
-
-      - name: Upload artefact cross-conditions
-        uses: actions/upload-artifact@v4
-        with:
-          name: brisbane_cross_conditions_artifact
-          path: _ci_out/brisbane_stateprob
-
-  # ── Job 3 : batterie de stabilité ─────────────────────────────────────────
-  stability:
-    name: "Stabilité (variants=${{ inputs.run_variants }})"
-    runs-on: ubuntu-latest
-    needs: cross_conditions
-    env:
-      STAB_THRESHOLD:  ${{ inputs.stab_threshold }}
-      RESAMPLES:       ${{ inputs.resamples }}
-      SUBSAMPLE_FRAC:  ${{ inputs.subsample_frac }}
-      WINDOW_SIZES:    ${{ inputs.window_sizes }}
-      BOOTSTRAPS:      ${{ inputs.bootstrap_samples }}
-      RUN_VARIANTS:    ${{ inputs.run_variants }}
-      SEED:            ${{ inputs.seed }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps
-        run: |
-          set -euo pipefail
-          pip install --upgrade pip
-          pip install -r requirements-qcc-stateprob.txt
-
-      - name: Download artefact cross-conditions
-        uses: actions/download-artifact@v4
-        with:
-          name: brisbane_cross_conditions_artifact
-          path: _ci_out/brisbane_stateprob
-
-      - name: Batterie de stabilité
-        run: |
-          set -euo pipefail
-          VARIANTS_ARG=""
-          if [ "$RUN_VARIANTS" = "true" ]; then
-            VARIANTS_ARG="--run-variants"
-          fi
-          python -m tools.qcc_stateprob_stability_battery \
-            --out-root          _ci_out/brisbane_stateprob \
-            --threshold         "$STAB_THRESHOLD" \
-            --resamples         "$RESAMPLES" \
-            --subsample-frac    "$SUBSAMPLE_FRAC" \
-            --window-sizes      "$WINDOW_SIZES" \
-            --bootstraps        "$BOOTSTRAPS" \
-            --seed              "$SEED" \
-            --stability-criteria contracts/STABILITY_CRITERIA.json \
-            $VARIANTS_ARG
-
-      - name: Afficher résultats stabilité
-        run: |
-          python - <<'EOF'
-          import json, pathlib, sys
-          runs = sorted(pathlib.Path("_ci_out/brisbane_stateprob/runs").iterdir())
-          if not runs:
-              print("Aucun run trouvé"); sys.exit(1)
-          sp = runs[-1] / "stability" / "stability_summary.json"
-          if not sp.exists():
-              print("stability_summary.json absent"); sys.exit(1)
-          ss = json.loads(sp.read_text())
-          sc = ss.get("stability_check", {})
-          print(f"all_pass : {sc.get('all_pass')}")
-          for k, v in sc.get("checks", {}).items():
-              flag = "PASS" if v.get("pass") else "FAIL"
-              print(f"  {flag}  {k}: {v}")
-          vv = ss.get("versioned_variants", {})
-          if vv.get("run"):
-              print(f"Variantes ({vv.get('n_variants')}) :")
-              for var in vv.get("variants", []):
-                  flag = "PASS" if var.get("stability_all_pass") else ("FAIL" if var.get("stability_all_pass") is False else "n/a")
-                  print(f"  {flag}  {var['variant']}  thr={var['threshold']:.3f}  frac={var['subsample_frac']:.2f}")
-          EOF
-
-      - name: Assert contrat stabilité (hard gate)
-        run: |
-          python - <<'PYEOF'
-          import json
-          import sys
-          from pathlib import Path
-
-          # ── find latest run dir ────────────────────────────────────────────
-          runs_dir = Path("_ci_out/brisbane_stateprob/runs")
-          candidates = sorted([p for p in runs_dir.iterdir() if p.is_dir()])
-          if not candidates:
-              print("ERROR: no run dirs under _ci_out/brisbane_stateprob/runs")
-              sys.exit(1)
-          run_dir = candidates[-1]
-          print(f"run_dir: {run_dir}")
-
-          # ── load contracts criteria (embedded copy inside run dir) ─────────
-          criteria_path = run_dir / "contracts" / "STABILITY_CRITERIA.json"
-          if not criteria_path.exists():
-              print(f"ERROR: {criteria_path} absent — criteria were not embedded by the battery")
-              sys.exit(1)
-          criteria = json.loads(criteria_path.read_text(encoding="utf-8"))
-          expected_rv = criteria.get("relative_variation_max")
-          print(f"contracts/STABILITY_CRITERIA.json  relative_variation_max = {expected_rv}")
-          print(f"  schema={criteria.get('schema','')}  version={criteria.get('criteria_version','')}")
-
-          # ── load stability summary ─────────────────────────────────────────
-          ss_path = run_dir / "stability" / "stability_summary.json"
-          if not ss_path.exists():
-              print(f"ERROR: {ss_path} absent")
-              sys.exit(1)
-          ss = json.loads(ss_path.read_text(encoding="utf-8"))
-          sc = ss.get("stability_check", {})
-          rv_check = sc.get("checks", {}).get("relative_variation", {})
-          used_threshold = rv_check.get("threshold")
-          all_pass = sc.get("all_pass")
-
-          print(f"stability_summary  relative_variation.threshold = {used_threshold}")
-          print(f"stability_summary  all_pass = {all_pass}")
-
-          # ── gate 1 : threshold must match the versioned criteria ───────────
-          if expected_rv is None:
-              print("ERROR: relative_variation_max absent from criteria file")
-              sys.exit(1)
-          if used_threshold is None:
-              print("ERROR: stability_check.checks.relative_variation.threshold absent from summary")
-              sys.exit(1)
-          if abs(float(used_threshold) - float(expected_rv)) > 1e-9:
-              print(
-                  f"\nFAIL: threshold mismatch — "
-                  f"criteria file says {expected_rv} but battery used {used_threshold}.\n"
-                  "The battery did NOT load the versioned criteria file correctly."
-              )
-              sys.exit(1)
-          print(f"\nOK gate 1: threshold {used_threshold} matches criteria {expected_rv}")
-
-          # ── gate 2 : all stability checks must pass ────────────────────────
-          if all_pass is not True:
-              print(f"\nFAIL: stability_check.all_pass={all_pass} — at least one stability check failed.")
-              for k, v in sc.get("checks", {}).items():
-                  flag = "PASS" if v.get("pass") else "FAIL"
-                  print(f"  {flag}  {k}: value={v.get('value')} threshold={v.get('threshold')}")
-              sys.exit(1)
-          print("OK gate 2: all stability checks pass")
-          PYEOF
-
-      - name: Re-écrire le manifest final
-        run: |
-          set -euo pipefail
-          python -m tools.qcc_stateprob_write_manifest \
-            --out-root _ci_out/brisbane_stateprob
-
-      - name: Upload artefact final (données + analyse + stabilité)
-        uses: actions/upload-artifact@v4
-        with:
-          name: brisbane_stateprob_full_artifact
-          path: _ci_out/brisbane_stateprob
+  canonical:
+    name: "Brisbane → Canonical Full Pipeline"
+    uses: ./.github/workflows/qcc_canonical_full.yml
+    with:
+      backend: ${{ inputs.backend }}
+      algo: ${{ inputs.algo }}
+      depths: ${{ inputs.depths }}
+      instances: ${{ inputs.instances }}
+      shots: ${{ inputs.shots }}
+      n_qubits: ${{ inputs.n_qubits }}
+      dd: ${{ inputs.dd }}
+      pooling: ${{ inputs.pooling }}
+      metric: ${{ inputs.metric }}
+      threshold: ${{ inputs.threshold }}
+      bootstrap_samples: ${{ inputs.bootstrap_samples }}
+      resamples: ${{ inputs.resamples }}
+      subsample_frac: ${{ inputs.subsample_frac }}
+      window_sizes: ${{ inputs.window_sizes }}
+      run_variants: ${{ inputs.run_variants }}
+      seed: ${{ inputs.seed }}
+      mode: "full"
+      out_label: "brisbane_stateprob"
