@@ -1,0 +1,19 @@
+[flake8]
+max-line-length = 100
+extend-ignore =
+    W503,
+    E731,
+per-file-ignores =
+    src/oric/__init__.py: F401,F403
+exclude =
+    .git,
+    __pycache__,
+    .tox,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    _ci_out,
+    _demo_*,
+    _tmp_results_*,
+    05_Results,

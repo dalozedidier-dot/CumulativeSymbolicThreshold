@@ -49,6 +49,17 @@ Thumbs.db
 # ── Jupyter ──────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 
+# ── Secrets / credentials (never commit) ────────────────────────────────────
+.env.*
+*.pem
+*.key
+secrets/
+credentials.json
+*.secret
+
+# ── Docker local state ───────────────────────────────────────────────────────
+.docker/
+
 # ── Keep (explicitly tracked) ───────────────────────────────────────────────
 # data/real_datasets_index.csv  — canonical dataset inventory
 # ci_metrics/                   — append-only metrics (tracked)
