@@ -1,1 +1,4 @@
 timestamp,run_id,dataset_id,sector,commit_sha,evidence_strength,all_pass,stability_criteria_sha256,run_mode,workflow
+2026-03-03T17:50:25Z,_collected_artifacts/run_22598331540/qcc_stateprob_densify_artifact/runs/20260302_221932,22598331540,,,,low,,,
+2026-03-03T17:50:25Z,_collected_artifacts/run_22598331540/qcc_stateprob_stability_artifact/runs/20260302_221932,22598331540,,,,low,True,,
+2026-03-03T17:50:25Z,_collected_artifacts/run_22631903996/qcc_canonical_full_artifact/runs/20260303_161436,22631903996,,,,high,True,19592e0daf995d48a245d966c92dff4fd7ed770c8712e265dc1cbc4ba224e543,
