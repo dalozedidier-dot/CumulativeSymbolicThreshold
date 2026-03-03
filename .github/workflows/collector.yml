@@ -9,6 +9,11 @@ on:
       - "Real Data Canonical T1–T8 (ORI-C)"
     types: [completed]
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Optional: GitHub Actions run id to download artifacts from (bypass listing)."
+        required: false
+        type: string
   schedule:
     - cron: "23 2 * * *"
 
@@ -39,15 +44,25 @@ jobs:
           echo "Downloading artifacts from triggering run: ${{ github.event.workflow_run.id }}"
           gh run download "${{ github.event.workflow_run.id }}" --dir _collected_artifacts/run_${{ github.event.workflow_run.id }}
 
-      - name: Download artifacts from latest successful canonical runs (schedule/manual)
-        if: github.event_name != 'workflow_run'
+      - name: Download artifacts from explicit run_id (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_id != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p _collected_artifacts
-          echo "Fetching latest successful runs for canonical workflows (fuzzy patterns)..."
-          python -m tools.collector_download_artifacts             --out _collected_artifacts             --workflows               "QCC Brisbane StateProb"               "QCC StateProb Densify"               "Real Data Matrix"               "Real Data Canonical"
+          echo "Downloading artifacts from explicit run_id: ${{ inputs.run_id }}"
+          gh run download "${{ inputs.run_id }}" --dir _collected_artifacts/run_${{ inputs.run_id }}
+
+      - name: Download artifacts from latest successful canonical runs (schedule/manual no run_id)
+        if: (github.event_name != 'workflow_run') && !(github.event_name == 'workflow_dispatch' && inputs.run_id != '')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p _collected_artifacts
+          echo "Fetching latest successful runs for canonical workflows (using gh run list)..."
+          python -m tools.collector_download_artifacts_runlist             --out _collected_artifacts             --workflows               "QCC Brisbane StateProb"               "QCC StateProb Densify"               "Real Data Matrix"               "Real Data Canonical"
 
       - name: Collect and append metrics
         env:
