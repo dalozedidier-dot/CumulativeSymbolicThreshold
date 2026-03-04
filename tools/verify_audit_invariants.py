@@ -146,6 +146,63 @@ def check_manifest(run_dir: Path) -> List[str]:
     return errors
 
 
+# ── Invariant 3b: stability_summary reflects contract ────────────────────────
+
+
+def check_stability_reflects_contract(run_dir: Path) -> List[str]:
+    """Verify stability_summary.json threshold matches STABILITY_CRITERIA.json.
+
+    This ensures the stability battery ran with the *frozen* contract thresholds,
+    not with ad-hoc values. Any mismatch is a hard fail.
+    """
+    errors = []
+    criteria_path = run_dir / "contracts" / "STABILITY_CRITERIA.json"
+    summary_path = run_dir / "stability" / "stability_summary.json"
+
+    if not criteria_path.exists() or not summary_path.exists():
+        # Dependencies already checked by earlier invariants; skip here.
+        return errors
+
+    try:
+        criteria = json.loads(criteria_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        errors.append(f"Cannot parse STABILITY_CRITERIA.json: {e}")
+        return errors
+
+    try:
+        ss = json.loads(summary_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        errors.append(f"Cannot parse stability_summary.json: {e}")
+        return errors
+
+    # Verify criteria sha recorded in stability_summary matches the staged file
+    criteria_sha = _sha256_file(criteria_path)
+    recorded_sha = ss.get("criteria_sha256", "")
+    if recorded_sha and recorded_sha != criteria_sha:
+        errors.append(
+            f"stability_summary.json criteria_sha256 mismatch: "
+            f"recorded={recorded_sha[:16]}... actual={criteria_sha[:16]}..."
+        )
+
+    # The threshold used in the battery must match the contract value
+    expected_rv = criteria.get("max_relative_variation") or criteria.get(
+        "relative_variation_max"
+    )
+    if expected_rv is not None:
+        sc = ss.get("stability_check", {})
+        rv_check = sc.get("checks", {}).get("relative_variation", {})
+        used_threshold = rv_check.get("threshold")
+        if used_threshold is not None:
+            if abs(float(used_threshold) - float(expected_rv)) > 1e-9:
+                errors.append(
+                    f"Stability threshold mismatch — contract says {expected_rv}, "
+                    f"battery used {used_threshold}. "
+                    "Run the stability battery with --stability-criteria contracts/STABILITY_CRITERIA.json."
+                )
+
+    return errors
+
+
 # ── Invariant 4: standardized outputs ────────────────────────────────────────
 
 REQUIRED_OUTPUTS = [
@@ -198,6 +255,12 @@ def verify(
     stability_errors = check_stability(run_dir, require_stability=require_stability)
     all_errors.extend(stability_errors)
 
+    # 2b. Stability reflects contract (only meaningful in full mode)
+    contract_reflect_errors: List[str] = []
+    if require_stability:
+        contract_reflect_errors = check_stability_reflects_contract(run_dir)
+        all_errors.extend(contract_reflect_errors)
+
     # 3. Manifest
     manifest_errors = check_manifest(run_dir)
     all_errors.extend(manifest_errors)
@@ -223,6 +286,7 @@ def verify(
         "checks": {
             "contracts": len(contract_errors) == 0,
             "stability": len(stability_errors) == 0,
+            "stability_reflects_contract": len(contract_reflect_errors) == 0 if require_stability else True,
             "manifest": len(manifest_errors) == 0,
             "standard_outputs": len(output_errors) == 0,
         },
