@@ -120,7 +120,11 @@ jobs:
               # Capture source workflow metadata for accurate reporting
               run_json=$(gh run view "$run_id" \
                 --json workflowName,headSha,createdAt 2>/dev/null || echo '{}')
-              wf_name=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('workflowName','unknown'))")
+              wf_name=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('workflowName',''))")
+              # Fallback: if gh run view returned empty or 'unknown', use the known workflow filename
+              if [ -z "$wf_name" ] || [ "$wf_name" = "unknown" ]; then
+                wf_name="$workflow_file"
+              fi
               head_sha=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('headSha','unknown'))")
               created_at=$(echo "$run_json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('createdAt',''))")
               printf '{"workflowName":"%s","runId":"%s","headSha":"%s","createdAt":"%s"}\n' \
@@ -314,10 +318,11 @@ jobs:
                   or summary.get("power_level")
                   or summary.get("power_diagnostic", {}).get("evidence_strength", "")
               )
+              # run_mode = CI pipeline mode (full | scan_only | smoke_ci)
+              # pooling_mode is a statistical concept — NOT the same thing; excluded here
               run_mode = (
                   summary.get("run_mode")
                   or summary.get("mode")
-                  or summary.get("pooling_mode")
                   or (summary.get("meta") or {}).get("run_mode")
                   or (summary.get("meta") or {}).get("mode")
                   or (wf_name and _infer_run_mode(wf_name))
@@ -380,7 +385,9 @@ jobs:
           for run_dir in all_run_dirs:
               github_run_id = extract_github_run_id(run_dir, collected_root)
               run_meta = read_run_meta(run_dir, collected_root)
-              per_run_workflow = run_meta.get("workflowName") or workflow_name
+              # Discard "unknown" placeholder — fall back to the env-based workflow name
+              _meta_wf = (run_meta.get("workflowName") or "").strip()
+              per_run_workflow = (_meta_wf if _meta_wf and _meta_wf.lower() != "unknown" else None) or workflow_name
               per_run_sha = run_meta.get("headSha") or commit_sha
               try:
                   metrics = extract_metrics(run_dir, wf_name=per_run_workflow)
