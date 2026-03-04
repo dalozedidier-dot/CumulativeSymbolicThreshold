@@ -39,7 +39,7 @@ jobs:
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
       - name: Run pytest with coverage
-        run: pytest -q --cov=src/oric --cov-report=xml --cov-report=term-missing 04_Code/tests 2>&1
+        run: pytest -q --cov=src/oric --cov-report=xml --cov-report=term-missing src/oric/tests 04_Code/tests 2>&1
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
