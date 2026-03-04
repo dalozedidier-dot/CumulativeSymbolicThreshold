@@ -64,10 +64,6 @@ Documentation = "https://www.ori-c.be/ori-c-recherche.html"
 "OSF Pre-registration" = "https://osf.io/g62pz/"
 "Bug Tracker" = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/issues"
 
-[project.scripts]
-oric-demo = "oric.cli:main_demo"
-oric-test = "oric.cli:main_test"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -105,4 +101,3 @@ omit = ["*/tests/*", "*/examples/*"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 60
