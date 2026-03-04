@@ -23,12 +23,13 @@ RUNS_INDEX_FIELDS = [
     "run_dir_name",
     "dataset_id",
     "sector",
-    "commit_sha",
+    "run_mode",
     "evidence_strength",
     "all_pass",
-    "run_mode",
     "manifest_sha256",
     "stability_criteria_sha256",
+    "commit_sha",
+    "workflow_source",
 ]
 
 HISTORY_FIELDS = ["timestamp"] + RUNS_INDEX_FIELDS + ["workflow"]
@@ -208,21 +209,33 @@ def main() -> None:
         manifest_sha256 = manifest.get("manifest_sha256") or manifest.get("sha256") or ""
 
         commit_sha = _get_commit_sha(summary)
+        # workflow_source: canonical identifier of the GH Actions workflow that
+        # produced this run. Inferred from path structure (run_<id> dir name) or
+        # from an optional run_meta.json written by the collector workflow.
+        run_meta_path = os.path.join(os.path.dirname(sp), "..", "..", "..", "run_meta.json")
+        run_meta = _read_json(run_meta_path) or {}
+        workflow_source = (
+            run_meta.get("workflowName")
+            or summary.get("workflow_source")
+            or summary.get("workflow")
+            or ""
+        )
 
         row = {
             "github_run_id": github_run_id,
             "run_dir_name": run_dir_name,
             "dataset_id": dataset_id,
             "sector": sector,
-            "commit_sha": commit_sha,
+            "run_mode": run_mode,
             "evidence_strength": evidence_strength,
             "all_pass": all_pass,
-            "run_mode": run_mode,
             "manifest_sha256": manifest_sha256,
             "stability_criteria_sha256": stability_criteria_sha256,
+            "commit_sha": commit_sha,
+            "workflow_source": workflow_source,
         }
         rows_index.append(row)
-        rows_hist.append({"timestamp": ts, **row, "workflow": ""})
+        rows_hist.append({"timestamp": ts, **row, "workflow": workflow_source})
 
     if rows_index:
         with open(runs_index_path, "a", newline="", encoding="utf-8") as f:

@@ -2,10 +2,8 @@
 05_Results/
 _ci_out/
 
-# ── Extracted bundles — currently tracked because real_datasets_index references them.
-# TODO: Once datasets are migrated to canonical paths under data/<sector>/,
-# un-track with: git rm -r --cached data/bundles_extracted/
-# data/bundles_extracted/
+# ── Extracted bundles (generated, not versioned — re-extract from data/bundles/*.zip)
+data/bundles_extracted/
 
 # ── Local runs (generated, not versioned) ────────────────────────────────────
 runs/

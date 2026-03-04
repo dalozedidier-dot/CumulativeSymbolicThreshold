@@ -1,0 +1,39 @@
+# Pre-commit hooks for ORI-C / CumulativeSymbolicThreshold
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# Single entrypoint: ruff (lint + format) + nbstripout for notebooks.
+# No mypy here (slow; use `make lint` for full type checks).
+
+repos:
+  # ── Ruff: fast Python linter + formatter (replaces flake8 + isort) ──────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # ── Standard pre-commit hooks ────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]   # allow anchors in GitHub Actions YAML
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048]  # 2 MB — catch accidentally committed bundles
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
+  # ── nbstripout: strip notebook outputs before commit ────────────────────────
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+        files: \.ipynb$
