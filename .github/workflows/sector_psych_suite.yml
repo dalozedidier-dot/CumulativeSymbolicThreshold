@@ -34,7 +34,7 @@ jobs:
         pilot: [google_trends, wvs_synthetic]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload sector artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sector-psych-${{ matrix.pilot }}-${{ github.run_number }}
           path: _sector_psych_out/${{ matrix.pilot }}/
@@ -107,12 +107,12 @@ jobs:
     if: always()
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
       - name: Download all psych artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sector-psych-*-${{ github.run_number }}
           path: _psych_artifacts/

@@ -1,80 +1,108 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "oric"
 version = "1.3.0"
-description = "Cumulative Symbolic Threshold — ORI-C framework for phase-transition detection in symbolic systems"
+description = "Cumulative Symbolic Threshold — A falsifiable protocol for O·R·I dynamics"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = {text = "MIT"}
+requires-python = ">=3.10"
 authors = [
-  { name = "Didier Daloze" }
+    {name = "Didier Daloze", email = "contact@ori-c.be"}
 ]
-keywords = ["symbolic threshold", "ORI-C", "causal testing", "phase transition", "reproducibility"]
+keywords = [
+    "symbolic-threshold", "viability", "phase-transition",
+    "falsifiable", "ORI-C", "cumulative-regime", "dissipative-systems"
+]
 classifiers = [
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.12",
-  "Topic :: Scientific/Engineering",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Operating System :: OS Independent",
 ]
-requires-python = ">=3.12"
+
 dependencies = [
-  "numpy>=1.26",
-  "pandas>=2.0",
-  "matplotlib>=3.8",
-  "scipy>=1.11",
-  "statsmodels>=0.14",
-  "tqdm>=4.66",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "statsmodels>=0.14",
+    "scikit-learn>=1.3",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=7.4",
-  "pytest-cov>=4.1",
-  "flake8>=6.1",
-  "black>=23.0",
-  "mypy>=1.5",
-  "isort>=5.12",
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "flake8>=6.0",
+    "black>=23.0",
+    "mypy>=1.5",
+    "isort>=5.12",
 ]
 notebooks = [
-  "jupyter>=1.0",
-  "ipykernel>=6.0",
+    "jupyter>=1.0",
+    "jupyterlab>=4.0",
 ]
+all = ["oric[dev,notebooks]"]
 
 [project.scripts]
 oric-run-all = "oric._entrypoints:run_all"
 oric-run-tests = "oric._entrypoints:run_all_tests"
 
 [project.urls]
-Homepage = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"
+Homepage = "https://www.ori-c.be"
 Repository = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold"
-DOI = "https://doi.org/10.17605/OSF.IO/G62PZ"
-Issues = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/issues"
+Documentation = "https://www.ori-c.be/ori-c-recherche.html"
+"OSF Pre-registration" = "https://osf.io/g62pz/"
+"Bug Tracker" = "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/issues"
+
+[project.scripts]
+oric-demo = "oric.cli:main_demo"
+oric-test = "oric.cli:main_test"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools.package-data]
+oric = ["py.typed"]
 
+# ── Formatting ──────────────────────────────────────────
 [tool.black]
 line-length = 100
 target-version = ["py312"]
-skip-magic-trailing-comma = false
 
 [tool.isort]
 profile = "black"
 line_length = 100
 
+# ── Type checking ───────────────────────────────────────
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
-ignore_missing_imports = true
+disallow_untyped_defs = false     # progressive — set true later
 
+# ── Testing ─────────────────────────────────────────────
 [tool.pytest.ini_options]
-testpaths = ["src/oric/tests", "04_Code/tests"]
-addopts = "--tb=short -q"
+testpaths = ["04_Code/tests"]
+addopts = "-q --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+# ── Coverage ────────────────────────────────────────────
+[tool.coverage.run]
+source = ["src/oric"]
+omit = ["*/tests/*", "*/examples/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60

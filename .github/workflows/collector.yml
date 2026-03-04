@@ -45,7 +45,7 @@ jobs:
       REPO: ${{ github.repository }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
@@ -57,7 +57,7 @@ jobs:
       # ── Mode A: download from the TRIGGERING workflow_run ──────────────────
       - name: "[workflow_run] Download artifacts from triggering run"
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -458,7 +458,7 @@ jobs:
           fi
 
       # ── Upload snapshot ────────────────────────────────────────────────────
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ci_metrics_snapshot_${{ github.run_id }}

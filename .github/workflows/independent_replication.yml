@@ -42,7 +42,7 @@ jobs:
     outputs:
       integrity_passed: ${{ steps.check.outputs.passed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -65,7 +65,7 @@ jobs:
     if: needs.integrity-check.outputs.integrity_passed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -103,7 +103,7 @@ jobs:
             --seed ${{ inputs.seed || '42' }}
 
       - name: Upload OOS results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: oos-panel-results
           path: _ci_out/oos_panel/
@@ -115,7 +115,7 @@ jobs:
     if: needs.integrity-check.outputs.integrity_passed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -158,7 +158,7 @@ jobs:
             --seed ${{ inputs.seed || '42' }}
 
       - name: Upload DiD results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: did-sc-results
           path: _ci_out/did/
@@ -168,18 +168,18 @@ jobs:
     needs: [oos-panel, did-synthetic-control]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
       - name: Download OOS results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: oos-panel-results
           path: _ci_out/oos_panel/
 
       - name: Download DiD results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: did-sc-results
           path: _ci_out/did/
@@ -223,7 +223,7 @@ jobs:
           EOF
 
       - name: Upload combined summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: replication-summary
           path: _ci_out/

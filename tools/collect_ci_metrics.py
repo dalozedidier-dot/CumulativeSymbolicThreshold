@@ -1,27 +1,13 @@
 #!/usr/bin/env python3
 """
-Collect metrics from downloaded artifacts and append to ci_metrics CSVs.
+collect_ci_metrics.py (v2)
+Append-only collector that is robust to schema drift across summary.json files.
 
-Input layout (expected):
-  <in-dir>/
-    run_<runid>/... (downloaded via `gh run download`)
-      (one or more artifacts unpacked)
-      .../runs/<timestamp>/tables/summary.json
-      .../runs/<timestamp>/stability/stability_summary.json (optional)
-      .../runs/<timestamp>/manifest.json
-
-This tool:
-- scans recursively for runs/<ts>/tables/summary.json
-- for each run_dir, reads:
-    - summary.json (required)
-    - manifest.json (optional but recommended)
-    - stability_summary.json (optional)
-- writes/append-only:
-    - <out-dir>/runs_index.csv
-    - <out-dir>/history.csv  (one row per run, same schema; kept for compatibility)
-
-It is FAIL-SOFT:
-- if no runs found, ensures CSV files exist with headers and exits 0.
+Fixes:
+- sector/run_mode inference from dataset_id when missing.
+- run_mode inference from presence of stability outputs.
+- supports both old and new field names in summary.json / stability_summary.json / manifest.json.
+- FAIL-SOFT: ensures CSVs exist even if no runs found.
 """
 from __future__ import annotations
 
@@ -29,248 +15,227 @@ import argparse
 import csv
 import json
 import os
-from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
-
+from datetime import datetime
+from typing import Dict, List, Optional
 
 RUNS_INDEX_FIELDS = [
-    "run_dir",
-    "run_id",
-    "workflow",
-    "sector",
+    "github_run_id",
+    "run_dir_name",
     "dataset_id",
-    "run_mode",
+    "sector",
+    "commit_sha",
     "evidence_strength",
-    "stability_all_pass",
-    "stability_criteria_sha256",
+    "all_pass",
+    "run_mode",
     "manifest_sha256",
+    "stability_criteria_sha256",
 ]
 
-HISTORY_FIELDS = ["ts_utc"] + RUNS_INDEX_FIELDS
-
-# ── Workflow name → sector / run_mode fallback maps ───────────────────────────
-# Ordered: more specific patterns first
-_WORKFLOW_SECTOR_MAP = [
-    ("qcc",         "qcc"),
-    ("real data",   "real_data"),
-    ("real_data",   "real_data"),
-    ("bio",         "bio"),
-    ("cosmo",       "cosmo"),
-    ("infra_cloud", "infra_cloud"),
-    ("infra",       "infra"),
-    ("finance",     "finance"),
-    ("climate",     "climate"),
-    ("ai",          "ai_tech"),
-    ("psych",       "psych"),
-    ("social",      "social"),
-    ("stress",      "stress"),
-]
-_WORKFLOW_MODE_MAP = [
-    ("scan only",  "scan_only"),
-    ("scan_only",  "scan_only"),
-    ("full",       "full"),
-    ("nightly",    "full"),
-    ("weekly",     "full"),
-    ("smoke",      "smoke_ci"),
-]
-
-
-def _infer_sector_from_workflow(wf_name: str) -> str:
-    n = wf_name.lower()
-    for kw, val in _WORKFLOW_SECTOR_MAP:
-        if kw in n:
-            return val
-    return "unknown"
-
-
-def _infer_run_mode_from_workflow(wf_name: str) -> str:
-    n = wf_name.lower()
-    for kw, val in _WORKFLOW_MODE_MAP:
-        if kw in n:
-            return val
-    return ""
-
-
-def _safe_get(d: Dict, path: List[str], default=None):
-    cur = d
-    for k in path:
-        if not isinstance(cur, dict) or k not in cur:
-            return default
-        cur = cur[k]
-    return cur
+HISTORY_FIELDS = ["timestamp"] + RUNS_INDEX_FIELDS + ["workflow"]
 
 
 def _read_json(path: str) -> Optional[Dict]:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
-    except FileNotFoundError:
-        return None
-    except json.JSONDecodeError:
+    except Exception:
         return None
 
 
-def _find_run_dirs(in_dir: str) -> List[str]:
-    # We look for .../runs/<ts>/tables/summary.json
-    matches: List[str] = []
+def _ensure_csv(path: str, fields: List[str]) -> None:
+    if os.path.exists(path):
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+
+
+def _find_summary_paths(in_dir: str) -> List[str]:
+    # Find any */runs/<ts>/tables/summary.json
+    hits = []
     for root, _, files in os.walk(in_dir):
-        if "summary.json" not in files:
-            continue
-        if os.path.basename(root) != "tables":
-            continue
-        # root = .../runs/<ts>/tables
-        run_dir = os.path.dirname(root)  # .../runs/<ts>
-        if os.path.basename(os.path.dirname(run_dir)) != "runs":
-            # ensure path segment
-            continue
-        matches.append(run_dir)
-    return sorted(set(matches))
+        if "summary.json" in files and os.path.basename(root) == "tables":
+            run_dir = os.path.dirname(root)  # .../runs/<ts>
+            if os.path.basename(os.path.dirname(run_dir)) == "runs":
+                hits.append(os.path.join(root, "summary.json"))
+    return sorted(set(hits))
 
 
-def _infer_run_id_from_path(run_dir: str) -> str:
-    # Best-effort: if the path includes /run_<id>/, use that.
-    parts = run_dir.split(os.sep)
+def _infer_github_run_id(path: str) -> str:
+    # path contains .../_collected_artifacts/run_<id>/...
+    parts = path.split(os.sep)
     for p in parts:
         if p.startswith("run_") and p[4:].isdigit():
             return p[4:]
     return ""
 
 
-def _read_run_meta(run_dir: str, in_dir: str) -> Dict:
-    """Read run_meta.json from the top-level run_<id> directory."""
-    # Walk up from run_dir until we find the run_<id> segment under in_dir
-    path = run_dir
-    while True:
-        parent = os.path.dirname(path)
-        if parent == path:
-            break
-        basename = os.path.basename(path)
-        if basename.startswith("run_") and basename[4:].isdigit():
-            meta_path = os.path.join(path, "run_meta.json")
-            result = _read_json(meta_path)
-            return result if result else {}
-        if os.path.abspath(path) == os.path.abspath(in_dir):
-            break
-        path = parent
-    return {}
+def _infer_run_dir_name(summary_path: str) -> str:
+    # .../runs/<ts>/tables/summary.json -> <ts>
+    return os.path.basename(os.path.dirname(os.path.dirname(summary_path)))
 
 
-def _ensure_csv(path: str, fieldnames: List[str]) -> None:
-    if os.path.exists(path):
-        return
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
-        w.writeheader()
+def _infer_sector(dataset_id: str, run_mode: str) -> str:
+    s = (dataset_id or "").lower()
+    m = (run_mode or "").lower()
+    if s.startswith("qcc") or "stateprob" in s or "brisbane" in s:
+        return "qcc"
+    if "climate" in s or "co2" in s or "gistemp" in s:
+        return "climate"
+    if "finance" in s or "sp500" in s or "btc" in s:
+        return "finance"
+    if "ai" in s or "llm" in s or "mlperf" in s:
+        return "ai_tech"
+    if "twitter" in s or "social" in s:
+        return "social"
+    if "google_trends" in s or "psych" in s or "wvs" in s:
+        return "psych"
+    if "ecdc" in s or "epidemic" in s or "bio" in s:
+        return "bio"
+    if "real" in m or "canonical" in m:
+        return "real_data"
+    return "unknown"
+
+
+def _infer_run_mode(summary: Dict, has_stability: bool) -> str:
+    for k in ("run_mode", "mode"):
+        v = summary.get(k)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    # If no explicit run_mode:
+    return "full" if has_stability else "scan_only"
+
+
+def _get_evidence_strength(summary: Dict) -> str:
+    v = summary.get("evidence_strength")
+    if isinstance(v, str) and v:
+        return v
+    pd = summary.get("power_diagnostic")
+    if isinstance(pd, dict):
+        v2 = pd.get("evidence_strength") or pd.get("evidence")
+        if isinstance(v2, str) and v2:
+            return v2
+    return ""
+
+
+def _get_commit_sha(summary: Dict) -> str:
+    for k in ("commit_sha", "head_sha", "sha", "git_sha"):
+        v = summary.get(k)
+        if isinstance(v, str) and v:
+            return v
+    return ""
+
+
+def _get_dataset_id(summary: Dict) -> str:
+    for k in ("dataset_id", "dataset", "input_csv", "dataset_path"):
+        v = summary.get(k)
+        if isinstance(v, str) and v:
+            # If input_csv is a path, take basename stem.
+            if "/" in v or "\\" in v:
+                base = os.path.basename(v)
+                return os.path.splitext(base)[0]
+            return v
+    return ""
 
 
 def _load_existing_keys(path: str) -> set:
-    # key is run_dir
     keys = set()
     if not os.path.exists(path):
         return keys
     with open(path, "r", newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
         for row in r:
-            if row.get("run_dir"):
-                keys.add(row["run_dir"])
+            # unique key = github_run_id + run_dir_name
+            keys.add((row.get("github_run_id",""), row.get("run_dir_name","")))
     return keys
-
-
-def _append_rows(path: str, fieldnames: List[str], rows: List[Dict]) -> None:
-    if not rows:
-        return
-    _ensure_csv(path, fieldnames)
-    with open(path, "a", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
-        for row in rows:
-            # only keep known fields
-            cleaned = {k: row.get(k, "") for k in fieldnames}
-            w.writerow(cleaned)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--in-dir", required=True)
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--append", action="store_true", help="Append-only; skip existing run_dir rows.")
+    ap.add_argument("--append", action="store_true")
     args = ap.parse_args()
 
-    in_dir = args.in_dir
-    out_dir = args.out_dir
-
-    runs_index_path = os.path.join(out_dir, "runs_index.csv")
-    history_path = os.path.join(out_dir, "history.csv")
+    runs_index_path = os.path.join(args.out_dir, "runs_index.csv")
+    history_path = os.path.join(args.out_dir, "history.csv")
 
     _ensure_csv(runs_index_path, RUNS_INDEX_FIELDS)
     _ensure_csv(history_path, HISTORY_FIELDS)
 
-    run_dirs = _find_run_dirs(in_dir)
-    if not run_dirs:
-        print(f"[INFO] No run dirs found under {in_dir}. CSVs ensured, nothing to append.")
+    summaries = _find_summary_paths(args.in_dir)
+    if not summaries:
+        print(f"[INFO] No runs found under {args.in_dir}.")
         return
 
     existing = _load_existing_keys(runs_index_path) if args.append else set()
+    ts = datetime.utcnow().isoformat() + "Z"
 
-    rows_index: List[Dict] = []
-    rows_history: List[Dict] = []
+    rows_index = []
+    rows_hist = []
 
-    ts_utc = __import__("datetime").datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-
-    for run_dir in run_dirs:
-        if args.append and run_dir in existing:
-            continue
-
-        summary = _read_json(os.path.join(run_dir, "tables", "summary.json")) or {}
+    for sp in summaries:
+        summary = _read_json(sp) or {}
+        run_dir = os.path.dirname(os.path.dirname(sp))  # .../runs/<ts>
+        has_stability = os.path.exists(os.path.join(run_dir, "stability", "stability_summary.json"))
         stability = _read_json(os.path.join(run_dir, "stability", "stability_summary.json")) or {}
         manifest = _read_json(os.path.join(run_dir, "manifest.json")) or {}
-        run_meta = _read_run_meta(run_dir, in_dir)
 
-        wf_name = run_meta.get("workflowName", "")
+        github_run_id = _infer_github_run_id(sp)
+        run_dir_name = _infer_run_dir_name(sp)
+        key = (github_run_id, run_dir_name)
+        if args.append and key in existing:
+            continue
 
-        sector = (
-            summary.get("sector")
-            or summary.get("domain")
-            or _safe_get(summary, ["meta", "sector"])
-            or _safe_get(summary, ["dataset", "sector"])
-            or (wf_name and _infer_sector_from_workflow(wf_name))
-            or "unknown"
-        )
-        dataset_id = summary.get("dataset_id", "") or summary.get("label", "")
-        run_mode = (
-            summary.get("run_mode")
-            or summary.get("mode")
-            or summary.get("pooling_mode")
-            or _safe_get(summary, ["meta", "run_mode"])
-            or _safe_get(summary, ["meta", "mode"])
-            or (wf_name and _infer_run_mode_from_workflow(wf_name))
-            or ""
-        )
-        evidence_strength = summary.get("evidence_strength", _safe_get(summary, ["power_diagnostic", "evidence_strength"], ""))
-        stability_all_pass = _safe_get(stability, ["stability_check", "all_pass"], "")
-        # Criteria sha may be in stability_summary; prefer explicit
+        dataset_id = _get_dataset_id(summary)
+        run_mode = _infer_run_mode(summary, has_stability)
+        sector = summary.get("sector") or summary.get("domain") or ""
+        if not sector:
+            sector = _infer_sector(dataset_id, run_mode)
+
+        evidence_strength = _get_evidence_strength(summary)
+        # all_pass: from stability if exists, else from summary if scan-only records it
+        all_pass = ""
+        if isinstance(stability.get("stability_check"), dict):
+            apass = stability["stability_check"].get("all_pass")
+            if apass is not None:
+                all_pass = bool(apass)
+        if all_pass == "" and "all_pass" in summary:
+            all_pass = summary.get("all_pass")
+
         stability_criteria_sha256 = stability.get("criteria_sha256", "")
-        manifest_sha256 = manifest.get("manifest_sha256", "") or manifest.get("sha256", "")
+        manifest_sha256 = manifest.get("manifest_sha256") or manifest.get("sha256") or ""
+
+        commit_sha = _get_commit_sha(summary)
 
         row = {
-            "run_dir": run_dir,
-            "run_id": _infer_run_id_from_path(run_dir),
-            "workflow": wf_name,
-            "sector": sector,
+            "github_run_id": github_run_id,
+            "run_dir_name": run_dir_name,
             "dataset_id": dataset_id,
-            "run_mode": run_mode,
+            "sector": sector,
+            "commit_sha": commit_sha,
             "evidence_strength": evidence_strength,
-            "stability_all_pass": str(stability_all_pass),
-            "stability_criteria_sha256": stability_criteria_sha256,
+            "all_pass": all_pass,
+            "run_mode": run_mode,
             "manifest_sha256": manifest_sha256,
+            "stability_criteria_sha256": stability_criteria_sha256,
         }
         rows_index.append(row)
-        rows_history.append({"ts_utc": ts_utc, **row})
+        rows_hist.append({"timestamp": ts, **row, "workflow": ""})
 
-    _append_rows(runs_index_path, RUNS_INDEX_FIELDS, rows_index)
-    _append_rows(history_path, HISTORY_FIELDS, rows_history)
+    if rows_index:
+        with open(runs_index_path, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=RUNS_INDEX_FIELDS)
+            for r in rows_index:
+                w.writerow({k: r.get(k, "") for k in RUNS_INDEX_FIELDS})
 
-    print(f"[INFO] Appended {len(rows_index)} runs into {runs_index_path} and {history_path}.")
+        with open(history_path, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=HISTORY_FIELDS)
+            for r in rows_hist:
+                w.writerow({k: r.get(k, "") for k in HISTORY_FIELDS})
+
+    print(f"[INFO] Appended {len(rows_index)} rows.")
 
 
 if __name__ == "__main__":
