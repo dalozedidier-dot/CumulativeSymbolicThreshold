@@ -1,5 +1,12 @@
 # Cumulative Symbolic Threshold (ORI-C)
 
+## Documentation
+- docs/INDEX.md : index
+- docs/ORI_C_POINT_OF_TRUTH.md : point de vérité unique
+- docs/CI_PIPELINES.md : pipelines CI
+- docs/REPRODUCE.md : reproduction
+- docs/REPO_LAYOUT.md : sources de vérité et duplications
+
 [![DOI](https://img.shields.io/badge/DOI-10.17605%2FOSF.IO%2FG62PZ-blue)](https://doi.org/10.17605/OSF.IO/G62PZ)
 [![OSF Pre-registration](https://img.shields.io/badge/OSF-G62PZ-lightgrey)](https://osf.io/g62pz/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
