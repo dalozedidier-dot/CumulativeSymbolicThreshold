@@ -55,7 +55,6 @@ jobs:
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
 
       - name: Run synthetic canonical suite (full_statistical)
-        id: synthetic_run
         run: |
           set -eo pipefail
           mkdir -p _ci_out/synthetic
@@ -70,6 +69,7 @@ jobs:
             2>&1 | tee _ci_out/synthetic/run_all_tests.log
 
       - name: Build registered report assets (figures + tables)
+        id: synthetic_run
         run: |
           set -e
           RUN_DIR=$(ls -1d _ci_out/synthetic/canonical_tests/* | sort | tail -n 1)

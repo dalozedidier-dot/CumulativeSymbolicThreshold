@@ -624,6 +624,22 @@ def _safe_float(v: object) -> float | None:
         return None
 
 
+def _json_dumps_safe(obj: object, **kwargs: object) -> str:
+    """json.dumps that converts NaN/Inf to None (valid JSON)."""
+    import math
+
+    def _sanitize(o: object) -> object:
+        if isinstance(o, float) and (math.isnan(o) or math.isinf(o)):
+            return None
+        if isinstance(o, dict):
+            return {k: _sanitize(v) for k, v in o.items()}
+        if isinstance(o, (list, tuple)):
+            return [_sanitize(v) for v in o]
+        return o
+
+    return json.dumps(_sanitize(obj), **kwargs)  # type: ignore[arg-type]
+
+
 # ── Summarise protocol ────────────────────────────────────────────────────────
 
 def _summarise_protocol(dfw: pd.DataFrame, dfs: pd.DataFrame) -> dict:
@@ -910,12 +926,19 @@ def main() -> int:
         dfs.to_csv(tabdir / "subsample_stability.csv", index=False)
 
         summary = _summarise_protocol(dfw, dfs)
-        (tabdir / "validation_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        (tabdir / "validation_summary.json").write_text(_json_dumps_safe(summary, indent=2), encoding="utf-8")
 
         verdict = summary.get("protocol_verdict", "UNKNOWN")
-        det_rate = float(summary.get("test_det_rate", 0.0) or 0.0)
-        stable_rate = float(summary.get("stable_det_rate", 0.0) or 0.0)
-        placebo_rate = float(summary.get("placebo_det_rate", 0.0) or 0.0)
+        def _rate(v: object) -> float:
+            try:
+                f = float(v)  # type: ignore[arg-type]
+                return 0.0 if f != f else f  # NaN → 0.0
+            except (TypeError, ValueError):
+                return 0.0
+
+        det_rate = _rate(summary.get("test_det_rate"))
+        stable_rate = _rate(summary.get("stable_det_rate"))
+        placebo_rate = _rate(summary.get("placebo_det_rate"))
         modal = summary.get("test_modal", "")
 
         (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
@@ -953,21 +976,31 @@ def main() -> int:
     dfagg.to_csv(outdir_root / "tables" / "aggregate_inputs.csv", index=False) if len(dfagg) else None
 
     any_accept = any(r["protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
-    overall_verdict = "ACCEPT" if any_accept else "REJECT"
+    any_indeterminate = any(r["protocol_verdict"] == "INDETERMINATE" for r in aggregate_rows)
+    if any_accept:
+        overall_verdict = "ACCEPT"
+    elif any_indeterminate:
+        overall_verdict = "INDETERMINATE"
+    else:
+        overall_verdict = "REJECT"
 
     outdir_root.joinpath("tables").mkdir(parents=True, exist_ok=True)
     outdir_root.joinpath("figures").mkdir(parents=True, exist_ok=True)
 
+    # Provide test_metrics at top level for CI extraction compatibility
+    best_det_rate = (best_row or {}).get("test_det_rate", 0.0)
     overall = {
         "protocol_verdict": overall_verdict,
         "n_inputs": len(inputs),
         "any_accept": any_accept,
+        "any_indeterminate": any_indeterminate,
         "best_input": (best_row or {}).get("input"),
         "best_stem": (best_row or {}).get("stem"),
-        "best_test_det_rate": (best_row or {}).get("test_det_rate"),
+        "best_test_det_rate": best_det_rate,
+        "test_metrics": {"detection_rate": best_det_rate},
         "inputs": aggregate_rows,
     }
-    (outdir_root / "tables" / "validation_summary.json").write_text(json.dumps(overall, indent=2), encoding="utf-8")
+    (outdir_root / "tables" / "validation_summary.json").write_text(_json_dumps_safe(overall, indent=2), encoding="utf-8")
     (outdir_root / "verdict.txt").write_text(f"{overall_verdict}\n", encoding="utf-8")
     if best_row:
         (outdir_root / "best_input.txt").write_text(f"{best_row['input']}\n", encoding="utf-8")
