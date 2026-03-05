@@ -91,13 +91,29 @@ jobs:
           for workflow_file in qcc_canonical_full.yml real_canonical_schedule.yml; do
             echo "── Workflow: $workflow_file"
 
-            # List recent successful runs
+            # List recent successful runs — try REST API first, fall back to gh run list
             run_ids=$(gh api \
               "repos/${REPO}/actions/workflows/${workflow_file}/runs?status=success&per_page=20&created=>=${SINCE}" \
               --jq '.workflow_runs[].id' 2>/dev/null || true)
 
             if [ -z "$run_ids" ]; then
-              echo "  No successful runs found for ${workflow_file}"
+              echo "  REST API returned empty for ${workflow_file} — trying gh run list fallback"
+              # Resolve numeric workflow id from filename, then list runs
+              wf_id=$(gh api "repos/${REPO}/actions/workflows/${workflow_file}" \
+                --jq '.id' 2>/dev/null || true)
+              if [ -n "$wf_id" ]; then
+                run_ids=$(gh run list \
+                  --repo "$REPO" \
+                  --workflow "$wf_id" \
+                  --status success \
+                  --limit 20 \
+                  --json databaseId \
+                  --jq '.[].databaseId' 2>/dev/null || true)
+              fi
+            fi
+
+            if [ -z "$run_ids" ]; then
+              echo "  No successful runs found for ${workflow_file} (REST + gh run list both empty)"
               continue
             fi
 
