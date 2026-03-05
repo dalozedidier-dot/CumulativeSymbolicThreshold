@@ -34,7 +34,7 @@ jobs:
         pilot: [solar, stellar, transient]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload cosmo artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sector-cosmo-${{ matrix.pilot }}-${{ github.run_number }}
           path: _sector_cosmo_out/${{ matrix.pilot }}/
@@ -108,12 +108,12 @@ jobs:
     if: always()
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Ensure _ci_out exists
         run: mkdir -p _ci_out
 
       - name: Download all cosmo artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: sector-cosmo-*-${{ github.run_number }}
           path: _cosmo_artifacts/
