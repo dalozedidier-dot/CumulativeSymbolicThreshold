@@ -231,7 +231,7 @@ jobs:
           fi
           echo "FRED monthly: $(wc -l < 03_Data/real/fred_monthly/real.csv) rows"
 
-      - name: Run real data validation protocol (fast mode — 3 windows × 10 subsamples)
+      - name: Run real data validation protocol (fast mode — 4 windows × 15 subsamples)
         id: protocol_run
         run: |
           set -eo pipefail
