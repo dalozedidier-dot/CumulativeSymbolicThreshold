@@ -26,9 +26,14 @@ Important real-data robustness rules
 - Window slicing always uses integer step index (0..n-1), never raw t values
   (which may encode calendar day-counts). If the output CSV has a 'step' column
   it is used; otherwise the DataFrame's row position is used.
-- Sigma-gate for V-related verdicts: if Sigma(t) is identically zero in the
-  post-threshold window, the symbolic pathway cannot operate. A non-detection
-  in that case is INDETERMINATE, not a falsification.
+- Sigma-gate with non-parametric fallback: if Sigma(t) is identically zero in
+  the post-threshold window (demand < capacity throughout), the symbolic pathway
+  cannot operate. Instead of declaring INDETERMINATE unconditionally:
+    • If a mean-shift test is significant (Welch/bootstrap/MWU cascade) → DETECTED
+      (structural change in C(t) confirmed even without Sigma pressure)
+    • If no significant shift → NOT_DETECTED (not INDETERMINATE)
+  This keeps runs decidable and avoids systematic INDETERMINATE in regimes
+  where demand never exceeds capacity (common in subsamples and stable controls).
 
 Outputs
 - tables/causal_tests_summary.csv
@@ -548,10 +553,34 @@ def main() -> int:
             binary = False
             sigma_gate_note = "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): INDETERMINATE per WELCH_NAN_FALLBACK_POLICY."
         elif sigma_zero_post:
-            # Symbolic pathway inoperative: INDETERMINATE, not a failure of the hypothesis
-            verdict = "indetermine_sigma_nul"
-            binary = False
-            sigma_gate_note = "Sigma(t)=0 throughout post-threshold window: symbolic canal inoperable, cannot falsify H."
+            # Symbolic pathway inoperative — but we may still have statistical evidence.
+            # Fallback: if at least one non-parametric test supports a mean shift in C(t),
+            # the structural change is decidable even without Sigma pressure.
+            # This avoids systematic INDETERMINATE when demand < capacity.
+            if ok_p:
+                # p-value significant (via whichever source in the cascade) even without bootstrap
+                verdict = "seuil_detecte"
+                binary = True
+                sigma_gate_note = (
+                    f"Sigma(t)=0 in post-window (symbolic canal inoperable), but mean-shift "
+                    f"test significant via {ok_p_source} (p <= {args.alpha}): "
+                    f"non-parametric fallback → DETECTED."
+                )
+            elif np.isfinite(p_mwu) and p_mwu <= float(args.alpha):
+                # MWU significant even if ok_p cascade didn't pick it (shouldn't happen, but safety net)
+                verdict = "seuil_detecte"
+                binary = True
+                sigma_gate_note = (
+                    f"Sigma(t)=0 in post-window, but Mann-Whitney U significant "
+                    f"(p={p_mwu:.4g} <= {args.alpha}): non-parametric fallback → DETECTED."
+                )
+            else:
+                verdict = "non_detecte"
+                binary = False
+                sigma_gate_note = (
+                    "Sigma(t)=0 in post-window and no significant mean shift in C(t): "
+                    "non-parametric fallback → NOT_DETECTED."
+                )
         else:
             verdict = "non_detecte"
             binary = False

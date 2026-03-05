@@ -103,9 +103,9 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 # ── Protocol constants ────────────────────────────────────────────────────────
 
 N_WINDOW_VARIANTS_FULL = 5
-N_WINDOW_VARIANTS_FAST = 3
+N_WINDOW_VARIANTS_FAST = 4
 N_BOOT_FULL = 30
-N_BOOT_FAST = 10
+N_BOOT_FAST = 15
 SAMPLE_FRAC = 0.80
 PRE_FRAC = 0.50         # fraction of rows used for "stable" dataset
 SHIFT_DIVISOR = 3        # placebo: cyclic shift by N // SHIFT_DIVISOR
@@ -116,17 +116,20 @@ PLACEBO_MIN = 0.70       # C3: placebo non-detection rate threshold
 N_DECIDABLE_MIN = 3      # minimum decidable runs to issue ACCEPT/REJECT
 
 # Default window configs: (pre_horizon, post_horizon, label)
+# Post-window >= 100 ensures enough data points for Mann-Whitney fallback
+# when sigma_zero_post=True (avoids systematic INDETERMINATE on short windows).
 _WINDOW_VARIANTS_FULL = [
-    (20,  20,  "narrow"),
-    (40,  40,  "medium"),
-    (100, 100, "default"),
-    (150, 60,  "wide_pre"),
-    (60,  150, "wide_post"),
-]
-_WINDOW_VARIANTS_FAST = [
-    (20,  20,  "narrow"),
+    (30,  30,  "narrow"),
     (60,  60,  "medium"),
     (100, 100, "default"),
+    (150, 100, "wide_pre"),
+    (100, 150, "wide_post"),
+]
+_WINDOW_VARIANTS_FAST = [
+    (30,  30,  "narrow"),
+    (60,  60,  "medium"),
+    (100, 100, "default"),
+    (100, 150, "wide_post"),
 ]
 
 # ── Dataset generation ────────────────────────────────────────────────────────
@@ -820,8 +823,8 @@ def main() -> int:
                     ds_label,
                     tmpdir,
                     n_boot=n_boot,
-                    default_pre=60,
-                    default_post=60,
+                    default_pre=100,
+                    default_post=100,
                     col_O=args.col_O,
                     col_R=args.col_R,
                     col_I=args.col_I,
