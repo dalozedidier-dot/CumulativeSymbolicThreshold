@@ -30,10 +30,23 @@ Dataset generation
   placebo    : cyclic shift by N // SHIFT_DIVISOR rows — breaks temporal alignment while
                preserving within-series autocorrelation structure
 
-Verdict tokens (canonical)
---------------------------
+Verdict classification (tri-state)
+-----------------------------------
+  Each inner run result is classified into one of three states:
+    DETECTED       : binary_detected=True  OR verdict ∈ {seuil_detecte, …}
+    NOT_DETECTED   : binary_detected=False OR verdict ∈ {non_detecte, falsifie, …}
+    INDETERMINATE  : verdict starts with indetermine_, sigma_zero_post=True, or p NaN
+
+  Rates are computed on decidable runs only (DETECTED + NOT_DETECTED):
+    detection_rate     = n_detected / n_decidable
+    non_detection_rate = n_not_detected / n_decidable
+    indeterminate_rate = n_indeterminate / total
+
+Protocol verdict tokens (canonical)
+------------------------------------
+  INDETERMINATE  : any condition has < N_DECIDABLE_MIN decidable runs
+  REJECT         : enough decidable but C1 fails (transition not detected reliably)
   ACCEPT         : C1+C2+C3 all satisfied at both stability and window levels
-  REJECT         : C1 violated (transition not detected reliably) — principal hypothesis fails
   INDETERMINATE  : C1 ok but C2/C3 fail (detector may not be specific enough)
 
 Run time notes
@@ -100,6 +113,7 @@ SHIFT_DIVISOR = 3        # placebo: cyclic shift by N // SHIFT_DIVISOR
 STABILITY_MIN = 0.80     # C1: transition detection rate threshold
 STABLE_MIN = 0.70        # C2: stable non-detection rate threshold
 PLACEBO_MIN = 0.70       # C3: placebo non-detection rate threshold
+N_DECIDABLE_MIN = 3      # minimum decidable runs to issue ACCEPT/REJECT
 
 # Default window configs: (pre_horizon, post_horizon, label)
 _WINDOW_VARIANTS_FULL = [
@@ -240,12 +254,55 @@ def _run_causal(
             "p_mwu": float("nan"), "sigma_zero_post": False, "sigma_gate_note": ""}
 
 
+_DETECTED_TOKENS = frozenset({"seuil_detecte", "accept", "detected", "threshold_hit"})
+_NOT_DETECTED_TOKENS = frozenset({"non_detecte", "reject", "falsifie"})
+_INDETERMINATE_PREFIXES = ("indetermine_",)
+
+
+def _classify_verdict(result: dict) -> str:
+    """Classify a single run result into DETECTED / NOT_DETECTED / INDETERMINATE.
+
+    Rules (applied in order):
+      DETECTED        : binary_detected is True  OR  verdict ∈ _DETECTED_TOKENS
+      NOT_DETECTED    : binary_detected is False  OR  verdict ∈ _NOT_DETECTED_TOKENS
+      INDETERMINATE   : verdict starts with "indetermine_"
+                        OR sigma_zero_post is True
+                        OR verdict is "error" / "unknown"
+    """
+    verdict = str(result.get("verdict", "")).lower().strip()
+    binary = result.get("binary_detected")
+    sigma_zero = result.get("sigma_zero_post", False)
+
+    # Indeterminate conditions (checked first to avoid misclassifying sigma-zero)
+    if sigma_zero:
+        return "INDETERMINATE"
+    if any(verdict.startswith(p) for p in _INDETERMINATE_PREFIXES):
+        return "INDETERMINATE"
+    if verdict in ("error", "unknown", ""):
+        return "INDETERMINATE"
+
+    # Explicit binary flag takes precedence
+    if binary is True:
+        return "DETECTED"
+    if binary is False:
+        return "NOT_DETECTED"
+
+    # Fall back to token matching
+    if verdict in _DETECTED_TOKENS:
+        return "DETECTED"
+    if verdict in _NOT_DETECTED_TOKENS:
+        return "NOT_DETECTED"
+
+    return "INDETERMINATE"
+
+
 def _is_detected(verdict: str) -> bool:
-    return verdict == "seuil_detecte"
+    """Legacy helper — kept for backward compatibility with row-level dicts."""
+    return verdict.lower().strip() in _DETECTED_TOKENS
 
 
 def _is_not_detected(verdict: str) -> bool:
-    return verdict in ("non_detecte", "indetermine_sigma_nul", "INDETERMINATE")
+    return verdict.lower().strip() in _NOT_DETECTED_TOKENS
 
 
 # ── Protocol phases ───────────────────────────────────────────────────────────
@@ -368,36 +425,70 @@ def _stability_metrics(
     rows: list[dict],
     expected_detected: bool,
 ) -> dict:
-    """Compute stability metrics for a list of per-rep rows."""
-    verdicts = [r["verdict"] for r in rows if r.get("verdict", "error") != "error"]
-    n_valid = len(verdicts)
-    if n_valid == 0:
-        return {"n_valid": 0, "n_error": len(rows), "detection_rate": float("nan"),
-                "non_detection_rate": float("nan"), "modal_verdict": "error",
-                "stability_fraction": float("nan")}
+    """Compute stability metrics using tri-state classification.
 
-    detected = [v for v in verdicts if _is_detected(v)]
-    not_detected = [v for v in verdicts if _is_not_detected(v)]
+    States
+    ------
+    DETECTED       : binary_detected=True or verdict in {seuil_detecte, …}
+    NOT_DETECTED   : binary_detected=False or verdict in {non_detecte, falsifie, …}
+    INDETERMINATE  : verdict starts with indetermine_, sigma_zero_post=True, or p NaN
+
+    Rates
+    -----
+    detection_rate     = n_detected / (n_detected + n_not_detected)   (decidable only)
+    non_detection_rate = n_not_detected / (n_detected + n_not_detected)
+    indeterminate_rate = n_indeterminate / total
+    """
     from collections import Counter
-    modal_verdict = Counter(verdicts).most_common(1)[0][0]
-    modal_count = Counter(verdicts)[modal_verdict]
 
-    det_rate = len(detected) / n_valid
-    non_det_rate = len(not_detected) / n_valid
-    stability = modal_count / n_valid
+    classes = [_classify_verdict(r) for r in rows]
+    total = len(classes)
+    counts = Counter(classes)
+    n_det = counts.get("DETECTED", 0)
+    n_not = counts.get("NOT_DETECTED", 0)
+    n_ind = counts.get("INDETERMINATE", 0)
+    n_decidable = n_det + n_not
+
+    if total == 0:
+        return {"n_valid": 0, "n_error": 0, "n_decidable": 0,
+                "n_detected": 0, "n_not_detected": 0, "n_indeterminate": 0,
+                "detection_rate": float("nan"), "non_detection_rate": float("nan"),
+                "indeterminate_rate": float("nan"), "modal_verdict": "error",
+                "stability_fraction": float("nan"), "verdict_counts": {}}
+
+    det_rate = n_det / n_decidable if n_decidable > 0 else float("nan")
+    non_det_rate = n_not / n_decidable if n_decidable > 0 else float("nan")
+    ind_rate = n_ind / total
+
+    modal_class = counts.most_common(1)[0][0]
+    modal_count = counts[modal_class]
+    stability = modal_count / total
 
     return {
-        "n_valid": int(n_valid),
-        "n_error": int(len(rows) - n_valid),
+        "n_valid": int(total),
+        "n_error": 0,
+        "n_decidable": int(n_decidable),
+        "n_detected": int(n_det),
+        "n_not_detected": int(n_not),
+        "n_indeterminate": int(n_ind),
         "detection_rate": float(det_rate),
         "non_detection_rate": float(non_det_rate),
-        "modal_verdict": modal_verdict,
+        "indeterminate_rate": float(ind_rate),
+        "modal_verdict": modal_class,
         "stability_fraction": float(stability),
-        "verdict_counts": dict(Counter(verdicts)),
+        "verdict_counts": dict(counts),
     }
 
 
 # ── Protocol verdict ──────────────────────────────────────────────────────────
+
+def _window_class_counts(rows: list[dict]) -> tuple[int, int, int]:
+    """Classify window rows and return (n_detected, n_not_detected, n_indeterminate)."""
+    classes = [_classify_verdict(r) for r in rows]
+    from collections import Counter
+    c = Counter(classes)
+    return c.get("DETECTED", 0), c.get("NOT_DETECTED", 0), c.get("INDETERMINATE", 0)
+
 
 def _protocol_verdict(
     test_metrics: dict,
@@ -407,56 +498,110 @@ def _protocol_verdict(
     stable_window_rows: list[dict],
     placebo_window_rows: list[dict],
 ) -> tuple[str, dict]:
-    """Apply the three-condition protocol verdict rule."""
+    """Apply the three-condition protocol verdict rule with tri-state classification.
+
+    Decidability gate
+    -----------------
+    Each condition requires at least N_DECIDABLE_MIN decidable runs (DETECTED +
+    NOT_DETECTED).  If any condition falls below, the overall verdict is
+    INDETERMINATE (not enough decidable cases to judge).
+
+    Rates are computed on decidable runs only:
+      detection_rate     = n_detected / n_decidable
+      non_detection_rate = n_not_detected / n_decidable
+    """
     notes: dict = {}
 
-    # C1: transition detection stability
+    # ── C1: transition detection stability ──────────────────────────────
     c1_det_rate = test_metrics.get("detection_rate", float("nan"))
-    c1_window_det = sum(1 for r in test_window_rows if _is_detected(r.get("verdict", "")))
-    c1_window_n = len(test_window_rows) or 1
-    c1_window_frac = c1_window_det / c1_window_n
+    c1_decidable = test_metrics.get("n_decidable", 0)
+    c1_ind_rate = test_metrics.get("indeterminate_rate", 0.0)
+
+    w1_det, w1_not, w1_ind = _window_class_counts(test_window_rows)
+    w1_decidable = w1_det + w1_not
+    c1_window_frac = w1_det / w1_decidable if w1_decidable > 0 else float("nan")
+
+    c1_enough = c1_decidable >= N_DECIDABLE_MIN and w1_decidable >= 1
     c1_ok = (
-        isinstance(c1_det_rate, float) and c1_det_rate >= STABILITY_MIN
-        and c1_window_frac >= STABILITY_MIN
+        c1_enough
+        and isinstance(c1_det_rate, float) and c1_det_rate >= STABILITY_MIN
+        and isinstance(c1_window_frac, float) and c1_window_frac >= STABILITY_MIN
     )
     notes["C1_transition"] = {
-        "subsample_det_rate": float(c1_det_rate) if isinstance(c1_det_rate, float) else None,
-        "window_det_frac": float(c1_window_frac),
+        "subsample_det_rate": _safe_float(c1_det_rate),
+        "subsample_n_decidable": int(c1_decidable),
+        "subsample_indeterminate_rate": _safe_float(c1_ind_rate),
+        "window_det_frac": _safe_float(c1_window_frac),
+        "window_n_decidable": int(w1_decidable),
+        "window_n_indeterminate": int(w1_ind),
+        "enough_decidable": bool(c1_enough),
         "passed": bool(c1_ok),
         "threshold": STABILITY_MIN,
     }
 
-    # C2: stable non-detection
+    # ── C2: stable non-detection ────────────────────────────────────────
     c2_non_det_rate = stable_metrics.get("non_detection_rate", float("nan"))
-    c2_window_non_det = sum(1 for r in stable_window_rows if _is_not_detected(r.get("verdict", "")))
-    c2_window_frac = c2_window_non_det / (len(stable_window_rows) or 1)
+    c2_decidable = stable_metrics.get("n_decidable", 0)
+    c2_ind_rate = stable_metrics.get("indeterminate_rate", 0.0)
+
+    w2_det, w2_not, w2_ind = _window_class_counts(stable_window_rows)
+    w2_decidable = w2_det + w2_not
+    c2_window_frac = w2_not / w2_decidable if w2_decidable > 0 else float("nan")
+
+    c2_enough = c2_decidable >= N_DECIDABLE_MIN and w2_decidable >= 1
     c2_ok = (
-        isinstance(c2_non_det_rate, float) and c2_non_det_rate >= STABLE_MIN
-        and c2_window_frac >= STABLE_MIN
+        c2_enough
+        and isinstance(c2_non_det_rate, float) and c2_non_det_rate >= STABLE_MIN
+        and isinstance(c2_window_frac, float) and c2_window_frac >= STABLE_MIN
     )
     notes["C2_stable"] = {
-        "subsample_non_det_rate": float(c2_non_det_rate) if isinstance(c2_non_det_rate, float) else None,
-        "window_non_det_frac": float(c2_window_frac),
+        "subsample_non_det_rate": _safe_float(c2_non_det_rate),
+        "subsample_n_decidable": int(c2_decidable),
+        "subsample_indeterminate_rate": _safe_float(c2_ind_rate),
+        "window_non_det_frac": _safe_float(c2_window_frac),
+        "window_n_decidable": int(w2_decidable),
+        "window_n_indeterminate": int(w2_ind),
+        "enough_decidable": bool(c2_enough),
         "passed": bool(c2_ok),
         "threshold": STABLE_MIN,
     }
 
-    # C3: placebo non-detection
+    # ── C3: placebo non-detection ───────────────────────────────────────
     c3_non_det_rate = placebo_metrics.get("non_detection_rate", float("nan"))
-    c3_window_non_det = sum(1 for r in placebo_window_rows if _is_not_detected(r.get("verdict", "")))
-    c3_window_frac = c3_window_non_det / (len(placebo_window_rows) or 1)
+    c3_decidable = placebo_metrics.get("n_decidable", 0)
+    c3_ind_rate = placebo_metrics.get("indeterminate_rate", 0.0)
+
+    w3_det, w3_not, w3_ind = _window_class_counts(placebo_window_rows)
+    w3_decidable = w3_det + w3_not
+    c3_window_frac = w3_not / w3_decidable if w3_decidable > 0 else float("nan")
+
+    c3_enough = c3_decidable >= N_DECIDABLE_MIN and w3_decidable >= 1
     c3_ok = (
-        isinstance(c3_non_det_rate, float) and c3_non_det_rate >= PLACEBO_MIN
-        and c3_window_frac >= PLACEBO_MIN
+        c3_enough
+        and isinstance(c3_non_det_rate, float) and c3_non_det_rate >= PLACEBO_MIN
+        and isinstance(c3_window_frac, float) and c3_window_frac >= PLACEBO_MIN
     )
     notes["C3_placebo"] = {
-        "subsample_non_det_rate": float(c3_non_det_rate) if isinstance(c3_non_det_rate, float) else None,
-        "window_non_det_frac": float(c3_window_frac),
+        "subsample_non_det_rate": _safe_float(c3_non_det_rate),
+        "subsample_n_decidable": int(c3_decidable),
+        "subsample_indeterminate_rate": _safe_float(c3_ind_rate),
+        "window_non_det_frac": _safe_float(c3_window_frac),
+        "window_n_decidable": int(w3_decidable),
+        "window_n_indeterminate": int(w3_ind),
+        "enough_decidable": bool(c3_enough),
         "passed": bool(c3_ok),
         "threshold": PLACEBO_MIN,
     }
 
-    if not c1_ok:
+    # ── Decidability gate ───────────────────────────────────────────────
+    if not (c1_enough and c2_enough and c3_enough):
+        insufficient = [k for k, e in {"C1": c1_enough, "C2": c2_enough, "C3": c3_enough}.items() if not e]
+        verdict = "INDETERMINATE"
+        notes["reason"] = (
+            f"Not enough decidable runs for {insufficient} "
+            f"(need >= {N_DECIDABLE_MIN} decidable per condition)"
+        )
+    elif not c1_ok:
         verdict = "REJECT"
         notes["reason"] = "C1 failed: transition not detected with sufficient stability"
     elif c1_ok and c2_ok and c3_ok:
@@ -468,6 +613,67 @@ def _protocol_verdict(
         notes["reason"] = f"C1 passed but {failed} failed: detector may not be specific enough"
 
     return verdict, notes
+
+
+def _safe_float(v: object) -> float | None:
+    """Return v as float, or None if NaN / not a number."""
+    try:
+        f = float(v)  # type: ignore[arg-type]
+        return None if (f != f) else f  # NaN check
+    except (TypeError, ValueError):
+        return None
+
+
+# ── Summarise protocol ────────────────────────────────────────────────────────
+
+def _summarise_protocol(dfw: pd.DataFrame, dfs: pd.DataFrame) -> dict:
+    """Build a summary dict from window-sensitivity and subsample-stability tables.
+
+    Parameters
+    ----------
+    dfw : DataFrame with columns [dataset, window, verdict, …]
+    dfs : DataFrame with columns [dataset, rep, verdict, …]
+
+    Returns
+    -------
+    dict with keys: protocol_verdict, test_det_rate, stable_det_rate,
+    placebo_det_rate, test_modal, test_metrics, stable_metrics, placebo_metrics,
+    notes.
+    """
+    def _rows_for(df: pd.DataFrame, label: str) -> list[dict]:
+        if df.empty:
+            return []
+        mask = df["dataset"] == label
+        return df.loc[mask].to_dict(orient="records")
+
+    test_window_rows = _rows_for(dfw, "test")
+    stable_window_rows = _rows_for(dfw, "stable")
+    placebo_window_rows = _rows_for(dfw, "placebo")
+
+    test_sub_rows = _rows_for(dfs, "test")
+    stable_sub_rows = _rows_for(dfs, "stable")
+    placebo_sub_rows = _rows_for(dfs, "placebo")
+
+    test_metrics = _stability_metrics(test_sub_rows, expected_detected=True)
+    stable_metrics = _stability_metrics(stable_sub_rows, expected_detected=False)
+    placebo_metrics = _stability_metrics(placebo_sub_rows, expected_detected=False)
+
+    verdict, notes = _protocol_verdict(
+        test_metrics, stable_metrics, placebo_metrics,
+        test_window_rows, stable_window_rows, placebo_window_rows,
+    )
+
+    return {
+        "protocol_verdict": verdict,
+        "test_det_rate": test_metrics.get("detection_rate", 0.0),
+        "stable_det_rate": stable_metrics.get("detection_rate", 0.0),
+        "placebo_det_rate": placebo_metrics.get("detection_rate", 0.0),
+        "test_modal": test_metrics.get("modal_verdict", ""),
+        "test_metrics": test_metrics,
+        "stable_metrics": stable_metrics,
+        "placebo_metrics": placebo_metrics,
+        "notes": notes,
+    }
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
