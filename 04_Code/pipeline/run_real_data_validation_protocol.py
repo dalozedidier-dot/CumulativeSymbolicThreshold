@@ -258,7 +258,7 @@ def _phase_window_sensitivity(
     col_O: str, col_R: str, col_I: str, col_demand: str, col_S: str,
     col_time: str, time_mode: str, normalize: str, control_mode: str,
     lags: str, baseline_n: int, seed: int,
-    verbose: bool,
+    verbose: bool = False,
 ) -> list[dict]:
     """Run demo once on full series, then run causal tests with each window config."""
     rows: list[dict] = []
@@ -308,7 +308,7 @@ def _phase_subsample_stability(
     col_O: str, col_R: str, col_I: str, col_demand: str, col_S: str,
     col_time: str, time_mode: str, normalize: str, control_mode: str,
     lags: str, baseline_n: int, base_seed: int,
-    verbose: bool,
+    verbose: bool = False,
     pre_horizon: int | None = None,
     post_horizon: int | None = None,
     sample_frac: float = 0.8,
@@ -470,80 +470,93 @@ def _protocol_verdict(
     return verdict, notes
 
 
-# ── Protocol summary ─────────────────────────────────────────────────────────
+# ── Protocol summary (schema-stable) ──────────────────────────────────────────
 
 def _summarise_protocol(dfw: pd.DataFrame, dfs: pd.DataFrame) -> dict:
-    """Summarise protocol outputs into a compact JSON.
-
-    dfw: window_sensitivity table (one row per dataset_type × window_variant)
-    dfs: subsample_stability table (one row per dataset_type × rep)
-
-    Output keys are intentionally stable because downstream workflows (dual proof)
-    read them mechanically.
     """
-    # Defensive: ensure expected columns exist
-    for col in ["dataset_type", "verdict"]:
-        if col not in dfw.columns:
-            raise ValueError(f"window_sensitivity missing column: {col}")
-        if col not in dfs.columns:
-            raise ValueError(f"subsample_stability missing column: {col}")
+    Summarise protocol phases for a single input series.
 
-    def _rows(df: pd.DataFrame, dataset_type: str) -> list[dict]:
-        sub = df[df["dataset_type"] == dataset_type]
+    Inputs:
+      dfw: window_sensitivity.csv as DataFrame
+      dfs: subsample_stability.csv as DataFrame
+
+    Robustness goal:
+      - Accept both legacy column names ("dataset") and newer ("dataset_type").
+      - Never assume a column exists without normalising.
+      - Produce a schema-stable dict consumed by dual proof.
+    """
+    dfw = dfw.copy()
+    dfs = dfs.copy()
+
+    # Normalise dataset label column
+    if "dataset_type" not in dfw.columns and "dataset" in dfw.columns:
+        dfw["dataset_type"] = dfw["dataset"]
+    if "dataset_type" not in dfs.columns and "dataset" in dfs.columns:
+        dfs["dataset_type"] = dfs["dataset"]
+
+    required_w = ["dataset_type", "window", "pre_horizon", "post_horizon", "verdict"]
+    required_s = ["dataset_type", "rep", "n_rows", "verdict"]
+
+    missing_w = [c for c in required_w if c not in dfw.columns]
+    missing_s = [c for c in required_s if c not in dfs.columns]
+    if missing_w:
+        raise ValueError(f"window_sensitivity missing columns: {missing_w}")
+    if missing_s:
+        raise ValueError(f"subsample_stability missing columns: {missing_s}")
+
+    def _rows_for(ds: str, frame: pd.DataFrame) -> list[dict]:
+        sub = frame.loc[frame["dataset_type"] == ds]
         return sub.to_dict(orient="records")
 
-    # Subsample metrics (Phase B)
-    test_rows = _rows(dfs, "test")
-    stable_rows = _rows(dfs, "stable")
-    placebo_rows = _rows(dfs, "placebo")
+    test_window = _rows_for("test", dfw)
+    stable_window = _rows_for("stable", dfw)
+    placebo_window = _rows_for("placebo", dfw)
 
-    test_metrics = _stability_metrics(test_rows, expected_detected=True)
-    stable_metrics = _stability_metrics(stable_rows, expected_detected=False)
-    placebo_metrics = _stability_metrics(placebo_rows, expected_detected=False)
+    test_sub = _rows_for("test", dfs)
+    stable_sub = _rows_for("stable", dfs)
+    placebo_sub = _rows_for("placebo", dfs)
 
-    # Window sensitivity (Phase A)
-    test_window_rows = _rows(dfw, "test")
-    stable_window_rows = _rows(dfw, "stable")
-    placebo_window_rows = _rows(dfw, "placebo")
+    test_metrics = _stability_metrics(test_sub, expected_detected=True)
+    stable_metrics = _stability_metrics(stable_sub, expected_detected=False)
+    placebo_metrics = _stability_metrics(placebo_sub, expected_detected=False)
 
-    verdict, notes = _protocol_verdict(
-        test_metrics=test_metrics,
-        stable_metrics=stable_metrics,
-        placebo_metrics=placebo_metrics,
-        test_window_rows=test_window_rows,
-        stable_window_rows=stable_window_rows,
-        placebo_window_rows=placebo_window_rows,
+    protocol_verdict, notes = _protocol_verdict(
+        test_metrics, stable_metrics, placebo_metrics,
+        test_window, stable_window, placebo_window,
     )
 
+    # Convenience fields for workflow summary + dual proof
     out = {
-        "protocol_verdict": verdict,
+        "protocol_verdict": protocol_verdict,
         "protocol_notes": notes,
 
-        # Key summary fields consumed by downstream checks
-        "test_det_rate": float(test_metrics.get("detection_rate", float("nan"))),
-        "stable_det_rate": float(stable_metrics.get("detection_rate", float("nan"))),
-        "placebo_det_rate": float(placebo_metrics.get("detection_rate", float("nan"))),
+        "test_det_rate": test_metrics.get("detection_rate"),
+        "test_non_det_rate": test_metrics.get("non_detection_rate"),
+        "test_modal": test_metrics.get("modal_verdict"),
+        "test_n_valid": test_metrics.get("n_valid"),
+        "test_n_error": test_metrics.get("n_error"),
 
-        "test_modal": str(test_metrics.get("modal_verdict", "")),
-        "stable_modal": str(stable_metrics.get("modal_verdict", "")),
-        "placebo_modal": str(placebo_metrics.get("modal_verdict", "")),
+        "stable_det_rate": stable_metrics.get("detection_rate"),
+        "stable_non_det_rate": stable_metrics.get("non_detection_rate"),
+        "stable_modal": stable_metrics.get("modal_verdict"),
+        "stable_n_valid": stable_metrics.get("n_valid"),
+        "stable_n_error": stable_metrics.get("n_error"),
 
-        "test_n_valid": int(test_metrics.get("n_valid", 0) or 0),
-        "stable_n_valid": int(stable_metrics.get("n_valid", 0) or 0),
-        "placebo_n_valid": int(placebo_metrics.get("n_valid", 0) or 0),
+        "placebo_det_rate": placebo_metrics.get("detection_rate"),
+        "placebo_non_det_rate": placebo_metrics.get("non_detection_rate"),
+        "placebo_modal": placebo_metrics.get("modal_verdict"),
+        "placebo_n_valid": placebo_metrics.get("n_valid"),
+        "placebo_n_error": placebo_metrics.get("n_error"),
 
-        "test_stability_fraction": float(test_metrics.get("stability_fraction", float("nan"))),
-        "stable_stability_fraction": float(stable_metrics.get("stability_fraction", float("nan"))),
-        "placebo_stability_fraction": float(placebo_metrics.get("stability_fraction", float("nan"))),
-
-        "window_test_n": int(len(test_window_rows)),
-        "window_stable_n": int(len(stable_window_rows)),
-        "window_placebo_n": int(len(placebo_window_rows)),
-        "window_test_det_frac": float(sum(1 for r in test_window_rows if _is_detected(r.get("verdict",""))) / (len(test_window_rows) or 1)),
-        "window_stable_det_frac": float(sum(1 for r in stable_window_rows if _is_detected(r.get("verdict",""))) / (len(stable_window_rows) or 1)),
-        "window_placebo_det_frac": float(sum(1 for r in placebo_window_rows if _is_detected(r.get("verdict",""))) / (len(placebo_window_rows) or 1)),
+        # Raw windows summary
+        "window_counts": {
+            "test": len(test_window),
+            "stable": len(stable_window),
+            "placebo": len(placebo_window),
+        },
     }
     return out
+
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
