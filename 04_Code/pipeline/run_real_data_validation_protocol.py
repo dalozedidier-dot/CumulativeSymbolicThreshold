@@ -258,7 +258,7 @@ def _phase_window_sensitivity(
     col_O: str, col_R: str, col_I: str, col_demand: str, col_S: str,
     col_time: str, time_mode: str, normalize: str, control_mode: str,
     lags: str, baseline_n: int, seed: int,
-    verbose: bool,
+    verbose: bool = False,
 ) -> list[dict]:
     """Run demo once on full series, then run causal tests with each window config."""
     rows: list[dict] = []
@@ -472,6 +472,86 @@ def _protocol_verdict(
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
+
+# ── Protocol summary ─────────────────────────────────────────────────────────
+
+def _summarise_protocol(dfw: "pd.DataFrame", dfs: "pd.DataFrame") -> dict:
+    """
+    Build a stable JSON summary for the validation protocol.
+
+    Inputs:
+    - dfw: window_sensitivity.csv as DataFrame (must contain a dataset label column)
+    - dfs: subsample_stability.csv as DataFrame (must contain a dataset label column)
+
+    The protocol is strictly mechanical:
+    - test should be detected stably
+    - stable and placebo should be non-detected stably
+    """
+    # Accept either dataset or dataset_type to avoid schema drift
+    if "dataset_type" in dfw.columns and "dataset" not in dfw.columns:
+        dfw = dfw.rename(columns={"dataset_type": "dataset"})
+    if "dataset_type" in dfs.columns and "dataset" not in dfs.columns:
+        dfs = dfs.rename(columns={"dataset_type": "dataset"})
+
+    required_w = {"dataset", "window", "pre_horizon", "post_horizon", "verdict"}
+    required_s = {"dataset", "rep", "n_rows", "verdict"}
+
+    missing_w = sorted(required_w - set(dfw.columns))
+    missing_s = sorted(required_s - set(dfs.columns))
+    if missing_w:
+        raise ValueError(f"window_sensitivity missing columns: {missing_w}")
+    if missing_s:
+        raise ValueError(f"subsample_stability missing columns: {missing_s}")
+
+    def rows_for(df, label: str) -> list[dict]:
+        sub = df.loc[df["dataset"] == label]
+        return sub.to_dict(orient="records")
+
+    test_window_rows = rows_for(dfw, "test")
+    stable_window_rows = rows_for(dfw, "stable")
+    placebo_window_rows = rows_for(dfw, "placebo")
+
+    test_sub_rows = rows_for(dfs, "test")
+    stable_sub_rows = rows_for(dfs, "stable")
+    placebo_sub_rows = rows_for(dfs, "placebo")
+
+    test_metrics = _stability_metrics(test_sub_rows, expected_detected=True)
+    stable_metrics = _stability_metrics(stable_sub_rows, expected_detected=False)
+    placebo_metrics = _stability_metrics(placebo_sub_rows, expected_detected=False)
+
+    protocol_verdict, protocol_notes = _protocol_verdict(
+        test_metrics,
+        stable_metrics,
+        placebo_metrics,
+        test_window_rows,
+        stable_window_rows,
+        placebo_window_rows,
+    )
+
+    return {
+        "protocol_verdict": protocol_verdict,
+        "schema_version": 1,
+        "datasets": {
+            "test": {
+                "n_window_rows": int(len(test_window_rows)),
+                "n_subsample_rows": int(len(test_sub_rows)),
+                "metrics": test_metrics,
+            },
+            "stable": {
+                "n_window_rows": int(len(stable_window_rows)),
+                "n_subsample_rows": int(len(stable_sub_rows)),
+                "metrics": stable_metrics,
+            },
+            "placebo": {
+                "n_window_rows": int(len(placebo_window_rows)),
+                "n_subsample_rows": int(len(placebo_sub_rows)),
+                "metrics": placebo_metrics,
+            },
+        },
+        "protocol_notes": protocol_notes,
+    }
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="ORI-C real-data validation protocol: 3 datasets × window sensitivity × subsampling"
@@ -515,10 +595,6 @@ def main() -> int:
 
     outdir_root = Path(args.outdir)
     outdir_root.mkdir(parents=True, exist_ok=True)
-
-    # Output contract directories (avoid CI crashes when writing late-stage tables)
-    for sub in ["tables", "figures", "contracts"]:
-        (outdir_root / sub).mkdir(parents=True, exist_ok=True)
 
     # Common protocol configuration
     n_window = N_WINDOW_VARIANTS_FAST if args.fast else N_WINDOW_VARIANTS_FULL
