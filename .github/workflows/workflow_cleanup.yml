@@ -1,0 +1,35 @@
+name: Cleanup noisy workflows (one-shot)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Disable noisy workflows
+        run: |
+          set -euo pipefail
+          python tools/disable_noisy_workflows.py --repo-root .
+
+      - name: Commit workflow cleanup
+        run: |
+          set -euo pipefail
+          git config user.name "ori-c-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/workflows .github/workflows_disabled tools/disable_noisy_workflows.py || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(workflows): hide noisy workflows"
+          git push
