@@ -236,6 +236,7 @@ jobs:
         run: |
           set -eo pipefail
           mkdir -p _ci_out/real/validation_protocol
+          mkdir -p _ci_out/real/validation_protocol/tables _ci_out/real/validation_protocol/figures _ci_out/real/validation_protocol/contracts
 
           PYTHONPATH=src python 04_Code/pipeline/run_real_data_validation_protocol.py \
             --input 03_Data/real/fred_monthly/real.csv \
