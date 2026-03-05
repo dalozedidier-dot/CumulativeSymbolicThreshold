@@ -125,7 +125,7 @@ def _sector(summary: Dict, dataset_id: str, run_mode: str) -> str:
         return "bio"
     if "eurobarometer" in s or "parlemeter" in s or "survey" in s:
         return "survey"
-    if "real" in m:
+    if "real" in m or "canonical" in m:
         return "real_data"
     return "unknown"
 
@@ -162,6 +162,25 @@ def _commit_sha(summary: Dict) -> str:
 def _workflow_source(summary: Dict, fallback: str = "") -> str:
     return _get_str(summary, "workflow_source", "workflow_name", "workflow") or fallback
 
+# Aliases expected by tests
+def _get_commit_sha(summary: Dict) -> str:
+    return _commit_sha(summary)
+
+def _get_dataset_id(summary: Dict) -> str:
+    return _dataset_id(summary)
+
+def _get_evidence_strength(summary: Dict) -> str:
+    return _evidence_strength(summary)
+
+def _infer_run_mode(summary: Dict, has_stability: bool) -> str:
+    return _run_mode(summary, has_stability)
+
+def _infer_sector(dataset_id_or_summary, run_mode: str = "") -> str:
+    """Wrapper: accept (dataset_id, run_mode) strings or (summary, dataset_id, run_mode)."""
+    if isinstance(dataset_id_or_summary, dict):
+        return _sector(dataset_id_or_summary, "", run_mode)
+    return _sector({}, dataset_id_or_summary, run_mode)
+
 def _existing_keys(path: Path) -> set:
     keys=set()
     with path.open("r", encoding="utf-8", newline="") as f:
@@ -173,10 +192,9 @@ def _existing_keys(path: Path) -> set:
 def _find_summary_paths(in_dir: Path) -> List[Path]:
     hits=[]
     for p in in_dir.rglob("summary.json"):
-        if p.parent.name == "tables" and p.parts[-4:-2] == ("runs", p.parts[-3]):  # coarse
-            # better: ensure .../runs/<ts>/tables/summary.json
-            if p.parent.name == "tables" and p.name == "summary.json" and p.parents[1].name == "runs":
-                hits.append(p)
+        # Expect .../runs/<ts>/tables/summary.json
+        if p.parent.name == "tables" and p.name == "summary.json" and p.parents[2].name == "runs":
+            hits.append(p)
     return sorted(set(hits))
 
 def main() -> None:
@@ -228,6 +246,11 @@ def main() -> None:
         csha=_criteria_sha256(stability)
         cmt=_commit_sha(summary)
         wsrc=_workflow_source(summary)
+        # Override workflow_source from run_meta.json if available
+        run_meta_path = sp.parents[3] / "run_meta.json"
+        run_meta = _read_json(run_meta_path) or {}
+        if run_meta.get("workflowName"):
+            wsrc = run_meta["workflowName"]
 
         key=(gid, rname, did)
         if args.append and key in existing:
