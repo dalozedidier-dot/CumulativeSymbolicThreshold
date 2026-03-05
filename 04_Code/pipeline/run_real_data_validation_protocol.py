@@ -772,7 +772,9 @@ def main() -> int:
         print(f"Best input: {best_row['input']}  (verdict={best_row['protocol_verdict']}, det_rate={best_row['test_det_rate']:.3f})")
     print("=" * 78)
 
-    return 0 if overall_verdict == "ACCEPT" else 1
+    # Verdict (ACCEPT/REJECT/INDETERMINATE) is a scientific outcome, not an error.
+    # The CI workflow reads verdict.txt for gating decisions; exit 0 always.
+    return 0
 
 
 if __name__ == "__main__":
