@@ -584,9 +584,10 @@ def main() -> int:
                     args.time_mode,
                     args.normalize,
                     args.control_mode,
-                    args.baseline_n,
                     args.lags,
+                    args.baseline_n,
                     args.seed,
+                    verbose=args.verbose,
                 )
                 all_window_rows.extend(wrows)
 
@@ -596,10 +597,9 @@ def main() -> int:
                     df_ds,
                     ds_label,
                     tmpdir,
-                    pre_horizon=60,
-                    post_horizon=60,
                     n_boot=n_boot,
-                    sample_frac=SAMPLE_FRAC,
+                    default_pre=60,
+                    default_post=60,
                     col_O=args.col_O,
                     col_R=args.col_R,
                     col_I=args.col_I,
@@ -609,9 +609,11 @@ def main() -> int:
                     time_mode=args.time_mode,
                     normalize=args.normalize,
                     control_mode=args.control_mode,
-                    baseline_n=args.baseline_n,
                     lags=args.lags,
-                    seed=args.seed,
+                    baseline_n=args.baseline_n,
+                    base_seed=args.seed,
+                    verbose=args.verbose,
+                    sample_frac=SAMPLE_FRAC,
                 )
                 all_subsample_rows.extend(srows)
 
