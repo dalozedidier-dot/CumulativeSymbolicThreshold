@@ -1,0 +1,143 @@
+name: Full Statistical Suite (N≥50 — T1–T9)
+
+# Exécution manuelle uniquement. Ne jamais lancer en --fast.
+# Ce workflow produit run_mode=full_statistical + T9 cross-domain inclus.
+# Critère de succès : run_mode=full_statistical ET support_level ≠ rejected.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "Base RNG seed"
+        required: false
+        default: "1234"
+      n_runs_min:
+        description: "Minimum n_runs par test statistique (doit être ≥50)"
+        required: false
+        default: "50"
+
+jobs:
+  full_statistical:
+    name: "Full statistical (N≥50, T9 inclus)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clean CI output directory
+        run: |
+          rm -rf _ci_out
+          mkdir -p _ci_out
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install \
+            "numpy>=1.26" \
+            "pandas>=2.0" \
+            "matplotlib>=3.8" \
+            "scipy>=1.11" \
+            "statsmodels>=0.14" \
+            "pytest>=8.0"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f 04_Code/requirements.txt ]; then python -m pip install -r 04_Code/requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
+
+      - name: Log environment
+        run: |
+          python -V | tee _ci_out/python_version.txt
+          pip list | tee _ci_out/pip_list.txt
+
+      - name: Run full statistical suite (N≥50, T9 inclus)
+        run: |
+          set -eo pipefail
+          PYTHONPATH=src python 04_Code/pipeline/run_all_tests.py \
+            --outdir _ci_out/canonical_tests \
+            --seed "${{ inputs.seed || '1234' }}" \
+            --n-runs-min "${{ inputs.n_runs_min || '50' }}" \
+            2>&1 | tee _ci_out/run_all_tests.log
+
+          if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
+
+      - name: Build registered report assets (figures + tables)
+        continue-on-error: true   # reporting step — does not gate the science contract
+        run: |
+          set -e
+          RUN_DIR=$(ls -1d _ci_out/canonical_tests/* 2>/dev/null | sort | tail -n 1)
+          if [ -z "$RUN_DIR" ]; then
+            echo "ERROR: no run directory found under _ci_out/canonical_tests"
+            exit 1
+          fi
+          echo "Using RUN_DIR=$RUN_DIR"
+          python 04_Code/reporting/build_registered_report_assets.py --run-dir "$RUN_DIR"
+
+          mkdir -p _ci_out/06_Manuscript
+          if [ -d 06_Manuscript ]; then cp -R 06_Manuscript _ci_out/06_Manuscript; fi
+
+      - name: Assert full_statistical contract (hard gate)
+        run: |
+          python - <<'PYEOF'
+          import glob
+          import json
+          import os
+          import sys
+
+          candidates = glob.glob("_ci_out/canonical_tests/**/global_verdict.json", recursive=True)
+          if not candidates:
+              candidates = glob.glob("_ci_out/**/global_verdict.json", recursive=True)
+
+          if not candidates:
+              print("ERROR: global_verdict.json not found")
+              sys.exit(1)
+
+          verdict_file = max(candidates, key=os.path.getmtime)
+          d = json.loads(open(verdict_file, encoding="utf-8").read())
+
+          run_mode      = d.get("run_mode", "UNKNOWN")
+          support_level = d.get("support_level", "UNKNOWN")
+
+          print(f"run_mode      : {run_mode}")
+          print(f"support_level : {support_level}")
+          print(f"verdict_file  : {verdict_file}")
+
+          # Gate 1 : le mode doit être full_statistical
+          # (--n-runs-min 50 aurait déjà bloqué l'étape précédente si n < 50,
+          # mais on vérifie ici par sécurité au niveau du contrat)
+          if run_mode != "full_statistical":
+              print(
+                  f"ERROR: run_mode='{run_mode}', attendu 'full_statistical'. "
+                  "Ce workflow doit être lancé sans --fast et avec --n-runs-min 50."
+              )
+              sys.exit(1)
+
+          # Gate 2 : le résultat global ne doit pas être rejeté
+          if support_level == "rejected":
+              print("ERROR: support_level=rejected — au moins un test statistique a échoué.")
+              sys.exit(1)
+
+          print(f"OK contrat full_statistical: run_mode={run_mode} support_level={support_level}")
+          PYEOF
+
+      - name: Build CI summary (json + md + Actions summary)
+        run: |
+          set -e
+          python 04_Code/reporting/build_ci_summary.py \
+            --ci-out _ci_out \
+            --canonical-root _ci_out/canonical_tests
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: full_statistical_${{ github.run_id }}
+          path: _ci_out
+          if-no-files-found: warn
