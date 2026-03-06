@@ -45,9 +45,9 @@ Verdict classification (tri-state)
 Protocol verdict tokens (canonical)
 ------------------------------------
   INDETERMINATE  : any condition has < N_DECIDABLE_MIN decidable runs
-  REJECT         : enough decidable but C1 fails (transition not detected reliably)
+  REJECT         : C1 fails (failure_mode=no_detection) — transition not detected reliably
+  REJECT         : C1 ok but C2/C3 fail (failure_mode=non_specific_detector)
   ACCEPT         : C1+C2+C3 all satisfied at both stability and window levels
-  INDETERMINATE  : C1 ok but C2/C3 fail (detector may not be specific enough)
 
 Run time notes
 --------------
@@ -636,13 +636,19 @@ def _protocol_verdict(
     elif not c1_ok:
         verdict = "REJECT"
         notes["reason"] = "C1 failed: transition not detected with sufficient stability"
+        notes["failure_mode"] = "no_detection"
     elif c1_ok and c2_ok and c3_ok:
         verdict = "ACCEPT"
         notes["reason"] = "C1+C2+C3 all passed: transition detected, stable and placebo not detected"
     else:
-        verdict = "INDETERMINATE"
+        # C1 passes but C2 and/or C3 fail → detector triggers on non-transition data
+        verdict = "REJECT"
         failed = [k for k, v in {"C2": c2_ok, "C3": c3_ok}.items() if not v]
-        notes["reason"] = f"C1 passed but {failed} failed: detector may not be specific enough"
+        notes["failure_mode"] = "non_specific_detector"
+        notes["reason"] = (
+            f"C1 passed but {failed} failed: detector is not specific enough "
+            f"(triggers on stable/placebo data)"
+        )
 
     return verdict, notes
 
@@ -888,16 +894,17 @@ def main() -> int:
             except (TypeError, ValueError):
                 return 0.0
 
-        det_rate = _rate(summary.get("test_det_rate"))
-        stable_rate = _rate(summary.get("stable_det_rate"))
-        placebo_rate = _rate(summary.get("placebo_det_rate"))
-        modal = summary.get("test_modal", "")
+        # Read metrics directly from the per-condition dicts (never invent zeros)
+        test_m = summary.get("test_metrics", {})
+        stable_m = summary.get("stable_metrics", {})
+        placebo_m = summary.get("placebo_metrics", {})
+
+        det_rate = _rate(test_m.get("detection_rate"))
+        stable_rate = _rate(stable_m.get("detection_rate"))
+        placebo_rate = _rate(placebo_m.get("detection_rate"))
+        modal = test_m.get("modal_verdict", "")
 
         (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
-
-        # Decidability counters per condition (from per-input summary)
-        def _cond(metrics_key: str, field: str, default: object = 0) -> object:
-            return summary.get(metrics_key, {}).get(field, default)
 
         row = {
             "input": str(inp_path),
@@ -908,14 +915,22 @@ def main() -> int:
             "placebo_det_rate": placebo_rate,
             "test_modal": modal,
             "n_test": int(len(df_test)),
-            # Decidability diagnostics
-            "test_n_decidable": _cond("test_metrics", "n_decidable"),
-            "test_n_indeterminate": _cond("test_metrics", "n_indeterminate"),
-            "test_sigma_zero_post_rate": _cond("test_metrics", "sigma_zero_post_rate", 0.0),
-            "stable_n_decidable": _cond("stable_metrics", "n_decidable"),
-            "stable_n_indeterminate": _cond("stable_metrics", "n_indeterminate"),
-            "placebo_n_decidable": _cond("placebo_metrics", "n_decidable"),
-            "placebo_n_indeterminate": _cond("placebo_metrics", "n_indeterminate"),
+            # Decidability diagnostics — read directly from computed metrics
+            "test_n_decidable": test_m.get("n_decidable", 0),
+            "test_n_indeterminate": test_m.get("n_indeterminate", 0),
+            "test_sigma_zero_post_rate": test_m.get("sigma_zero_post_rate", 0.0),
+            "stable_n_decidable": stable_m.get("n_decidable", 0),
+            "stable_n_indeterminate": stable_m.get("n_indeterminate", 0),
+            "stable_sigma_zero_post_rate": stable_m.get("sigma_zero_post_rate", 0.0),
+            "placebo_n_decidable": placebo_m.get("n_decidable", 0),
+            "placebo_n_indeterminate": placebo_m.get("n_indeterminate", 0),
+            "placebo_sigma_zero_post_rate": placebo_m.get("sigma_zero_post_rate", 0.0),
+            # Failure mode from protocol notes
+            "failure_mode": summary.get("notes", {}).get("failure_mode"),
+            # Keep full metrics dicts for root-level propagation
+            "_test_metrics": test_m,
+            "_stable_metrics": stable_m,
+            "_placebo_metrics": placebo_m,
         }
         aggregate_rows.append(row)
 
@@ -954,17 +969,34 @@ def main() -> int:
     outdir_root.joinpath("tables").mkdir(parents=True, exist_ok=True)
     outdir_root.joinpath("figures").mkdir(parents=True, exist_ok=True)
 
-    # Provide test_metrics at top level for CI extraction compatibility
-    best_det_rate = (best_row or {}).get("test_det_rate", 0.0)
+    # Provide full per-condition metrics from the best input at root level.
+    # This ensures CI and downstream tools read real computed metrics,
+    # not placeholders.  The _test_metrics / _stable_metrics / _placebo_metrics
+    # private keys carry the full dicts; we promote them to the root summary
+    # and strip them from the serialised aggregate rows.
+    best = best_row or {}
+    best_test_m = best.pop("_test_metrics", {})
+    best_stable_m = best.pop("_stable_metrics", {})
+    best_placebo_m = best.pop("_placebo_metrics", {})
+    # Strip private keys from all aggregate rows before serialisation
+    for r in aggregate_rows:
+        r.pop("_test_metrics", None)
+        r.pop("_stable_metrics", None)
+        r.pop("_placebo_metrics", None)
+
     overall = {
         "protocol_verdict": overall_verdict,
         "n_inputs": len(inputs),
         "any_accept": any_accept,
         "any_indeterminate": any_indeterminate,
-        "best_input": (best_row or {}).get("input"),
-        "best_stem": (best_row or {}).get("stem"),
-        "best_test_det_rate": best_det_rate,
-        "test_metrics": {"detection_rate": best_det_rate},
+        "best_input": best.get("input"),
+        "best_stem": best.get("stem"),
+        "best_test_det_rate": best.get("test_det_rate", 0.0),
+        "failure_mode": best.get("failure_mode"),
+        # Full per-condition metrics from the best input — never invented zeros
+        "test_metrics": best_test_m,
+        "stable_metrics": best_stable_m,
+        "placebo_metrics": best_placebo_m,
         "inputs": aggregate_rows,
     }
     (outdir_root / "tables" / "validation_summary.json").write_text(_json_dumps_safe(overall, indent=2), encoding="utf-8")
