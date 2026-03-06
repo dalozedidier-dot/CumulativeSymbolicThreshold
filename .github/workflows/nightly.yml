@@ -373,28 +373,27 @@ jobs:
               r = tm.get("detection_rate")
               proto_det_rate = "NaN" if r is None else f"{float(r):.3f}"
 
-              # Build per-input blocks from the root JSON
+              # Build per-input blocks — read the canonical nested dicts directly
               for inp in validation_summary.get("inputs", []):
+                  def _pick(m):
+                      """Extract the fields we surface in the manifest."""
+                      if not isinstance(m, dict):
+                          return {}
+                      return {
+                          "detection_rate": m.get("detection_rate"),
+                          "n_decidable": m.get("n_decidable"),
+                          "n_indeterminate": m.get("n_indeterminate"),
+                          "sigma_zero_post_rate": m.get("sigma_zero_post_rate"),
+                          "modal_verdict": m.get("modal_verdict"),
+                      }
                   validation_inputs.append({
-                      "input": inp.get("input"),
+                      "input_id": inp.get("input_id"),
                       "stem": inp.get("stem"),
-                      "protocol_verdict": inp.get("protocol_verdict"),
+                      "input_protocol_verdict": inp.get("input_protocol_verdict"),
                       "failure_mode": inp.get("failure_mode"),
-                      "test": {
-                          "detection_rate": inp.get("test_det_rate"),
-                          "n_decidable": inp.get("test_n_decidable"),
-                          "sigma_zero_post_rate": inp.get("test_sigma_zero_post_rate"),
-                      },
-                      "stable": {
-                          "detection_rate": inp.get("stable_det_rate"),
-                          "n_decidable": inp.get("stable_n_decidable"),
-                          "sigma_zero_post_rate": inp.get("stable_sigma_zero_post_rate"),
-                      },
-                      "placebo": {
-                          "detection_rate": inp.get("placebo_det_rate"),
-                          "n_decidable": inp.get("placebo_n_decidable"),
-                          "sigma_zero_post_rate": inp.get("placebo_sigma_zero_post_rate"),
-                      },
+                      "test_metrics": _pick(inp.get("test_metrics")),
+                      "stable_metrics": _pick(inp.get("stable_metrics")),
+                      "placebo_metrics": _pick(inp.get("placebo_metrics")),
                   })
 
           dual_status = (
@@ -500,20 +499,28 @@ jobs:
 
           dual_icon = "✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"
 
-          # Build per-input detail rows for validation protocol
+          # Build per-input detail rows from canonical nested schema
           input_rows = ""
           for inp in val_inputs:
               stem = inp.get("stem", "?")
-              v = inp.get("protocol_verdict", "?")
+              v = inp.get("input_protocol_verdict", "?")
               fm = inp.get("failure_mode") or ""
-              td = inp.get("test_n_decidable", "?")
-              ti = inp.get("test_n_indeterminate", "?")
-              tdr = inp.get("test_det_rate")
-              tdr_s = "NaN" if tdr is None else f"{float(tdr):.3f}"
-              tsz = inp.get("test_sigma_zero_post_rate")
-              tsz_s = "—" if tsz is None else f"{float(tsz):.2f}"
-              sd = inp.get("stable_n_decidable", "?")
-              pd_ = inp.get("placebo_n_decidable", "?")
+              tm = inp.get("test_metrics") or {}
+              sm = inp.get("stable_metrics") or {}
+              pm = inp.get("placebo_metrics") or {}
+              def _fmt(val, prec=3):
+                  if val is None:
+                      return "NaN"
+                  try:
+                      return f"{float(val):.{prec}f}"
+                  except (TypeError, ValueError):
+                      return "NaN"
+              td = tm.get("n_decidable", "?")
+              ti = tm.get("n_indeterminate", "?")
+              tdr_s = _fmt(tm.get("detection_rate"))
+              tsz_s = _fmt(tm.get("sigma_zero_post_rate"), 2)
+              sd = sm.get("n_decidable", "?")
+              pd_ = pm.get("n_decidable", "?")
               input_rows += (
                   f"| `{stem}` | `{v}` | {fm or '—'} | "
                   f"{tdr_s} | {td} / {ti} | {tsz_s} | {sd} | {pd_} |\n"
