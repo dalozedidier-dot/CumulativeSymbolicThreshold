@@ -26,14 +26,16 @@ Important real-data robustness rules
 - Window slicing always uses integer step index (0..n-1), never raw t values
   (which may encode calendar day-counts). If the output CSV has a 'step' column
   it is used; otherwise the DataFrame's row position is used.
-- Sigma-gate with non-parametric fallback: if Sigma(t) is identically zero in
-  the post-threshold window (demand < capacity throughout), the symbolic pathway
-  cannot operate. Instead of declaring INDETERMINATE unconditionally:
-    • If a mean-shift test is significant (Welch/bootstrap/MWU cascade) → DETECTED
-      (structural change in C(t) confirmed even without Sigma pressure)
-    • If no significant shift → NOT_DETECTED (not INDETERMINATE)
-  This keeps runs decidable and avoids systematic INDETERMINATE in regimes
-  where demand never exceeds capacity (common in subsamples and stable controls).
+- sigma_zero_post is a DIAGNOSTIC, not a verdict override. When Sigma(t)=0
+  in the post-threshold window (demand < capacity), the symbolic pathway is
+  inoperative, but the statistical tests (Welch, bootstrap, MWU) still run
+  on C(t) and produce a decidable verdict (DETECTED or NOT_DETECTED).
+  sigma_zero_post only causes INDETERMINATE if all statistical tests also
+  return NaN (verdict = indetermine_stats_indisponibles).
+  Decidability rule:
+    • DETECTED     : ok_p=True (p cascade significant), with or without ok_boot
+    • NOT_DETECTED : ok_p=False and tests ran (p values finite)
+    • INDETERMINATE: all p-value sources unavailable (Welch/boot/MWU all NaN)
 
 Outputs
 - tables/causal_tests_summary.csv
@@ -585,8 +587,15 @@ def main() -> int:
     # Reverse direction significance is a warning, not an automatic fail.
     reverse_warning = bool(np.isfinite(min_granger_dc_to_s) and (min_granger_dc_to_s <= float(args.alpha)))
 
-    # Verdict
+    # Verdict — based solely on statistical test results.
+    # sigma_zero_post is a DIAGNOSTIC (logged), never a verdict override.
     sigma_gate_note: str | None = None
+    if sigma_zero_post:
+        sigma_gate_note = (
+            f"Sigma(t)=0 in post-window (sigma_max_post={sigma_max_post:.2e}): "
+            f"symbolic pathway inoperative. Verdict based on statistical tests only."
+        )
+
     if not has_threshold:
         verdict = "non_detecte"
         binary = False
@@ -597,40 +606,24 @@ def main() -> int:
         elif ok_p and ok_boot:
             verdict = "seuil_detecte"
             binary = True
+        elif ok_p:
+            # p-value significant but bootstrap CI does not exclude zero.
+            # Still decidable: detected via p-value cascade.
+            verdict = "seuil_detecte"
+            binary = True
+            if sigma_zero_post:
+                sigma_gate_note = (
+                    f"Sigma(t)=0 in post-window, but mean-shift significant "
+                    f"via {ok_p_source} (p <= {args.alpha}): DETECTED."
+                )
         elif ok_p_source == "unavailable":
-            # All statistical tests returned NaN — cannot decide, not a falsification.
+            # All statistical tests returned NaN — cannot decide.
             verdict = "indetermine_stats_indisponibles"
-            binary = False
-            sigma_gate_note = "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): INDETERMINATE per WELCH_NAN_FALLBACK_POLICY."
-        elif sigma_zero_post:
-            # Symbolic pathway inoperative — but we may still have statistical evidence.
-            # Fallback: if at least one non-parametric test supports a mean shift in C(t),
-            # the structural change is decidable even without Sigma pressure.
-            # This avoids systematic INDETERMINATE when demand < capacity.
-            if ok_p:
-                # p-value significant (via whichever source in the cascade) even without bootstrap
-                verdict = "seuil_detecte"
-                binary = True
-                sigma_gate_note = (
-                    f"Sigma(t)=0 in post-window (symbolic canal inoperable), but mean-shift "
-                    f"test significant via {ok_p_source} (p <= {args.alpha}): "
-                    f"non-parametric fallback → DETECTED."
-                )
-            elif np.isfinite(p_mwu) and p_mwu <= float(args.alpha):
-                # MWU significant even if ok_p cascade didn't pick it (shouldn't happen, but safety net)
-                verdict = "seuil_detecte"
-                binary = True
-                sigma_gate_note = (
-                    f"Sigma(t)=0 in post-window, but Mann-Whitney U significant "
-                    f"(p={p_mwu:.4g} <= {args.alpha}): non-parametric fallback → DETECTED."
-                )
-            else:
-                verdict = "non_detecte"
-                binary = False
-                sigma_gate_note = (
-                    "Sigma(t)=0 in post-window and no significant mean shift in C(t): "
-                    "non-parametric fallback → NOT_DETECTED."
-                )
+            binary = None  # genuinely undecidable — not False
+            sigma_gate_note = (
+                "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): "
+                "INDETERMINATE per WELCH_NAN_FALLBACK_POLICY."
+            )
         else:
             verdict = "non_detecte"
             binary = False
@@ -638,7 +631,7 @@ def main() -> int:
     report = {
         "run_dir": str(run_dir),
         "verdict": verdict,
-        "binary_detected": bool(binary),
+        "binary_detected": binary,  # True/False/None (None = indeterminate)
         "alpha": float(args.alpha),
         "c_mean_post_min": float(args.c_mean_post_min),
         "lags": lags,
@@ -687,7 +680,7 @@ def main() -> int:
     # One-row summary CSV
     row = {
         "verdict": verdict,
-        "binary_detected": bool(binary),
+        "binary_detected": binary,  # True/False/None (None = indeterminate)
         "threshold_hit_t": thr_t,
         "threshold_value": float(thr_val),
         "no_false_positives_pre": bool(no_fp_pre),

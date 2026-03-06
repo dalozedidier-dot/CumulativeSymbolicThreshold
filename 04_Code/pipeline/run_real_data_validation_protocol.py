@@ -265,36 +265,45 @@ _INDETERMINATE_PREFIXES = ("indetermine_",)
 def _classify_verdict(result: dict) -> str:
     """Classify a single run result into DETECTED / NOT_DETECTED / INDETERMINATE.
 
-    Rules (applied in order):
-      DETECTED        : binary_detected is True  OR  verdict ∈ _DETECTED_TOKENS
-      NOT_DETECTED    : binary_detected is False  OR  verdict ∈ _NOT_DETECTED_TOKENS
-      INDETERMINATE   : verdict starts with "indetermine_"
-                        OR sigma_zero_post is True
-                        OR verdict is "error" / "unknown"
+    Decidability rule
+    -----------------
+    A run is **decidable** if its verdict is DETECTED or NOT_DETECTED.
+    It is INDETERMINATE only if:
+      - verdict starts with ``indetermine_`` (all stats NaN, missing columns, …)
+      - verdict is ``error`` / ``unknown`` / empty
+      - p-values are NaN AND no fallback test could produce a decision
+
+    sigma_zero_post is a **diagnostic flag**, not a verdict override. When
+    Sigma=0, the statistical tests (Welch, bootstrap, MWU) still operate on
+    C(t) and produce a decidable result. Only if those tests themselves
+    cannot run (all NaN) does the verdict become INDETERMINATE.
+
+    Priority order
+    --------------
+      1. binary_detected flag (set by tests_causaux verdict logic)
+      2. verdict token matching
+      3. INDETERMINATE as last resort
     """
     verdict = str(result.get("verdict", "")).lower().strip()
     binary = result.get("binary_detected")
-    sigma_zero = result.get("sigma_zero_post", False)
 
-    # Indeterminate conditions (checked first to avoid misclassifying sigma-zero)
-    if sigma_zero:
-        return "INDETERMINATE"
-    if any(verdict.startswith(p) for p in _INDETERMINATE_PREFIXES):
-        return "INDETERMINATE"
-    if verdict in ("error", "unknown", ""):
-        return "INDETERMINATE"
-
-    # Explicit binary flag takes precedence
+    # Explicit binary flag takes precedence (set by the verdict logic)
     if binary is True:
         return "DETECTED"
     if binary is False:
         return "NOT_DETECTED"
 
-    # Fall back to token matching
+    # Token matching
     if verdict in _DETECTED_TOKENS:
         return "DETECTED"
     if verdict in _NOT_DETECTED_TOKENS:
         return "NOT_DETECTED"
+
+    # Indeterminate conditions
+    if any(verdict.startswith(p) for p in _INDETERMINATE_PREFIXES):
+        return "INDETERMINATE"
+    if verdict in ("error", "unknown", ""):
+        return "INDETERMINATE"
 
     return "INDETERMINATE"
 
@@ -434,13 +443,18 @@ def _stability_metrics(
     ------
     DETECTED       : binary_detected=True or verdict in {seuil_detecte, …}
     NOT_DETECTED   : binary_detected=False or verdict in {non_detecte, falsifie, …}
-    INDETERMINATE  : verdict starts with indetermine_, sigma_zero_post=True, or p NaN
+    INDETERMINATE  : verdict starts with indetermine_, all p-values NaN, or error
+
+    sigma_zero_post is a diagnostic, NOT a classification override.
+    Runs with sigma_zero_post=True are still decidable if the statistical
+    tests produced a finite p-value.
 
     Rates
     -----
     detection_rate     = n_detected / (n_detected + n_not_detected)   (decidable only)
     non_detection_rate = n_not_detected / (n_detected + n_not_detected)
     indeterminate_rate = n_indeterminate / total
+    sigma_zero_post_rate = n_sigma_zero / total  (diagnostic only)
     """
     from collections import Counter
 
@@ -451,6 +465,9 @@ def _stability_metrics(
     n_not = counts.get("NOT_DETECTED", 0)
     n_ind = counts.get("INDETERMINATE", 0)
     n_decidable = n_det + n_not
+
+    # Diagnostic: count sigma_zero_post occurrences (independent of verdict class)
+    n_sigma_zero = sum(1 for r in rows if r.get("sigma_zero_post", False))
 
     if total == 0:
         return {"n_valid": 0, "n_error": 0, "n_decidable": 0,
@@ -479,6 +496,8 @@ def _stability_metrics(
         "indeterminate_rate": float(ind_rate),
         "modal_verdict": modal_class,
         "stability_fraction": float(stability),
+        "sigma_zero_post_rate": n_sigma_zero / total if total > 0 else 0.0,
+        "n_sigma_zero_post": int(n_sigma_zero),
         "verdict_counts": dict(counts),
     }
 
