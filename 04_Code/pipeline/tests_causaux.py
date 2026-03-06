@@ -497,9 +497,10 @@ def main() -> int:
     else:
         p_shift = float("nan")
 
-    # Mann-Whitney U fallback (one-tailed: post > pre) — only computed when Welch is NaN
+    # Mann-Whitney U (one-tailed: post > pre) — always computed for diagnostics
+    # and as a fallback in the p-value cascade when Welch is NaN.
     p_mwu = float("nan")
-    if not np.isfinite(p_shift) and len(pre) >= 5 and len(post) >= 5:
+    if len(pre) >= 5 and len(post) >= 5:
         try:
             mwu = stats.mannwhitneyu(
                 post["C"].to_numpy(dtype=float),

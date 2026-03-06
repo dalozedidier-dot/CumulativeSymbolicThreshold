@@ -219,7 +219,7 @@ def _run_causal(
             env={**__import__("os").environ, "PYTHONPATH": str(_REPO_ROOT / "src")},
         )
     except subprocess.CalledProcessError:
-        return {"verdict": "error", "ok_p_source": "", "p_welch": float("nan")}
+        return {"verdict": "error", "binary_detected": None, "ok_p_source": "", "p_welch": float("nan")}
 
     # Read result
     summary_csv = run_dir / "tables" / "causal_tests_summary.csv"
@@ -229,11 +229,15 @@ def _run_causal(
             d = json.loads(verdict_json.read_text(encoding="utf-8"))
             return {
                 "verdict": d.get("verdict", "unknown"),
+                "binary_detected": d.get("binary_detected"),  # True/False/None
                 "ok_p_source": d.get("criteria", {}).get("ok_p_source", ""),
                 "p_welch": float(d.get("p_value_mean_shift_C", float("nan"))),
                 "p_mwu": float(d.get("p_value_mannwhitney_C", float("nan"))),
                 "sigma_zero_post": bool(d.get("sigma_zero_post", False)),
+                "sigma_max_post": d.get("sigma_max_post"),
                 "sigma_gate_note": d.get("sigma_gate_note") or "",
+                "var_reason": d.get("var_reason") or "",
+                "cointegration_reason": d.get("cointegration_reason") or "",
             }
         except Exception:
             pass
@@ -242,19 +246,25 @@ def _run_causal(
         try:
             df = pd.read_csv(summary_csv)
             if len(df) > 0:
+                row0 = df.iloc[0]
                 return {
-                    "verdict": str(df.iloc[0].get("verdict", "unknown")),
-                    "ok_p_source": str(df.iloc[0].get("ok_p_source", "")),
-                    "p_welch": float(df.iloc[0].get("p_value_mean_shift_C", float("nan"))),
+                    "verdict": str(row0.get("verdict", "unknown")),
+                    "binary_detected": row0.get("binary_detected"),
+                    "ok_p_source": str(row0.get("ok_p_source", "")),
+                    "p_welch": float(row0.get("p_value_mean_shift_C", float("nan"))),
                     "p_mwu": float("nan"),
-                    "sigma_zero_post": False,
+                    "sigma_zero_post": bool(row0.get("sigma_zero_post", False)),
+                    "sigma_max_post": None,
                     "sigma_gate_note": "",
+                    "var_reason": "",
+                    "cointegration_reason": "",
                 }
         except Exception:
             pass
 
-    return {"verdict": "error", "ok_p_source": "", "p_welch": float("nan"),
-            "p_mwu": float("nan"), "sigma_zero_post": False, "sigma_gate_note": ""}
+    return {"verdict": "error", "binary_detected": None, "ok_p_source": "",
+            "p_welch": float("nan"), "p_mwu": float("nan"),
+            "sigma_zero_post": False, "sigma_gate_note": ""}
 
 
 _DETECTED_TOKENS = frozenset({"seuil_detecte", "accept", "detected", "threshold_hit"})
@@ -885,6 +895,10 @@ def main() -> int:
 
         (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
 
+        # Decidability counters per condition (from per-input summary)
+        def _cond(metrics_key: str, field: str, default: object = 0) -> object:
+            return summary.get(metrics_key, {}).get(field, default)
+
         row = {
             "input": str(inp_path),
             "stem": stem,
@@ -894,6 +908,14 @@ def main() -> int:
             "placebo_det_rate": placebo_rate,
             "test_modal": modal,
             "n_test": int(len(df_test)),
+            # Decidability diagnostics
+            "test_n_decidable": _cond("test_metrics", "n_decidable"),
+            "test_n_indeterminate": _cond("test_metrics", "n_indeterminate"),
+            "test_sigma_zero_post_rate": _cond("test_metrics", "sigma_zero_post_rate", 0.0),
+            "stable_n_decidable": _cond("stable_metrics", "n_decidable"),
+            "stable_n_indeterminate": _cond("stable_metrics", "n_indeterminate"),
+            "placebo_n_decidable": _cond("placebo_metrics", "n_decidable"),
+            "placebo_n_indeterminate": _cond("placebo_metrics", "n_indeterminate"),
         }
         aggregate_rows.append(row)
 
@@ -911,7 +933,10 @@ def main() -> int:
             if _rank(row) > _rank(best_row):
                 best_row = row
 
-        print(f"Protocol verdict for {stem}: {verdict}  (det_rate={det_rate:.3f}, modal={modal})")
+        td = row.get("test_n_decidable", "?")
+        ti = row.get("test_n_indeterminate", "?")
+        print(f"Protocol verdict for {stem}: {verdict}  "
+              f"(det_rate={det_rate:.3f}, decidable={td}, indeterminate={ti}, modal={modal})")
 
     # Aggregate verdict
     dfagg = pd.DataFrame(aggregate_rows)
