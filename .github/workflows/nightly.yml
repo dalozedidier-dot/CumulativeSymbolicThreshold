@@ -55,6 +55,7 @@ jobs:
           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
 
       - name: Run synthetic canonical suite (full_statistical)
+        id: synthetic_run
         run: |
           set -eo pipefail
           mkdir -p _ci_out/synthetic
@@ -69,7 +70,6 @@ jobs:
             2>&1 | tee _ci_out/synthetic/run_all_tests.log
 
       - name: Build registered report assets (figures + tables)
-        id: synthetic_run
         run: |
           set -e
           RUN_DIR=$(ls -1d _ci_out/synthetic/canonical_tests/* | sort | tail -n 1)
@@ -231,7 +231,7 @@ jobs:
           fi
           echo "FRED monthly: $(wc -l < 03_Data/real/fred_monthly/real.csv) rows"
 
-      - name: Run real data validation protocol (fast mode — 4 windows × 15 subsamples)
+      - name: Run real data validation protocol (fast mode — 3 windows × 10 subsamples)
         id: protocol_run
         run: |
           set -eo pipefail
@@ -251,6 +251,56 @@ jobs:
             --seed 42 \
             --fast \
             2>&1 | tee _ci_out/real/validation_protocol/protocol.log
+
+          # Ensure canonical root summary exists for CI consumption
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("_ci_out/real/validation_protocol")
+          (root / "tables").mkdir(parents=True, exist_ok=True)
+
+          out_file = root / "tables" / "validation_summary.json"
+          if not out_file.exists():
+              # Pick best input directory. Prefer "real" if present.
+              candidates = sorted([p.parent.parent for p in root.glob("*/tables/validation_summary.json")])
+              chosen = None
+              for c in candidates:
+                  if c.name == "real":
+                      chosen = c
+                      break
+              if chosen is None and candidates:
+                  chosen = candidates[0]
+
+              best_input = (root / "best_input.txt").read_text().strip() if (root / "best_input.txt").exists() else ""
+              if chosen is None:
+                  out = {
+                      "protocol_verdict": "UNKNOWN",
+                      "best_input": best_input,
+                      "test_metrics": {"detection_rate": None},
+                  }
+              else:
+                  d = json.loads((chosen / "tables" / "validation_summary.json").read_text())
+                  datasets = d.get("datasets", {})
+                  def metrics(ds):
+                      m = (ds or {}).get("metrics", {})
+                      return {
+                          "detection_rate": m.get("detection_rate"),
+                          "n_decidable": m.get("n_decidable"),
+                          "n_indeterminate": m.get("n_indeterminate"),
+                          "sigma_zero_post_rate": m.get("sigma_zero_post_rate"),
+                          "modal_verdict": m.get("modal_verdict"),
+                      }
+                  out = {
+                      "protocol_verdict": d.get("protocol_verdict", d.get("input_protocol_verdict", "UNKNOWN")),
+                      "best_input": best_input,
+                      "best_input_id": chosen.name,
+                      "test_metrics": metrics(datasets.get("test")),
+                      "stable_metrics": metrics(datasets.get("stable")),
+                      "placebo_metrics": metrics(datasets.get("placebo")),
+                  }
+              out_file.write_text(json.dumps(out, indent=2))
+          PY
 
           VERDICT=$(cat _ci_out/real/validation_protocol/verdict.txt 2>/dev/null || echo "UNKNOWN")
           DET_RATE=$(python -c "
