@@ -205,6 +205,7 @@ jobs:
     outputs:
       protocol_verdict: ${{ steps.protocol_run.outputs.protocol_verdict }}
       protocol_test_det_rate: ${{ steps.protocol_run.outputs.protocol_test_det_rate }}
+      protocol_failure_mode: ${{ steps.protocol_run.outputs.protocol_failure_mode }}
 
     steps:
       - name: Checkout
@@ -256,12 +257,20 @@ jobs:
           import json
           d = json.loads(open('_ci_out/real/validation_protocol/tables/validation_summary.json').read())
           m = d.get('test_metrics', {})
-          print(f\"{m.get('detection_rate', 'NaN'):.3f}\")
+          r = m.get('detection_rate')
+          print('NaN' if r is None else f'{float(r):.3f}')
           " 2>/dev/null || echo "NaN")
+          FAILURE_MODE=$(python -c "
+          import json
+          d = json.loads(open('_ci_out/real/validation_protocol/tables/validation_summary.json').read())
+          fm = d.get('failure_mode') or 'none'
+          print(fm)
+          " 2>/dev/null || echo "none")
 
           echo "protocol_verdict=${VERDICT}" >> "$GITHUB_OUTPUT"
           echo "protocol_test_det_rate=${DET_RATE}" >> "$GITHUB_OUTPUT"
-          echo "Validation protocol verdict: ${VERDICT}  test_det_rate=${DET_RATE}"
+          echo "protocol_failure_mode=${FAILURE_MODE}" >> "$GITHUB_OUTPUT"
+          echo "Validation protocol verdict: ${VERDICT}  test_det_rate=${DET_RATE}  failure_mode=${FAILURE_MODE}"
 
       - name: Upload protocol artifact
         if: always()
@@ -294,14 +303,22 @@ jobs:
           path: _combined/real_fred
         continue-on-error: true
 
+      - name: Download validation protocol artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: nightly_validation_protocol_${{ github.run_id }}
+          path: _combined/validation_protocol
+        continue-on-error: true
+
       - name: Create dual_proof_manifest.json
         env:
-          SYNTH_SUPPORT:    ${{ needs.synthetic_full.outputs.synthetic_support_level }}
-          SYNTH_VERDICT:    ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
-          REAL_SUPPORT:     ${{ needs.real_data_fred.outputs.real_support_level }}
-          REAL_VERDICT:     ${{ needs.real_data_fred.outputs.real_global_verdict }}
-          PROTO_VERDICT:    ${{ needs.real_data_validation_protocol.outputs.protocol_verdict }}
-          PROTO_DET_RATE:   ${{ needs.real_data_validation_protocol.outputs.protocol_test_det_rate }}
+          SYNTH_SUPPORT:      ${{ needs.synthetic_full.outputs.synthetic_support_level }}
+          SYNTH_VERDICT:      ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
+          REAL_SUPPORT:       ${{ needs.real_data_fred.outputs.real_support_level }}
+          REAL_VERDICT:       ${{ needs.real_data_fred.outputs.real_global_verdict }}
+          PROTO_VERDICT:      ${{ needs.real_data_validation_protocol.outputs.protocol_verdict }}
+          PROTO_DET_RATE:     ${{ needs.real_data_validation_protocol.outputs.protocol_test_det_rate }}
+          PROTO_FAILURE_MODE: ${{ needs.real_data_validation_protocol.outputs.protocol_failure_mode }}
         run: |
           python - <<'PYEOF'
           import json, glob, os
@@ -313,6 +330,7 @@ jobs:
           real_verdict  = os.environ.get("REAL_VERDICT",  "UNKNOWN")
           proto_verdict = os.environ.get("PROTO_VERDICT", "UNKNOWN")
           proto_det_rate = os.environ.get("PROTO_DET_RATE", "NaN")
+          proto_failure_mode = os.environ.get("PROTO_FAILURE_MODE", "none")
 
           # Pull gate details from the downloaded synthetic artifact
           synth_gate = {}
@@ -333,6 +351,50 @@ jobs:
               except Exception:
                   pass
               break
+
+          # ── Read root validation_summary.json from downloaded artifact ──
+          # This is the authoritative source: built by the protocol script,
+          # contains full per-condition metrics per input, never invented zeros.
+          validation_summary = {}
+          validation_inputs = []
+          for f in glob.glob("_combined/validation_protocol/**/validation_summary.json", recursive=True):
+              try:
+                  validation_summary = json.loads(open(f).read())
+                  break
+              except Exception:
+                  pass
+
+          if validation_summary:
+              # Override env-based values with authoritative JSON values
+              proto_verdict = validation_summary.get("protocol_verdict", proto_verdict)
+              proto_failure_mode = validation_summary.get("failure_mode") or proto_failure_mode
+              tm = validation_summary.get("test_metrics", {})
+              r = tm.get("detection_rate")
+              proto_det_rate = "NaN" if r is None else f"{float(r):.3f}"
+
+              # Build per-input blocks from the root JSON
+              for inp in validation_summary.get("inputs", []):
+                  validation_inputs.append({
+                      "input": inp.get("input"),
+                      "stem": inp.get("stem"),
+                      "protocol_verdict": inp.get("protocol_verdict"),
+                      "failure_mode": inp.get("failure_mode"),
+                      "test": {
+                          "detection_rate": inp.get("test_det_rate"),
+                          "n_decidable": inp.get("test_n_decidable"),
+                          "sigma_zero_post_rate": inp.get("test_sigma_zero_post_rate"),
+                      },
+                      "stable": {
+                          "detection_rate": inp.get("stable_det_rate"),
+                          "n_decidable": inp.get("stable_n_decidable"),
+                          "sigma_zero_post_rate": inp.get("stable_sigma_zero_post_rate"),
+                      },
+                      "placebo": {
+                          "detection_rate": inp.get("placebo_det_rate"),
+                          "n_decidable": inp.get("placebo_n_decidable"),
+                          "sigma_zero_post_rate": inp.get("placebo_sigma_zero_post_rate"),
+                      },
+                  })
 
           dual_status = (
               "DUAL_PROOF_COMPLETE"
@@ -364,9 +426,12 @@ jobs:
                   "real_data_validation_protocol": {
                       "run_mode": "validation_protocol_fast",
                       "protocol": "3-dataset (test/stable/placebo) × window_sensitivity × subsample_stability",
-                      "verdict": proto_verdict,
+                      "protocol_verdict": proto_verdict,
+                      "failure_mode": proto_failure_mode if proto_failure_mode != "none" else None,
                       "test_detection_rate": proto_det_rate,
-                      "note": "fast mode: 3 window variants × 10 subsamples",
+                      "best_input": validation_summary.get("best_stem"),
+                      "inputs": validation_inputs if validation_inputs else None,
+                      "note": "fast mode: 4 window variants × 15 subsamples",
                   },
               },
               "forbidden_report_labels": [
@@ -388,15 +453,16 @@ jobs:
 
       - name: Write GitHub step summary
         env:
-          SYNTH_SUPPORT:    ${{ needs.synthetic_full.outputs.synthetic_support_level }}
-          SYNTH_VERDICT:    ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
-          REAL_SUPPORT:     ${{ needs.real_data_fred.outputs.real_support_level }}
-          REAL_VERDICT:     ${{ needs.real_data_fred.outputs.real_global_verdict }}
-          PROTO_VERDICT:    ${{ needs.real_data_validation_protocol.outputs.protocol_verdict }}
-          PROTO_DET_RATE:   ${{ needs.real_data_validation_protocol.outputs.protocol_test_det_rate }}
+          SYNTH_SUPPORT:      ${{ needs.synthetic_full.outputs.synthetic_support_level }}
+          SYNTH_VERDICT:      ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}
+          REAL_SUPPORT:       ${{ needs.real_data_fred.outputs.real_support_level }}
+          REAL_VERDICT:       ${{ needs.real_data_fred.outputs.real_global_verdict }}
+          PROTO_VERDICT:      ${{ needs.real_data_validation_protocol.outputs.protocol_verdict }}
+          PROTO_DET_RATE:     ${{ needs.real_data_validation_protocol.outputs.protocol_test_det_rate }}
+          PROTO_FAILURE_MODE: ${{ needs.real_data_validation_protocol.outputs.protocol_failure_mode }}
         run: |
           python - <<'PYEOF'
-          import os
+          import json, glob, os
 
           synth_support = os.environ.get("SYNTH_SUPPORT", "NOT_FOUND")
           synth_verdict = os.environ.get("SYNTH_VERDICT", "UNKNOWN")
@@ -404,6 +470,26 @@ jobs:
           real_verdict  = os.environ.get("REAL_VERDICT",  "UNKNOWN")
           proto_verdict = os.environ.get("PROTO_VERDICT", "UNKNOWN")
           proto_det_rate = os.environ.get("PROTO_DET_RATE", "NaN")
+          proto_failure_mode = os.environ.get("PROTO_FAILURE_MODE", "none")
+
+          # Read root validation_summary.json for per-input detail table
+          val_inputs = []
+          for f in glob.glob("_combined/validation_protocol/**/validation_summary.json", recursive=True):
+              try:
+                  vs = json.loads(open(f).read())
+                  val_inputs = vs.get("inputs", [])
+                  # Override with authoritative values
+                  proto_verdict = vs.get("protocol_verdict", proto_verdict)
+                  fm = vs.get("failure_mode")
+                  if fm:
+                      proto_failure_mode = fm
+                  tm = vs.get("test_metrics", {})
+                  r = tm.get("detection_rate")
+                  if r is not None:
+                      proto_det_rate = f"{float(r):.3f}"
+                  break
+              except Exception:
+                  pass
 
           def icon(s):
               return "✅" if s in ("full_statistical_support", "real_data_canonical_support") else "❌"
@@ -416,27 +502,54 @@ jobs:
               and real_support == "real_data_canonical_support"
           )
 
+          # Build per-input detail rows for validation protocol
+          input_rows = ""
+          for inp in val_inputs:
+              stem = inp.get("stem", "?")
+              v = inp.get("protocol_verdict", "?")
+              fm = inp.get("failure_mode") or ""
+              td = inp.get("test_n_decidable", "?")
+              ti = inp.get("test_n_indeterminate", "?")
+              tdr = inp.get("test_det_rate")
+              tdr_s = "NaN" if tdr is None else f"{float(tdr):.3f}"
+              tsz = inp.get("test_sigma_zero_post_rate")
+              tsz_s = "—" if tsz is None else f"{float(tsz):.2f}"
+              sd = inp.get("stable_n_decidable", "?")
+              pd_ = inp.get("placebo_n_decidable", "?")
+              input_rows += (
+                  f"| `{stem}` | `{v}` | {fm or '—'} | "
+                  f"{tdr_s} | {td} / {ti} | {tsz_s} | {sd} | {pd_} |\n"
+              )
+
+          fm_note = ""
+          if proto_failure_mode and proto_failure_mode != "none":
+              fm_note = f"\n> **failure_mode**: `{proto_failure_mode}`\n"
+
           md = f"""## ORI-C Nightly — Dual Canonical Proof + Validation Protocol
 
-          {"✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"}
+{"✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"}
 
-          | Dimension | run_mode | verdict | support_level | |
-          |-----------|----------|---------|---------------|---|
-          | Synthetic simulation | `full_statistical` (n=60, min=50 enforced) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
-          | Real data FRED (1986–2025) | `real_data_canonical` | `{real_verdict}` | `{real_support}` | {icon(real_support)} |
-          | Validation protocol (FRED fast) | `3-dataset × window × subsample` | `{proto_verdict}` (det_rate={proto_det_rate}) | — | {icon_v(proto_verdict)} |
+| Dimension | run_mode | verdict | support_level | |
+|-----------|----------|---------|---------------|---|
+| Synthetic simulation | `full_statistical` (n=60, min=50 enforced) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
+| Real data FRED (1986–2025) | `real_data_canonical` | `{real_verdict}` | `{real_support}` | {icon(real_support)} |
+| Validation protocol | `3-dataset × window × subsample` | `{proto_verdict}` (det_rate={proto_det_rate}) | — | {icon_v(proto_verdict)} |
+{fm_note}
+### Validation Protocol — Per-Input Detail
 
-          **Validation protocol**: 3 datasets (test / stable / placebo) × 3 window variants × 10 subsamples (80%).
-          Transition stability, stable specificity, placebo non-detection are evaluated jointly.
+| input | verdict | failure_mode | test det_rate | test decid/indet | test σ₀ rate | stable decid | placebo decid |
+|-------|---------|--------------|---------------|------------------|--------------|--------------|---------------|
+{input_rows}
+**Protocol**: 3 datasets (test / stable / placebo) × 4 window variants × 15 subsamples (80%).
+Transition stability, stable specificity, placebo non-detection are evaluated jointly.
 
-          ### Labels FORBIDDEN in any report derived from any run
-          - `full support`
-          - `full empirical support`
+### Labels FORBIDDEN in any report derived from any run
+- `full support`
+- `full empirical support`
 
-          Use **only** the machine-computed `support_level` tokens from `dual_proof_manifest.json`.
-          See artifact `nightly_dual_proof_{os.environ.get("GITHUB_RUN_ID", "")}` for combined manifest.
-          """
-          md = "\n".join(line.lstrip() for line in md.splitlines())
+Use **only** the machine-computed `support_level` tokens from `dual_proof_manifest.json`.
+See artifact `nightly_dual_proof_{os.environ.get("GITHUB_RUN_ID", "")}` for combined manifest.
+"""
 
           step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
           if step_summary:
