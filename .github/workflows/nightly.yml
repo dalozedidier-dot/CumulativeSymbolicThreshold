@@ -547,6 +547,10 @@ jobs:
           def icon_v(v):
               return "✅" if v == "ACCEPT" else ("❌" if v == "REJECT" else "⚠️")
 
+          dual_ok = (
+              synth_support == "full_statistical_support"
+              and real_support == "real_data_canonical_support"
+          )
           dual_icon = "✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"
 
           # Build per-input detail rows from canonical nested schema
