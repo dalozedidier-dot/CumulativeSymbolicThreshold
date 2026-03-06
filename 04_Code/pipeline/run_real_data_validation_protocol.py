@@ -887,78 +887,61 @@ def main() -> int:
         (tabdir / "validation_summary.json").write_text(_json_dumps_safe(summary, indent=2), encoding="utf-8")
 
         verdict = summary.get("protocol_verdict", "UNKNOWN")
-        def _rate(v: object) -> float:
-            try:
-                f = float(v)  # type: ignore[arg-type]
-                return 0.0 if f != f else f  # NaN → 0.0
-            except (TypeError, ValueError):
-                return 0.0
-
-        # Read metrics directly from the per-condition dicts (never invent zeros)
         test_m = summary.get("test_metrics", {})
         stable_m = summary.get("stable_metrics", {})
         placebo_m = summary.get("placebo_metrics", {})
-
-        det_rate = _rate(test_m.get("detection_rate"))
-        stable_rate = _rate(stable_m.get("detection_rate"))
-        placebo_rate = _rate(placebo_m.get("detection_rate"))
-        modal = test_m.get("modal_verdict", "")
+        failure_mode = summary.get("notes", {}).get("failure_mode")
 
         (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
 
+        # Canonical per-input record — metrics are the full computed dicts,
+        # never flattened, never invented.
         row = {
-            "input": str(inp_path),
+            "input_id": str(inp_path),
             "stem": stem,
-            "protocol_verdict": verdict,
-            "test_det_rate": det_rate,
-            "stable_det_rate": stable_rate,
-            "placebo_det_rate": placebo_rate,
-            "test_modal": modal,
-            "n_test": int(len(df_test)),
-            # Decidability diagnostics — read directly from computed metrics
-            "test_n_decidable": test_m.get("n_decidable", 0),
-            "test_n_indeterminate": test_m.get("n_indeterminate", 0),
-            "test_sigma_zero_post_rate": test_m.get("sigma_zero_post_rate", 0.0),
-            "stable_n_decidable": stable_m.get("n_decidable", 0),
-            "stable_n_indeterminate": stable_m.get("n_indeterminate", 0),
-            "stable_sigma_zero_post_rate": stable_m.get("sigma_zero_post_rate", 0.0),
-            "placebo_n_decidable": placebo_m.get("n_decidable", 0),
-            "placebo_n_indeterminate": placebo_m.get("n_indeterminate", 0),
-            "placebo_sigma_zero_post_rate": placebo_m.get("sigma_zero_post_rate", 0.0),
-            # Failure mode from protocol notes
-            "failure_mode": summary.get("notes", {}).get("failure_mode"),
-            # Keep full metrics dicts for root-level propagation
-            "_test_metrics": test_m,
-            "_stable_metrics": stable_m,
-            "_placebo_metrics": placebo_m,
+            "input_protocol_verdict": verdict,
+            "failure_mode": failure_mode,
+            "n_rows": int(len(df_test)),
+            "test_metrics": test_m,
+            "stable_metrics": stable_m,
+            "placebo_metrics": placebo_m,
         }
         aggregate_rows.append(row)
 
         # Best row = highest det_rate among ACCEPT; else highest det_rate overall
+        def _safe_rate(m: dict, key: str = "detection_rate") -> float:
+            v = m.get(key)
+            if v is None:
+                return 0.0
+            try:
+                f = float(v)
+                return 0.0 if f != f else f
+            except (TypeError, ValueError):
+                return 0.0
+
         if best_row is None:
             best_row = row
         else:
             def _rank(r: dict) -> tuple:
                 return (
-                    1 if r["protocol_verdict"] == "ACCEPT" else 0,
-                    r["test_det_rate"],
-                    -r["stable_det_rate"],
-                    -r["placebo_det_rate"],
+                    1 if r["input_protocol_verdict"] == "ACCEPT" else 0,
+                    _safe_rate(r["test_metrics"]),
+                    -_safe_rate(r["stable_metrics"]),
+                    -_safe_rate(r["placebo_metrics"]),
                 )
             if _rank(row) > _rank(best_row):
                 best_row = row
 
-        td = row.get("test_n_decidable", "?")
-        ti = row.get("test_n_indeterminate", "?")
+        td = test_m.get("n_decidable", "?")
+        ti = test_m.get("n_indeterminate", "?")
+        dr = _safe_rate(test_m)
+        modal = test_m.get("modal_verdict", "")
         print(f"Protocol verdict for {stem}: {verdict}  "
-              f"(det_rate={det_rate:.3f}, decidable={td}, indeterminate={ti}, modal={modal})")
+              f"(det_rate={dr:.3f}, decidable={td}, indeterminate={ti}, modal={modal})")
 
-    # Aggregate verdict
-    dfagg = pd.DataFrame(aggregate_rows)
-    dfagg.to_csv(outdir_root / "tables" / "aggregate_inputs.csv", index=False) if len(dfagg) else None
-
-    any_accept = any(r["protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
-    any_indeterminate = any(r["protocol_verdict"] == "INDETERMINATE" for r in aggregate_rows)
+    # ── Aggregate verdict ────────────────────────────────────────────────
+    any_accept = any(r["input_protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
+    any_indeterminate = any(r["input_protocol_verdict"] == "INDETERMINATE" for r in aggregate_rows)
     if any_accept:
         overall_verdict = "ACCEPT"
     elif any_indeterminate:
@@ -969,45 +952,51 @@ def main() -> int:
     outdir_root.joinpath("tables").mkdir(parents=True, exist_ok=True)
     outdir_root.joinpath("figures").mkdir(parents=True, exist_ok=True)
 
-    # Provide full per-condition metrics from the best input at root level.
-    # This ensures CI and downstream tools read real computed metrics,
-    # not placeholders.  The _test_metrics / _stable_metrics / _placebo_metrics
-    # private keys carry the full dicts; we promote them to the root summary
-    # and strip them from the serialised aggregate rows.
+    # ── Root validation_summary.json (canonical schema) ──────────────────
+    #
+    # Contract:
+    #   protocol_verdict   — global verdict across all inputs
+    #   best_input         — path of the best-performing input
+    #   best_stem          — stem of that input
+    #   failure_mode       — from best input (null if ACCEPT/INDETERMINATE)
+    #   test_metrics       — full metrics dict from best input (backward compat)
+    #   stable_metrics     — full metrics dict from best input
+    #   placebo_metrics    — full metrics dict from best input
+    #   inputs[]           — per-input records, each with:
+    #       input_id, stem, input_protocol_verdict, failure_mode,
+    #       test_metrics, stable_metrics, placebo_metrics (full dicts)
+    #
+    # The workflow reads d.get("test_metrics", {}).get("detection_rate")
+    # and gets the real computed value from the best input.
     best = best_row or {}
-    best_test_m = best.pop("_test_metrics", {})
-    best_stable_m = best.pop("_stable_metrics", {})
-    best_placebo_m = best.pop("_placebo_metrics", {})
-    # Strip private keys from all aggregate rows before serialisation
-    for r in aggregate_rows:
-        r.pop("_test_metrics", None)
-        r.pop("_stable_metrics", None)
-        r.pop("_placebo_metrics", None)
-
     overall = {
         "protocol_verdict": overall_verdict,
         "n_inputs": len(inputs),
         "any_accept": any_accept,
         "any_indeterminate": any_indeterminate,
-        "best_input": best.get("input"),
+        "best_input": best.get("input_id"),
         "best_stem": best.get("stem"),
-        "best_test_det_rate": best.get("test_det_rate", 0.0),
         "failure_mode": best.get("failure_mode"),
-        # Full per-condition metrics from the best input — never invented zeros
-        "test_metrics": best_test_m,
-        "stable_metrics": best_stable_m,
-        "placebo_metrics": best_placebo_m,
+        "test_metrics": best.get("test_metrics", {}),
+        "stable_metrics": best.get("stable_metrics", {}),
+        "placebo_metrics": best.get("placebo_metrics", {}),
         "inputs": aggregate_rows,
     }
-    (outdir_root / "tables" / "validation_summary.json").write_text(_json_dumps_safe(overall, indent=2), encoding="utf-8")
+    (outdir_root / "tables" / "validation_summary.json").write_text(
+        _json_dumps_safe(overall, indent=2), encoding="utf-8",
+    )
     (outdir_root / "verdict.txt").write_text(f"{overall_verdict}\n", encoding="utf-8")
     if best_row:
-        (outdir_root / "best_input.txt").write_text(f"{best_row['input']}\n", encoding="utf-8")
+        (outdir_root / "best_input.txt").write_text(
+            f"{best_row['input_id']}\n", encoding="utf-8",
+        )
 
     print("\n" + "=" * 78)
     print(f"OVERALL PROTOCOL VERDICT: {overall_verdict}")
     if best_row:
-        print(f"Best input: {best_row['input']}  (verdict={best_row['protocol_verdict']}, det_rate={best_row['test_det_rate']:.3f})")
+        bdr = _safe_rate(best_row.get("test_metrics", {}))
+        print(f"Best input: {best_row['input_id']}  "
+              f"(verdict={best_row['input_protocol_verdict']}, det_rate={bdr:.3f})")
     print("=" * 78)
 
     # Verdict (ACCEPT/REJECT/INDETERMINATE) is a scientific outcome, not an error.
