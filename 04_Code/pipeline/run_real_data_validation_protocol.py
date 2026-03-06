@@ -45,9 +45,9 @@ Verdict classification (tri-state)
 Protocol verdict tokens (canonical)
 ------------------------------------
   INDETERMINATE  : any condition has < N_DECIDABLE_MIN decidable runs
-  REJECT         : enough decidable but C1 fails (transition not detected reliably)
+  REJECT         : C1 fails (failure_mode=no_detection) — transition not detected reliably
+  REJECT         : C1 ok but C2/C3 fail (failure_mode=non_specific_detector)
   ACCEPT         : C1+C2+C3 all satisfied at both stability and window levels
-  INDETERMINATE  : C1 ok but C2/C3 fail (detector may not be specific enough)
 
 Run time notes
 --------------
@@ -219,7 +219,7 @@ def _run_causal(
             env={**__import__("os").environ, "PYTHONPATH": str(_REPO_ROOT / "src")},
         )
     except subprocess.CalledProcessError:
-        return {"verdict": "error", "ok_p_source": "", "p_welch": float("nan")}
+        return {"verdict": "error", "binary_detected": None, "ok_p_source": "", "p_welch": float("nan")}
 
     # Read result
     summary_csv = run_dir / "tables" / "causal_tests_summary.csv"
@@ -229,11 +229,15 @@ def _run_causal(
             d = json.loads(verdict_json.read_text(encoding="utf-8"))
             return {
                 "verdict": d.get("verdict", "unknown"),
+                "binary_detected": d.get("binary_detected"),  # True/False/None
                 "ok_p_source": d.get("criteria", {}).get("ok_p_source", ""),
                 "p_welch": float(d.get("p_value_mean_shift_C", float("nan"))),
                 "p_mwu": float(d.get("p_value_mannwhitney_C", float("nan"))),
                 "sigma_zero_post": bool(d.get("sigma_zero_post", False)),
+                "sigma_max_post": d.get("sigma_max_post"),
                 "sigma_gate_note": d.get("sigma_gate_note") or "",
+                "var_reason": d.get("var_reason") or "",
+                "cointegration_reason": d.get("cointegration_reason") or "",
             }
         except Exception:
             pass
@@ -242,19 +246,25 @@ def _run_causal(
         try:
             df = pd.read_csv(summary_csv)
             if len(df) > 0:
+                row0 = df.iloc[0]
                 return {
-                    "verdict": str(df.iloc[0].get("verdict", "unknown")),
-                    "ok_p_source": str(df.iloc[0].get("ok_p_source", "")),
-                    "p_welch": float(df.iloc[0].get("p_value_mean_shift_C", float("nan"))),
+                    "verdict": str(row0.get("verdict", "unknown")),
+                    "binary_detected": row0.get("binary_detected"),
+                    "ok_p_source": str(row0.get("ok_p_source", "")),
+                    "p_welch": float(row0.get("p_value_mean_shift_C", float("nan"))),
                     "p_mwu": float("nan"),
-                    "sigma_zero_post": False,
+                    "sigma_zero_post": bool(row0.get("sigma_zero_post", False)),
+                    "sigma_max_post": None,
                     "sigma_gate_note": "",
+                    "var_reason": "",
+                    "cointegration_reason": "",
                 }
         except Exception:
             pass
 
-    return {"verdict": "error", "ok_p_source": "", "p_welch": float("nan"),
-            "p_mwu": float("nan"), "sigma_zero_post": False, "sigma_gate_note": ""}
+    return {"verdict": "error", "binary_detected": None, "ok_p_source": "",
+            "p_welch": float("nan"), "p_mwu": float("nan"),
+            "sigma_zero_post": False, "sigma_gate_note": ""}
 
 
 _DETECTED_TOKENS = frozenset({"seuil_detecte", "accept", "detected", "threshold_hit"})
@@ -265,36 +275,45 @@ _INDETERMINATE_PREFIXES = ("indetermine_",)
 def _classify_verdict(result: dict) -> str:
     """Classify a single run result into DETECTED / NOT_DETECTED / INDETERMINATE.
 
-    Rules (applied in order):
-      DETECTED        : binary_detected is True  OR  verdict ∈ _DETECTED_TOKENS
-      NOT_DETECTED    : binary_detected is False  OR  verdict ∈ _NOT_DETECTED_TOKENS
-      INDETERMINATE   : verdict starts with "indetermine_"
-                        OR sigma_zero_post is True
-                        OR verdict is "error" / "unknown"
+    Decidability rule
+    -----------------
+    A run is **decidable** if its verdict is DETECTED or NOT_DETECTED.
+    It is INDETERMINATE only if:
+      - verdict starts with ``indetermine_`` (all stats NaN, missing columns, …)
+      - verdict is ``error`` / ``unknown`` / empty
+      - p-values are NaN AND no fallback test could produce a decision
+
+    sigma_zero_post is a **diagnostic flag**, not a verdict override. When
+    Sigma=0, the statistical tests (Welch, bootstrap, MWU) still operate on
+    C(t) and produce a decidable result. Only if those tests themselves
+    cannot run (all NaN) does the verdict become INDETERMINATE.
+
+    Priority order
+    --------------
+      1. binary_detected flag (set by tests_causaux verdict logic)
+      2. verdict token matching
+      3. INDETERMINATE as last resort
     """
     verdict = str(result.get("verdict", "")).lower().strip()
     binary = result.get("binary_detected")
-    sigma_zero = result.get("sigma_zero_post", False)
 
-    # Indeterminate conditions (checked first to avoid misclassifying sigma-zero)
-    if sigma_zero:
-        return "INDETERMINATE"
-    if any(verdict.startswith(p) for p in _INDETERMINATE_PREFIXES):
-        return "INDETERMINATE"
-    if verdict in ("error", "unknown", ""):
-        return "INDETERMINATE"
-
-    # Explicit binary flag takes precedence
+    # Explicit binary flag takes precedence (set by the verdict logic)
     if binary is True:
         return "DETECTED"
     if binary is False:
         return "NOT_DETECTED"
 
-    # Fall back to token matching
+    # Token matching
     if verdict in _DETECTED_TOKENS:
         return "DETECTED"
     if verdict in _NOT_DETECTED_TOKENS:
         return "NOT_DETECTED"
+
+    # Indeterminate conditions
+    if any(verdict.startswith(p) for p in _INDETERMINATE_PREFIXES):
+        return "INDETERMINATE"
+    if verdict in ("error", "unknown", ""):
+        return "INDETERMINATE"
 
     return "INDETERMINATE"
 
@@ -434,13 +453,18 @@ def _stability_metrics(
     ------
     DETECTED       : binary_detected=True or verdict in {seuil_detecte, …}
     NOT_DETECTED   : binary_detected=False or verdict in {non_detecte, falsifie, …}
-    INDETERMINATE  : verdict starts with indetermine_, sigma_zero_post=True, or p NaN
+    INDETERMINATE  : verdict starts with indetermine_, all p-values NaN, or error
+
+    sigma_zero_post is a diagnostic, NOT a classification override.
+    Runs with sigma_zero_post=True are still decidable if the statistical
+    tests produced a finite p-value.
 
     Rates
     -----
     detection_rate     = n_detected / (n_detected + n_not_detected)   (decidable only)
     non_detection_rate = n_not_detected / (n_detected + n_not_detected)
     indeterminate_rate = n_indeterminate / total
+    sigma_zero_post_rate = n_sigma_zero / total  (diagnostic only)
     """
     from collections import Counter
 
@@ -451,6 +475,9 @@ def _stability_metrics(
     n_not = counts.get("NOT_DETECTED", 0)
     n_ind = counts.get("INDETERMINATE", 0)
     n_decidable = n_det + n_not
+
+    # Diagnostic: count sigma_zero_post occurrences (independent of verdict class)
+    n_sigma_zero = sum(1 for r in rows if r.get("sigma_zero_post", False))
 
     if total == 0:
         return {"n_valid": 0, "n_error": 0, "n_decidable": 0,
@@ -479,6 +506,8 @@ def _stability_metrics(
         "indeterminate_rate": float(ind_rate),
         "modal_verdict": modal_class,
         "stability_fraction": float(stability),
+        "sigma_zero_post_rate": n_sigma_zero / total if total > 0 else 0.0,
+        "n_sigma_zero_post": int(n_sigma_zero),
         "verdict_counts": dict(counts),
     }
 
@@ -607,13 +636,19 @@ def _protocol_verdict(
     elif not c1_ok:
         verdict = "REJECT"
         notes["reason"] = "C1 failed: transition not detected with sufficient stability"
+        notes["failure_mode"] = "no_detection"
     elif c1_ok and c2_ok and c3_ok:
         verdict = "ACCEPT"
         notes["reason"] = "C1+C2+C3 all passed: transition detected, stable and placebo not detected"
     else:
-        verdict = "INDETERMINATE"
+        # C1 passes but C2 and/or C3 fail → detector triggers on non-transition data
+        verdict = "REJECT"
         failed = [k for k, v in {"C2": c2_ok, "C3": c3_ok}.items() if not v]
-        notes["reason"] = f"C1 passed but {failed} failed: detector may not be specific enough"
+        notes["failure_mode"] = "non_specific_detector"
+        notes["reason"] = (
+            f"C1 passed but {failed} failed: detector is not specific enough "
+            f"(triggers on stable/placebo data)"
+        )
 
     return verdict, notes
 
@@ -932,54 +967,61 @@ def main() -> int:
         (tabdir / "validation_summary.json").write_text(_json_dumps_safe(summary, indent=2), encoding="utf-8")
 
         verdict = summary.get("protocol_verdict", "UNKNOWN")
-        def _rate(v: object) -> float:
-            try:
-                f = float(v)  # type: ignore[arg-type]
-                return 0.0 if f != f else f  # NaN → 0.0
-            except (TypeError, ValueError):
-                return 0.0
-
-        det_rate = _rate(summary.get("test_det_rate"))
-        stable_rate = _rate(summary.get("stable_det_rate"))
-        placebo_rate = _rate(summary.get("placebo_det_rate"))
-        modal = summary.get("test_modal", "")
+        test_m = summary.get("test_metrics", {})
+        stable_m = summary.get("stable_metrics", {})
+        placebo_m = summary.get("placebo_metrics", {})
+        failure_mode = summary.get("notes", {}).get("failure_mode")
 
         (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
 
+        # Canonical per-input record — metrics are the full computed dicts,
+        # never flattened, never invented.
         row = {
-            "input": str(inp_path),
+            "input_id": str(inp_path),
             "stem": stem,
-            "protocol_verdict": verdict,
-            "test_det_rate": det_rate,
-            "stable_det_rate": stable_rate,
-            "placebo_det_rate": placebo_rate,
-            "test_modal": modal,
-            "n_test": int(len(df_test)),
+            "input_protocol_verdict": verdict,
+            "failure_mode": failure_mode,
+            "n_rows": int(len(df_test)),
+            "test_metrics": test_m,
+            "stable_metrics": stable_m,
+            "placebo_metrics": placebo_m,
         }
         aggregate_rows.append(row)
 
         # Best row = highest det_rate among ACCEPT; else highest det_rate overall
+        def _safe_rate(m: dict, key: str = "detection_rate") -> float:
+            v = m.get(key)
+            if v is None:
+                return 0.0
+            try:
+                f = float(v)
+                return 0.0 if f != f else f
+            except (TypeError, ValueError):
+                return 0.0
+
         if best_row is None:
             best_row = row
         else:
             def _rank(r: dict) -> tuple:
                 return (
-                    1 if r["protocol_verdict"] == "ACCEPT" else 0,
-                    r["test_det_rate"],
-                    -r["stable_det_rate"],
-                    -r["placebo_det_rate"],
+                    1 if r["input_protocol_verdict"] == "ACCEPT" else 0,
+                    _safe_rate(r["test_metrics"]),
+                    -_safe_rate(r["stable_metrics"]),
+                    -_safe_rate(r["placebo_metrics"]),
                 )
             if _rank(row) > _rank(best_row):
                 best_row = row
 
-        print(f"Protocol verdict for {stem}: {verdict}  (det_rate={det_rate:.3f}, modal={modal})")
+        td = test_m.get("n_decidable", "?")
+        ti = test_m.get("n_indeterminate", "?")
+        dr = _safe_rate(test_m)
+        modal = test_m.get("modal_verdict", "")
+        print(f"Protocol verdict for {stem}: {verdict}  "
+              f"(det_rate={dr:.3f}, decidable={td}, indeterminate={ti}, modal={modal})")
 
-    # Aggregate verdict
-    dfagg = pd.DataFrame(aggregate_rows)
-    dfagg.to_csv(outdir_root / "tables" / "aggregate_inputs.csv", index=False) if len(dfagg) else None
-
-    any_accept = any(r["protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
-    any_indeterminate = any(r["protocol_verdict"] == "INDETERMINATE" for r in aggregate_rows)
+    # ── Aggregate verdict ────────────────────────────────────────────────
+    any_accept = any(r["input_protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
+    any_indeterminate = any(r["input_protocol_verdict"] == "INDETERMINATE" for r in aggregate_rows)
     if any_accept:
         overall_verdict = "ACCEPT"
     elif any_indeterminate:
@@ -990,28 +1032,51 @@ def main() -> int:
     outdir_root.joinpath("tables").mkdir(parents=True, exist_ok=True)
     outdir_root.joinpath("figures").mkdir(parents=True, exist_ok=True)
 
-    # Provide test_metrics at top level for CI extraction compatibility
-    best_det_rate = (best_row or {}).get("test_det_rate", 0.0)
+    # ── Root validation_summary.json (canonical schema) ──────────────────
+    #
+    # Contract:
+    #   protocol_verdict   — global verdict across all inputs
+    #   best_input         — path of the best-performing input
+    #   best_stem          — stem of that input
+    #   failure_mode       — from best input (null if ACCEPT/INDETERMINATE)
+    #   test_metrics       — full metrics dict from best input (backward compat)
+    #   stable_metrics     — full metrics dict from best input
+    #   placebo_metrics    — full metrics dict from best input
+    #   inputs[]           — per-input records, each with:
+    #       input_id, stem, input_protocol_verdict, failure_mode,
+    #       test_metrics, stable_metrics, placebo_metrics (full dicts)
+    #
+    # The workflow reads d.get("test_metrics", {}).get("detection_rate")
+    # and gets the real computed value from the best input.
+    best = best_row or {}
     overall = {
         "protocol_verdict": overall_verdict,
         "n_inputs": len(inputs),
         "any_accept": any_accept,
         "any_indeterminate": any_indeterminate,
-        "best_input": (best_row or {}).get("input"),
-        "best_stem": (best_row or {}).get("stem"),
-        "best_test_det_rate": best_det_rate,
-        "test_metrics": {"detection_rate": best_det_rate},
+        "best_input": best.get("input_id"),
+        "best_stem": best.get("stem"),
+        "failure_mode": best.get("failure_mode"),
+        "test_metrics": best.get("test_metrics", {}),
+        "stable_metrics": best.get("stable_metrics", {}),
+        "placebo_metrics": best.get("placebo_metrics", {}),
         "inputs": aggregate_rows,
     }
-    (outdir_root / "tables" / "validation_summary.json").write_text(_json_dumps_safe(overall, indent=2), encoding="utf-8")
+    (outdir_root / "tables" / "validation_summary.json").write_text(
+        _json_dumps_safe(overall, indent=2), encoding="utf-8",
+    )
     (outdir_root / "verdict.txt").write_text(f"{overall_verdict}\n", encoding="utf-8")
     if best_row:
-        (outdir_root / "best_input.txt").write_text(f"{best_row['input']}\n", encoding="utf-8")
+        (outdir_root / "best_input.txt").write_text(
+            f"{best_row['input_id']}\n", encoding="utf-8",
+        )
 
     print("\n" + "=" * 78)
     print(f"OVERALL PROTOCOL VERDICT: {overall_verdict}")
     if best_row:
-        print(f"Best input: {best_row['input']}  (verdict={best_row['protocol_verdict']}, det_rate={best_row['test_det_rate']:.3f})")
+        bdr = _safe_rate(best_row.get("test_metrics", {}))
+        print(f"Best input: {best_row['input_id']}  "
+              f"(verdict={best_row['input_protocol_verdict']}, det_rate={bdr:.3f})")
     print("=" * 78)
 
     # Verdict (ACCEPT/REJECT/INDETERMINATE) is a scientific outcome, not an error.

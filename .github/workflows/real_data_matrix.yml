@@ -60,7 +60,7 @@ jobs:
             input: 03_Data/real/fred_monthly/real.csv
             proxy_spec: 03_Data/real/fred_monthly/proxy_spec.json
             col_time: date
-            time_mode: value
+            time_mode: index
             col_O: O
             col_R: R
             col_I: I
@@ -351,6 +351,8 @@ jobs:
             --col-O O \
             --col-R R \
             --col-I I \
+            --col-demand O \
+            --col-S S \
             --normalize none \
             --alpha 0.01 \
             --lags "${{ matrix.lags }}" \

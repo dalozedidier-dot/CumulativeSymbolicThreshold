@@ -26,14 +26,16 @@ Important real-data robustness rules
 - Window slicing always uses integer step index (0..n-1), never raw t values
   (which may encode calendar day-counts). If the output CSV has a 'step' column
   it is used; otherwise the DataFrame's row position is used.
-- Sigma-gate with non-parametric fallback: if Sigma(t) is identically zero in
-  the post-threshold window (demand < capacity throughout), the symbolic pathway
-  cannot operate. Instead of declaring INDETERMINATE unconditionally:
-    • If a mean-shift test is significant (Welch/bootstrap/MWU cascade) → DETECTED
-      (structural change in C(t) confirmed even without Sigma pressure)
-    • If no significant shift → NOT_DETECTED (not INDETERMINATE)
-  This keeps runs decidable and avoids systematic INDETERMINATE in regimes
-  where demand never exceeds capacity (common in subsamples and stable controls).
+- sigma_zero_post is a DIAGNOSTIC, not a verdict override. When Sigma(t)=0
+  in the post-threshold window (demand < capacity), the symbolic pathway is
+  inoperative, but the statistical tests (Welch, bootstrap, MWU) still run
+  on C(t) and produce a decidable verdict (DETECTED or NOT_DETECTED).
+  sigma_zero_post only causes INDETERMINATE if all statistical tests also
+  return NaN (verdict = indetermine_stats_indisponibles).
+  Decidability rule:
+    • DETECTED     : ok_p=True (p cascade significant), with or without ok_boot
+    • NOT_DETECTED : ok_p=False and tests ran (p values finite)
+    • INDETERMINATE: all p-value sources unavailable (Welch/boot/MWU all NaN)
 
 Outputs
 - tables/causal_tests_summary.csv
@@ -124,8 +126,21 @@ def _block_bootstrap_mean_diff(
     rng = np.random.default_rng(int(seed))
     x_pre = np.asarray(x_pre, dtype=float)
     x_post = np.asarray(x_post, dtype=float)
+
+    # Drop NaN values before size/variance checks
+    x_pre = x_pre[np.isfinite(x_pre)]
+    x_post = x_post[np.isfinite(x_post)]
+
     if len(x_pre) < 5 or len(x_post) < 5:
         return float("nan"), float("nan"), float("nan")
+
+    # Constant-value guard: if either window has zero variance, bootstrap
+    # mean-diff CI is degenerate (width=0) and misleading.
+    if np.nanstd(x_pre) < 1e-12 or np.nanstd(x_post) < 1e-12:
+        # Still return the point estimate (it may be useful for diagnostics)
+        # but CI bounds are NaN to signal non-informative bootstrap.
+        diff = float(np.mean(x_post) - np.mean(x_pre))
+        return diff, float("nan"), float("nan")
 
     block = int(block)
     if block < 5:
@@ -180,13 +195,26 @@ def _granger_pvalues(delta_c: np.ndarray, s: np.ndarray, lags: list[int]) -> dic
         return {}
 
 
-def _var_causality(delta_c: np.ndarray, s: np.ndarray, maxlag: int) -> tuple[float, int]:
+def _var_causality(delta_c: np.ndarray, s: np.ndarray, maxlag: int) -> tuple[float, int, str]:
+    """VAR causality test: S → delta_C.
+
+    Returns (p_value, lag_used, reason).
+    reason is "" on success, or a diagnostic string explaining why p is NaN.
+    """
     try:
         from statsmodels.tsa.api import VAR  # type: ignore
 
         df = pd.DataFrame({"delta_C": delta_c, "S": s}).dropna()
-        if len(df) < max(20, maxlag * 5):
-            return float("nan"), 0
+        n = len(df)
+        n_min = max(20, maxlag * 5)
+        if n < n_min:
+            return float("nan"), 0, f"VAR: n={n} < n_min={n_min} after dropna"
+
+        # Variance precheck: VAR is undefined on constant series
+        if df["delta_C"].std() < 1e-12:
+            return float("nan"), 0, "VAR: delta_C has zero variance"
+        if df["S"].std() < 1e-12:
+            return float("nan"), 0, "VAR: S has zero variance (Sigma_max=0?)"
 
         model = VAR(df)
         sel = model.select_order(maxlags=int(maxlag))
@@ -196,25 +224,41 @@ def _var_causality(delta_c: np.ndarray, s: np.ndarray, maxlag: int) -> tuple[flo
 
         fitted = model.fit(lag)
         test = fitted.test_causality(causing=["S"], caused=["delta_C"], kind="f")
-        return _safe_float(test.pvalue), int(lag)
-    except Exception:
-        return float("nan"), 0
+        return _safe_float(test.pvalue), int(lag), ""
+    except Exception as exc:
+        return float("nan"), 0, f"VAR exception: {type(exc).__name__}: {exc}"
 
 
-def _cointegration_p(C: np.ndarray, S: np.ndarray) -> float:
+def _cointegration_p(C: np.ndarray, S: np.ndarray) -> tuple[float, str]:
+    """Engle-Granger cointegration test between C and S.
+
+    Returns (p_value, reason).
+    reason is "" on success, or a diagnostic string explaining why p is NaN.
+    """
     try:
         from statsmodels.tsa.stattools import coint  # type: ignore
 
         x = np.asarray(C, dtype=float)
         y = np.asarray(S, dtype=float)
-        n = min(len(x), len(y))
-        if n < 50:
-            return float("nan")
 
-        _, p, _ = coint(x[:n], y[:n])
-        return _safe_float(p)
-    except Exception:
-        return float("nan")
+        # Drop paired NaN
+        mask = np.isfinite(x) & np.isfinite(y)
+        x, y = x[mask], y[mask]
+        n = len(x)
+
+        if n < 50:
+            return float("nan"), f"cointegration: n={n} < 50 after dropna"
+
+        # Variance precheck: coint is undefined on constant series
+        if np.std(x) < 1e-12:
+            return float("nan"), "cointegration: C has zero variance"
+        if np.std(y) < 1e-12:
+            return float("nan"), "cointegration: S has zero variance (Sigma_max=0?)"
+
+        _, p, _ = coint(x, y)
+        return _safe_float(p), ""
+    except Exception as exc:
+        return float("nan"), f"cointegration exception: {type(exc).__name__}: {exc}"
 
 
 def _render_md(report: dict) -> str:
@@ -453,9 +497,10 @@ def main() -> int:
     else:
         p_shift = float("nan")
 
-    # Mann-Whitney U fallback (one-tailed: post > pre) — only computed when Welch is NaN
+    # Mann-Whitney U (one-tailed: post > pre) — always computed for diagnostics
+    # and as a fallback in the p-value cascade when Welch is NaN.
     p_mwu = float("nan")
-    if not np.isfinite(p_shift) and len(pre) >= 5 and len(post) >= 5:
+    if len(pre) >= 5 and len(post) >= 5:
         try:
             mwu = stats.mannwhitneyu(
                 post["C"].to_numpy(dtype=float),
@@ -486,8 +531,8 @@ def main() -> int:
     min_granger_s_to_dc = min(granger_s_to_dc.values()) if granger_s_to_dc else float("nan")
     min_granger_dc_to_s = min(granger_dc_to_s.values()) if granger_dc_to_s else float("nan")
 
-    var_p, var_lag = _var_causality(dC, S, maxlag=int(args.maxlag))
-    coint_p = _cointegration_p(df_t["C"].to_numpy(dtype=float), S)
+    var_p, var_lag, var_reason = _var_causality(dC, S, maxlag=int(args.maxlag))
+    coint_p, coint_reason = _cointegration_p(df_t["C"].to_numpy(dtype=float), S)
 
     # Criteria
     has_threshold = thr_idx is not None
@@ -525,18 +570,33 @@ def main() -> int:
         ok_p = False
         ok_p_source = "unavailable"
 
+    # Sigma diagnostics: max |Sigma| over full series and post-window
+    sigma_max_full = float("nan")
+    if "Sigma" in df_t.columns:
+        _sv = df_t["Sigma"].to_numpy(dtype=float)
+        sigma_max_full = float(np.nanmax(np.abs(_sv))) if len(_sv) > 0 else 0.0
+
     # Sigma-gate: if Sigma is identically zero in the post window, the symbolic pathway
     # cannot operate. A non-detection in that context is INDETERMINATE, not a real failure.
     sigma_zero_post = False
+    sigma_max_post = float("nan")
     if "Sigma" in post.columns and len(post) > 0:
         sigma_vals = post["Sigma"].to_numpy(dtype=float)
-        sigma_zero_post = bool(np.nanmax(np.abs(sigma_vals)) < 1e-9)
+        sigma_max_post = float(np.nanmax(np.abs(sigma_vals)))
+        sigma_zero_post = bool(sigma_max_post < 1e-9)
 
     # Reverse direction significance is a warning, not an automatic fail.
     reverse_warning = bool(np.isfinite(min_granger_dc_to_s) and (min_granger_dc_to_s <= float(args.alpha)))
 
-    # Verdict
+    # Verdict — based solely on statistical test results.
+    # sigma_zero_post is a DIAGNOSTIC (logged), never a verdict override.
     sigma_gate_note: str | None = None
+    if sigma_zero_post:
+        sigma_gate_note = (
+            f"Sigma(t)=0 in post-window (sigma_max_post={sigma_max_post:.2e}): "
+            f"symbolic pathway inoperative. Verdict based on statistical tests only."
+        )
+
     if not has_threshold:
         verdict = "non_detecte"
         binary = False
@@ -547,40 +607,24 @@ def main() -> int:
         elif ok_p and ok_boot:
             verdict = "seuil_detecte"
             binary = True
+        elif ok_p:
+            # p-value significant but bootstrap CI does not exclude zero.
+            # Still decidable: detected via p-value cascade.
+            verdict = "seuil_detecte"
+            binary = True
+            if sigma_zero_post:
+                sigma_gate_note = (
+                    f"Sigma(t)=0 in post-window, but mean-shift significant "
+                    f"via {ok_p_source} (p <= {args.alpha}): DETECTED."
+                )
         elif ok_p_source == "unavailable":
-            # All statistical tests returned NaN — cannot decide, not a falsification.
+            # All statistical tests returned NaN — cannot decide.
             verdict = "indetermine_stats_indisponibles"
-            binary = False
-            sigma_gate_note = "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): INDETERMINATE per WELCH_NAN_FALLBACK_POLICY."
-        elif sigma_zero_post:
-            # Symbolic pathway inoperative — but we may still have statistical evidence.
-            # Fallback: if at least one non-parametric test supports a mean shift in C(t),
-            # the structural change is decidable even without Sigma pressure.
-            # This avoids systematic INDETERMINATE when demand < capacity.
-            if ok_p:
-                # p-value significant (via whichever source in the cascade) even without bootstrap
-                verdict = "seuil_detecte"
-                binary = True
-                sigma_gate_note = (
-                    f"Sigma(t)=0 in post-window (symbolic canal inoperable), but mean-shift "
-                    f"test significant via {ok_p_source} (p <= {args.alpha}): "
-                    f"non-parametric fallback → DETECTED."
-                )
-            elif np.isfinite(p_mwu) and p_mwu <= float(args.alpha):
-                # MWU significant even if ok_p cascade didn't pick it (shouldn't happen, but safety net)
-                verdict = "seuil_detecte"
-                binary = True
-                sigma_gate_note = (
-                    f"Sigma(t)=0 in post-window, but Mann-Whitney U significant "
-                    f"(p={p_mwu:.4g} <= {args.alpha}): non-parametric fallback → DETECTED."
-                )
-            else:
-                verdict = "non_detecte"
-                binary = False
-                sigma_gate_note = (
-                    "Sigma(t)=0 in post-window and no significant mean shift in C(t): "
-                    "non-parametric fallback → NOT_DETECTED."
-                )
+            binary = None  # genuinely undecidable — not False
+            sigma_gate_note = (
+                "All p-value sources unavailable (Welch NaN, bootstrap NaN, MWU NaN): "
+                "INDETERMINATE per WELCH_NAN_FALLBACK_POLICY."
+            )
         else:
             verdict = "non_detecte"
             binary = False
@@ -588,7 +632,7 @@ def main() -> int:
     report = {
         "run_dir": str(run_dir),
         "verdict": verdict,
-        "binary_detected": bool(binary),
+        "binary_detected": binary,  # True/False/None (None = indeterminate)
         "alpha": float(args.alpha),
         "c_mean_post_min": float(args.c_mean_post_min),
         "lags": lags,
@@ -605,6 +649,8 @@ def main() -> int:
         "C_positive_frac_post": C_positive_frac_post,
         "p_value_mean_shift_C": p_shift,
         "p_value_mannwhitney_C": float(p_mwu),
+        "sigma_max_full": sigma_max_full,
+        "sigma_max_post": sigma_max_post,
         "sigma_zero_post": bool(sigma_zero_post),
         "sigma_gate_note": sigma_gate_note,
         "boot_mean_diff_C": boot_mid,
@@ -618,7 +664,9 @@ def main() -> int:
         "granger_diagnostic_only": bool(granger_diagnostic_only),
         "var_S_to_deltaC_p": float(var_p),
         "var_lag_used": int(var_lag),
+        "var_reason": var_reason or None,
         "cointegration_p": float(coint_p),
+        "cointegration_reason": coint_reason or None,
         "criteria": {
             "has_threshold": bool(has_threshold),
             "ok_c_level": bool(ok_c_level),
@@ -633,7 +681,7 @@ def main() -> int:
     # One-row summary CSV
     row = {
         "verdict": verdict,
-        "binary_detected": bool(binary),
+        "binary_detected": binary,  # True/False/None (None = indeterminate)
         "threshold_hit_t": thr_t,
         "threshold_value": float(thr_val),
         "no_false_positives_pre": bool(no_fp_pre),
