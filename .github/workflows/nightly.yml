@@ -497,10 +497,7 @@ jobs:
           def icon_v(v):
               return "✅" if v == "ACCEPT" else ("❌" if v == "REJECT" else "⚠️")
 
-          dual_ok = (
-              synth_support == "full_statistical_support"
-              and real_support == "real_data_canonical_support"
-          )
+          dual_icon = "✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"
 
           # Build per-input detail rows for validation protocol
           input_rows = ""
@@ -525,31 +522,32 @@ jobs:
           if proto_failure_mode and proto_failure_mode != "none":
               fm_note = f"\n> **failure_mode**: `{proto_failure_mode}`\n"
 
+          run_id = os.environ.get("GITHUB_RUN_ID", "")
+
           md = f"""## ORI-C Nightly — Dual Canonical Proof + Validation Protocol
+            {dual_icon}
+            | Dimension | run_mode | verdict | support_level | |
+            |-----------|----------|---------|---------------|---|
+            | Synthetic simulation | `full_statistical` (n=60, min=50 enforced) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
+            | Real data FRED (1986–2025) | `real_data_canonical` | `{real_verdict}` | `{real_support}` | {icon(real_support)} |
+            | Validation protocol | `3-dataset × window × subsample` | `{proto_verdict}` (det_rate={proto_det_rate}) | — | {icon_v(proto_verdict)} |
+            {fm_note}
+            ### Validation Protocol — Per-Input Detail
 
-{"✅ DUAL_PROOF_COMPLETE" if dual_ok else "❌ DUAL_PROOF_INCOMPLETE"}
+            | input | verdict | failure_mode | test det_rate | test decid/indet | test σ₀ rate | stable decid | placebo decid |
+            |-------|---------|--------------|---------------|------------------|--------------|--------------|---------------|
+            {input_rows}
+            **Protocol**: 3 datasets (test / stable / placebo) × 4 window variants × 15 subsamples (80%).
+            Transition stability, stable specificity, placebo non-detection are evaluated jointly.
 
-| Dimension | run_mode | verdict | support_level | |
-|-----------|----------|---------|---------------|---|
-| Synthetic simulation | `full_statistical` (n=60, min=50 enforced) | `{synth_verdict}` | `{synth_support}` | {icon(synth_support)} |
-| Real data FRED (1986–2025) | `real_data_canonical` | `{real_verdict}` | `{real_support}` | {icon(real_support)} |
-| Validation protocol | `3-dataset × window × subsample` | `{proto_verdict}` (det_rate={proto_det_rate}) | — | {icon_v(proto_verdict)} |
-{fm_note}
-### Validation Protocol — Per-Input Detail
+            ### Labels FORBIDDEN in any report derived from any run
+            - `full support`
+            - `full empirical support`
 
-| input | verdict | failure_mode | test det_rate | test decid/indet | test σ₀ rate | stable decid | placebo decid |
-|-------|---------|--------------|---------------|------------------|--------------|--------------|---------------|
-{input_rows}
-**Protocol**: 3 datasets (test / stable / placebo) × 4 window variants × 15 subsamples (80%).
-Transition stability, stable specificity, placebo non-detection are evaluated jointly.
-
-### Labels FORBIDDEN in any report derived from any run
-- `full support`
-- `full empirical support`
-
-Use **only** the machine-computed `support_level` tokens from `dual_proof_manifest.json`.
-See artifact `nightly_dual_proof_{os.environ.get("GITHUB_RUN_ID", "")}` for combined manifest.
-"""
+            Use **only** the machine-computed `support_level` tokens from `dual_proof_manifest.json`.
+            See artifact `nightly_dual_proof_{run_id}` for combined manifest.
+            """
+          md = "\n".join(line.lstrip() for line in md.splitlines())
 
           step_summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
           if step_summary:
