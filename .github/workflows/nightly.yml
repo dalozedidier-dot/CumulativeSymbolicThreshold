@@ -386,61 +386,61 @@ jobs:
           print(json.dumps(manifest, indent=2))
           PYEOF
 
-- name: Final gate (contract) . write final_status.json
-  run: |
-    python - <<'PYEOF'
-    import json, os
-    from datetime import datetime, timezone
-    path = "_combined/dual_proof_manifest.json"
-    if not os.path.exists(path):
-        raise SystemExit(f"missing {path}")
-    d = json.loads(open(path, "r").read())
+      - name: Final gate (contract) . write final_status.json
+        run: |
+          python - <<'PYEOF'
+          import json, os
+          from datetime import datetime, timezone
+          path = "_combined/dual_proof_manifest.json"
+          if not os.path.exists(path):
+              raise SystemExit(f"missing {path}")
+          d = json.loads(open(path, "r").read())
 
-    reasons = []
-    status = str(d.get("dual_proof_status", "")).strip()
-    if status != "DUAL_PROOF_COMPLETE":
-        reasons.append(f"dual_proof_status={status}")
+          reasons = []
+          status = str(d.get("dual_proof_status", "")).strip()
+          if status != "DUAL_PROOF_COMPLETE":
+              reasons.append(f"dual_proof_status={status}")
 
-    syn = d.get("synthetic", {}) or {}
-    if str(syn.get("global_verdict","")).strip() != "ACCEPT":
-        reasons.append(f"synthetic.global_verdict={syn.get('global_verdict')}")
-    if str(syn.get("support_level","")).strip() == "":
-        reasons.append("synthetic.support_level=missing")
+          syn = d.get("synthetic", {}) or {}
+          if str(syn.get("global_verdict","")).strip() != "ACCEPT":
+              reasons.append(f"synthetic.global_verdict={syn.get('global_verdict')}")
+          if str(syn.get("support_level","")).strip() == "":
+              reasons.append("synthetic.support_level=missing")
 
-    real = d.get("real_data_fred", {}) or {}
-    if str(real.get("global_verdict","")).strip() != "ACCEPT":
-        reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
-    if str(real.get("support_level","")).strip() == "":
-        reasons.append("real_data_fred.support_level=missing")
+          real = d.get("real_data_fred", {}) or {}
+          if str(real.get("global_verdict","")).strip() != "ACCEPT":
+              reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
+          if str(real.get("support_level","")).strip() == "":
+              reasons.append("real_data_fred.support_level=missing")
 
-    proto = d.get("real_data_validation_protocol", {}) or {}
-    proto_verdict = str(proto.get("verdict","")).strip()
-    if proto_verdict == "REJECT":
-        reasons.append("validation_protocol.verdict=REJECT")
+          proto = d.get("real_data_validation_protocol", {}) or {}
+          proto_verdict = str(proto.get("verdict","")).strip()
+          if proto_verdict == "REJECT":
+              reasons.append("validation_protocol.verdict=REJECT")
 
-    final_pass = (len(reasons) == 0)
+          final_pass = (len(reasons) == 0)
 
-    out = {
-        "final_pass": final_pass,
-        "reasons": reasons,
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "inputs": {
-            "dual_proof_status": status,
-            "synthetic_global_verdict": syn.get("global_verdict"),
-            "real_data_fred_global_verdict": real.get("global_verdict"),
-            "validation_protocol_verdict": proto_verdict,
-            "validation_protocol_test_detection_rate": proto.get("test_detection_rate"),
-        },
-        "contract": {
-            "rule": "pass iff dual_proof complete, synthetic ACCEPT, real_fred ACCEPT, validation_protocol != REJECT",
-        },
-    }
+          out = {
+              "final_pass": final_pass,
+              "reasons": reasons,
+              "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+              "inputs": {
+                  "dual_proof_status": status,
+                  "synthetic_global_verdict": syn.get("global_verdict"),
+                  "real_data_fred_global_verdict": real.get("global_verdict"),
+                  "validation_protocol_verdict": proto_verdict,
+                  "validation_protocol_test_detection_rate": proto.get("test_detection_rate"),
+              },
+              "contract": {
+                  "rule": "pass iff dual_proof complete, synthetic ACCEPT, real_fred ACCEPT, validation_protocol != REJECT",
+              },
+          }
 
-    os.makedirs("_combined/tables", exist_ok=True)
-    with open("_combined/tables/final_status.json", "w") as fh:
-        json.dump(out, fh, indent=2, sort_keys=True)
-    print(json.dumps(out, indent=2, sort_keys=True))
-    PYEOF
+          os.makedirs("_combined/tables", exist_ok=True)
+          with open("_combined/tables/final_status.json", "w") as fh:
+              json.dump(out, fh, indent=2, sort_keys=True)
+          print(json.dumps(out, indent=2, sort_keys=True))
+          PYEOF
 
       - name: Write GitHub step summary
         env:
