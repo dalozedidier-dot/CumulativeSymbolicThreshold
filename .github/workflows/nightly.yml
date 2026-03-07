@@ -233,7 +233,7 @@ jobs:
             exit 0
           fi
           echo "FRED monthly: $(wc -l < 03_Data/real/fred_monthly/real.csv) rows"
-
+          
       - name: Run real data validation protocol
       - name: Run real data validation protocol (fast mode — 3 windows × 10 subsamples)
         id: protocol_run
