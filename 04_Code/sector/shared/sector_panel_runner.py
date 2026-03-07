@@ -194,6 +194,35 @@ def _read_verdict(path: Path) -> str:
     return "INDETERMINATE"
 
 
+
+
+def _sync_summary_verdict(run_dir: Path) -> None:
+    """Align tables/summary.json['verdict'] on tables/verdict.json['verdict'] when both exist.
+
+    This is contract-preserving: verdict.json is the causal source of truth after tests_causaux.py.
+    """
+    s_path = run_dir / "tables" / "summary.json"
+    v_path = run_dir / "tables" / "verdict.json"
+    if not s_path.exists() or not v_path.exists():
+        return
+    try:
+        s = json.loads(s_path.read_text(encoding="utf-8"))
+        v = json.loads(v_path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+
+    verdict_value = v.get("verdict", v.get("label", v.get("global")))
+    if verdict_value is None:
+        return
+
+    s["verdict"] = verdict_value
+    if "precheck_passed" in v:
+        s["precheck_passed"] = v.get("precheck_passed")
+    if "precheck_reason" in v:
+        s["precheck_reason"] = v.get("precheck_reason")
+
+    s_path.write_text(json.dumps(s, indent=2), encoding="utf-8")
+
 def _aggregate_verdicts(verdicts: list[str]) -> str:
     """ACCEPT only if all ACCEPT; REJECT if any REJECT; else INDETERMINATE."""
     if any(v == "REJECT" for v in verdicts):
@@ -405,6 +434,7 @@ def run_sector_panel(
         cwd=repo_root, label="tests_causaux", log_dir=log_dir,
     )
     causal_verdict = _read_verdict(real_out) if causal_r["ok"] else "INDETERMINATE"
+    _sync_summary_verdict(real_out)
 
     # ---------------------------------------------------------------------- #
     # 6. Robustness variants
@@ -444,6 +474,7 @@ def run_sector_panel(
             cwd=repo_root, label=f"causal_{vname}", log_dir=log_dir,
         )
         robust_verdicts[vname] = _read_verdict(var_out) if c_r["ok"] else "INDETERMINATE"
+        _sync_summary_verdict(var_out)
         print(f"         {vname}: {robust_verdicts[vname]}")
 
     n_accept  = sum(1 for v in robust_verdicts.values() if v == "ACCEPT")
