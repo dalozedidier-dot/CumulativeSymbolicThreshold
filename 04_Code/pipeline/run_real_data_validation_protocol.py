@@ -885,39 +885,61 @@ def main() -> int:
 
         summary = _summarise_protocol(dfw, dfs)
         (tabdir / "validation_summary.json").write_text(_json_dumps_safe(summary, indent=2), encoding="utf-8")
+        (subdir / "verdict.txt").write_text(
+            f"{summary.get('protocol_verdict', 'UNKNOWN')}\n", encoding="utf-8",
+        )
 
-        verdict = summary.get("protocol_verdict", "UNKNOWN")
+        # Log progress (reads from the just-written JSON to prove it works)
         test_m = summary.get("test_metrics", {})
-        stable_m = summary.get("stable_metrics", {})
-        placebo_m = summary.get("placebo_metrics", {})
-        failure_mode = summary.get("notes", {}).get("failure_mode")
+        td = test_m.get("n_decidable", "?")
+        ti = test_m.get("n_indeterminate", "?")
+        dr = test_m.get("detection_rate")
+        dr_s = "NaN" if dr is None or (isinstance(dr, float) and dr != dr) else f"{dr:.3f}"
+        modal = test_m.get("modal_verdict", "")
+        print(f"Protocol verdict for {stem}: {summary.get('protocol_verdict')}  "
+              f"(det_rate={dr_s}, decidable={td}, indeterminate={ti}, modal={modal})")
 
-        (subdir / "verdict.txt").write_text(f"{verdict}\n", encoding="utf-8")
+    # ── Root summary: re-read per-input JSONs from disk ──────────────────
+    #
+    # Ground truth = what is on disk, not what was in Python memory.
+    # For each input, read <stem>/tables/validation_summary.json and
+    # extract the canonical fields.  This guarantees the root summary
+    # is always consistent with the per-input artefacts.
 
-        # Canonical per-input record — metrics are the full computed dicts,
-        # never flattened, never invented.
+    def _safe_rate(m: dict, key: str = "detection_rate") -> float:
+        """Extract a rate from a metrics dict, returning 0.0 on NaN/None."""
+        v = m.get(key)
+        if v is None:
+            return 0.0
+        try:
+            f = float(v)
+            return 0.0 if f != f else f
+        except (TypeError, ValueError):
+            return 0.0
+
+    aggregate_rows: list[dict] = []
+    best_row: dict | None = None
+
+    for inp in inputs:
+        stem = Path(inp).stem.replace(" ", "_")
+        per_input_json = outdir_root / stem / "tables" / "validation_summary.json"
+        if not per_input_json.exists():
+            print(f"WARNING: {per_input_json} not found — skipping {stem}")
+            continue
+
+        # Re-read from disk: this is the authoritative source.
+        disk_summary = json.loads(per_input_json.read_text(encoding="utf-8"))
+
         row = {
-            "input_id": str(inp_path),
+            "input_id": str(inp),
             "stem": stem,
-            "input_protocol_verdict": verdict,
-            "failure_mode": failure_mode,
-            "n_rows": int(len(df_test)),
-            "test_metrics": test_m,
-            "stable_metrics": stable_m,
-            "placebo_metrics": placebo_m,
+            "input_protocol_verdict": disk_summary.get("protocol_verdict", "UNKNOWN"),
+            "failure_mode": disk_summary.get("notes", {}).get("failure_mode"),
+            "test_metrics": disk_summary.get("test_metrics", {}),
+            "stable_metrics": disk_summary.get("stable_metrics", {}),
+            "placebo_metrics": disk_summary.get("placebo_metrics", {}),
         }
         aggregate_rows.append(row)
-
-        # Best row = highest det_rate among ACCEPT; else highest det_rate overall
-        def _safe_rate(m: dict, key: str = "detection_rate") -> float:
-            v = m.get(key)
-            if v is None:
-                return 0.0
-            try:
-                f = float(v)
-                return 0.0 if f != f else f
-            except (TypeError, ValueError):
-                return 0.0
 
         if best_row is None:
             best_row = row
@@ -931,13 +953,6 @@ def main() -> int:
                 )
             if _rank(row) > _rank(best_row):
                 best_row = row
-
-        td = test_m.get("n_decidable", "?")
-        ti = test_m.get("n_indeterminate", "?")
-        dr = _safe_rate(test_m)
-        modal = test_m.get("modal_verdict", "")
-        print(f"Protocol verdict for {stem}: {verdict}  "
-              f"(det_rate={dr:.3f}, decidable={td}, indeterminate={ti}, modal={modal})")
 
     # ── Aggregate verdict ────────────────────────────────────────────────
     any_accept = any(r["input_protocol_verdict"] == "ACCEPT" for r in aggregate_rows)
@@ -954,7 +969,7 @@ def main() -> int:
 
     # ── Root validation_summary.json (canonical schema) ──────────────────
     #
-    # Contract:
+    # Contract (every consumer reads this file):
     #   protocol_verdict   — global verdict across all inputs
     #   best_input         — path of the best-performing input
     #   best_stem          — stem of that input
@@ -964,10 +979,10 @@ def main() -> int:
     #   placebo_metrics    — full metrics dict from best input
     #   inputs[]           — per-input records, each with:
     #       input_id, stem, input_protocol_verdict, failure_mode,
-    #       test_metrics, stable_metrics, placebo_metrics (full dicts)
+    #       test_metrics{}, stable_metrics{}, placebo_metrics{} (full dicts)
     #
-    # The workflow reads d.get("test_metrics", {}).get("detection_rate")
-    # and gets the real computed value from the best input.
+    # The workflow reads d["test_metrics"]["detection_rate"] and gets the
+    # real computed value from the best input.  NaN is serialised as null.
     best = best_row or {}
     overall = {
         "protocol_verdict": overall_verdict,
