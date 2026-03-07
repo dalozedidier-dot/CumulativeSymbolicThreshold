@@ -468,7 +468,14 @@ def main() -> int:
             no_fp_pre = False
 
     # Pre and post windows — always in step units
+    # If threshold is hit so early that the pre-window has fewer than
+    # MIN_PRE_OBS observations, the split point is unreliable for statistical
+    # testing.  Fall back to the midpoint split (same as no-threshold case)
+    # so that both windows have enough data for Welch/MWU/bootstrap.
+    MIN_PRE_OBS = 10  # Welch t-test minimum
     if thr_step is None:
+        s0 = int(df_t["_step"].iloc[len(df_t) // 2])
+    elif thr_step < MIN_PRE_OBS:
         s0 = int(df_t["_step"].iloc[len(df_t) // 2])
     else:
         s0 = int(thr_step)
