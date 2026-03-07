@@ -307,7 +307,7 @@ jobs:
           DET_RATE=$(python -c "
           import json
           d = json.loads(open('_ci_out/real/validation_protocol/tables/validation_summary.json').read())
-          m = d.get('test_metrics', {})
+          m = d.get('test_metrics') or {}
           r = m.get('detection_rate')
           print('NaN' if r is None else f'{float(r):.3f}')
           " 2>/dev/null || echo "NaN")
@@ -423,7 +423,7 @@ jobs:
           if validation_summary:
               proto_verdict = validation_summary.get("protocol_verdict", proto_verdict)
               proto_failure_mode = validation_summary.get("failure_mode") or proto_failure_mode
-              tm = validation_summary.get("test_metrics", {})
+              tm = validation_summary.get("test_metrics") or {}
               r = tm.get("detection_rate")
               proto_det_rate = "NaN" if r is None else f"{float(r):.3f}"
 
@@ -551,7 +551,7 @@ jobs:
                   val_inputs = vs.get("inputs", [])
                   proto_verdict = vs.get("protocol_verdict", proto_verdict)
                   proto_failure_mode = vs.get("failure_mode") or "none"
-                  tm = vs.get("test_metrics", {})
+                  tm = vs.get("test_metrics") or {}
                   r = tm.get("detection_rate")
                   proto_det_rate = "NaN" if r is None else f"{float(r):.3f}"
               except Exception:
