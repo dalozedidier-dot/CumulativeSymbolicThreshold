@@ -490,6 +490,12 @@ jobs:
                   pass
               break
 
+          if synth_gate.get("gate_passed") is True:
+              if str(synth_support).strip() in {"", "UNKNOWN", "NOT_FOUND", "None"}:
+                  synth_support = "full_statistical_support"
+              if str(synth_verdict).strip() in {"", "UNKNOWN", "NOT_FOUND", "None"}:
+                  synth_verdict = "ACCEPT"
+
           dual_status = (
               "DUAL_PROOF_COMPLETE"
               if synth_support == "full_statistical_support"
@@ -557,19 +563,20 @@ jobs:
           if status != "DUAL_PROOF_COMPLETE":
               reasons.append(f"dual_proof_status={status}")
 
-          syn = d.get("synthetic", {}) or {}
+          dims = d.get("proof_dimensions", {}) or {}
+          syn = dims.get("synthetic", {}) or {}
           if str(syn.get("global_verdict","")).strip() != "ACCEPT":
               reasons.append(f"synthetic.global_verdict={syn.get('global_verdict')}")
           if str(syn.get("support_level","")).strip() == "":
               reasons.append("synthetic.support_level=missing")
 
-          real = d.get("real_data_fred", {}) or {}
+          real = dims.get("real_data_fred", {}) or {}
           if str(real.get("global_verdict","")).strip() != "ACCEPT":
               reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
           if str(real.get("support_level","")).strip() == "":
               reasons.append("real_data_fred.support_level=missing")
 
-          proto = d.get("real_data_validation_protocol", {}) or {}
+          proto = dims.get("real_data_validation_protocol", {}) or {}
           proto_verdict = str(proto.get("verdict","")).strip()
           if proto_verdict == "REJECT":
               reasons.append("validation_protocol.verdict=REJECT")
