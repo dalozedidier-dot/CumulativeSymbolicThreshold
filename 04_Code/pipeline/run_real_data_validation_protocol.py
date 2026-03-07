@@ -691,8 +691,7 @@ def _summarise_protocol(dfw: pd.DataFrame, dfs: pd.DataFrame) -> dict:
     Returns
     -------
     dict with keys: protocol_verdict, test_det_rate, stable_det_rate,
-    placebo_det_rate, test_modal, test_metrics, stable_metrics, placebo_metrics,
-    notes.
+    placebo_det_rate, test_modal, datasets{test,stable,placebo}.metrics, notes.
     """
     def _rows_for(df: pd.DataFrame, label: str) -> list[dict]:
         if df.empty:
@@ -1002,15 +1001,18 @@ def main() -> int:
     #   best_input         — path of the best-performing input
     #   best_stem          — stem of that input
     #   failure_mode       — from best input (null if ACCEPT/INDETERMINATE)
-    #   test_metrics       — full metrics dict from best input (backward compat)
+    #   test_metrics       — full metrics dict from best input
     #   stable_metrics     — full metrics dict from best input
     #   placebo_metrics    — full metrics dict from best input
+    #   test_det_rate      — compat alias: test_metrics.detection_rate
+    #   stable_det_rate    — compat alias: stable_metrics.detection_rate
+    #   placebo_det_rate   — compat alias: placebo_metrics.detection_rate
     #   inputs[]           — per-input records, each with:
     #       input_id, stem, input_protocol_verdict, failure_mode,
     #       test_metrics{}, stable_metrics{}, placebo_metrics{} (full dicts)
     #
-    # The workflow reads d["test_metrics"]["detection_rate"] and gets the
-    # real computed value from the best input.  NaN is serialised as null.
+    # Canonical read path: d["test_metrics"]["detection_rate"]
+    # Compat read path:    d["test_det_rate"]  (same value)
     # Contract: never write {} — use None + missing_metrics_reason instead.
     best = best_row or {}
     best_test = best.get("test_metrics")
@@ -1029,6 +1031,10 @@ def main() -> int:
         "test_metrics": best_test,
         "stable_metrics": best_stable,
         "placebo_metrics": best_placebo,
+        # Compat flat keys — same value as *_metrics.detection_rate
+        "test_det_rate": _safe_rate(best_test),
+        "stable_det_rate": _safe_rate(best_stable),
+        "placebo_det_rate": _safe_rate(best_placebo),
         "inputs": aggregate_rows,
     }
     if root_missing:
@@ -1048,7 +1054,7 @@ def main() -> int:
     print("\n" + "=" * 78)
     print(f"OVERALL PROTOCOL VERDICT: {overall_verdict}")
     if best_row:
-        bdr = _safe_rate(best_row.get("test_metrics", {}))
+        bdr = _safe_rate(best_row.get("test_metrics"))
         print(f"Best input: {best_row['input_id']}  "
               f"(verdict={best_row['input_protocol_verdict']}, det_rate={bdr:.3f})")
     print("=" * 78)
