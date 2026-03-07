@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "policy": {
+    "if_gate_passed_then": {
+      "global_verdict": "ACCEPT",
+      "support_level": "full_statistical_support"
+    }
+  }
+}

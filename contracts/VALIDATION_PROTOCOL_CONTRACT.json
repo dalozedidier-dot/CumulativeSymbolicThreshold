@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "root_summary": {
+    "required_files": ["tables/validation_summary.json"],
+    "required_keys": ["protocol_verdict", "best_stem", "test_metrics", "stable_metrics", "placebo_metrics"],
+    "compat_keys": ["test_det_rate", "stable_det_rate", "placebo_det_rate"]
+  },
+  "decidability": {
+    "min_decidable_per_condition": 6,
+    "min_total_decidable": 18,
+    "max_indeterminate_rate_per_condition": 0.40
+  },
+  "verdict_policy": {
+    "all_indeterminate": "INDETERMINATE",
+    "non_specific_detector": "REJECT",
+    "insufficient_decidable": "INDETERMINATE"
+  }
+}
