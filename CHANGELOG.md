@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.3.0] — 2026-03-07 — Multi-domain validation + repo consolidation
+
+### Added
+- Multi-domain real data validation: 4 new pilot datasets (CPI France, Énergie EU27,
+  Météo Estonie, Trafic Allemagne) run through the full ORI-C pipeline + causal tests
+- Nightly workflow covering all 5 pilot datasets (FRED + 4 sector pilots)
+- Multi-domain verdict table (`05_Results/real/multi_domain_verdict_table.md`)
+- Code coverage reporting via Codecov (badge + `codecov-action` in CI)
+- README files for opaque directories: `contracts/`, `tools/`, `ci_metrics/`,
+  `Articles/`, `data/`
+- `mkdocs.yml` for GitHub Pages documentation with mkdocstrings
+- `[project.optional-dependencies] docs` in pyproject.toml (mkdocs, material, mkdocstrings)
+
+### Changed
+- Consolidated documentation: improved README.md with documentation table, codecov badge,
+  updated repository structure reflecting all directories
+- Harmonized requirements: `environment.yml` now delegates to `pyproject.toml` via
+  `pip install -e ".[dev]"` instead of duplicating dependency lists
+- Nightly workflow `dual_proof_summary` now depends on all 5 real data jobs
+  (FRED + CPI + Énergie + Météo + Trafic)
+
+### Notes
+- Sector pilots (N=35-44 annual observations) return pipeline-level ACCEPT but causal tests
+  INDETERMINATE (precheck: min_points_per_segment < 60). This is a data limitation documented
+  honestly in the multi-domain verdict table.
+- Full causal support confirmed only on FRED (N=480). Sector pilots provide directional
+  evidence consistent with ORI-C hypothesis.
+
+---
+
 ## v1.3 (2026-02-22) — Verrou machine "full support" + conformance suite données réelles
 
 ### A — Verrou "full_statistical_support" : Option B machine-enforced
