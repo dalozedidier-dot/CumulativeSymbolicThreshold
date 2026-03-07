@@ -986,8 +986,10 @@ def main() -> int:
     # extract the canonical fields.  This guarantees the root summary
     # is always consistent with the per-input artefacts.
 
-    def _safe_rate(m: dict, key: str = "detection_rate") -> float:
+    def _safe_rate(m: dict | None, key: str = "detection_rate") -> float:
         """Extract a rate from a metrics dict, returning 0.0 on NaN/None."""
+        if not m:
+            return 0.0
         v = m.get(key)
         if v is None:
             return 0.0
@@ -1010,15 +1012,35 @@ def main() -> int:
         # Re-read from disk: this is the authoritative source.
         disk_summary = json.loads(per_input_json.read_text(encoding="utf-8"))
 
+        # Extract per-dataset metrics.  Never write {} when the sub-summary
+        # has real data — use None + missing_metrics_reason when absent.
+        def _extract_metrics(ds_key: str) -> dict | None:
+            m = disk_summary.get(f"{ds_key}_metrics")
+            if isinstance(m, dict) and m:
+                return m
+            return None
+
+        test_m = _extract_metrics("test")
+        stable_m = _extract_metrics("stable")
+        placebo_m = _extract_metrics("placebo")
+
+        any_missing = [k for k, v in [("test", test_m), ("stable", stable_m), ("placebo", placebo_m)] if v is None]
+
+        notes_dict = disk_summary.get("notes") or {}
         row = {
             "input_id": str(inp),
             "stem": stem,
             "input_protocol_verdict": disk_summary.get("protocol_verdict", "UNKNOWN"),
-            "failure_mode": disk_summary.get("notes", {}).get("failure_mode"),
-            "test_metrics": disk_summary.get("test_metrics", {}),
-            "stable_metrics": disk_summary.get("stable_metrics", {}),
-            "placebo_metrics": disk_summary.get("placebo_metrics", {}),
+            "failure_mode": notes_dict.get("failure_mode"),
+            "test_metrics": test_m,
+            "stable_metrics": stable_m,
+            "placebo_metrics": placebo_m,
         }
+        if any_missing:
+            row["missing_metrics_reason"] = (
+                f"Empty or absent metrics for: {', '.join(any_missing)}. "
+                f"Per-input JSON exists at {per_input_json}."
+            )
         aggregate_rows.append(row)
 
         if best_row is None:
@@ -1063,7 +1085,13 @@ def main() -> int:
     #
     # The workflow reads d["test_metrics"]["detection_rate"] and gets the
     # real computed value from the best input.  NaN is serialised as null.
+    # Contract: never write {} — use None + missing_metrics_reason instead.
     best = best_row or {}
+    best_test = best.get("test_metrics")
+    best_stable = best.get("stable_metrics")
+    best_placebo = best.get("placebo_metrics")
+    root_missing = [k for k, v in [("test", best_test), ("stable", best_stable), ("placebo", best_placebo)] if v is None]
+
     overall = {
         "protocol_verdict": overall_verdict,
         "n_inputs": len(inputs),
@@ -1072,11 +1100,16 @@ def main() -> int:
         "best_input": best.get("input_id"),
         "best_stem": best.get("stem"),
         "failure_mode": best.get("failure_mode"),
-        "test_metrics": best.get("test_metrics", {}),
-        "stable_metrics": best.get("stable_metrics", {}),
-        "placebo_metrics": best.get("placebo_metrics", {}),
+        "test_metrics": best_test,
+        "stable_metrics": best_stable,
+        "placebo_metrics": best_placebo,
         "inputs": aggregate_rows,
     }
+    if root_missing:
+        overall["missing_metrics_reason"] = (
+            f"No computed metrics for: {', '.join(root_missing)} "
+            f"(best_stem={best.get('stem', '?')})"
+        )
     (outdir_root / "tables" / "validation_summary.json").write_text(
         _json_dumps_safe(overall, indent=2), encoding="utf-8",
     )

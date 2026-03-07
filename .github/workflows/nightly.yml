@@ -433,6 +433,7 @@ jobs:
                           return {}
                       return {
                           "detection_rate": m.get("detection_rate"),
+                          "non_detection_rate": m.get("non_detection_rate"),
                           "n_decidable": m.get("n_decidable"),
                           "n_indeterminate": m.get("n_indeterminate"),
                           "sigma_zero_post_rate": m.get("sigma_zero_post_rate"),
@@ -589,7 +590,8 @@ jobs:
                   f"{_fmt(tm.get('detection_rate'))} | "
                   f"{tm.get('n_decidable', '?')} / {tm.get('n_indeterminate', '?')} | "
                   f"{_fmt(tm.get('sigma_zero_post_rate'), 2)} | "
-                  f"{sm.get('n_decidable', '?')} | {pm.get('n_decidable', '?')} |\n"
+                  f"{_fmt(sm.get('detection_rate'))} ({sm.get('n_decidable', '?')}) | "
+                  f"{_fmt(pm.get('detection_rate'))} ({pm.get('n_decidable', '?')}) |\n"
               )
 
           fm_note = ""
@@ -608,8 +610,8 @@ jobs:
             {fm_note}
             ### Validation Protocol — Per-Input Detail
 
-            | input | verdict | failure_mode | test det_rate | test decid/indet | test σ₀ rate | stable decid | placebo decid |
-            |-------|---------|--------------|---------------|------------------|--------------|--------------|---------------|
+            | input | verdict | failure_mode | test det_rate | test decid/indet | test σ₀ rate | stable det_rate (n) | placebo det_rate (n) |
+            |-------|---------|--------------|---------------|------------------|--------------|---------------------|----------------------|
             {input_rows}
             **Protocol**: 3 datasets (test / stable / placebo) × 4 window variants × 15 subsamples (80%).
             Transition stability, stable specificity, placebo non-detection are evaluated jointly.
