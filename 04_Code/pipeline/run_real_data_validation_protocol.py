@@ -723,9 +723,11 @@ def _summarise_protocol(dfw: pd.DataFrame, dfs: pd.DataFrame) -> dict:
         "stable_det_rate": stable_metrics.get("detection_rate", 0.0),
         "placebo_det_rate": placebo_metrics.get("detection_rate", 0.0),
         "test_modal": test_metrics.get("modal_verdict", ""),
-        "test_metrics": test_metrics,
-        "stable_metrics": stable_metrics,
-        "placebo_metrics": placebo_metrics,
+        "datasets": {
+            "test":    {"metrics": test_metrics},
+            "stable":  {"metrics": stable_metrics},
+            "placebo": {"metrics": placebo_metrics},
+        },
         "notes": notes,
     }
 
@@ -890,7 +892,8 @@ def main() -> int:
         )
 
         # Log progress (reads from the just-written JSON to prove it works)
-        test_m = summary.get("test_metrics", {})
+        ds_block = summary.get("datasets") or {}
+        test_m = (ds_block.get("test") or {}).get("metrics") or {}
         td = test_m.get("n_decidable", "?")
         ti = test_m.get("n_indeterminate", "?")
         dr = test_m.get("detection_rate")
@@ -932,10 +935,13 @@ def main() -> int:
         # Re-read from disk: this is the authoritative source.
         disk_summary = json.loads(per_input_json.read_text(encoding="utf-8"))
 
-        # Extract per-dataset metrics.  Never write {} when the sub-summary
-        # has real data — use None + missing_metrics_reason when absent.
+        # Extract per-dataset metrics from datasets.{test,stable,placebo}.metrics.
+        # Never write {} — use None + missing_metrics_reason when absent.
+        datasets_block = disk_summary.get("datasets") or {}
+
         def _extract_metrics(ds_key: str) -> dict | None:
-            m = disk_summary.get(f"{ds_key}_metrics")
+            ds = datasets_block.get(ds_key) or {}
+            m = ds.get("metrics")
             if isinstance(m, dict) and m:
                 return m
             return None
