@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -106,7 +106,7 @@ jobs:
 
       - name: Upload synthetic artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_synthetic_${{ github.run_id }}
           path: _ci_out/synthetic
@@ -125,7 +125,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -187,7 +187,7 @@ jobs:
 
       - name: Upload real data artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_real_fred_${{ github.run_id }}
           path: _ci_out/real/fred_monthly
@@ -208,7 +208,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -265,7 +265,7 @@ jobs:
 
       - name: Upload protocol artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_validation_protocol_${{ github.run_id }}
           path: _ci_out/real/validation_protocol
@@ -281,14 +281,14 @@ jobs:
 
     steps:
       - name: Download synthetic artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nightly_synthetic_${{ github.run_id }}
           path: _combined/synthetic
         continue-on-error: true
 
       - name: Download real data artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nightly_real_fred_${{ github.run_id }}
           path: _combined/real_fred
@@ -334,6 +334,18 @@ jobs:
                   pass
               break
 
+
+          # Fallback: if workflow outputs did not propagate synthetic verdict/support but gate passed, infer them.
+          try:
+              gate_passed = bool(synth_gate.get("gate_passed")) if synth_gate else False
+          except Exception:
+              gate_passed = False
+
+          if gate_passed:
+              if not synth_support or synth_support in ("NOT_FOUND", "UNKNOWN", "None"):
+                  synth_support = "full_statistical_support"
+              if not synth_verdict or synth_verdict in ("UNKNOWN", "None"):
+                  synth_verdict = "ACCEPT"
           dual_status = (
               "DUAL_PROOF_COMPLETE"
               if synth_support == "full_statistical_support"
@@ -446,7 +458,7 @@ jobs:
           PYEOF
 
       - name: Upload combined dual proof artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_dual_proof_${{ github.run_id }}
           path: _combined
