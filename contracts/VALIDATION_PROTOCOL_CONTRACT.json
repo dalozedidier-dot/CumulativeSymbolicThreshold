@@ -1,0 +1,49 @@
+{
+  "schema": "oric.validation_protocol_contract.v1",
+  "note": "Frozen contract defining the root schema for tables/validation_summary.json. Source of truth — no consumer may invent additional required fields.",
+  "version": 1,
+  "root_schema": {
+    "required_keys": [
+      "protocol_verdict",
+      "best_input",
+      "best_stem",
+      "failure_mode",
+      "test_metrics",
+      "stable_metrics",
+      "placebo_metrics",
+      "inputs"
+    ],
+    "compat_keys": {
+      "test_det_rate":    "Alias for test_metrics.detection_rate",
+      "stable_det_rate":  "Alias for stable_metrics.detection_rate",
+      "placebo_det_rate": "Alias for placebo_metrics.detection_rate"
+    },
+    "metrics_fields": {
+      "detection_rate":       { "type": ["number", "null"] },
+      "n_decidable":          { "type": ["integer", "null"] },
+      "n_indeterminate":      { "type": ["integer", "null"] },
+      "sigma_zero_post_rate": { "type": ["number", "null"] },
+      "modal_verdict":        { "type": ["string", "null"] }
+    }
+  },
+  "decidability_rules": {
+    "min_decidable_per_condition": 6,
+    "min_total_decidable": 18,
+    "max_indeterminate_rate": 0.40,
+    "source": "contracts/VALIDATION_DECIDABILITY.json"
+  },
+  "verdict_rules": {
+    "ACCEPT":        "All conditions (C1+C2+C3) pass AND decidability thresholds met.",
+    "REJECT":        "At least one condition fails AND decidability thresholds met.",
+    "INDETERMINATE": "Decidability thresholds NOT met OR data insufficient for any condition.",
+    "failure_modes": [
+      "insufficient_decidable",
+      "stable_false_positive",
+      "placebo_false_positive",
+      "low_test_detection",
+      "contrast_failure"
+    ]
+  },
+  "canonical_output_path": "tables/validation_summary.json",
+  "note_on_consumers": "dual_proof reads ONLY the root tables/validation_summary.json, never per-input sub-summaries."
+}

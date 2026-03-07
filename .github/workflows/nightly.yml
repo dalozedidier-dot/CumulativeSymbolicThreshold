@@ -104,6 +104,21 @@ jobs:
           echo "synthetic_global_verdict=${SYNTHETIC_VERDICT}" >> "$GITHUB_OUTPUT"
           echo "Synthetic support_level: ${SYNTHETIC_SUPPORT}   verdict: ${SYNTHETIC_VERDICT}"
 
+      - name: Promote synthetic summary to canonical root path
+        run: |
+          set -e
+          mkdir -p _ci_out/synthetic/tables
+          # Copy global_verdict.json to a fixed canonical path (no timestamp in path)
+          SRC=$(find _ci_out/synthetic/canonical_tests -name global_verdict.json -type f | head -1)
+          if [ -n "$SRC" ]; then
+            cp "$SRC" _ci_out/synthetic/tables/synthetic_gate.json
+            echo "Promoted $SRC -> _ci_out/synthetic/tables/synthetic_gate.json"
+          else
+            echo '{"global":"UNKNOWN","support_level":"NOT_FOUND","full_validation_gate":{"gate_passed":null}}' \
+              > _ci_out/synthetic/tables/synthetic_gate.json
+            echo "WARNING: global_verdict.json not found — wrote fallback"
+          fi
+
       - name: Upload synthetic artifact
         if: always()
         uses: actions/upload-artifact@v7
@@ -397,30 +412,26 @@ jobs:
           proto_det_rate = os.environ.get("PROTO_DET_RATE", "") or "NaN"
           proto_failure_mode = os.environ.get("PROTO_FAILURE_MODE", "") or "none"
 
-          # ── Synthetic: read global_verdict.json from artifact (authoritative) ──
-          # The env vars may be empty if build_registered_report_assets.py
-          # failed before the echo lines executed.  The artifact file is the
-          # ground truth.
+          # ── Synthetic: read canonical root synthetic_gate.json (no glob) ──
           synth_gate = {}
-          for f in glob.glob("_combined/synthetic/**/global_verdict.json", recursive=True):
+          synth_path = "_combined/synthetic/tables/synthetic_gate.json"
+          if os.path.exists(synth_path):
               try:
-                  d = json.loads(open(f).read())
+                  d = json.loads(open(synth_path).read())
                   synth_gate = d.get("full_validation_gate", {})
-                  # Override env-var values with authoritative artifact values
                   synth_verdict = d.get("global", "") or synth_verdict
                   synth_support = d.get("support_level", "") or synth_support
               except Exception:
                   pass
-              break
 
-          # ── Real FRED: read global_summary.json from artifact ──
-          for f in glob.glob("_combined/real_fred/**/global_summary.json", recursive=True):
+          # ── Real FRED: read canonical root global_summary.json (no glob) ──
+          real_path = "_combined/real_fred/tables/global_summary.json"
+          if os.path.exists(real_path):
               try:
-                  d = json.loads(open(f).read())
+                  d = json.loads(open(real_path).read())
                   real_support = d.get("support_level", "") or real_support
               except Exception:
                   pass
-              break
 
           # ── Validation protocol: read ROOT validation_summary.json + KPIs ──
           # Exact path — no glob ambiguity with per-input JSONs.
@@ -532,33 +543,34 @@ jobs:
           python - <<'PYEOF'
           import json, glob, os
 
-          # ── Read all values from artifacts (ground truth), not env vars ──
+          # ── Read all values from canonical root paths (no globs) ──
           # Synthetic
           synth_verdict = "UNKNOWN"
           synth_support = "NOT_FOUND"
-          for f in glob.glob("_combined/synthetic/**/global_verdict.json", recursive=True):
+          synth_path = "_combined/synthetic/tables/synthetic_gate.json"
+          if os.path.exists(synth_path):
               try:
-                  d = json.loads(open(f).read())
+                  d = json.loads(open(synth_path).read())
                   synth_verdict = d.get("global", "") or "UNKNOWN"
                   synth_support = d.get("support_level", "") or "NOT_FOUND"
               except Exception:
                   pass
-              break
 
           # Real FRED
           real_verdict = "UNKNOWN"
           real_support = "NOT_FOUND"
-          for f in glob.glob("_combined/real_fred/**/global_summary.json", recursive=True):
+          real_path = "_combined/real_fred/tables/global_summary.json"
+          if os.path.exists(real_path):
               try:
-                  d = json.loads(open(f).read())
+                  d = json.loads(open(real_path).read())
                   real_support = d.get("support_level", "") or "NOT_FOUND"
               except Exception:
                   pass
-              break
           # Also try verdict.txt
-          for f in glob.glob("_combined/real_fred/verdict.txt"):
+          vt_path = "_combined/real_fred/verdict.txt"
+          if os.path.exists(vt_path):
               try:
-                  real_verdict = open(f).read().strip() or real_verdict
+                  real_verdict = open(vt_path).read().strip() or real_verdict
               except Exception:
                   pass
 
@@ -655,7 +667,121 @@ jobs:
           print(md)
           PYEOF
 
-      - name: Upload combined dual proof artifact
+      - name: "Final Gate — contractual binary verdict"
+        id: final_gate
+        run: |
+          python - <<'PYEOF'
+          import hashlib
+          import json
+          import os
+          import sys
+          from datetime import datetime, timezone
+
+          # ── 1. Verify presence of the 4 canonical artefacts ──
+          ARTEFACTS = {
+              "synthetic_gate":       "_combined/synthetic/tables/synthetic_gate.json",
+              "real_fred_summary":    "_combined/real_fred/tables/global_summary.json",
+              "validation_summary":   "_combined/validation_protocol/tables/validation_summary.json",
+              "dual_proof_manifest":  "_combined/dual_proof_manifest.json",
+          }
+
+          missing = [k for k, p in ARTEFACTS.items() if not os.path.exists(p)]
+          artefact_data = {}
+          for k, p in ARTEFACTS.items():
+              if os.path.exists(p):
+                  try:
+                      artefact_data[k] = json.loads(open(p).read())
+                  except Exception as e:
+                      missing.append(f"{k} (parse error: {e})")
+
+          # ── 2. Read root summaries ──
+          synth = artefact_data.get("synthetic_gate", {})
+          real  = artefact_data.get("real_fred_summary", {})
+          proto = artefact_data.get("validation_summary", {})
+          dual  = artefact_data.get("dual_proof_manifest", {})
+
+          # ── 3. Apply contractual final_pass rules ──
+          fail_reasons = []
+
+          # Rule 1: synthetic.global_verdict == ACCEPT
+          synth_verdict = synth.get("global", "UNKNOWN")
+          if synth_verdict != "ACCEPT":
+              fail_reasons.append(f"synthetic.global_verdict={synth_verdict} (expected ACCEPT)")
+
+          # Rule 2: real_fred.global_verdict == ACCEPT
+          real_verdict = real.get("global_verdict", "UNKNOWN")
+          if real_verdict != "ACCEPT":
+              fail_reasons.append(f"real_fred.global_verdict={real_verdict} (expected ACCEPT)")
+
+          # Rule 3: validation_protocol.protocol_verdict != REJECT
+          #   (INDETERMINATE is allowed, but reported clearly)
+          proto_verdict = proto.get("protocol_verdict", "UNKNOWN")
+          if proto_verdict == "REJECT":
+              fail_reasons.append(f"validation_protocol.protocol_verdict=REJECT")
+
+          # Rule 4: dual_proof_status == DUAL_PROOF_COMPLETE
+          dual_status = dual.get("dual_proof_status", "UNKNOWN")
+          if dual_status != "DUAL_PROOF_COMPLETE":
+              fail_reasons.append(f"dual_proof_status={dual_status} (expected DUAL_PROOF_COMPLETE)")
+
+          # Missing artefacts
+          for m in missing:
+              fail_reasons.append(f"missing_artefact: {m}")
+
+          final_pass = len(fail_reasons) == 0
+
+          # ── 4. Compute hash of all artefact files ──
+          artefact_hashes = {}
+          for k, p in ARTEFACTS.items():
+              if os.path.exists(p):
+                  h = hashlib.sha256(open(p, "rb").read()).hexdigest()
+                  artefact_hashes[k] = h
+
+          # ── 5. Write final_status.json ──
+          final_status = {
+              "schema": "oric.final_status.v1",
+              "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+              "run_id": os.environ.get("GITHUB_RUN_ID", ""),
+              "final_pass": final_pass,
+              "fail_reasons": fail_reasons if fail_reasons else None,
+              "verdicts": {
+                  "synthetic_global_verdict": synth_verdict,
+                  "real_fred_global_verdict": real_verdict,
+                  "validation_protocol_verdict": proto_verdict,
+                  "dual_proof_status": dual_status,
+              },
+              "protocol_note": "INDETERMINATE allowed for validation_protocol (not a blocker)" if proto_verdict == "INDETERMINATE" else None,
+              "artefact_hashes": artefact_hashes,
+          }
+
+          os.makedirs("_combined/final/tables", exist_ok=True)
+          out_path = "_combined/final/tables/final_status.json"
+          with open(out_path, "w") as f:
+              json.dump(final_status, f, indent=2)
+
+          # ── 6. Report ──
+          icon = "PASS" if final_pass else "FAIL"
+          print(f"\n{'='*65}")
+          print(f"  FINAL GATE: {icon}")
+          print(f"{'='*65}")
+          print(f"  synthetic:            {synth_verdict}")
+          print(f"  real_fred:            {real_verdict}")
+          print(f"  validation_protocol:  {proto_verdict}")
+          print(f"  dual_proof_status:    {dual_status}")
+          if fail_reasons:
+              print(f"  fail_reasons:")
+              for r in fail_reasons:
+                  print(f"    - {r}")
+          print(f"{'='*65}\n")
+          print(json.dumps(final_status, indent=2))
+
+          if not final_pass:
+              print("\nFinal gate FAILED — see fail_reasons above.")
+              sys.exit(1)
+          PYEOF
+
+      - name: Upload combined dual proof artifact (incl. final_status)
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: nightly_dual_proof_${{ github.run_id }}

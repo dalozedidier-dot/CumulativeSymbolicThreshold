@@ -1,0 +1,22 @@
+{
+  "schema": "oric.synthetic_gate_contract.v1",
+  "note": "Frozen contract for the synthetic simulation gate. Single rule: gate_passed => global_verdict=ACCEPT.",
+  "version": 1,
+  "gate_rule": {
+    "condition": "full_validation_gate.gate_passed == true",
+    "implies": "global_verdict == 'ACCEPT' AND support_level == 'full_statistical_support'",
+    "description": "If the triplet gate (p + CI99% + SESOI + power >= 0.70) passes with n_runs >= 50 for all statistical tests, the synthetic dimension is ACCEPT with full_statistical_support."
+  },
+  "support_level_vocabulary": {
+    "full_statistical_support":       "run_mode=full_statistical, gate passed, global=ACCEPT",
+    "full_statistical_gates_failed":  "run_mode=full_statistical, gate failed, global=ACCEPT",
+    "smoke_ci_accept":                "run_mode=smoke_ci, global=ACCEPT (non-canonical)",
+    "rejected":                       "global=REJECT",
+    "inconclusive":                   "global=INDETERMINATE"
+  },
+  "canonical_output_files": {
+    "global_verdict": "<run_dir>/global_verdict.json (produced by analyse_verdicts_canonical.py)",
+    "synthetic_gate": "tables/synthetic_gate.json (promoted copy at canonical root, no timestamp in path)"
+  },
+  "note_on_consumers": "dual_proof reads ONLY tables/synthetic_gate.json (promoted canonical root), never globs into timestamped subdirectories."
+}
