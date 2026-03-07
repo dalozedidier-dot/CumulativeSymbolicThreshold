@@ -1,25 +1,33 @@
-# ORI-C . Index documentation
+# ORI-C — Cumulative Symbolic Threshold
 
-## Démarrage
-- README racine : vue rapide et commandes
-- docs/REPRODUCE.md : reproduction locale, seeds, manifests
-- docs/installation.md : environnements (pip/conda/docker)
+**A pre-registered, falsifiable scientific framework** for testing the ORI-C hypothesis:
+beyond a critical threshold of symbolic accumulation, the symbolic transmission channel
+becomes self-reinforcing — a measurable phase transition.
 
-## Références normatives
-- docs/ORI_C_POINT_OF_TRUTH.md : point de vérité unique (théorie, règles, invariants)
-- 02_Protocol/ : pré-enregistrement, critères, règles de décision
+## Quick navigation
 
-## Pipelines CI
-- docs/CI_PIPELINES.md : workflows canoniques, smoke, real-data, collector
-- docs/maintenance/WORKFLOWS_NOTES.md : historique technique (patchs, contraintes)
+| Document | Description |
+|----------|-------------|
+| [Installation](installation.md) | pip, conda, Docker setup |
+| [Reproduction](REPRODUCE.md) | Seeds, manifests, full reproducibility |
+| [CI Pipelines](CI_PIPELINES.md) | Workflow reference (CI, nightly, collector) |
+| [Symbolic Tests](SYMBOLIC_TESTS.md) | T1–T8 test descriptions |
+| [Repository Layout](REPO_LAYOUT.md) | Directory structure and sources of truth |
+| [Point of Truth](ORI_C_POINT_OF_TRUTH.md) | Canonical normative reference |
 
-## Données
-- docs/data/DATA_STRUCTURE.md : structure
-- docs/data/README_DATA_REAL_PACK.md : data réelle (packs)
+## API Reference
 
-## Tests
-- docs/SYMBOLIC_TESTS.md : tests symboliques
-- docs/T9_DIAGNOSTICS.md : diagnostics
+| Module | Description |
+|--------|-------------|
+| [ori_core](api/ori_core.md) | Cap(t), Sigma(t), V(t) computations |
+| [symbolic](api/symbolic.md) | S(t), C(t), threshold detection |
+| [decision](api/decision.md) | NaN-safe hierarchical verdict engine |
+| [proxy_spec](api/proxy_spec.md) | Versioned, hashable column mapping |
+| [prereg](api/prereg.md) | Frozen ex-ante parameter spec |
+| [randomization](api/randomization.md) | Seed management |
 
-## Publications internes (artefacts)
-- docs/publications/ : pancartes, manifeste, PDF
+## Links
+
+- [GitHub Repository](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold)
+- [OSF Pre-registration](https://osf.io/g62pz/)
+- [DOI: 10.17605/OSF.IO/G62PZ](https://doi.org/10.17605/OSF.IO/G62PZ)
