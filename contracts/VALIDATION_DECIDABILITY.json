@@ -1,0 +1,41 @@
+{
+  "schema": "oric.validation_decidability.v1",
+  "note": "Decidability contract for the validation protocol. Frozen ex ante — never adjusted to match observed data.",
+  "decidability_thresholds": {
+    "min_decidable_per_condition": 6,
+    "max_indeterminate_rate_per_condition": 0.40,
+    "min_total_decidable": 18
+  },
+  "verdict_rule": {
+    "description": "If min_total_decidable is not reached across C1+C2+C3, verdict = INDETERMINATE (not REJECT). Otherwise verdict is determined by C1/C2/C3 condition gates.",
+    "insufficient_decidable_verdict": "INDETERMINATE",
+    "sufficient_decidable_verdict_logic": "C1_AND_C2_AND_C3"
+  },
+  "sampling_power": {
+    "n_subsamples_full": 30,
+    "n_subsamples_fast": 15,
+    "n_window_variants_full": 7,
+    "n_window_variants_fast": 5,
+    "sample_frac": 0.80,
+    "rep_seeds": [
+      1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051,
+      1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061,
+      1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071
+    ],
+    "window_set": [
+      {"pre": 20,  "post": 20,  "label": "tiny",     "category": "small"},
+      {"pre": 40,  "post": 40,  "label": "small",    "category": "small"},
+      {"pre": 60,  "post": 60,  "label": "medium_lo","category": "medium"},
+      {"pre": 100, "post": 100, "label": "medium_hi","category": "medium"},
+      {"pre": 150, "post": 100, "label": "wide_pre", "category": "large"},
+      {"pre": 100, "post": 150, "label": "wide_post","category": "large"},
+      {"pre": 200, "post": 200, "label": "wide",     "category": "large"}
+    ]
+  },
+  "rationale": {
+    "min_decidable_per_condition": "6 (not 3) — with 3, a single flipped run can change the verdict. 6 provides a robust majority.",
+    "max_indeterminate_rate_per_condition": "0.40 — above 40% indeterminate, the condition is unreliable and should not produce ACCEPT/REJECT.",
+    "min_total_decidable": "18 = 3 conditions × 6 — ensures all three conditions have adequate decidable runs.",
+    "window_set": "2 small, 2 medium, 3 large — contractual coverage of scale sensitivity, not hand-picked."
+  }
+}

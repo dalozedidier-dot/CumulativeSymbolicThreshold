@@ -1,0 +1,47 @@
+{
+  "schema": "oric.validation_benchmark.v1",
+  "note": "Fixed benchmark set for the validation protocol. Adding or removing inputs requires a versioned contract update. Placebo series are generated deterministically from the corresponding real input using the specified rule.",
+  "version": 1,
+  "inputs": [
+    {
+      "id": "fred_monthly",
+      "path": "03_Data/real/fred_monthly/real.csv",
+      "description": "FRED economic indicators, monthly, 1986-2025 (n≈480). Primary canonical real-data test.",
+      "expected_verdict": "ACCEPT",
+      "category": "economic"
+    },
+    {
+      "id": "epidemic_ecdc_BE",
+      "path": "03_Data/real/validation_candidates/epidemic_ecdc_BE_daily_oric.csv",
+      "description": "Belgian COVID epidemic data from ECDC, daily (n≈350). Known to produce INDETERMINATE on stable split due to near-constant C.",
+      "expected_verdict": null,
+      "category": "biological"
+    },
+    {
+      "id": "excess_deaths_OWID_BE",
+      "path": "03_Data/real/validation_candidates/excess_deaths_OWID_BE_oric.csv",
+      "description": "Belgian excess mortality from OWID (n≈4500). Large daily series.",
+      "expected_verdict": null,
+      "category": "biological"
+    },
+    {
+      "id": "ecology_pelt",
+      "path": "03_Data/real/validation_candidates/ecology_pelt_oric.csv",
+      "description": "Ecological PELT dataset. Reference for decidability — stable_n_decidable should exceed 6.",
+      "expected_verdict": null,
+      "category": "ecological"
+    }
+  ],
+  "control_series": {
+    "stable": {
+      "rule": "first_50pct",
+      "description": "First 50% of rows (PRE_FRAC=0.50). Must give NOT_DETECTED on a well-specified detector."
+    },
+    "placebo": {
+      "rule": "cyclic_shift_N_div_3",
+      "seed": 42,
+      "description": "Cyclic shift by N//3 rows. Preserves autocorrelation, breaks temporal alignment. Must give NOT_DETECTED."
+    }
+  },
+  "evaluation_rule": "All inputs in the benchmark set are evaluated. Results are aggregated per-input, not cherry-picked. Any future input addition must update this contract version."
+}

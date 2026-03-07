@@ -195,10 +195,12 @@ jobs:
           if-no-files-found: warn
 
   # ── JOB 3: Real data validation protocol (3-dataset × window × subsampling) ──
+  # Nightly: fast mode (5 windows × 15 subsamples).
+  # Weekly (Sunday): full mode (7 windows × 30 subsamples) on the fixed benchmark set.
   real_data_validation_protocol:
-    name: "Real Data Validation Protocol — FRED fast"
+    name: "Real Data Validation Protocol"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     needs: real_data_fred   # runs in parallel with real_data_fred dependency only for ordering
     if: always()
 
@@ -232,12 +234,24 @@ jobs:
           fi
           echo "FRED monthly: $(wc -l < 03_Data/real/fred_monthly/real.csv) rows"
 
+      - name: Run real data validation protocol
       - name: Run real data validation protocol (fast mode — 3 windows × 10 subsamples)
         id: protocol_run
         run: |
           set -eo pipefail
           mkdir -p _ci_out/real/validation_protocol
           mkdir -p _ci_out/real/validation_protocol/tables _ci_out/real/validation_protocol/figures _ci_out/real/validation_protocol/contracts
+
+          # Weekly (Sunday cron) → full mode; otherwise → fast mode
+          DAY_OF_WEEK=$(date +%u)
+          if [ "$DAY_OF_WEEK" = "7" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            FAST_FLAG=""
+            MODE="full (7 windows × 30 subsamples)"
+          else
+            FAST_FLAG="--fast"
+            MODE="fast (5 windows × 15 subsamples)"
+          fi
+          echo "Protocol mode: $MODE"
 
           PYTHONPATH=src python 04_Code/pipeline/run_real_data_validation_protocol.py \
             --input 03_Data/real/fred_monthly/real.csv \
@@ -250,7 +264,7 @@ jobs:
             --baseline-n 30 \
             --lags 1-3 \
             --seed 42 \
-            --fast \
+            $FAST_FLAG \
             2>&1 | tee _ci_out/real/validation_protocol/protocol.log
 
           # Ensure canonical root summary exists for CI consumption
@@ -409,14 +423,21 @@ jobs:
                   pass
               break
 
-          # ── Validation protocol: read ROOT validation_summary.json ──
+          # ── Validation protocol: read ROOT validation_summary.json + KPIs ──
           # Exact path — no glob ambiguity with per-input JSONs.
           validation_summary = {}
           validation_inputs = []
+          validation_kpis = {}
           root_val_path = "_combined/validation_protocol/tables/validation_summary.json"
+          root_kpi_path = "_combined/validation_protocol/tables/validation_kpis.json"
           if os.path.exists(root_val_path):
               try:
                   validation_summary = json.loads(open(root_val_path).read())
+              except Exception:
+                  pass
+          if os.path.exists(root_kpi_path):
+              try:
+                  validation_kpis = json.loads(open(root_kpi_path).read())
               except Exception:
                   pass
 
@@ -477,14 +498,17 @@ jobs:
                       "support_level": real_support,
                   },
                   "real_data_validation_protocol": {
-                      "run_mode": "validation_protocol_fast",
+                      "run_mode": "validation_protocol",
                       "protocol": "3-dataset (test/stable/placebo) × window_sensitivity × subsample_stability",
                       "protocol_verdict": proto_verdict,
                       "failure_mode": proto_failure_mode if proto_failure_mode != "none" else None,
                       "test_detection_rate": proto_det_rate,
                       "best_input": validation_summary.get("best_stem"),
+                      "contrast_passes": validation_summary.get("contrast_passes"),
+                      "contrast_gap": validation_summary.get("contrast_gap"),
                       "inputs": validation_inputs if validation_inputs else None,
-                      "note": "fast mode: 4 window variants × 15 subsamples",
+                      "kpis": validation_kpis if validation_kpis else None,
+                      "note": "nightly=fast (5×15), weekly Sunday=full (7×30)",
                   },
               },
               "forbidden_report_labels": [

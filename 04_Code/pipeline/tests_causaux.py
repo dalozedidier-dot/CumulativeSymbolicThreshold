@@ -66,6 +66,66 @@ if str(_CODE_DIR) not in sys.path:
     sys.path.insert(0, str(_CODE_DIR))
 
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _load_prechecks_contract() -> dict:
+    """Load contracts/VALIDATION_PRECHECKS.json if available."""
+    p = _REPO_ROOT / "contracts" / "VALIDATION_PRECHECKS.json"
+    if p.exists():
+        return json.loads(p.read_text(encoding="utf-8"))
+    return {}
+
+
+_PRECHECKS_CONTRACT = _load_prechecks_contract()
+_PRECHECKS = _PRECHECKS_CONTRACT.get("prechecks", {})
+
+
+def _run_prechecks(
+    pre: pd.DataFrame,
+    post: pd.DataFrame,
+    freq: str = "default",
+) -> tuple[bool, str]:
+    """Run precondition checks on pre/post windows.
+
+    Returns (passed, reason).  If passed=False, reason is
+    'precheck_failed:<name>' for the first failing check.
+    """
+    # 1. min_points_per_segment
+    min_pts_cfg = _PRECHECKS.get("min_points_per_segment", {})
+    min_pts = min_pts_cfg.get(freq, min_pts_cfg.get("default", 60))
+    if len(pre) < min_pts or len(post) < min_pts:
+        short = "pre" if len(pre) < min_pts else "post"
+        return False, f"precheck_failed:min_points_per_segment ({short}={min(len(pre), len(post))}<{min_pts})"
+
+    # 2. min_unique_values_C
+    min_uniq = _PRECHECKS.get("min_unique_values_C", {}).get("value", 5)
+    if "C" in pre.columns and "C" in post.columns:
+        pre_uniq = pre["C"].nunique()
+        post_uniq = post["C"].nunique()
+        if pre_uniq < min_uniq or post_uniq < min_uniq:
+            return False, f"precheck_failed:min_unique_values_C (pre={pre_uniq}, post={post_uniq}, min={min_uniq})"
+
+    # 3. max_nan_frac
+    max_nan = _PRECHECKS.get("max_nan_frac", {}).get("value", 0.05)
+    for col in ("C", "S"):
+        if col in pre.columns:
+            frac_pre = pre[col].isna().mean()
+            frac_post = post[col].isna().mean() if col in post.columns else 0.0
+            if frac_pre > max_nan or frac_post > max_nan:
+                return False, f"precheck_failed:max_nan_frac ({col} nan_frac pre={frac_pre:.3f} post={frac_post:.3f})"
+
+    # 4. min_variance_C
+    min_var = _PRECHECKS.get("min_variance_C", {}).get("value", 1e-10)
+    if "C" in pre.columns and "C" in post.columns:
+        var_pre = float(pre["C"].var())
+        var_post = float(post["C"].var())
+        if (np.isfinite(var_pre) and var_pre < min_var) or (np.isfinite(var_post) and var_post < min_var):
+            return False, f"precheck_failed:min_variance_C (var_pre={var_pre:.2e}, var_post={var_post:.2e})"
+
+    return True, ""
+
+
 def _make_dirs(outdir: Path) -> Path:
     tabdir = outdir / "tables"
     tabdir.mkdir(parents=True, exist_ok=True)
@@ -488,6 +548,9 @@ def main() -> int:
     pre = df_t[(df_t["_step"] >= pre_start) & (df_t["_step"] < pre_end)].copy()
     post = df_t[(df_t["_step"] >= post_start) & (df_t["_step"] < post_end)].copy()
 
+    # ── Prechecks: validate data quality before running statistical tests ──
+    precheck_passed, precheck_reason = _run_prechecks(pre, post)
+
     C_mean_pre = float(pre["C"].mean()) if len(pre) else float("nan")
     C_mean_post = float(post["C"].mean()) if len(post) else float("nan")
     C_positive_frac_post = float((post["C"] > 0.0).mean()) if len(post) else float("nan")
@@ -604,7 +667,11 @@ def main() -> int:
             f"symbolic pathway inoperative. Verdict based on statistical tests only."
         )
 
-    if not has_threshold:
+    if not precheck_passed:
+        verdict = f"indetermine_{precheck_reason}"
+        binary = None
+        sigma_gate_note = f"Prechecks failed: {precheck_reason}. Verdict = INDETERMINATE."
+    elif not has_threshold:
         verdict = "non_detecte"
         binary = False
     else:
@@ -636,10 +703,27 @@ def main() -> int:
             verdict = "non_detecte"
             binary = False
 
+    # ── Detection strength score ────────────────────────────────────────
+    # Composite score for contrast-based detection (see VALIDATION_SPECIFICITY).
+    # Combines p-value evidence and bootstrap effect size into [0, 1].
+    # Higher = stronger detection signal.
+    if binary is True:
+        # Normalize p-value contribution: -log10(p) capped at 10
+        _p_val = p_shift if np.isfinite(p_shift) else (p_mwu if np.isfinite(p_mwu) else 1.0)
+        _p_score = min(1.0, -np.log10(max(_p_val, 1e-10)) / 10.0)
+        # Bootstrap effect: is the CI entirely above zero?
+        _boot_score = 1.0 if (np.isfinite(boot_lo) and boot_lo > 0) else 0.5 if np.isfinite(boot_mid) and boot_mid > 0 else 0.0
+        detection_strength = float(0.6 * _p_score + 0.4 * _boot_score)
+    elif binary is False:
+        detection_strength = 0.0
+    else:
+        detection_strength = float("nan")
+
     report = {
         "run_dir": str(run_dir),
         "verdict": verdict,
         "binary_detected": binary,  # True/False/None (None = indeterminate)
+        "detection_strength": detection_strength,
         "alpha": float(args.alpha),
         "c_mean_post_min": float(args.c_mean_post_min),
         "lags": lags,
@@ -674,6 +758,8 @@ def main() -> int:
         "var_reason": var_reason or None,
         "cointegration_p": float(coint_p),
         "cointegration_reason": coint_reason or None,
+        "precheck_passed": bool(precheck_passed),
+        "precheck_reason": precheck_reason or None,
         "criteria": {
             "has_threshold": bool(has_threshold),
             "ok_c_level": bool(ok_c_level),
@@ -689,6 +775,7 @@ def main() -> int:
     row = {
         "verdict": verdict,
         "binary_detected": binary,  # True/False/None (None = indeterminate)
+        "detection_strength": detection_strength,
         "threshold_hit_t": thr_t,
         "threshold_value": float(thr_val),
         "no_false_positives_pre": bool(no_fp_pre),
