@@ -1,0 +1,40 @@
+{
+  "schema": "oric.dual_proof_contract.v1",
+  "note": "Frozen contract defining the structure and rules for dual_proof_manifest.json. Source of truth — fields listed here are the ONLY fields that consumers may depend on.",
+  "version": 1,
+  "required_sections": {
+    "synthetic": {
+      "fields": {
+        "gate_passed":    { "type": ["boolean", "null"], "description": "Full validation gate passed (triplet + n_min)." },
+        "global_verdict": { "type": "string", "enum": ["ACCEPT", "REJECT", "INDETERMINATE", "UNKNOWN"], "description": "Aggregate synthetic verdict." },
+        "support_level":  { "type": "string", "description": "Machine-computed support level token." }
+      },
+      "required": ["gate_passed", "global_verdict", "support_level"]
+    },
+    "real_data_fred": {
+      "fields": {
+        "global_verdict": { "type": "string", "enum": ["ACCEPT", "REJECT", "INDETERMINATE", "UNKNOWN"], "description": "Aggregate real data verdict." },
+        "support_level":  { "type": "string", "description": "Machine-computed support level token." }
+      },
+      "required": ["global_verdict", "support_level"]
+    },
+    "validation_protocol": {
+      "fields": {
+        "protocol_verdict":    { "type": "string", "enum": ["ACCEPT", "REJECT", "INDETERMINATE", "UNKNOWN"], "description": "Overall validation protocol verdict." },
+        "test_detection_rate": { "type": ["string", "number", "null"], "description": "Detection rate on test series (best input)." },
+        "failure_mode":        { "type": ["string", "null"], "description": "Failure classification if not ACCEPT." },
+        "decidable_fraction":  { "type": ["number", "null"], "description": "Fraction of runs that produced a decidable verdict." }
+      },
+      "required": ["protocol_verdict", "test_detection_rate", "failure_mode"]
+    },
+    "dual_proof_status": {
+      "type": "string",
+      "enum": ["DUAL_PROOF_COMPLETE", "DUAL_PROOF_INCOMPLETE"],
+      "rule": "DUAL_PROOF_COMPLETE iff synthetic.support_level == 'full_statistical_support' AND real_data_fred.support_level == 'real_data_canonical_support'"
+    }
+  },
+  "forbidden_report_labels": [
+    "full support",
+    "full empirical support"
+  ]
+}
