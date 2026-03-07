@@ -101,36 +101,70 @@ _CODE_DIR = Path(__file__).resolve().parents[1]
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # ── Protocol constants ────────────────────────────────────────────────────────
+#
+# Sampling power and decidability thresholds are loaded from the versioned
+# contract contracts/VALIDATION_DECIDABILITY.json when present.  Hardcoded
+# defaults below are used as fallback only.
 
-N_WINDOW_VARIANTS_FULL = 5
-N_WINDOW_VARIANTS_FAST = 4
-N_BOOT_FULL = 30
-N_BOOT_FAST = 15
-SAMPLE_FRAC = 0.80
+def _load_decidability_contract() -> dict:
+    """Load contracts/VALIDATION_DECIDABILITY.json if available."""
+    p = _REPO_ROOT / "contracts" / "VALIDATION_DECIDABILITY.json"
+    if p.exists():
+        return json.loads(p.read_text(encoding="utf-8"))
+    return {}
+
+_DECIDABILITY_CONTRACT = _load_decidability_contract()
+_DEC_THR = _DECIDABILITY_CONTRACT.get("decidability_thresholds", {})
+_DEC_POWER = _DECIDABILITY_CONTRACT.get("sampling_power", {})
+
+N_BOOT_FULL = _DEC_POWER.get("n_subsamples_full", 30)
+N_BOOT_FAST = _DEC_POWER.get("n_subsamples_fast", 15)
+SAMPLE_FRAC = _DEC_POWER.get("sample_frac", 0.80)
 PRE_FRAC = 0.50         # fraction of rows used for "stable" dataset
 SHIFT_DIVISOR = 3        # placebo: cyclic shift by N // SHIFT_DIVISOR
 
 STABILITY_MIN = 0.80     # C1: transition detection rate threshold
 STABLE_MIN = 0.70        # C2: stable non-detection rate threshold
 PLACEBO_MIN = 0.70       # C3: placebo non-detection rate threshold
-N_DECIDABLE_MIN = 3      # minimum decidable runs to issue ACCEPT/REJECT
+N_DECIDABLE_MIN = _DEC_THR.get("min_decidable_per_condition", 6)
+MAX_INDETERMINATE_RATE = _DEC_THR.get("max_indeterminate_rate_per_condition", 0.40)
+MIN_TOTAL_DECIDABLE = _DEC_THR.get("min_total_decidable", 18)
+
+# Rep seeds — fixed list from contract for reproducibility
+_CONTRACT_REP_SEEDS: list[int] = _DEC_POWER.get("rep_seeds", [])
 
 # Default window configs: (pre_horizon, post_horizon, label)
-# Post-window >= 100 ensures enough data points for Mann-Whitney fallback
-# when sigma_zero_post=True (avoids systematic INDETERMINATE on short windows).
-_WINDOW_VARIANTS_FULL = [
-    (30,  30,  "narrow"),
-    (60,  60,  "medium"),
-    (100, 100, "default"),
-    (150, 100, "wide_pre"),
-    (100, 150, "wide_post"),
-]
-_WINDOW_VARIANTS_FAST = [
-    (30,  30,  "narrow"),
-    (60,  60,  "medium"),
-    (100, 100, "default"),
-    (100, 150, "wide_post"),
-]
+# Contract defines 7 variants (2 small, 2 medium, 3 large).
+# Fast mode uses 5 (drops the two extremes: tiny and wide).
+_contract_windows = _DEC_POWER.get("window_set", [])
+
+if _contract_windows:
+    _WINDOW_VARIANTS_FULL = [(w["pre"], w["post"], w["label"]) for w in _contract_windows]
+    # Fast: drop the smallest and largest
+    _WINDOW_VARIANTS_FAST = [
+        (w["pre"], w["post"], w["label"]) for w in _contract_windows
+        if w.get("category") != "small" or w["label"] != "tiny"
+    ][:5]
+else:
+    _WINDOW_VARIANTS_FULL = [
+        (20,  20,  "tiny"),
+        (40,  40,  "small"),
+        (60,  60,  "medium_lo"),
+        (100, 100, "medium_hi"),
+        (150, 100, "wide_pre"),
+        (100, 150, "wide_post"),
+        (200, 200, "wide"),
+    ]
+    _WINDOW_VARIANTS_FAST = [
+        (40,  40,  "small"),
+        (60,  60,  "medium_lo"),
+        (100, 100, "medium_hi"),
+        (150, 100, "wide_pre"),
+        (100, 150, "wide_post"),
+    ]
+
+N_WINDOW_VARIANTS_FULL = len(_WINDOW_VARIANTS_FULL)
+N_WINDOW_VARIANTS_FAST = len(_WINDOW_VARIANTS_FAST)
 
 # ── Dataset generation ────────────────────────────────────────────────────────
 
@@ -233,11 +267,14 @@ def _run_causal(
                 "ok_p_source": d.get("criteria", {}).get("ok_p_source", ""),
                 "p_welch": float(d.get("p_value_mean_shift_C", float("nan"))),
                 "p_mwu": float(d.get("p_value_mannwhitney_C", float("nan"))),
+                "detection_strength": float(d.get("detection_strength", float("nan"))),
                 "sigma_zero_post": bool(d.get("sigma_zero_post", False)),
                 "sigma_max_post": d.get("sigma_max_post"),
                 "sigma_gate_note": d.get("sigma_gate_note") or "",
                 "var_reason": d.get("var_reason") or "",
                 "cointegration_reason": d.get("cointegration_reason") or "",
+                "precheck_passed": d.get("precheck_passed", True),
+                "precheck_reason": d.get("precheck_reason"),
             }
         except Exception:
             pass
@@ -368,6 +405,7 @@ def _phase_window_sensitivity(
             "post_horizon": int(post),
             "verdict": result["verdict"],
             "ok_p_source": result.get("ok_p_source", ""),
+            "detection_strength": result.get("detection_strength", float("nan")),
             "sigma_zero_post": result.get("sigma_zero_post", False),
         }
         rows.append(row)
@@ -405,7 +443,11 @@ def _phase_subsample_stability(
     n_sample = max(5, int(n * sf))
 
     for rep in range(n_boot):
-        sub_seed = int(base_seed + 1000 + rep)
+        # Use contract seeds when available, else deterministic offset
+        if _CONTRACT_REP_SEEDS and rep < len(_CONTRACT_REP_SEEDS):
+            sub_seed = int(_CONTRACT_REP_SEEDS[rep])
+        else:
+            sub_seed = int(base_seed + 1000 + rep)
         # Sample n_sample indices without replacement, maintain temporal order
         idx = np.sort(rng.choice(n, size=n_sample, replace=False))
         df_sub = df.iloc[idx].reset_index(drop=True)
@@ -433,6 +475,7 @@ def _phase_subsample_stability(
             "n_rows": int(n_sample),
             "verdict": result["verdict"],
             "ok_p_source": result.get("ok_p_source", ""),
+            "detection_strength": result.get("detection_strength", float("nan")),
             "sigma_zero_post": result.get("sigma_zero_post", False),
         })
         if verbose:
@@ -442,6 +485,71 @@ def _phase_subsample_stability(
 
 
 # ── Aggregate stability metrics ───────────────────────────────────────────────
+
+def _load_specificity_contract() -> dict:
+    """Load contracts/VALIDATION_SPECIFICITY.json if available."""
+    p = _REPO_ROOT / "contracts" / "VALIDATION_SPECIFICITY.json"
+    if p.exists():
+        return json.loads(p.read_text(encoding="utf-8"))
+    return {}
+
+_SPECIFICITY_CONTRACT = _load_specificity_contract()
+_CONTRAST = _SPECIFICITY_CONTRACT.get("contrast_criterion", {})
+_CONTRAST_Q_TEST = _CONTRAST.get("Q_test", 0.80)
+_CONTRAST_MARGIN = _CONTRAST.get("margin", 0.10)
+
+
+def _compute_contrast_verdict(
+    test_rows: list[dict],
+    stable_rows: list[dict],
+    placebo_rows: list[dict],
+) -> dict:
+    """Apply contrast-based detection criterion from VALIDATION_SPECIFICITY.
+
+    Returns a dict with contrast metrics and a boolean 'contrast_passes'.
+    """
+    def _strengths(rows: list[dict]) -> list[float]:
+        return [
+            float(r.get("detection_strength", float("nan")))
+            for r in rows
+            if isinstance(r.get("detection_strength"), (int, float))
+            and np.isfinite(r.get("detection_strength", float("nan")))
+        ]
+
+    test_s = _strengths(test_rows)
+    stable_s = _strengths(stable_rows)
+    placebo_s = _strengths(placebo_rows)
+
+    result: dict = {
+        "test_n_scores": len(test_s),
+        "stable_n_scores": len(stable_s),
+        "placebo_n_scores": len(placebo_s),
+        "Q_test": _CONTRAST_Q_TEST,
+        "margin": _CONTRAST_MARGIN,
+    }
+
+    if not test_s:
+        result["contrast_passes"] = None
+        result["reason"] = "no test detection_strength scores available"
+        return result
+
+    q_val = float(np.quantile(test_s, _CONTRAST_Q_TEST))
+    max_stable = max(stable_s) if stable_s else 0.0
+    max_placebo = max(placebo_s) if placebo_s else 0.0
+    max_control = max(max_stable, max_placebo)
+
+    result["test_q_value"] = q_val
+    result["max_stable_score"] = max_stable
+    result["max_placebo_score"] = max_placebo
+    result["contrast_gap"] = q_val - max_control
+
+    result["contrast_passes"] = bool(
+        q_val >= _CONTRAST_Q_TEST
+        and (q_val - max_control) >= _CONTRAST_MARGIN
+    )
+
+    return result
+
 
 def _stability_metrics(
     rows: list[dict],
@@ -626,12 +734,46 @@ def _protocol_verdict(
     }
 
     # ── Decidability gate ───────────────────────────────────────────────
-    if not (c1_enough and c2_enough and c3_enough):
+    # Check per-condition decidability
+    total_decidable = c1_decidable + c2_decidable + c3_decidable
+    # Check per-condition indeterminate rate cap
+    c1_ind_ok = c1_ind_rate <= MAX_INDETERMINATE_RATE if test_metrics.get("n_valid", 0) > 0 else False
+    c2_ind_ok = c2_ind_rate <= MAX_INDETERMINATE_RATE if stable_metrics.get("n_valid", 0) > 0 else False
+    c3_ind_ok = c3_ind_rate <= MAX_INDETERMINATE_RATE if placebo_metrics.get("n_valid", 0) > 0 else False
+    notes["decidability_gate"] = {
+        "total_decidable": int(total_decidable),
+        "min_total_decidable": int(MIN_TOTAL_DECIDABLE),
+        "per_condition_min": int(N_DECIDABLE_MIN),
+        "max_indeterminate_rate": float(MAX_INDETERMINATE_RATE),
+        "C1_indeterminate_rate_ok": bool(c1_ind_ok),
+        "C2_indeterminate_rate_ok": bool(c2_ind_ok),
+        "C3_indeterminate_rate_ok": bool(c3_ind_ok),
+    }
+
+    all_enough = c1_enough and c2_enough and c3_enough
+    total_enough = total_decidable >= MIN_TOTAL_DECIDABLE
+    ind_rate_ok = c1_ind_ok and c2_ind_ok and c3_ind_ok
+
+    if not (all_enough and total_enough):
         insufficient = [k for k, e in {"C1": c1_enough, "C2": c2_enough, "C3": c3_enough}.items() if not e]
         verdict = "INDETERMINATE"
+        reason_parts = []
+        if insufficient:
+            reason_parts.append(
+                f"Not enough decidable runs for {insufficient} "
+                f"(need >= {N_DECIDABLE_MIN} decidable per condition)"
+            )
+        if not total_enough:
+            reason_parts.append(
+                f"Total decidable={total_decidable} < min_total_decidable={MIN_TOTAL_DECIDABLE}"
+            )
+        notes["reason"] = "; ".join(reason_parts)
+    elif not ind_rate_ok:
+        failing_ind = [k for k, ok in {"C1": c1_ind_ok, "C2": c2_ind_ok, "C3": c3_ind_ok}.items() if not ok]
+        verdict = "INDETERMINATE"
         notes["reason"] = (
-            f"Not enough decidable runs for {insufficient} "
-            f"(need >= {N_DECIDABLE_MIN} decidable per condition)"
+            f"Indeterminate rate exceeds {MAX_INDETERMINATE_RATE:.0%} "
+            f"for {failing_ind}"
         )
     elif not c1_ok:
         verdict = "REJECT"
@@ -716,12 +858,18 @@ def _summarise_protocol(dfw: pd.DataFrame, dfs: pd.DataFrame) -> dict:
         test_window_rows, stable_window_rows, placebo_window_rows,
     )
 
+    # Contrast-based specificity check (B2)
+    contrast = _compute_contrast_verdict(test_sub_rows, stable_sub_rows, placebo_sub_rows)
+    notes["contrast_criterion"] = contrast
+
     return {
         "protocol_verdict": verdict,
         "test_det_rate": test_metrics.get("detection_rate", 0.0),
         "stable_det_rate": stable_metrics.get("detection_rate", 0.0),
         "placebo_det_rate": placebo_metrics.get("detection_rate", 0.0),
         "test_modal": test_metrics.get("modal_verdict", ""),
+        "contrast_passes": contrast.get("contrast_passes"),
+        "contrast_gap": contrast.get("contrast_gap"),
         "datasets": {
             "test":    {"metrics": test_metrics},
             "stable":  {"metrics": stable_metrics},
@@ -1046,6 +1194,51 @@ def main() -> int:
         _json_dumps_safe(overall, indent=2), encoding="utf-8",
     )
     (outdir_root / "verdict.txt").write_text(f"{overall_verdict}\n", encoding="utf-8")
+
+    # ── Validation KPIs (C3: ci_metrics tracking) ────────────────────────
+    # Write a separate JSON with the KPIs for CI tracking.
+    best_notes = {}
+    if best_row:
+        # Re-read per-input summary for best input to get notes
+        best_stem = best_row.get("stem", "")
+        best_json = outdir_root / best_stem / "tables" / "validation_summary.json"
+        if best_json.exists():
+            try:
+                best_summary = json.loads(best_json.read_text(encoding="utf-8"))
+                best_notes = best_summary.get("notes", {})
+            except Exception:
+                pass
+
+    contrast_info = best_notes.get("contrast_criterion", {})
+    decidability_info = best_notes.get("decidability_gate", {})
+
+    # Determine failure mode
+    failure_mode = best.get("failure_mode") if best_row else None
+    if overall_verdict == "INDETERMINATE" and not failure_mode:
+        failure_mode = "not_enough_decidable"
+    elif overall_verdict == "REJECT" and not failure_mode:
+        failure_mode = "non_specific"
+
+    kpis = {
+        "validation_protocol_verdict": overall_verdict,
+        "validation_test_det_rate": _safe_rate(best_test),
+        "validation_stable_fp_rate": _safe_rate(best_stable),
+        "validation_placebo_fp_rate": _safe_rate(best_placebo),
+        "validation_decidable_fraction": (
+            decidability_info.get("total_decidable", 0) /
+            max(1, 3 * (N_BOOT_FAST if True else N_BOOT_FULL))  # approximate
+        ),
+        "validation_contrast_passes": contrast_info.get("contrast_passes"),
+        "validation_contrast_gap": contrast_info.get("contrast_gap"),
+        "validation_failure_mode": failure_mode,
+        "validation_n_inputs": len(inputs),
+        "validation_n_accept": sum(1 for r in aggregate_rows if r["input_protocol_verdict"] == "ACCEPT"),
+        "validation_n_reject": sum(1 for r in aggregate_rows if r["input_protocol_verdict"] == "REJECT"),
+        "validation_n_indeterminate": sum(1 for r in aggregate_rows if r["input_protocol_verdict"] == "INDETERMINATE"),
+    }
+    (outdir_root / "tables" / "validation_kpis.json").write_text(
+        _json_dumps_safe(kpis, indent=2), encoding="utf-8",
+    )
     if best_row:
         (outdir_root / "best_input.txt").write_text(
             f"{best_row['input_id']}\n", encoding="utf-8",

@@ -1,0 +1,25 @@
+{
+  "schema": "oric.validation_prechecks.v1",
+  "note": "Pre-condition checks applied to each subsample/window before running statistical tests. If a precheck fails, the run verdict is INDETERMINATE with reason=precheck_failed:<name>. Failed runs count in n_indeterminate, not n_decidable.",
+  "prechecks": {
+    "min_points_per_segment": {
+      "daily": 120,
+      "monthly": 60,
+      "default": 60,
+      "description": "Minimum number of data points in the analysis segment (pre or post window). Below this, statistical tests are unreliable."
+    },
+    "min_unique_values_C": {
+      "value": 5,
+      "description": "Minimum number of distinct C values in each window (pre and post). Constant or near-constant C makes Welch/bootstrap degenerate."
+    },
+    "max_nan_frac": {
+      "value": 0.05,
+      "description": "Maximum fraction of NaN values in C or S columns within analysis windows. Above this, data quality is insufficient."
+    },
+    "min_variance_C": {
+      "value": 1e-10,
+      "description": "Minimum variance of C in each window. Zero variance makes all parametric tests undefined."
+    }
+  },
+  "rationale": "Standardized preconditions prevent contamination from inapplicable tests (VAR on constant data, Welch on zero-variance windows). Each failure is explicitly labeled, making indetermination diagnosable and reducible."
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "oric.validation_specificity.v1",
+  "note": "Specificity contract for the validation protocol. Calibrated on synthetic data, then frozen. Never adjusted to match real-data outcomes.",
+  "objectives": {
+    "stable_detection_rate_max": 0.20,
+    "placebo_detection_rate_max": 0.20,
+    "test_detection_rate_min": 0.80,
+    "description": "On the fixed benchmark set: stable and placebo false-positive rates must be <= 20%. Test detection rate must be >= 80%."
+  },
+  "contrast_criterion": {
+    "description": "Detection requires relative contrast: test score must exceed stable/placebo scores by a margin. This replaces absolute detection and prevents 'detects everywhere' failures.",
+    "Q_test": 0.80,
+    "margin": 0.10,
+    "score_key": "detection_strength",
+    "rule": "score_test >= quantile(test_scores, Q_test) AND score_test - max(score_stable, score_placebo) >= margin",
+    "calibrated_on": "synthetic",
+    "frozen": true
+  },
+  "calibration_grid": {
+    "description": "Pre-defined grid searched on synthetic data to select (margin, Q_test). Frozen after calibration.",
+    "margin_candidates": [0.05, 0.10, 0.15],
+    "Q_test_candidates": [0.70, 0.80, 0.90],
+    "selection_criteria": {
+      "test_det_rate_min": 0.80,
+      "stable_fp_rate_max": 0.20,
+      "placebo_fp_rate_max": 0.20
+    }
+  },
+  "anti_cherry_picking": {
+    "benchmark_set": "Fixed inputs defined in contracts/VALIDATION_BENCHMARK.json. Evaluated on the full set, never on a subset.",
+    "description": "Adding a new input to the benchmark requires a versioned contract update."
+  }
+}
