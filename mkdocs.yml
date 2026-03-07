@@ -1,0 +1,59 @@
+site_name: ORI-C Documentation
+site_description: "Cumulative Symbolic Threshold — A falsifiable protocol for O·R·I dynamics"
+site_url: https://dalozedidier-dot.github.io/CumulativeSymbolicThreshold/
+repo_url: https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold
+repo_name: CumulativeSymbolicThreshold
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Reproduction: REPRODUCE.md
+  - CI Pipelines: CI_PIPELINES.md
+  - Symbolic Tests: SYMBOLIC_TESTS.md
+  - Repository Layout: REPO_LAYOUT.md
+  - Point of Truth: ORI_C_POINT_OF_TRUTH.md
+  - API Reference:
+      - ori_core: api/ori_core.md
+      - symbolic: api/symbolic.md
+      - decision: api/decision.md
+      - proxy_spec: api/proxy_spec.md
+      - prereg: api/prereg.md
+      - randomization: api/randomization.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - toc:
+      permalink: true

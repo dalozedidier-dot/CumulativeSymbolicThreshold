@@ -51,7 +51,12 @@ notebooks = [
     "jupyter>=1.0",
     "jupyterlab>=4.0",
 ]
-all = ["oric[dev,notebooks]"]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+]
+all = ["oric[dev,notebooks,docs]"]
 
 [project.scripts]
 oric-run-all = "oric._entrypoints:run_all"

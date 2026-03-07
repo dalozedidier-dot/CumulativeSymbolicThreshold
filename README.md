@@ -1,11 +1,17 @@
 # Cumulative Symbolic Threshold (ORI-C)
 
 ## Documentation
-- docs/INDEX.md : index
-- docs/ORI_C_POINT_OF_TRUTH.md : point de vérité unique
-- docs/CI_PIPELINES.md : pipelines CI
-- docs/REPRODUCE.md : reproduction
-- docs/REPO_LAYOUT.md : sources de vérité et duplications
+
+📚 [Full documentation index](docs/INDEX.md)
+
+| Document | Description |
+|----------|-------------|
+| [docs/INDEX.md](docs/INDEX.md) | Documentation index |
+| [docs/ORI_C_POINT_OF_TRUTH.md](docs/ORI_C_POINT_OF_TRUTH.md) | Canonical point of truth |
+| [docs/CI_PIPELINES.md](docs/CI_PIPELINES.md) | CI/CD pipeline reference |
+| [docs/REPRODUCE.md](docs/REPRODUCE.md) | Reproduction guide |
+| [docs/REPO_LAYOUT.md](docs/REPO_LAYOUT.md) | Repository layout & sources of truth |
+| [docs/installation.md](docs/installation.md) | Installation guide (pip/conda/Docker) |
 
 [![DOI](https://img.shields.io/badge/DOI-10.17605%2FOSF.IO%2FG62PZ-blue)](https://doi.org/10.17605/OSF.IO/G62PZ)
 [![OSF Pre-registration](https://img.shields.io/badge/OSF-G62PZ-lightgrey)](https://osf.io/g62pz/)
@@ -13,6 +19,7 @@
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/ci.yml/badge.svg)](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/ci.yml)
 [![Nightly](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/nightly.yml/badge.svg)](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/nightly.yml)
+[![codecov](https://codecov.io/gh/dalozedidier-dot/CumulativeSymbolicThreshold/branch/main/graph/badge.svg)](https://codecov.io/gh/dalozedidier-dot/CumulativeSymbolicThreshold)
 
 **A pre-registered, falsifiable scientific framework** for testing the ORI-C hypothesis: beyond a critical threshold of symbolic accumulation, the symbolic transmission channel becomes self-reinforcing — a measurable phase transition from a pre-threshold regime to a cumulative symbolic regime.
 
@@ -212,13 +219,18 @@ CumulativeSymbolicThreshold/
 ├── 01_Theory/          # Normative placard, theory, glossary
 ├── 02_Protocol/        # Pre-registration, decision rules, intervention catalog
 ├── 03_Data/            # Synthetic + real datasets with proxy_spec.json
+│   └── real/           # 5 pilot datasets (FRED, CPI, Énergie, Météo, Trafic)
 ├── 04_Code/
 │   ├── pipeline/       # All executable pipeline scripts (40+ scripts)
 │   ├── tests/          # Pytest unit and integration tests
 │   └── configs/        # JSON run configs
 ├── 05_Results/         # Run outputs (gitignored — never committed)
 ├── 06_Manuscript/      # Academic manuscript draft
+├── contracts/          # Validation contracts (JSON schemas)
+├── ci_metrics/         # CI run history and metrics
+├── docs/               # Full documentation (index, guides, publications)
 ├── examples/           # Jupyter notebooks (3 demos)
+├── tools/              # CLI utilities, CI tooling, QCC checks
 ├── src/oric/           # Importable Python package
 │   ├── ori_core.py     # Cap, Σ, V computations
 │   ├── symbolic.py     # S(t), C(t), S* detection
@@ -227,7 +239,7 @@ CumulativeSymbolicThreshold/
 │   ├── prereg.py       # PreregSpec frozen dataclass (all ex-ante params)
 │   ├── randomization.py
 │   └── logger.py       # JSONL append-only experiment log
-├── ORIC_POINT_OF_TRUTH.md   # Normative repo anchors
+├── ORIC_POINT_OF_TRUTH.md   # Redirect → docs/ORI_C_POINT_OF_TRUTH.md
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
 └── CITATION.cff
