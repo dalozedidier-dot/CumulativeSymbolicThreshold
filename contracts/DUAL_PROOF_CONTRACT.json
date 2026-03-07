@@ -1,22 +1,30 @@
 {
-  "schema_version": "1.0",
-  "required": {
-    "dual_proof_status": ["DUAL_PROOF_COMPLETE", "DUAL_PROOF_INCOMPLETE"],
-    "synthetic": {
-      "gate_passed": "bool",
-      "global_verdict": ["ACCEPT", "REJECT", "INDETERMINATE"],
-      "support_level": "string",
-      "n_statistical_passed": "int"
-    },
-    "real_data_fred": {
-      "global_verdict": ["ACCEPT", "REJECT", "INDETERMINATE"],
-      "support_level": "string"
-    },
-    "validation_protocol_fast": {
-      "verdict": ["ACCEPT", "REJECT", "INDETERMINATE"],
-      "test_detection_rate": "number_or_string",
-      "failure_mode": "string_optional",
-      "decidable_fraction": "number_optional"
-    }
+  "dual_proof_status": {
+    "type": "string",
+    "allowed": [
+      "DUAL_PROOF_COMPLETE",
+      "DUAL_PROOF_INCOMPLETE"
+    ]
+  },
+  "synthetic": {
+    "required": [
+      "gate_passed",
+      "global_verdict",
+      "support_level",
+      "n_statistical_passed"
+    ]
+  },
+  "real_data_fred": {
+    "required": [
+      "global_verdict",
+      "support_level"
+    ]
+  },
+  "real_data_validation_protocol": {
+    "required": [
+      "verdict",
+      "test_detection_rate",
+      "best_input"
+    ]
   }
 }

@@ -386,74 +386,63 @@ jobs:
           print(json.dumps(manifest, indent=2))
           PYEOF
 
-      
+- name: Final gate (contract) . write final_status.json
+  run: |
+    python - <<'PYEOF'
+    import json, os
+    from datetime import datetime, timezone
+    path = "_combined/dual_proof_manifest.json"
+    if not os.path.exists(path):
+        raise SystemExit(f"missing {path}")
+    d = json.loads(open(path, "r").read())
 
-      - name: Final Gate (write final_status.json)
-        run: |
-          set -euo pipefail
-          python - <<'PYEOF'
-          import json, os
-          from pathlib import Path
+    reasons = []
+    status = str(d.get("dual_proof_status", "")).strip()
+    if status != "DUAL_PROOF_COMPLETE":
+        reasons.append(f"dual_proof_status={status}")
 
-          mpath = Path('_combined/dual_proof_manifest.json')
-          if not mpath.exists():
-              raise SystemExit('dual_proof_manifest.json missing in _combined')
-          m = json.loads(mpath.read_text(encoding='utf-8'))
+    syn = d.get("synthetic", {}) or {}
+    if str(syn.get("global_verdict","")).strip() != "ACCEPT":
+        reasons.append(f"synthetic.global_verdict={syn.get('global_verdict')}")
+    if str(syn.get("support_level","")).strip() == "":
+        reasons.append("synthetic.support_level=missing")
 
-          dual_status = m.get('dual_proof_status','')
-          synth = m.get('synthetic', {})
-          real = m.get('real_data_fred', {})
-          val = m.get('validation_protocol_fast', {}) or m.get('real_data_validation_protocol', {})
+    real = d.get("real_data_fred", {}) or {}
+    if str(real.get("global_verdict","")).strip() != "ACCEPT":
+        reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
+    if str(real.get("support_level","")).strip() == "":
+        reasons.append("real_data_fred.support_level=missing")
 
-          reasons = []
-          if dual_status != 'DUAL_PROOF_COMPLETE':
-              reasons.append(f"dual_proof_status={dual_status}")
+    proto = d.get("real_data_validation_protocol", {}) or {}
+    proto_verdict = str(proto.get("verdict","")).strip()
+    if proto_verdict == "REJECT":
+        reasons.append("validation_protocol.verdict=REJECT")
 
-          if synth.get('global_verdict') != 'ACCEPT':
-              reasons.append(f"synthetic.global_verdict={synth.get('global_verdict')}")
+    final_pass = (len(reasons) == 0)
 
-          if real.get('global_verdict') != 'ACCEPT':
-              reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
+    out = {
+        "final_pass": final_pass,
+        "reasons": reasons,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "inputs": {
+            "dual_proof_status": status,
+            "synthetic_global_verdict": syn.get("global_verdict"),
+            "real_data_fred_global_verdict": real.get("global_verdict"),
+            "validation_protocol_verdict": proto_verdict,
+            "validation_protocol_test_detection_rate": proto.get("test_detection_rate"),
+        },
+        "contract": {
+            "rule": "pass iff dual_proof complete, synthetic ACCEPT, real_fred ACCEPT, validation_protocol != REJECT",
+        },
+    }
 
-          vver = val.get('verdict')
-          if vver == 'REJECT':
-              reasons.append('validation_protocol_fast.verdict=REJECT')
+    os.makedirs("_combined/tables", exist_ok=True)
+    with open("_combined/tables/final_status.json", "w") as fh:
+        json.dump(out, fh, indent=2, sort_keys=True)
+    print(json.dumps(out, indent=2, sort_keys=True))
+    PYEOF
 
-          final_pass = (len(reasons) == 0)
-
-          out = {
-              "final_pass": final_pass,
-              "reasons": reasons,
-              "dual_proof_status": dual_status,
-              "synthetic": {
-                  "global_verdict": synth.get('global_verdict'),
-                  "support_level": synth.get('support_level'),
-                  "gate_passed": synth.get('gate_passed'),
-                  "n_statistical_passed": synth.get('n_statistical_passed')
-              },
-              "real_data_fred": {
-                  "global_verdict": real.get('global_verdict'),
-                  "support_level": real.get('support_level')
-              },
-              "validation_protocol_fast": {
-                  "verdict": vver,
-                  "test_detection_rate": val.get('test_detection_rate'),
-                  "failure_mode": val.get('failure_mode'),
-                  "decidable_fraction": val.get('decidable_fraction')
-              }
-          }
-
-          Path('_combined').mkdir(exist_ok=True)
-          Path('_combined/final_status.json').write_text(json.dumps(out, indent=2), encoding='utf-8')
-          print(json.dumps(out, indent=2))
-          PYEOF
-
-      - name: Upload final status
-        uses: actions/upload-artifact@v4
-        with:
-          name: nightly_final_status_${{ github.run_id }}
-          path: _combined/final_status.json
-- name: Write GitHub step summary
+      - name: Write GitHub step summary
         env:
           SYNTH_SUPPORT:    ${{ needs.synthetic_full.outputs.synthetic_support_level }}
           SYNTH_VERDICT:    ${{ needs.synthetic_full.outputs.synthetic_global_verdict }}

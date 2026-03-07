@@ -1,18 +1,24 @@
 {
-  "schema_version": "1.0",
-  "root_summary": {
-    "required_files": ["tables/validation_summary.json"],
-    "required_keys": ["protocol_verdict", "best_stem", "test_metrics", "stable_metrics", "placebo_metrics"],
-    "compat_keys": ["test_det_rate", "stable_det_rate", "placebo_det_rate"]
-  },
+  "root_summary_path": "tables/validation_summary.json",
+  "root_fields": [
+    "protocol_verdict",
+    "best_stem",
+    "test_metrics",
+    "stable_metrics",
+    "placebo_metrics",
+    "inputs"
+  ],
+  "metrics_fields": [
+    "detection_rate",
+    "n_decidable",
+    "n_indeterminate",
+    "indeterminate_rate",
+    "sigma_zero_post_rate",
+    "modal_verdict"
+  ],
   "decidability": {
     "min_decidable_per_condition": 6,
     "min_total_decidable": 18,
-    "max_indeterminate_rate_per_condition": 0.40
-  },
-  "verdict_policy": {
-    "all_indeterminate": "INDETERMINATE",
-    "non_specific_detector": "REJECT",
-    "insufficient_decidable": "INDETERMINATE"
+    "max_indeterminate_rate_per_condition": 0.4
   }
 }
