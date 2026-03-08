@@ -16,7 +16,7 @@ _SECTOR_SHARED = _REPO_ROOT / "04_Code" / "sector" / "shared"
 if str(_SECTOR_SHARED) not in sys.path:
     sys.path.insert(0, str(_SECTOR_SHARED))
 
-from sector_panel_runner import _sync_summary_verdict
+from sector_panel_runner import _sync_summary_verdict, _normalize_verdict
 
 
 def _make_run_dir(tmp_path, summary_data, verdict_json=None, verdict_txt=None):
@@ -153,3 +153,84 @@ class TestSyncSummaryVerdict:
         assert s["verdict"] == "REJECT"
         assert s["dataset_id"] == "fred"
         assert s["run_mode"] == "full"
+
+
+class TestNormalizeVerdict:
+    """French verdict tokens from tests_causaux.py must normalize correctly."""
+
+    def test_canonical_tokens_unchanged(self):
+        assert _normalize_verdict("ACCEPT") == "ACCEPT"
+        assert _normalize_verdict("REJECT") == "REJECT"
+        assert _normalize_verdict("INDETERMINATE") == "INDETERMINATE"
+
+    def test_french_detected(self):
+        assert _normalize_verdict("seuil_detecte") == "ACCEPT"
+
+    def test_french_not_detected(self):
+        assert _normalize_verdict("non_detecte") == "REJECT"
+
+    def test_french_falsified(self):
+        assert _normalize_verdict("falsifie") == "REJECT"
+
+    def test_french_indeterminate_precheck(self):
+        assert _normalize_verdict(
+            "indetermine_precheck_failed:min_variance_C (var_pre=0.00e+00)"
+        ) == "INDETERMINATE"
+
+    def test_french_indeterminate_min_unique(self):
+        assert _normalize_verdict(
+            "indetermine_precheck_failed:min_unique_values_C (pre=1, post=1)"
+        ) == "INDETERMINATE"
+
+    def test_none_returns_indeterminate(self):
+        assert _normalize_verdict(None) == "INDETERMINATE"
+
+    def test_empty_string_returns_indeterminate(self):
+        assert _normalize_verdict("") == "INDETERMINATE"
+
+    def test_case_insensitive(self):
+        assert _normalize_verdict("SEUIL_DETECTE") == "ACCEPT"
+        assert _normalize_verdict("Indetermine_precheck_failed:test") == "INDETERMINATE"
+
+
+class TestFrenchVerdictInSyncFlow:
+    """End-to-end: French token in verdict.json → normalized in summary.json."""
+
+    def test_indeterminate_precheck_synced(self, tmp_path):
+        """This is the exact scenario from the bug report."""
+        _make_run_dir(
+            tmp_path,
+            summary_data={"verdict": "ACCEPT"},
+            verdict_json={
+                "verdict": "indetermine_precheck_failed:min_variance_C (var_pre=0.00e+00, var_post=0.00e+00)",
+                "precheck_passed": False,
+                "precheck_reason": "precheck_failed:min_variance_C",
+            },
+        )
+        _sync_summary_verdict(tmp_path)
+        s = json.loads((tmp_path / "tables" / "summary.json").read_text())
+        assert s["verdict"] == "INDETERMINATE"
+        assert s["precheck_passed"] is False
+        assert "verdict_raw" in s
+
+    def test_seuil_detecte_synced(self, tmp_path):
+        """French 'seuil_detecte' → canonical ACCEPT."""
+        _make_run_dir(
+            tmp_path,
+            summary_data={"verdict": "INDETERMINATE"},
+            verdict_json={"verdict": "seuil_detecte", "precheck_passed": True},
+        )
+        _sync_summary_verdict(tmp_path)
+        s = json.loads((tmp_path / "tables" / "summary.json").read_text())
+        assert s["verdict"] == "ACCEPT"
+
+    def test_non_detecte_synced(self, tmp_path):
+        """French 'non_detecte' → canonical REJECT."""
+        _make_run_dir(
+            tmp_path,
+            summary_data={"verdict": "ACCEPT"},
+            verdict_json={"verdict": "non_detecte"},
+        )
+        _sync_summary_verdict(tmp_path)
+        s = json.loads((tmp_path / "tables" / "summary.json").read_text())
+        assert s["verdict"] == "REJECT"
