@@ -186,9 +186,19 @@ def _analyze_run(
     # Effect: mean(C_test_post) - mean(C_ctrl_post)
     effect = float(np.mean(c_test_post) - np.mean(c_ctrl_post))
 
-    # Welch t-test
-    if np.std(c_test_post) < 1e-12 and np.std(c_ctrl_post) < 1e-12:
-        p_welch = float("nan")
+    # Welch t-test with adapted precheck for zero-variance arms.
+    # When BOTH arms have near-zero variance, the Welch test is undefined.
+    # But this is a decidable outcome: if the effect is also near-zero,
+    # there is clearly no detection (NOT_DETECTED), not indeterminate.
+    both_zero_var = (np.std(c_test_post) < 1e-12 and np.std(c_ctrl_post) < 1e-12)
+    if both_zero_var:
+        if abs(effect) < 1e-10:
+            # Both arms identical / near-identical → effect = 0 → NOT_DETECTED
+            # This is the strongest possible negative result.
+            p_welch = 1.0  # No evidence of difference
+        else:
+            # Zero variance but non-zero mean difference: degenerate case
+            p_welch = float("nan")
     else:
         _, p_welch = stats.ttest_ind(c_test_post, c_ctrl_post, equal_var=False)
         p_welch = float(p_welch)
@@ -235,12 +245,21 @@ def _analyze_run(
 
     detection_strength = float(np.mean(strength_components)) if strength_components else 0.0
 
+    # Determine reason for verdict
     if triplet:
         verdict = "DETECTED"
+        reason = "triplet"
+    elif both_zero_var and abs(effect) < 1e-10:
+        # Adapted precheck: zero-variance in both arms + zero effect
+        # → decidable NOT_DETECTED (strongest negative control).
+        verdict = "NOT_DETECTED"
+        reason = "zero_variance_zero_effect"
     elif not math.isfinite(p_welch):
         verdict = "INDETERMINATE"
+        reason = "stats_unavailable"
     else:
         verdict = "NOT_DETECTED"
+        reason = "triplet_failed"
 
     return {
         "verdict": verdict,
@@ -257,7 +276,8 @@ def _analyze_run(
         "triplet": triplet,
         "threshold_hit": threshold_hit,
         "c_pos_frac_post": c_pos_frac,
-        "reason": "triplet" if triplet else ("stats_unavailable" if not math.isfinite(p_welch) else "triplet_failed"),
+        "reason": reason,
+        "both_zero_var": both_zero_var,
     }
 
 

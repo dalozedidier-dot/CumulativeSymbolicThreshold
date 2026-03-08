@@ -173,27 +173,61 @@ def _run(
 # --------------------------------------------------------------------------- #
 
 def _read_verdict(path: Path) -> str:
-    """Read verdict from verdict.txt or tables/verdict.json → canonical token."""
+    """Read verdict from verdict.txt or tables/verdict.json → canonical token.
+
+    Uses _normalize_verdict to handle French tokens from tests_causaux.py.
+    """
     txt = path / "verdict.txt"
     js  = path / "tables" / "verdict.json"
     if txt.exists():
-        raw = txt.read_text().strip().upper()
-        for tok in ("ACCEPT", "REJECT", "INDETERMINATE"):
-            if tok in raw:
-                return tok
-        return "INDETERMINATE"
+        raw = txt.read_text().strip()
+        return _normalize_verdict(raw)
     if js.exists():
         try:
             data = json.loads(js.read_text())
-            raw  = str(data.get("verdict", "")).upper()
-            for tok in ("ACCEPT", "REJECT", "INDETERMINATE"):
-                if tok in raw:
-                    return tok
+            raw  = str(data.get("verdict", ""))
+            return _normalize_verdict(raw)
         except Exception:
             pass
     return "INDETERMINATE"
 
 
+
+
+def _normalize_verdict(raw: str | None) -> str:
+    """Normalize a verdict token to canonical English: ACCEPT/REJECT/INDETERMINATE.
+
+    The causal pipeline (tests_causaux.py) writes French verdict tokens:
+      - "seuil_detecte"           → ACCEPT
+      - "non_detecte"             → REJECT
+      - "falsifie"                → REJECT
+      - "indetermine_*"           → INDETERMINATE
+      - "indeterminate_*"         → INDETERMINATE
+
+    If already canonical (ACCEPT/REJECT/INDETERMINATE), returned as-is.
+    """
+    if raw is None:
+        return "INDETERMINATE"
+    raw_upper = str(raw).strip().upper()
+
+    # Already canonical?
+    if raw_upper in ("ACCEPT", "REJECT", "INDETERMINATE"):
+        return raw_upper
+
+    # French → English mapping
+    if "SEUIL_DETECTE" in raw_upper or raw_upper == "DETECTE":
+        return "ACCEPT"
+    if "NON_DETECTE" in raw_upper or "FALSIFIE" in raw_upper:
+        return "REJECT"
+    if raw_upper.startswith("INDETERMINE") or raw_upper.startswith("INDETERMINATE"):
+        return "INDETERMINATE"
+
+    # Partial matches as last resort
+    for tok in ("ACCEPT", "REJECT", "INDETERMINATE"):
+        if tok in raw_upper:
+            return tok
+
+    return "INDETERMINATE"
 
 
 def _sync_summary_verdict(run_dir: Path) -> None:
@@ -225,8 +259,19 @@ def _sync_summary_verdict(run_dir: Path) -> None:
     if v_path.exists():
         try:
             v = json.loads(v_path.read_text(encoding="utf-8"))
-            canonical_verdict = v.get("verdict", v.get("label", v.get("global")))
+            raw_verdict = v.get("verdict", v.get("label", v.get("global")))
             verdict_source = "verdict.json"
+
+            # Normalize to canonical English tokens.
+            # tests_causaux.py may write French tokens like:
+            #   "seuil_detecte"           → ACCEPT
+            #   "non_detecte"             → REJECT
+            #   "falsifie"                → REJECT
+            #   "indetermine_precheck_*"  → INDETERMINATE
+            canonical_verdict = _normalize_verdict(raw_verdict)
+
+            # Store the raw verdict for audit trail
+            s["verdict_raw"] = raw_verdict
 
             # Propagate precheck fields
             if "precheck_passed" in v:

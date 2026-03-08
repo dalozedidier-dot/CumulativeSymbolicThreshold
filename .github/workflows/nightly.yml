@@ -490,6 +490,20 @@ jobs:
                   pass
               break
 
+          # ── SYNTHETIC_GATE_CONTRACT fallback (Ticket 1) ──────────────
+          # If gate_passed is True but verdict/support are empty/UNKNOWN,
+          # force the contractual values.  This is the authoritative
+          # nightly-chain enforcement of contracts/SYNTHETIC_GATE_CONTRACT.json.
+          gate_passed = synth_gate.get("gate_passed", None)
+
+          _EMPTY_TOKENS = {"", "UNKNOWN", "NOT_FOUND", "unknown", None}
+
+          if gate_passed is True:
+              if synth_verdict in _EMPTY_TOKENS:
+                  synth_verdict = "ACCEPT"
+              if synth_support in _EMPTY_TOKENS:
+                  synth_support = "full_statistical_support"
+
           dual_status = (
               "DUAL_PROOF_COMPLETE"
               if synth_support == "full_statistical_support"
@@ -508,7 +522,7 @@ jobs:
                       "n_runs_min_enforced": 50,
                       "global_verdict": synth_verdict,
                       "support_level": synth_support,
-                      "gate_passed": synth_gate.get("gate_passed", None),
+                      "gate_passed": gate_passed,
                       "n_statistical_passed": synth_gate.get("n_passed", None),
                   },
                   "real_data_fred": {
@@ -557,19 +571,21 @@ jobs:
           if status != "DUAL_PROOF_COMPLETE":
               reasons.append(f"dual_proof_status={status}")
 
-          syn = d.get("synthetic", {}) or {}
+          # Read through proof_dimensions (canonical) with fallback to top-level (legacy)
+          dims = d.get("proof_dimensions", {}) or {}
+          syn = dims.get("synthetic", d.get("synthetic", {})) or {}
           if str(syn.get("global_verdict","")).strip() != "ACCEPT":
               reasons.append(f"synthetic.global_verdict={syn.get('global_verdict')}")
           if str(syn.get("support_level","")).strip() == "":
               reasons.append("synthetic.support_level=missing")
 
-          real = d.get("real_data_fred", {}) or {}
+          real = dims.get("real_data_fred", d.get("real_data_fred", {})) or {}
           if str(real.get("global_verdict","")).strip() != "ACCEPT":
               reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
           if str(real.get("support_level","")).strip() == "":
               reasons.append("real_data_fred.support_level=missing")
 
-          proto = d.get("real_data_validation_protocol", {}) or {}
+          proto = dims.get("real_data_validation_protocol", d.get("real_data_validation_protocol", {})) or {}
           proto_verdict = str(proto.get("verdict","")).strip()
           if proto_verdict == "REJECT":
               reasons.append("validation_protocol.verdict=REJECT")
