@@ -445,49 +445,46 @@ jobs:
           print(md)
           PYEOF
 
-
       - name: Render nightly HTML report
         run: |
           python - <<'PYEOF'
-          import json, os
+          import json
           from pathlib import Path
 
-          final_path = Path("_combined/tables/final_status.json")
-          dual_path = Path("_combined/dual_proof_manifest.json")
+          final_path = Path('_combined/tables/final_status.json')
+          dual_path = Path('_combined/dual_proof_manifest.json')
 
           if not final_path.exists():
-              raise SystemExit(f"missing {final_path}")
+              raise SystemExit(f'missing {final_path}')
           if not dual_path.exists():
-              raise SystemExit(f"missing {dual_path}")
+              raise SystemExit(f'missing {dual_path}')
 
-          final_data = json.loads(final_path.read_text(encoding="utf-8"))
-          dual_data = json.loads(dual_path.read_text(encoding="utf-8"))
-          dims = dual_data.get("proof_dimensions", {}) or {}
-          syn = dims.get("synthetic", {}) or {}
-          fred = dims.get("real_data_fred", {}) or {}
-          proto = dims.get("real_data_validation_protocol", {}) or {}
+          final_data = json.loads(final_path.read_text(encoding='utf-8'))
+          dual_data = json.loads(dual_path.read_text(encoding='utf-8'))
+          dims = dual_data.get('proof_dimensions', {}) or {}
+          syn = dims.get('synthetic', {}) or {}
+          fred = dims.get('real_data_fred', {}) or {}
+          proto = dims.get('real_data_validation_protocol', {}) or {}
 
           def esc(value):
-              s = "" if value is None else str(value)
-              return (
-                  s.replace("&", "&amp;")
-                   .replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace('"', "&quot;")
-              )
+              s = '' if value is None else str(value)
+              return (s.replace('&', '&amp;')
+                       .replace('<', '&lt;')
+                       .replace('>', '&gt;')
+                       .replace('"', '&quot;'))
 
           def verdict_class(value):
-              v = str(value or "").upper()
-              if v in {"TRUE", "ACCEPT", "DUAL_PROOF_COMPLETE"}:
-                  return "ok"
-              if v in {"FALSE", "REJECT", "DUAL_PROOF_INCOMPLETE"}:
-                  return "bad"
-              if v == "INDETERMINATE":
-                  return "warn"
-              return ""
+              v = str(value or '').upper()
+              if v in {'TRUE', 'ACCEPT', 'DUAL_PROOF_COMPLETE'}:
+                  return 'ok'
+              if v in {'FALSE', 'REJECT', 'DUAL_PROOF_INCOMPLETE'}:
+                  return 'bad'
+              if v == 'INDETERMINATE':
+                  return 'warn'
+              return ''
 
-          reasons = final_data.get("reasons") or []
-          reasons_html = "".join(f"<li>{esc(r)}</li>" for r in reasons) if reasons else "<li>Aucune raison bloquante.</li>"
+          reasons = final_data.get('reasons') or []
+          reasons_html = ''.join(f'<li>{esc(r)}</li>' for r in reasons) if reasons else '<li>Aucune raison bloquante.</li>'
 
           html = f'''<!doctype html>
 <html lang="fr">
@@ -496,26 +493,23 @@ jobs:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ORI-C . Nightly Report</title>
   <style>
-    :root {{
-      --bg: #0b1220; --panel: #121b2d; --panel2: #17233a; --text: #e8eefc; --muted: #9fb0d1;
-      --ok: #2ecc71; --warn: #f1c40f; --bad: #e74c3c; --line: #2a3958;
-    }}
-    * {{ box-sizing: border-box; }}
-    body {{ margin: 0; font-family: Inter, system-ui, Arial, sans-serif; background: linear-gradient(180deg,#0b1220 0%,#0d1628 100%); color: var(--text); }}
+    :root {{ --bg:#0b1220; --panel:#121b2d; --panel2:#17233a; --text:#e8eefc; --muted:#9fb0d1; --ok:#2ecc71; --warn:#f1c40f; --bad:#e74c3c; --line:#2a3958; }}
+    * {{ box-sizing:border-box; }}
+    body {{ margin:0; font-family:Inter,system-ui,Arial,sans-serif; background:linear-gradient(180deg,#0b1220 0%,#0d1628 100%); color:var(--text); }}
     .wrap {{ width:min(1160px, calc(100% - 32px)); margin:0 auto; padding:28px 0 48px; }}
     h1 {{ margin:0 0 8px; font-size:2rem; }}
-    .muted {{ color: var(--muted); }}
-    .grid {{ display:grid; grid-template-columns: repeat(12,1fr); gap:14px; margin-top:22px; }}
-    .card {{ grid-column: span 12; background: rgba(18,27,45,.92); border:1px solid var(--line); border-radius:16px; padding:18px; }}
-    .span-3 {{ grid-column: span 3; }} .span-4 {{ grid-column: span 4; }} .span-6 {{ grid-column: span 6; }} .span-8 {{ grid-column: span 8; }} .span-12 {{ grid-column: span 12; }}
-    @media (max-width: 960px) {{ .span-3,.span-4,.span-6,.span-8,.span-12 {{ grid-column: span 12; }} }}
-    .klabel {{ color: var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; margin-bottom:7px; }}
+    .muted {{ color:var(--muted); }}
+    .grid {{ display:grid; grid-template-columns:repeat(12,1fr); gap:14px; margin-top:22px; }}
+    .card {{ grid-column:span 12; background:rgba(18,27,45,.92); border:1px solid var(--line); border-radius:16px; padding:18px; }}
+    .span-3 {{ grid-column:span 3; }} .span-4 {{ grid-column:span 4; }} .span-6 {{ grid-column:span 6; }} .span-8 {{ grid-column:span 8; }} .span-12 {{ grid-column:span 12; }}
+    @media (max-width:960px) {{ .span-3,.span-4,.span-6,.span-8,.span-12 {{ grid-column:span 12; }} }}
+    .klabel {{ color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; margin-bottom:7px; }}
     .kvalue {{ font-size:1.35rem; font-weight:700; word-break:break-word; }}
-    .ok {{ color: var(--ok); }} .warn {{ color: var(--warn); }} .bad {{ color: var(--bad); }}
-    dl {{ display:grid; grid-template-columns: 220px 1fr; gap:8px 12px; margin:0; }}
-    dt {{ color: var(--muted); }} dd {{ margin:0; overflow-wrap:anywhere; }}
+    .ok {{ color:var(--ok); }} .warn {{ color:var(--warn); }} .bad {{ color:var(--bad); }}
+    dl {{ display:grid; grid-template-columns:220px 1fr; gap:8px 12px; margin:0; }}
+    dt {{ color:var(--muted); }} dd {{ margin:0; overflow-wrap:anywhere; }}
     @media (max-width:720px) {{ dl {{ grid-template-columns:1fr; }} }}
-    .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.92rem; }}
+    .mono {{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92rem; }}
     .json {{ background:#0d1526; border:1px solid var(--line); border-radius:12px; padding:14px; max-height:360px; overflow:auto; white-space:pre-wrap; }}
   </style>
 </head>
@@ -523,54 +517,31 @@ jobs:
   <div class="wrap">
     <h1>ORI-C . Nightly Report</h1>
     <p class="muted">Page générée automatiquement par le workflow nightly. Source de vérité : <span class="mono">final_status.json</span> et <span class="mono">dual_proof_manifest.json</span>.</p>
-
     <div class="grid">
-      <section class="card span-3"><div class="klabel">Final pass</div><div class="kvalue {verdict_class(str(final_data.get("final_pass")).upper())}">{esc(final_data.get("final_pass"))}</div></section>
-      <section class="card span-3"><div class="klabel">Dual proof</div><div class="kvalue {verdict_class(dual_data.get("dual_proof_status"))}">{esc(dual_data.get("dual_proof_status"))}</div></section>
-      <section class="card span-3"><div class="klabel">Validation verdict</div><div class="kvalue {verdict_class(proto.get("verdict"))}">{esc(proto.get("verdict"))}</div></section>
-      <section class="card span-3"><div class="klabel">Best input</div><div class="kvalue">{esc(proto.get("best_input") or proto.get("best_stem") or "—")}</div></section>
-
+      <section class="card span-3"><div class="klabel">Final pass</div><div class="kvalue {verdict_class(str(final_data.get('final_pass')).upper())}">{esc(final_data.get('final_pass'))}</div></section>
+      <section class="card span-3"><div class="klabel">Dual proof</div><div class="kvalue {verdict_class(dual_data.get('dual_proof_status'))}">{esc(dual_data.get('dual_proof_status'))}</div></section>
+      <section class="card span-3"><div class="klabel">Validation verdict</div><div class="kvalue {verdict_class(proto.get('verdict'))}">{esc(proto.get('verdict'))}</div></section>
+      <section class="card span-3"><div class="klabel">Best input</div><div class="kvalue">{esc(proto.get('best_input') or proto.get('best_stem') or '—')}</div></section>
       <section class="card span-8">
         <h2>Résumé canonique</h2>
         <dl>
-          <dt>Run ID</dt><dd class="mono">{esc(dual_data.get("run_id"))}</dd>
-          <dt>Timestamp UTC</dt><dd>{esc(dual_data.get("timestamp_utc") or final_data.get("timestamp_utc"))}</dd>
-          <dt>Synthétique</dt><dd>{esc(syn.get("global_verdict"))}</dd>
-          <dt>Support synthétique</dt><dd>{esc(syn.get("support_level"))}</dd>
-          <dt>Real FRED</dt><dd>{esc(fred.get("global_verdict"))}</dd>
-          <dt>Support real FRED</dt><dd>{esc(fred.get("support_level"))}</dd>
-          <dt>Validation test detection rate</dt><dd>{esc(proto.get("test_detection_rate") or final_data.get("inputs",{{}}).get("validation_protocol_test_detection_rate"))}</dd>
+          <dt>Run ID</dt><dd class="mono">{esc(dual_data.get('run_id'))}</dd>
+          <dt>Timestamp UTC</dt><dd>{esc(dual_data.get('timestamp_utc') or final_data.get('timestamp_utc'))}</dd>
+          <dt>Synthétique</dt><dd>{esc(syn.get('global_verdict'))}</dd>
+          <dt>Support synthétique</dt><dd>{esc(syn.get('support_level'))}</dd>
+          <dt>Real FRED</dt><dd>{esc(fred.get('global_verdict'))}</dd>
+          <dt>Support real FRED</dt><dd>{esc(fred.get('support_level'))}</dd>
+          <dt>Validation test detection rate</dt><dd>{esc(proto.get('test_detection_rate') or final_data.get('inputs',{{}}).get('validation_protocol_test_detection_rate'))}</dd>
         </dl>
       </section>
-
       <section class="card span-4">
         <h2>Raisons</h2>
         <ul>{reasons_html}</ul>
       </section>
-
-      <section class="card span-6">
-        <h2>Dimensions de preuve</h2>
-        <dl>
-          <dt>Synthetic gate passed</dt><dd>{esc(syn.get("gate_passed"))}</dd>
-          <dt>n statistical passed</dt><dd>{esc(syn.get("n_statistical_passed"))}</dd>
-          <dt>Validation verdict</dt><dd>{esc(proto.get("verdict"))}</dd>
-          <dt>Validation detection rate</dt><dd>{esc(proto.get("test_detection_rate"))}</dd>
-        </dl>
-      </section>
-
-      <section class="card span-6">
-        <h2>Fichiers sources</h2>
-        <dl>
-          <dt>final_status.json</dt><dd class="mono">tables/final_status.json</dd>
-          <dt>dual_proof_manifest.json</dt><dd class="mono">dual_proof_manifest.json</dd>
-        </dl>
-      </section>
-
       <section class="card span-12">
         <h2>JSON brut . final_status.json</h2>
         <div class="json mono">{esc(json.dumps(final_data, indent=2, sort_keys=True))}</div>
       </section>
-
       <section class="card span-12">
         <h2>JSON brut . dual_proof_manifest.json</h2>
         <div class="json mono">{esc(json.dumps(dual_data, indent=2, sort_keys=True))}</div>
@@ -580,10 +551,11 @@ jobs:
 </body>
 </html>'''
 
-          out = Path("_combined/nightly_report.html")
-          out.write_text(html, encoding="utf-8")
-          print(f"wrote {out}")
+          out = Path('_combined/nightly_report.html')
+          out.write_text(html, encoding='utf-8')
+          print(f'wrote {out}')
           PYEOF
+
       - name: Upload combined dual proof artifact
         uses: actions/upload-artifact@v4
         with:
