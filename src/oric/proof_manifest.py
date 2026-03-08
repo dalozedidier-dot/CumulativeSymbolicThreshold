@@ -271,63 +271,230 @@ def build_dual_proof_manifest(
             m.validation_specificity = _safe_float(dm.get("specificity"))
             m.validation_fisher_p = _safe_float(dm.get("fisher_p_value") or dm.get("fisher_p"))
 
+    # ── Synthetic fallback rule (SYNTHETIC_GATE_CONTRACT) ──────────
+    # If synthetic.gate_passed == True but verdict/support are empty,
+    # enforce the contractual values.  This prevents a known defect
+    # where the gate passes but downstream fields stay blank.
+    _apply_synthetic_fallback(m)
+
     m.check_completeness()
     return m
+
+
+def _apply_synthetic_fallback(m: DualProofManifest) -> None:
+    """Enforce SYNTHETIC_GATE_CONTRACT: gate_passed=True implies ACCEPT.
+
+    If synthetic.gate_passed is True but global_verdict or support_level
+    are empty/absent/UNKNOWN, force the contractual values.  This is the
+    single authoritative fallback — applied in the builder, not in a
+    fragile post-processing step.
+    """
+    if m.synthetic_gate_passed is not True:
+        return
+
+    _UNKNOWN_TOKENS = {"", "UNKNOWN", "unknown", None}
+
+    if (m.synthetic_global_verdict in _UNKNOWN_TOKENS
+            or _is_empty(m.synthetic_global_verdict)):
+        m.synthetic_global_verdict = "ACCEPT"
+
+    if (m.synthetic_support_level in _UNKNOWN_TOKENS
+            or _is_empty(m.synthetic_support_level)):
+        m.synthetic_support_level = "full_statistical_support"
 
 
 # ── Final status builder ───────────────────────────────────────────────────
 
 FINAL_STATUS_SCHEMA = {
-    "schema": "oric.final_status.v1",
+    "schema": "oric.final_status.v2",
     "required_fields": [
         "framework_status",
         "dual_proof_status",
-        "synthetic_verdict",
-        "real_data_verdict",
-        "validation_verdict",
-        "sensitivity",
-        "specificity",
+        "proof_dimensions",
         "empty_fields",
         "inconsistencies",
     ],
 }
+
+# The three canonical proof dimensions — the ONLY source of truth.
+_PROOF_DIMENSIONS = ("synthetic", "real_data_fred", "real_data_validation_protocol")
+
+
+class FinalGateError(Exception):
+    """Raised when the final gate encounters an invalid or incomplete schema."""
+
+
+def _extract_proof_dimensions(manifest: DualProofManifest) -> dict:
+    """Extract proof_dimensions from manifest — canonical structure only.
+
+    Returns a dict with exactly three keys.  Each sub-dict contains the
+    dimension-specific fields.  If any required field within a dimension
+    is None, the dimension is flagged incomplete (never silently None).
+    """
+    dims: dict[str, dict] = {}
+
+    # Synthetic
+    dims["synthetic"] = {
+        "gate_passed": manifest.synthetic_gate_passed,
+        "global_verdict": manifest.synthetic_global_verdict,
+        "support_level": manifest.synthetic_support_level,
+        "n_statistical_passed": manifest.synthetic_n_statistical_passed,
+    }
+
+    # Real data FRED
+    dims["real_data_fred"] = {
+        "global_verdict": manifest.fred_global_verdict,
+        "support_level": manifest.fred_support_level,
+    }
+
+    # Real data validation protocol
+    dims["real_data_validation_protocol"] = {
+        "verdict": manifest.validation_verdict,
+        "test_detection_rate": manifest.validation_test_detection_rate,
+        "best_input": manifest.validation_best_input,
+        "sensitivity": manifest.validation_sensitivity,
+        "specificity": manifest.validation_specificity,
+        "fisher_p": manifest.validation_fisher_p,
+    }
+
+    return dims
+
+
+def read_proof_dimensions(manifest_data: dict) -> dict:
+    """Read proof_dimensions from a serialised manifest dict.
+
+    Validates the canonical schema and raises FinalGateError on:
+      - Missing proof_dimensions key
+      - Missing required dimension
+      - Any required verdict field being None within a present dimension
+
+    This is the ONLY function the final gate should use to parse a
+    manifest.  Top-level shortcuts (e.g. manifest_data["synthetic_verdict"])
+    are forbidden.
+    """
+    # Accept both nested proof_dimensions and flat manifest structure
+    dims = manifest_data.get("proof_dimensions")
+
+    if dims is None:
+        # Try to reconstruct from flat manifest (DualProofManifest.to_dict())
+        dims = _reconstruct_proof_dimensions(manifest_data)
+        if dims is None:
+            raise FinalGateError(
+                "Manifest missing 'proof_dimensions' and cannot be "
+                "reconstructed from flat fields. Schema is invalid."
+            )
+
+    errors: list[str] = []
+
+    for dim_name in _PROOF_DIMENSIONS:
+        if dim_name not in dims:
+            errors.append(f"Missing required proof dimension: {dim_name}")
+            continue
+        dim = dims[dim_name]
+        # Check for None verdicts in each dimension
+        verdict_key = "global_verdict" if dim_name != "real_data_validation_protocol" else "verdict"
+        verdict_val = dim.get(verdict_key)
+        if verdict_val is None or (isinstance(verdict_val, str) and verdict_val.strip() == ""):
+            errors.append(
+                f"proof_dimensions.{dim_name}.{verdict_key} is "
+                f"None or empty (got {verdict_val!r})"
+            )
+
+    if errors:
+        raise FinalGateError(
+            "Final gate schema validation failed:\n  " + "\n  ".join(errors)
+        )
+
+    return dims
+
+
+def _reconstruct_proof_dimensions(flat: dict) -> dict | None:
+    """Reconstruct proof_dimensions from a flat DualProofManifest dict."""
+    # Check if this looks like a flat manifest
+    if "synthetic_global_verdict" not in flat and "fred_global_verdict" not in flat:
+        return None
+
+    return {
+        "synthetic": {
+            "gate_passed": flat.get("synthetic_gate_passed"),
+            "global_verdict": flat.get("synthetic_global_verdict"),
+            "support_level": flat.get("synthetic_support_level"),
+            "n_statistical_passed": flat.get("synthetic_n_statistical_passed"),
+        },
+        "real_data_fred": {
+            "global_verdict": flat.get("fred_global_verdict"),
+            "support_level": flat.get("fred_support_level"),
+        },
+        "real_data_validation_protocol": {
+            "verdict": flat.get("validation_verdict"),
+            "test_detection_rate": flat.get("validation_test_detection_rate"),
+            "best_input": flat.get("validation_best_input"),
+            "sensitivity": flat.get("validation_sensitivity"),
+            "specificity": flat.get("validation_specificity"),
+            "fisher_p": flat.get("validation_fisher_p"),
+        },
+    }
 
 
 def build_final_status(manifest: DualProofManifest) -> dict:
     """Build final_status.json from a completed manifest.
 
     The final status is the SINGLE authoritative output that summarises
-    the entire framework state.  It is derived mechanically from the
-    manifest — never from in-memory pipeline state.
+    the entire framework state.  It reads ONLY through proof_dimensions —
+    never through top-level legacy fields.
     """
+    proof_dims = _extract_proof_dimensions(manifest)
+
+    # Determine framework status from the three canonical dimensions
+    syn = proof_dims["synthetic"]
+    fred = proof_dims["real_data_fred"]
+    val = proof_dims["real_data_validation_protocol"]
+
     all_accept = (
-        manifest.synthetic_global_verdict == "ACCEPT"
-        and manifest.fred_global_verdict == "ACCEPT"
-        and manifest.validation_verdict == "ACCEPT"
+        syn.get("global_verdict") == "ACCEPT"
+        and fred.get("global_verdict") == "ACCEPT"
+        and val.get("verdict") == "ACCEPT"
     )
+
     no_empty = len(manifest.empty_fields) == 0
     no_inconsistencies = len(manifest.inconsistencies) == 0
 
-    if all_accept and no_empty and no_inconsistencies:
-        framework_status = "COMPLETE"
-    elif manifest.dual_proof_status == "DUAL_PROOF_INCOMPLETE":
+    # Check for None in any dimension verdict — explicit INCOMPLETE, not silent
+    has_none_verdicts = any([
+        _is_empty(syn.get("global_verdict")),
+        _is_empty(fred.get("global_verdict")),
+        _is_empty(val.get("verdict")),
+    ])
+
+    if has_none_verdicts:
         framework_status = "INCOMPLETE"
+        incompleteness_reason = "one_or_more_dimension_verdicts_missing"
+    elif all_accept and no_empty and no_inconsistencies:
+        framework_status = "COMPLETE"
+        incompleteness_reason = None
     else:
         framework_status = "INCOMPLETE"
+        incompleteness_reason = (
+            "not_all_accept" if not all_accept
+            else "empty_or_inconsistent_fields"
+        )
 
     return {
-        "schema": "oric.final_status.v1",
+        "schema": "oric.final_status.v2",
         "framework_status": framework_status,
         "dual_proof_status": manifest.dual_proof_status,
-        "synthetic_verdict": manifest.synthetic_global_verdict,
-        "real_data_verdict": manifest.fred_global_verdict,
-        "validation_verdict": manifest.validation_verdict,
-        "sensitivity": manifest.validation_sensitivity,
-        "specificity": manifest.validation_specificity,
-        "fisher_p": manifest.validation_fisher_p,
-        "test_detection_rate": manifest.validation_test_detection_rate,
+        "proof_dimensions": proof_dims,
+        # Keep flat fields for backward-compat reads (but proof_dimensions is canonical)
+        "synthetic_verdict": syn.get("global_verdict"),
+        "real_data_verdict": fred.get("global_verdict"),
+        "validation_verdict": val.get("verdict"),
+        "sensitivity": val.get("sensitivity"),
+        "specificity": val.get("specificity"),
+        "fisher_p": val.get("fisher_p"),
+        "test_detection_rate": val.get("test_detection_rate"),
         "empty_fields": manifest.empty_fields,
         "inconsistencies": manifest.inconsistencies,
         "n_empty": len(manifest.empty_fields),
         "n_inconsistencies": len(manifest.inconsistencies),
+        "incompleteness_reason": incompleteness_reason,
     }

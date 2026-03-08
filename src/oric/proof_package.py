@@ -183,7 +183,7 @@ def build_proof_package(
         final_status["framework_status"] == "COMPLETE"
     )
     pkg.bloc1_contractual.schema_valid = (
-        final_status.get("schema") == "oric.final_status.v1"
+        final_status.get("schema") in ("oric.final_status.v1", "oric.final_status.v2")
     )
 
     if integrity_checks is not None:

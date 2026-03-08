@@ -197,29 +197,70 @@ def _read_verdict(path: Path) -> str:
 
 
 def _sync_summary_verdict(run_dir: Path) -> None:
-    """Align tables/summary.json['verdict'] on tables/verdict.json['verdict'] when both exist.
+    """Enforce canonical verdict alignment: summary.json MUST match verdict.json.
 
-    This is contract-preserving: verdict.json is the causal source of truth after tests_causaux.py.
+    Rules (contract-preserving — verdict.json is the single source of truth):
+      1. summary.json["verdict"] := verdict.json["verdict"]
+      2. If verdict.json has precheck_passed=false, summary CANNOT show ACCEPT
+      3. If verdict.json is absent, fall back to verdict.txt
+      4. All precheck fields propagated from verdict.json into summary
+      5. summary.json["verdict_source"] := "verdict.json" (audit trail)
     """
     s_path = run_dir / "tables" / "summary.json"
     v_path = run_dir / "tables" / "verdict.json"
-    if not s_path.exists() or not v_path.exists():
+    v_txt = run_dir / "verdict.txt"
+
+    if not s_path.exists():
         return
+
     try:
         s = json.loads(s_path.read_text(encoding="utf-8"))
-        v = json.loads(v_path.read_text(encoding="utf-8"))
     except Exception:
         return
 
-    verdict_value = v.get("verdict", v.get("label", v.get("global")))
-    if verdict_value is None:
+    # Determine canonical verdict
+    canonical_verdict = None
+    verdict_source = None
+
+    if v_path.exists():
+        try:
+            v = json.loads(v_path.read_text(encoding="utf-8"))
+            canonical_verdict = v.get("verdict", v.get("label", v.get("global")))
+            verdict_source = "verdict.json"
+
+            # Propagate precheck fields
+            if "precheck_passed" in v:
+                s["precheck_passed"] = v["precheck_passed"]
+            if "precheck_reason" in v:
+                s["precheck_reason"] = v["precheck_reason"]
+
+            # Hard rule: precheck_passed=false → cannot be ACCEPT
+            if v.get("precheck_passed") is False and canonical_verdict == "ACCEPT":
+                canonical_verdict = "INDETERMINATE"
+                s["verdict_override_reason"] = (
+                    "precheck_passed=false contradicts ACCEPT; "
+                    "overridden to INDETERMINATE"
+                )
+        except Exception:
+            pass
+
+    if canonical_verdict is None and v_txt.exists():
+        try:
+            raw = v_txt.read_text(encoding="utf-8").strip()
+            for tok in ("ACCEPT", "REJECT", "INDETERMINATE"):
+                if tok in raw.upper():
+                    canonical_verdict = tok
+                    verdict_source = "verdict.txt"
+                    break
+        except Exception:
+            pass
+
+    if canonical_verdict is None:
         return
 
-    s["verdict"] = verdict_value
-    if "precheck_passed" in v:
-        s["precheck_passed"] = v.get("precheck_passed")
-    if "precheck_reason" in v:
-        s["precheck_reason"] = v.get("precheck_reason")
+    # Apply: summary.json["verdict"] is ALWAYS derived from canonical
+    s["verdict"] = canonical_verdict
+    s["verdict_source"] = verdict_source
 
     s_path.write_text(json.dumps(s, indent=2), encoding="utf-8")
 
