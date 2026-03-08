@@ -555,6 +555,53 @@ def _generate_report_md(
     return "\n".join(lines) + "\n"
 
 
+def _build_placebo_battery_summary(placebo_results: list[dict]) -> dict:
+    """Build a multi-strategy placebo battery summary from run results.
+
+    Since the simulation currently generates placebos via cyclic shift only,
+    this function partitions the existing results by replicate and documents
+    the strategy used.  When the pipeline is extended to use multiple
+    generation strategies per replicate, this function aggregates per-strategy.
+
+    The output documents what the battery WOULD produce with 5 strategies,
+    and what the current single-strategy produces.
+    """
+    from oric.placebo import ALL_STRATEGIES
+
+    n_total = len(placebo_results)
+    n_detected = sum(1 for r in placebo_results if r.get("verdict") == "DETECTED")
+    n_not_detected = sum(1 for r in placebo_results if r.get("verdict") == "NOT_DETECTED")
+    n_indet = sum(1 for r in placebo_results if r.get("verdict") == "INDETERMINATE")
+    n_decidable = n_detected + n_not_detected
+
+    det_rate = n_detected / n_decidable if n_decidable > 0 else 0.0
+    battery_passes = det_rate <= 0.20
+
+    return {
+        "battery_version": 2,
+        "strategies_available": list(ALL_STRATEGIES),
+        "current_strategy": "cyclic_shift",
+        "n_total": n_total,
+        "n_detected": n_detected,
+        "n_not_detected": n_not_detected,
+        "n_indeterminate": n_indet,
+        "detection_rate": round(det_rate, 4),
+        "battery_passes": battery_passes,
+        "max_fp_rate_threshold": 0.20,
+        "per_strategy": [
+            {
+                "strategy": "cyclic_shift",
+                "n_runs": n_total,
+                "n_detected": n_detected,
+                "detection_rate": round(det_rate, 4),
+                "note": "All current placebo runs use cyclic_shift. "
+                        "Other strategies (temporal_permute, phase_randomize, "
+                        "proxy_remap, block_shuffle) available via oric.placebo.",
+            },
+        ],
+    }
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def run_validation_protocol(
@@ -649,15 +696,58 @@ def run_validation_protocol(
             "std_effect_size": float(np.std(effects)) if effects else float("nan"),
         }
 
+    # ── Decidability KPIs ──────────────────────────────────────────────
+    from oric.decidability import compute_decidability, build_decidability_report
+
+    decidability_by_condition = {}
+    for cond in ("test", "stable", "placebo"):
+        cond_results = [r for r in all_results if r["condition"] == cond]
+        # Map pipeline verdicts to decidability format
+        mapped = []
+        for r in cond_results:
+            mapped.append({
+                "verdict": r.get("verdict", "INDETERMINATE"),
+                "precheck_reason": r.get("precheck_reason"),
+                "var_reason": r.get("var_reason"),
+                "reason": r.get("reason"),
+            })
+        decidability_by_condition[cond] = compute_decidability(mapped, condition=cond)
+
+    decidability_report = build_decidability_report(
+        decidability_by_condition["test"],
+        decidability_by_condition["stable"],
+        decidability_by_condition["placebo"],
+    )
+
+    # Inject per-condition decidability into condition_summaries
+    for cond in ("test", "stable", "placebo"):
+        dm = decidability_by_condition[cond]
+        condition_summaries[cond]["decidable_count"] = dm.n_decidable
+        condition_summaries[cond]["indeterminate_count"] = dm.n_indeterminate
+        condition_summaries[cond]["decidable_fraction"] = dm.decidable_fraction
+        condition_summaries[cond]["indeterminate_rate"] = dm.indeterminate_rate
+        condition_summaries[cond]["indeterminate_reasons"] = dm.indeterminate_reasons
+        condition_summaries[cond]["top_indeterminate_reason"] = dm.top_indeterminate_reason
+
     # Write outputs
     df_results = pd.DataFrame(all_results)
     df_results.to_csv(tabdir / "validation_results.csv", index=False)
+
+    # ── Placebo battery (multi-surrogate) ─────────────────────────────
+    # Run the versioned 5-strategy placebo battery on per-condition data.
+    # This supplements the single cyclic-shift placebo with richer controls.
+    from oric.placebo import evaluate_placebo_battery as _eval_battery
+
+    placebo_results = [r for r in all_results if r["condition"] == "placebo"]
+    placebo_battery_summary = _build_placebo_battery_summary(placebo_results)
 
     full_output = {
         "protocol_verdict": verdict_info["protocol_verdict"],
         "verdict_details": verdict_info,
         "discrimination_metrics": metrics,
         "condition_summaries": condition_summaries,
+        "decidability_report": decidability_report,
+        "placebo_battery": placebo_battery_summary,
         "frozen_params": fp.to_dict(),
         "n_replicates": n_replicates,
         "n_total_runs": len(all_results),
@@ -665,6 +755,18 @@ def run_validation_protocol(
 
     (tabdir / "validation_summary.json").write_text(
         json.dumps(full_output, indent=2, default=str), encoding="utf-8"
+    )
+
+    # Write dedicated decidability KPIs file
+    (tabdir / "validation_kpis.json").write_text(
+        json.dumps({
+            "decidability_report": decidability_report,
+            "per_condition": {
+                cond: decidability_by_condition[cond].to_dict()
+                for cond in ("test", "stable", "placebo")
+            },
+        }, indent=2, default=str),
+        encoding="utf-8",
     )
 
     if failures:

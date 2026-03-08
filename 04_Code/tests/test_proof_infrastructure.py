@@ -171,7 +171,7 @@ class TestFinalStatus:
         m.check_completeness()
         fs = build_final_status(m)
         assert fs["framework_status"] == "COMPLETE"
-        assert fs["schema"] == "oric.final_status.v1"
+        assert fs["schema"] == "oric.final_status.v2"
         assert fs["n_empty"] == 0
         assert fs["n_inconsistencies"] == 0
 

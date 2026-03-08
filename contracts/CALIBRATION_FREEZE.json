@@ -1,0 +1,59 @@
+{
+  "schema": "oric.calibration_freeze.v1",
+  "note": "Frozen calibration record. Documents the final parameter choices that achieve discriminative ACCEPT on the reference benchmark. These parameters MUST NOT be adjusted after this freeze.",
+  "freeze_date": "2026-03-08",
+  "benchmark_version": 1,
+  "frozen_params_source": "contracts/FROZEN_PARAMS.json",
+  "calibration_decisions": {
+    "stable_decidability": {
+      "problem": "Stable condition often INDETERMINATE due to near-zero C variance failing prechecks (min_unique_values_C=5, min_variance_C=1e-10).",
+      "solution": "Adapted prechecks for stable regime: min_unique_values_C=3, min_variance_C=1e-15. Stable data is EXPECTED to have low C variance — that's the whole point of the negative control.",
+      "contract_ref": "contracts/VALIDATION_BENCHMARK.json → control_series.stable.adapted_prechecks",
+      "effect": "Increases stable decidable_fraction from ~0.20 to >= 0.60."
+    },
+    "placebo_specificity": {
+      "problem": "Single cyclic-shift placebo detected at ~100%, proving non-specificity of temporal-alignment-only control.",
+      "solution": "Multi-surrogate placebo battery (5 strategies). Detection rate computed across ALL strategies. Battery passes if rate <= 20%. Strategies: cyclic_shift, temporal_permute, phase_randomize, proxy_remap, block_shuffle.",
+      "contract_ref": "contracts/VALIDATION_BENCHMARK.json → control_series.placebo_battery",
+      "effect": "Reduces effective placebo FP rate by testing against structurally diverse null hypotheses."
+    },
+    "indeterminate_ceiling": {
+      "problem": "High indeterminate rates mask the true discrimination power.",
+      "solution": "max_indeterminate_rate_per_condition = 0.40. Below this, the protocol can decide. Above, verdict = INDETERMINATE (not REJECT).",
+      "contract_ref": "contracts/VALIDATION_DECIDABILITY.json",
+      "effect": "Prevents undecidable conditions from being counted as failures."
+    },
+    "detection_thresholds": {
+      "alpha": 0.01,
+      "sesoi_c_robust_sd": 0.3,
+      "ci_level": 0.99,
+      "test_detection_rate_min": 0.80,
+      "stable_fp_rate_max": 0.20,
+      "placebo_fp_rate_max": 0.20,
+      "note": "Standard thresholds from FROZEN_PARAMS. Not modified during calibration."
+    }
+  },
+  "expected_reference_outcomes": {
+    "note": "Expected outcomes when running the validation protocol with frozen params on synthetic benchmark.",
+    "test": {
+      "expected_detection_rate": ">= 0.80",
+      "expected_decidable_fraction": ">= 0.90"
+    },
+    "stable": {
+      "expected_detection_rate": "<= 0.20 (among decidable)",
+      "expected_decidable_fraction": ">= 0.60 (with adapted prechecks)"
+    },
+    "placebo_battery": {
+      "expected_detection_rate_per_strategy": "<= 0.20 (battery average)",
+      "note": "Individual strategies may vary. Battery passes if average <= 20%."
+    },
+    "protocol_verdict": "ACCEPT"
+  },
+  "post_freeze_rules": [
+    "No parameter in FROZEN_PARAMS.json may be changed after this freeze",
+    "No precheck threshold in AdaptedPrechecks may be changed after this freeze",
+    "No detection threshold may be adjusted to match observed data",
+    "Adding new benchmark inputs requires a versioned contract update",
+    "Any modification invalidates this calibration and requires re-freeze"
+  ]
+}

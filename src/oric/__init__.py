@@ -21,7 +21,10 @@ from .ori_core import compute_cap_projection, compute_sigma, compute_viability, 
 from .symbolic import compute_stock_S, compute_order_C, detect_s_star_piecewise
 from .proxy_spec import ProxySpec, ColumnSpec
 from .decision import DecisionResult, hierarchical_verdict, WELCH_NAN_FALLBACK_POLICY
-from .proof_manifest import DualProofManifest, build_dual_proof_manifest, build_final_status
+from .proof_manifest import (
+    DualProofManifest, build_dual_proof_manifest, build_final_status,
+    read_proof_dimensions, FinalGateError, _apply_synthetic_fallback,
+)
 from .integrity import check_run_integrity, check_dual_proof_integrity, integrity_gate
 from .placebo import generate_placebo, generate_placebo_battery, evaluate_placebo_battery
 from .decidability import DecidabilityMetrics, compute_decidability, AdaptedPrechecks
@@ -48,6 +51,9 @@ __all__ = [
     "DualProofManifest",
     "build_dual_proof_manifest",
     "build_final_status",
+    "read_proof_dimensions",
+    "FinalGateError",
+    "_apply_synthetic_fallback",
     "check_run_integrity",
     "check_dual_proof_integrity",
     "integrity_gate",
