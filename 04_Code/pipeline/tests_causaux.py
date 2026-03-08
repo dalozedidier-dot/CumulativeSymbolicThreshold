@@ -81,6 +81,70 @@ _PRECHECKS_CONTRACT = _load_prechecks_contract()
 _PRECHECKS = _PRECHECKS_CONTRACT.get("prechecks", {})
 
 
+def _normalize_verdict_token(raw: str | None) -> str:
+    """Normalise a verdict token to canonical English: ACCEPT/REJECT/INDETERMINATE.
+
+    tests_causaux.py writes French tokens:
+      seuil_detecte            → ACCEPT
+      non_detecte / falsifie   → REJECT
+      indetermine_*            → INDETERMINATE
+    """
+    if raw is None:
+        return "INDETERMINATE"
+    u = str(raw).strip().upper()
+    if u in ("ACCEPT", "REJECT", "INDETERMINATE"):
+        return u
+    if "SEUIL_DETECTE" in u or u == "DETECTE":
+        return "ACCEPT"
+    if "NON_DETECTE" in u or "FALSIFIE" in u:
+        return "REJECT"
+    if u.startswith("INDETERMINE") or u.startswith("INDETERMINATE"):
+        return "INDETERMINATE"
+    for tok in ("ACCEPT", "REJECT", "INDETERMINATE"):
+        if tok in u:
+            return tok
+    return "INDETERMINATE"
+
+
+def _sync_summary_after_verdict(tabdir: Path, report: dict) -> None:
+    """Sync summary.json with the verdict just written to verdict.json.
+
+    Called right after verdict.json is written, this ensures that
+    summary.json["verdict"] reflects the canonical (English) verdict
+    from tests_causaux, regardless of execution context.
+    """
+    summary_path = tabdir / "summary.json"
+    if not summary_path.exists():
+        return
+    try:
+        s = json.loads(summary_path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+
+    raw_verdict = report.get("verdict")
+    canonical = _normalize_verdict_token(raw_verdict)
+
+    s["verdict"] = canonical
+    s["verdict_raw"] = raw_verdict
+    s["verdict_source"] = "tests_causaux.verdict.json"
+
+    # Propagate precheck info
+    if "precheck_passed" in report:
+        s["precheck_passed"] = report["precheck_passed"]
+    if "precheck_reason" in report:
+        s["precheck_reason"] = report["precheck_reason"]
+
+    # Hard rule: precheck_passed=false → cannot be ACCEPT
+    if report.get("precheck_passed") is False and canonical == "ACCEPT":
+        s["verdict"] = "INDETERMINATE"
+        s["verdict_override_reason"] = (
+            "precheck_passed=false contradicts ACCEPT; "
+            "overridden to INDETERMINATE"
+        )
+
+    summary_path.write_text(json.dumps(s, indent=2), encoding="utf-8")
+
+
 def _run_prechecks(
     pre: pd.DataFrame,
     post: pd.DataFrame,
@@ -797,6 +861,14 @@ def main() -> int:
 
     pd.DataFrame([row]).to_csv(tabdir / "causal_tests_summary.csv", index=False)
     (tabdir / "verdict.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+    # ── Sync summary.json with verdict.json (Ticket 3) ────────────────
+    # This ensures summary.json["verdict"] always matches the canonical
+    # verdict from tests_causaux, regardless of execution context (nightly
+    # CI, sector suite, or standalone).  French tokens are normalised to
+    # canonical English: ACCEPT / REJECT / INDETERMINATE.
+    _sync_summary_after_verdict(tabdir, report)
+
     md = _render_md(report)
     (tabdir / "causal_report.md").write_text(md, encoding="utf-8")
     if bool(args.pdf):
