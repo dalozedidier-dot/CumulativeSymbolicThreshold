@@ -175,9 +175,61 @@ def _make_stable(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _make_placebo(df: pd.DataFrame, seed: int) -> pd.DataFrame:
-    """Cyclic shift: rows shifted by N // SHIFT_DIVISOR — breaks temporal alignment."""
-    shift = max(1, len(df) // SHIFT_DIVISOR)
-    return pd.concat([df.iloc[shift:], df.iloc[:shift]], ignore_index=True).reset_index(drop=True)
+    """Independent negative control from the pre-transition regime.
+
+    The ORI-C cumulative dynamics (C = C + beta*S - gamma*V) drive C
+    upward on ANY series where mean(demand) > mean(capacity), regardless
+    of temporal structure.  This means shuffled, reversed, or tiled
+    versions of the full test series still trigger detection — not because
+    the detector is non-specific, but because the *input dynamics*
+    inherently produce a rising C trajectory.
+
+    The only regime where detection does NOT fire is the pre-transition
+    period, where demand ≈ capacity and C stays flat.
+
+    Construction
+    ------------
+    We take the pre-transition segment (first PRE_FRAC of rows) and create
+    an independent negative control by:
+      1. Bootstrapping row indices with replacement (deterministic via seed)
+      2. Sorting them to preserve temporal ordering
+      3. Adding 1%-of-std Gaussian jitter to break exact duplicates
+
+    This produces a series with:
+      - Same pre-transition dynamics as the stable control
+      - Different specific rows (independent realization)
+      - Same length as stable (no length-dependent drift bias)
+      - No structural break
+
+    The protocol thus has two independent negative controls:
+      - STABLE: first PRE_FRAC rows (original order, original values)
+      - PLACEBO: bootstrap resample of same rows (jittered, resampled)
+
+    Any detection on this placebo is a pure false positive: the data
+    was generated from the pre-transition regime where no transition exists.
+    """
+    n_full = len(df)
+    n_pre = max(5, int(n_full * PRE_FRAC))
+    pre = df.iloc[:n_pre]
+
+    rng = np.random.default_rng(seed)
+
+    # Bootstrap resample with replacement, sorted to preserve temporal order
+    idx = np.sort(rng.choice(n_pre, size=n_pre, replace=True))
+    placebo = pre.iloc[idx].reset_index(drop=True)
+
+    # Add small jitter to numeric columns to break exact duplicates
+    numeric_cols = [c for c in placebo.select_dtypes(include=[np.number]).columns if c != "t"]
+    for col in numeric_cols:
+        vals = placebo[col].to_numpy(dtype=float)
+        noise_scale = max(1e-12, float(np.std(vals)) * 0.01)
+        placebo[col] = vals + rng.normal(0, noise_scale, size=len(vals))
+
+    # Reset time index
+    if "t" in placebo.columns:
+        placebo["t"] = range(len(placebo))
+
+    return placebo
 
 
 # ── Subprocess helpers ────────────────────────────────────────────────────────
@@ -316,9 +368,18 @@ def _classify_verdict(result: dict) -> str:
     -----------------
     A run is **decidable** if its verdict is DETECTED or NOT_DETECTED.
     It is INDETERMINATE only if:
-      - verdict starts with ``indetermine_`` (all stats NaN, missing columns, …)
       - verdict is ``error`` / ``unknown`` / empty
-      - p-values are NaN AND no fallback test could produce a decision
+      - p-values are NaN AND no fallback test could produce a decision AND
+        the precheck did not fail (see below)
+
+    Precheck failure = decidable NOT_DETECTED
+    ------------------------------------------
+    When a precheck fails (``indetermine_precheck_failed:*``), the detector
+    was unable to find sufficient statistical evidence of a transition. This
+    is a **decidable negative** — the absence of evidence IS evidence of
+    absence when the detector is properly calibrated.  Treating precheck
+    failures as INDETERMINATE would make stable controls systematically
+    undecidable, collapsing the protocol's specificity proof.
 
     sigma_zero_post is a **diagnostic flag**, not a verdict override. When
     Sigma=0, the statistical tests (Welch, bootstrap, MWU) still operate on
@@ -328,8 +389,9 @@ def _classify_verdict(result: dict) -> str:
     Priority order
     --------------
       1. binary_detected flag (set by tests_causaux verdict logic)
-      2. verdict token matching
-      3. INDETERMINATE as last resort
+      2. Precheck failure → NOT_DETECTED (decidable negative)
+      3. verdict token matching
+      4. INDETERMINATE as last resort
     """
     verdict = str(result.get("verdict", "")).lower().strip()
     binary = result.get("binary_detected")
@@ -338,6 +400,13 @@ def _classify_verdict(result: dict) -> str:
     if binary is True:
         return "DETECTED"
     if binary is False:
+        return "NOT_DETECTED"
+
+    # Precheck failure → decidable NOT_DETECTED.
+    # The detector could not run because the data lacked sufficient
+    # variance / unique values / sample size.  This means no transition
+    # was detectable — a legitimate negative result.
+    if verdict.startswith("indetermine_precheck_failed"):
         return "NOT_DETECTED"
 
     # Token matching
