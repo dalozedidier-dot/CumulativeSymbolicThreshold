@@ -809,8 +809,14 @@ def _protocol_verdict(
     c1_ind_ok = c1_ind_rate <= MAX_INDETERMINATE_RATE if test_metrics.get("n_valid", 0) > 0 else False
     c2_ind_ok = c2_ind_rate <= MAX_INDETERMINATE_RATE if stable_metrics.get("n_valid", 0) > 0 else False
     c3_ind_ok = c3_ind_rate <= MAX_INDETERMINATE_RATE if placebo_metrics.get("n_valid", 0) > 0 else False
+    total_runs = (
+        test_metrics.get("n_valid", 0)
+        + stable_metrics.get("n_valid", 0)
+        + placebo_metrics.get("n_valid", 0)
+    )
     notes["decidability_gate"] = {
         "total_decidable": int(total_decidable),
+        "total_runs": int(total_runs),
         "min_total_decidable": int(MIN_TOTAL_DECIDABLE),
         "per_condition_min": int(N_DECIDABLE_MIN),
         "max_indeterminate_rate": float(MAX_INDETERMINATE_RATE),
@@ -1374,8 +1380,8 @@ def main() -> int:
         "validation_stable_fp_rate": _safe_rate(best_stable),
         "validation_placebo_fp_rate": _safe_rate(best_placebo),
         "validation_decidable_fraction": (
-            decidability_info.get("total_decidable", 0) /
-            max(1, 3 * (N_BOOT_FAST if True else N_BOOT_FULL))  # approximate
+            decidability_info.get("total_decidable", 0)
+            / max(1, decidability_info.get("total_runs", 0))
         ),
         "validation_contrast_passes": contrast_info.get("contrast_passes"),
         "validation_contrast_gap": contrast_info.get("contrast_gap"),
