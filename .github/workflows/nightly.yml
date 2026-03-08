@@ -272,10 +272,166 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-  # ── JOB 4: Dual proof summary — combined artifact ───────────────────────────
+  # ── JOB 4a: Real data — CPI France ──────────────────────────────────────────
+  real_data_cpi:
+    name: "Real Data CPI — pilot_cpi (FR)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: Run CPI pilot
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/cpi
+          PYTHONPATH=src python 04_Code/pipeline/validate_proxy_spec.py \
+            --spec 03_Data/real/economie/pilot_cpi/proxy_spec.json \
+            --csv  03_Data/real/economie/pilot_cpi/real.csv
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py \
+            --input 03_Data/real/economie/pilot_cpi/real.csv \
+            --outdir _ci_out/real/cpi \
+            --proxy-spec 03_Data/real/economie/pilot_cpi/proxy_spec.json \
+            --col-time year --time-mode index \
+            --col-O industrial_production_i15 --col-R berd_pc_gdp --col-I ict_spec_pc_ent_ge10 \
+            --col-demand env_tax_env_mio_eur --col-S solar_collector_ths_m2 \
+            --normalize robust --control-mode no_symbolic
+          PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
+            --run-dir _ci_out/real/cpi --alpha 0.01 --lags 1-3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly_real_cpi_${{ github.run_id }}
+          path: _ci_out/real/cpi/
+          retention-days: 30
+
+  # ── JOB 4b: Real data — Énergie EU27 ──────────────────────────────────────
+  real_data_energie:
+    name: "Real Data Énergie — pilot_energie (EU27)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: Run Énergie pilot
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/energie
+          PYTHONPATH=src python 04_Code/pipeline/validate_proxy_spec.py \
+            --spec 03_Data/real/energie/pilot_energie/proxy_spec.json \
+            --csv  03_Data/real/energie/pilot_energie/real.csv
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py \
+            --input 03_Data/real/energie/pilot_energie/real.csv \
+            --outdir _ci_out/real/energie \
+            --proxy-spec 03_Data/real/energie/pilot_energie/proxy_spec.json \
+            --col-time year --time-mode index \
+            --col-O industrial_production_i15 --col-R solar_collector_ths_m2 --col-I heat_pump_cap_ath_mw \
+            --col-demand sdg_13_50_mio_eur --col-S road_elec_ktoe \
+            --normalize robust --control-mode no_symbolic
+          PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
+            --run-dir _ci_out/real/energie --alpha 0.01 --lags 1-3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly_real_energie_${{ github.run_id }}
+          path: _ci_out/real/energie/
+          retention-days: 30
+
+  # ── JOB 4c: Real data — Météo Estonie ─────────────────────────────────────
+  real_data_meteo:
+    name: "Real Data Météo — pilot_meteo (EE)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: Run Météo pilot
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/meteo
+          PYTHONPATH=src python 04_Code/pipeline/validate_proxy_spec.py \
+            --spec 03_Data/real/meteo/pilot_meteo/proxy_spec.json \
+            --csv  03_Data/real/meteo/pilot_meteo/real.csv
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py \
+            --input 03_Data/real/meteo/pilot_meteo/real.csv \
+            --outdir _ci_out/real/meteo \
+            --proxy-spec 03_Data/real/meteo/pilot_meteo/proxy_spec.json \
+            --col-time year --time-mode index \
+            --col-O industrial_production_i15 --col-R berd_pc_gdp --col-I ict_spec_pc_ent_ge10 \
+            --col-demand env_tax_env_mio_eur --col-S solar_collector_ths_m2 \
+            --normalize robust --control-mode no_symbolic
+          PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
+            --run-dir _ci_out/real/meteo --alpha 0.01 --lags 1-3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly_real_meteo_${{ github.run_id }}
+          path: _ci_out/real/meteo/
+          retention-days: 30
+
+  # ── JOB 4d: Real data — Trafic Allemagne ──────────────────────────────────
+  real_data_trafic:
+    name: "Real Data Trafic — pilot_trafic (DE)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+      - name: Run Trafic pilot
+        run: |
+          set -eo pipefail
+          mkdir -p _ci_out/real/trafic
+          PYTHONPATH=src python 04_Code/pipeline/validate_proxy_spec.py \
+            --spec 03_Data/real/trafic/pilot_trafic/proxy_spec.json \
+            --csv  03_Data/real/trafic/pilot_trafic/real.csv
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py \
+            --input 03_Data/real/trafic/pilot_trafic/real.csv \
+            --outdir _ci_out/real/trafic \
+            --proxy-spec 03_Data/real/trafic/pilot_trafic/proxy_spec.json \
+            --col-time year --time-mode index \
+            --col-O industrial_production_i15 --col-R berd_pc_gdp --col-I ict_spec_pc_ent_ge10 \
+            --col-demand road_elec_ktoe --col-S solar_collector_ths_m2 \
+            --normalize robust --control-mode no_symbolic
+          PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
+            --run-dir _ci_out/real/trafic --alpha 0.01 --lags 1-3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly_real_trafic_${{ github.run_id }}
+          path: _ci_out/real/trafic/
+          retention-days: 30
+
+  # ── JOB 5: Dual proof summary — combined artifact ──────────────────────────
   dual_proof_summary:
     name: "Dual Canonical Proof — Combined Artifact"
-    needs: [synthetic_full, real_data_fred, real_data_validation_protocol]
+    needs: [synthetic_full, real_data_fred, real_data_validation_protocol, real_data_cpi, real_data_energie, real_data_meteo, real_data_trafic]
     runs-on: ubuntu-latest
     if: always()
 
@@ -386,6 +542,62 @@ jobs:
           print(json.dumps(manifest, indent=2))
           PYEOF
 
+      - name: Final gate (contract) . write final_status.json
+        run: |
+          python - <<'PYEOF'
+          import json, os
+          from datetime import datetime, timezone
+          path = "_combined/dual_proof_manifest.json"
+          if not os.path.exists(path):
+              raise SystemExit(f"missing {path}")
+          d = json.loads(open(path, "r").read())
+
+          reasons = []
+          status = str(d.get("dual_proof_status", "")).strip()
+          if status != "DUAL_PROOF_COMPLETE":
+              reasons.append(f"dual_proof_status={status}")
+
+          syn = d.get("synthetic", {}) or {}
+          if str(syn.get("global_verdict","")).strip() != "ACCEPT":
+              reasons.append(f"synthetic.global_verdict={syn.get('global_verdict')}")
+          if str(syn.get("support_level","")).strip() == "":
+              reasons.append("synthetic.support_level=missing")
+
+          real = d.get("real_data_fred", {}) or {}
+          if str(real.get("global_verdict","")).strip() != "ACCEPT":
+              reasons.append(f"real_data_fred.global_verdict={real.get('global_verdict')}")
+          if str(real.get("support_level","")).strip() == "":
+              reasons.append("real_data_fred.support_level=missing")
+
+          proto = d.get("real_data_validation_protocol", {}) or {}
+          proto_verdict = str(proto.get("verdict","")).strip()
+          if proto_verdict == "REJECT":
+              reasons.append("validation_protocol.verdict=REJECT")
+
+          final_pass = (len(reasons) == 0)
+
+          out = {
+              "final_pass": final_pass,
+              "reasons": reasons,
+              "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+              "inputs": {
+                  "dual_proof_status": status,
+                  "synthetic_global_verdict": syn.get("global_verdict"),
+                  "real_data_fred_global_verdict": real.get("global_verdict"),
+                  "validation_protocol_verdict": proto_verdict,
+                  "validation_protocol_test_detection_rate": proto.get("test_detection_rate"),
+              },
+              "contract": {
+                  "rule": "pass iff dual_proof complete, synthetic ACCEPT, real_fred ACCEPT, validation_protocol != REJECT",
+              },
+          }
+
+          os.makedirs("_combined/tables", exist_ok=True)
+          with open("_combined/tables/final_status.json", "w") as fh:
+              json.dump(out, fh, indent=2, sort_keys=True)
+          print(json.dumps(out, indent=2, sort_keys=True))
+          PYEOF
+
       - name: Write GitHub step summary
         env:
           SYNTH_SUPPORT:    ${{ needs.synthetic_full.outputs.synthetic_support_level }}
@@ -443,117 +655,6 @@ jobs:
               with open(step_summary, "a") as fh:
                   fh.write(md)
           print(md)
-          PYEOF
-
-      - name: Render nightly HTML report
-        run: |
-          python - <<'PYEOF'
-          import json
-          from pathlib import Path
-
-          final_path = Path('_combined/tables/final_status.json')
-          dual_path = Path('_combined/dual_proof_manifest.json')
-
-          if not final_path.exists():
-              raise SystemExit(f'missing {final_path}')
-          if not dual_path.exists():
-              raise SystemExit(f'missing {dual_path}')
-
-          final_data = json.loads(final_path.read_text(encoding='utf-8'))
-          dual_data = json.loads(dual_path.read_text(encoding='utf-8'))
-          dims = dual_data.get('proof_dimensions', {}) or {}
-          syn = dims.get('synthetic', {}) or {}
-          fred = dims.get('real_data_fred', {}) or {}
-          proto = dims.get('real_data_validation_protocol', {}) or {}
-
-          def esc(value):
-              s = '' if value is None else str(value)
-              return (s.replace('&', '&amp;')
-                       .replace('<', '&lt;')
-                       .replace('>', '&gt;')
-                       .replace('"', '&quot;'))
-
-          def verdict_class(value):
-              v = str(value or '').upper()
-              if v in {'TRUE', 'ACCEPT', 'DUAL_PROOF_COMPLETE'}:
-                  return 'ok'
-              if v in {'FALSE', 'REJECT', 'DUAL_PROOF_INCOMPLETE'}:
-                  return 'bad'
-              if v == 'INDETERMINATE':
-                  return 'warn'
-              return ''
-
-          reasons = final_data.get('reasons') or []
-          reasons_html = ''.join(f'<li>{esc(r)}</li>' for r in reasons) if reasons else '<li>Aucune raison bloquante.</li>'
-
-          html = f'''<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ORI-C . Nightly Report</title>
-  <style>
-    :root {{ --bg:#0b1220; --panel:#121b2d; --panel2:#17233a; --text:#e8eefc; --muted:#9fb0d1; --ok:#2ecc71; --warn:#f1c40f; --bad:#e74c3c; --line:#2a3958; }}
-    * {{ box-sizing:border-box; }}
-    body {{ margin:0; font-family:Inter,system-ui,Arial,sans-serif; background:linear-gradient(180deg,#0b1220 0%,#0d1628 100%); color:var(--text); }}
-    .wrap {{ width:min(1160px, calc(100% - 32px)); margin:0 auto; padding:28px 0 48px; }}
-    h1 {{ margin:0 0 8px; font-size:2rem; }}
-    .muted {{ color:var(--muted); }}
-    .grid {{ display:grid; grid-template-columns:repeat(12,1fr); gap:14px; margin-top:22px; }}
-    .card {{ grid-column:span 12; background:rgba(18,27,45,.92); border:1px solid var(--line); border-radius:16px; padding:18px; }}
-    .span-3 {{ grid-column:span 3; }} .span-4 {{ grid-column:span 4; }} .span-6 {{ grid-column:span 6; }} .span-8 {{ grid-column:span 8; }} .span-12 {{ grid-column:span 12; }}
-    @media (max-width:960px) {{ .span-3,.span-4,.span-6,.span-8,.span-12 {{ grid-column:span 12; }} }}
-    .klabel {{ color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; margin-bottom:7px; }}
-    .kvalue {{ font-size:1.35rem; font-weight:700; word-break:break-word; }}
-    .ok {{ color:var(--ok); }} .warn {{ color:var(--warn); }} .bad {{ color:var(--bad); }}
-    dl {{ display:grid; grid-template-columns:220px 1fr; gap:8px 12px; margin:0; }}
-    dt {{ color:var(--muted); }} dd {{ margin:0; overflow-wrap:anywhere; }}
-    @media (max-width:720px) {{ dl {{ grid-template-columns:1fr; }} }}
-    .mono {{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92rem; }}
-    .json {{ background:#0d1526; border:1px solid var(--line); border-radius:12px; padding:14px; max-height:360px; overflow:auto; white-space:pre-wrap; }}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>ORI-C . Nightly Report</h1>
-    <p class="muted">Page générée automatiquement par le workflow nightly. Source de vérité : <span class="mono">final_status.json</span> et <span class="mono">dual_proof_manifest.json</span>.</p>
-    <div class="grid">
-      <section class="card span-3"><div class="klabel">Final pass</div><div class="kvalue {verdict_class(str(final_data.get('final_pass')).upper())}">{esc(final_data.get('final_pass'))}</div></section>
-      <section class="card span-3"><div class="klabel">Dual proof</div><div class="kvalue {verdict_class(dual_data.get('dual_proof_status'))}">{esc(dual_data.get('dual_proof_status'))}</div></section>
-      <section class="card span-3"><div class="klabel">Validation verdict</div><div class="kvalue {verdict_class(proto.get('verdict'))}">{esc(proto.get('verdict'))}</div></section>
-      <section class="card span-3"><div class="klabel">Best input</div><div class="kvalue">{esc(proto.get('best_input') or proto.get('best_stem') or '—')}</div></section>
-      <section class="card span-8">
-        <h2>Résumé canonique</h2>
-        <dl>
-          <dt>Run ID</dt><dd class="mono">{esc(dual_data.get('run_id'))}</dd>
-          <dt>Timestamp UTC</dt><dd>{esc(dual_data.get('timestamp_utc') or final_data.get('timestamp_utc'))}</dd>
-          <dt>Synthétique</dt><dd>{esc(syn.get('global_verdict'))}</dd>
-          <dt>Support synthétique</dt><dd>{esc(syn.get('support_level'))}</dd>
-          <dt>Real FRED</dt><dd>{esc(fred.get('global_verdict'))}</dd>
-          <dt>Support real FRED</dt><dd>{esc(fred.get('support_level'))}</dd>
-          <dt>Validation test detection rate</dt><dd>{esc(proto.get('test_detection_rate') or final_data.get('inputs',{{}}).get('validation_protocol_test_detection_rate'))}</dd>
-        </dl>
-      </section>
-      <section class="card span-4">
-        <h2>Raisons</h2>
-        <ul>{reasons_html}</ul>
-      </section>
-      <section class="card span-12">
-        <h2>JSON brut . final_status.json</h2>
-        <div class="json mono">{esc(json.dumps(final_data, indent=2, sort_keys=True))}</div>
-      </section>
-      <section class="card span-12">
-        <h2>JSON brut . dual_proof_manifest.json</h2>
-        <div class="json mono">{esc(json.dumps(dual_data, indent=2, sort_keys=True))}</div>
-      </section>
-    </div>
-  </div>
-</body>
-</html>'''
-
-          out = Path('_combined/nightly_report.html')
-          out.write_text(html, encoding='utf-8')
-          print(f'wrote {out}')
           PYEOF
 
       - name: Upload combined dual proof artifact
