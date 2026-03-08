@@ -35,12 +35,38 @@
   "control_series": {
     "stable": {
       "rule": "first_50pct",
-      "description": "First 50% of rows (PRE_FRAC=0.50). Must give NOT_DETECTED on a well-specified detector."
+      "adapted_prechecks": true,
+      "description": "First 50% of rows (PRE_FRAC=0.50). Must give NOT_DETECTED on a well-specified detector. Uses adapted prechecks for stable regime (relaxed min_unique_values_C=3, min_variance_C=1e-15)."
     },
-    "placebo": {
+    "placebo_battery": {
+      "version": 2,
+      "strategies": [
+        {"id": "cyclic_shift", "preserves": ["autocorrelation", "spectral_density"], "destroys": ["temporal_alignment"]},
+        {"id": "temporal_permute", "preserves": ["marginal"], "destroys": ["autocorrelation", "temporal_alignment"]},
+        {"id": "phase_randomize", "preserves": ["spectral_density"], "destroys": ["phase_coupling", "temporal_alignment"]},
+        {"id": "proxy_remap", "preserves": ["autocorrelation", "temporal_alignment"], "destroys": ["cross_correlation", "causal_mapping"]},
+        {"id": "block_shuffle", "preserves": ["local_autocorrelation"], "destroys": ["global_temporal"]}
+      ],
+      "seed": 42,
+      "max_fp_rate": 0.20,
+      "description": "Versioned placebo battery with 5 strategies. Each destroys different aspects of causal structure. Battery passes if detection rate across all strategies <= 20%."
+    },
+    "placebo_legacy": {
       "rule": "cyclic_shift_N_div_3",
       "seed": 42,
-      "description": "Cyclic shift by N//3 rows. Preserves autocorrelation, breaks temporal alignment. Must give NOT_DETECTED."
+      "note": "Legacy single-strategy placebo. Retained for backward compatibility. New runs should use placebo_battery."
+    }
+  },
+  "evidence_levels": {
+    "A": {
+      "label": "Canonical demonstration",
+      "requirements": ["series_length >= 200", "precheck_passed", "causal_tests_available", "verdict decidable"],
+      "datasets": ["fred_monthly", "synthetic"]
+    },
+    "B": {
+      "label": "Exploratory multi-sector",
+      "requirements": ["pipeline runs", "proxy_spec loads", "C(t) responds to interventions"],
+      "note": "Not canonical proof level. Demonstrates feasibility and compatibility, not statistical proof."
     }
   },
   "evaluation_rule": "All inputs in the benchmark set are evaluated. Results are aggregated per-input, not cherry-picked. Any future input addition must update this contract version."

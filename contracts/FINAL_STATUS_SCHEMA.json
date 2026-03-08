@@ -1,0 +1,34 @@
+{
+  "schema": "oric.final_status.v1",
+  "note": "Canonical schema for final_status.json. Built mechanically from dual_proof_manifest.json — never from in-memory pipeline state. This is the SINGLE authoritative output summarising the framework state.",
+  "required_fields": {
+    "framework_status": {
+      "type": "string",
+      "allowed": ["COMPLETE", "INCOMPLETE"],
+      "rule": "COMPLETE iff synthetic=ACCEPT AND real_data=ACCEPT AND validation=ACCEPT AND n_empty=0 AND n_inconsistencies=0"
+    },
+    "dual_proof_status": {
+      "type": "string",
+      "allowed": ["DUAL_PROOF_COMPLETE", "DUAL_PROOF_INCOMPLETE"]
+    },
+    "synthetic_verdict": {"type": "string", "allowed": ["ACCEPT", "REJECT", "INDETERMINATE", null]},
+    "real_data_verdict": {"type": "string", "allowed": ["ACCEPT", "REJECT", "INDETERMINATE", null]},
+    "validation_verdict": {"type": "string", "allowed": ["ACCEPT", "REJECT", "INDETERMINATE", null]},
+    "sensitivity": {"type": "number_or_null"},
+    "specificity": {"type": "number_or_null"},
+    "fisher_p": {"type": "number_or_null"},
+    "test_detection_rate": {"type": "number_or_null"},
+    "empty_fields": {"type": "array_of_strings"},
+    "inconsistencies": {"type": "array_of_strings"},
+    "n_empty": {"type": "integer", "rule": "len(empty_fields)"},
+    "n_inconsistencies": {"type": "integer", "rule": "len(inconsistencies)"}
+  },
+  "integrity_rules": [
+    "If framework_status=COMPLETE, n_empty MUST be 0",
+    "If framework_status=COMPLETE, n_inconsistencies MUST be 0",
+    "If framework_status=COMPLETE, dual_proof_status MUST be DUAL_PROOF_COMPLETE",
+    "synthetic_verdict must match dual_proof_manifest.synthetic_global_verdict",
+    "real_data_verdict must match dual_proof_manifest.fred_global_verdict",
+    "validation_verdict must match dual_proof_manifest.validation_verdict"
+  ]
+}
