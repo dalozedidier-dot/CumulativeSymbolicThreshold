@@ -1,0 +1,33 @@
+{
+  "schema": "oric.proof_package.v1",
+  "note": "Schema for the unified 4-bloc proof package. This is the maximum-strength output of the framework.",
+  "blocs": {
+    "bloc1_contractual": {
+      "description": "Contractual proof: manifest complete, final_status correct, schema valid, integrity tests pass",
+      "required": ["manifest_complete", "final_status_correct", "schema_valid", "integrity_passed"],
+      "pass_rule": "manifest_complete AND integrity_passed"
+    },
+    "bloc2_discriminant": {
+      "description": "Discriminant proof: confusion matrix, sensitivity/specificity >= 0.80, Fisher p < 0.01, decidability metrics, placebo battery",
+      "required": ["confusion_matrix", "sensitivity", "specificity", "fisher_p", "decidability_report", "placebo_battery"],
+      "pass_rule": "sensitivity >= 0.80 AND specificity >= 0.80 AND fisher_p < 0.01"
+    },
+    "bloc3_robustness": {
+      "description": "Robustness proof: window stability, subsample stability, no verdict flipping",
+      "required": ["window_stability", "subsample_stability", "verdict_flip_detected"],
+      "pass_rule": "NOT verdict_flip_detected AND (window_stability OR subsample_stability present)"
+    },
+    "bloc4_external": {
+      "description": "External proof: independent replication with external dataset, frozen protocol, no retuning",
+      "required": ["independent_replication", "external_dataset_used", "frozen_protocol_used", "no_retuning"],
+      "pass_rule": "ALL four booleans true",
+      "status": "placeholder — requires external collaborator"
+    }
+  },
+  "overall_verdict_rule": {
+    "STRONG": "bloc1 AND bloc2 AND bloc3 AND bloc4",
+    "ACCEPT": "bloc1 AND bloc2 AND bloc3 (bloc4 pending)",
+    "PARTIAL": "bloc1 AND bloc2 (bloc3 incomplete)",
+    "INCOMPLETE": "anything else"
+  }
+}
