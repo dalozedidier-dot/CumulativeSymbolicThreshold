@@ -1,0 +1,56 @@
+{
+  "schema": "oric.showcase_pilots.v1",
+  "version": "1.0",
+  "date": "2026-03-09",
+  "description": "Two showcase pilots selected for detailed presentation in manuscript and reports. Two solid showcases, not twelve half-examples.",
+  "primary": {
+    "pilot_id": "sector_neuro.pilot_eeg_bonn",
+    "domain": "Neurosciences",
+    "sector": "neuro",
+    "data_path": "03_Data/sector_neuro/real/pilot_eeg_bonn",
+    "series_length": 500,
+    "proof_level": "B",
+    "power_class": "adequate",
+    "verdict": "ACCEPT",
+    "selection_rationale": [
+      "Longest pilot series (500 segments)",
+      "Strongest detection signal among all pilots",
+      "Out of socio-economic domain — demonstrates cross-domain generality",
+      "5 class labels (Z, O, N, F, S) enabling multi-regime analysis",
+      "EEG data is well-established benchmark in signal processing"
+    ],
+    "presentation_focus": [
+      "ORI-C Cap(t) and Sigma(t) across seizure/non-seizure classes",
+      "Threshold detection on C(t) aligned with known epileptic transitions",
+      "Causal test results: Granger, bootstrap CI, cointegration",
+      "Comparison with standard EEG classification baselines"
+    ]
+  },
+  "secondary": {
+    "pilot_id": "sector_finance.pilot_btc",
+    "domain": "Finance",
+    "sector": "finance",
+    "data_path": "03_Data/sector_finance/real/pilot_btc",
+    "series_length": 141,
+    "proof_level": "B",
+    "power_class": "borderline",
+    "verdict": "ACCEPT",
+    "selection_rationale": [
+      "Clear volatility regime transition detectable by ORI-C",
+      "Demonstrates portability to market dynamics and financial time series",
+      "Borderline power but still conclusive — shows framework robustness",
+      "BTC price dynamics are widely studied and understood"
+    ],
+    "presentation_focus": [
+      "ORI-C regime detection on BTC price/volatility series",
+      "Threshold detection aligned with known market regime shifts",
+      "Power class borderline: transparency about statistical limitations",
+      "Contrast with Solar (physical system) to show domain breadth"
+    ]
+  },
+  "alternative_secondary": {
+    "pilot_id": "sector_cosmo.pilot_solar",
+    "domain": "Astrophysique",
+    "note": "Solar is an equally valid secondary showcase (physical system, adequate power, 288 points). Use if astrophysical portability is prioritised over financial."
+  }
+}

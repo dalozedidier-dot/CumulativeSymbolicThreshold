@@ -1,0 +1,131 @@
+{
+  "schema": "oric.power_upgrade_protocol.v1",
+  "version": "1.0",
+  "date": "2026-03-09",
+  "description": "Protocol for upgrading underpowered Level C pilots to Level B. Each blocked pilot gets a concrete densification plan with testable success criteria.",
+  "min_points_per_segment_target": 60,
+  "min_total_points_target": 120,
+  "upgrade_methodology": {
+    "step_1": "Document current dataset version (rows, temporal range, point density)",
+    "step_2": "Identify densification path (extended dataset if available)",
+    "step_3": "Test robustness with multiple segmentation points (3-5 candidates)",
+    "step_4": "Run full ORI-C pipeline on extended version",
+    "step_5": "Classify final status: conclusive / underpowered / incompatible"
+  },
+  "final_status_options": {
+    "conclusive": "Upgraded to Level B with decidable verdict (ACCEPT or REJECT)",
+    "underpowered": "Signal present but insufficient data even after extension",
+    "incompatible": "Framework does not apply — legitimate negative result"
+  },
+  "pilots": [
+    {
+      "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+      "domain": "IA / Technologie",
+      "current_status": {
+        "series_length": 60,
+        "points_pre_threshold": "~30",
+        "points_post_threshold": "~30",
+        "verdict": "INDETERMINATE",
+        "blocking_constraint": "min_points_per_segment(30 < 60)"
+      },
+      "diagnosis": "Series too short. LLM benchmark releases are sparse; temporal depth insufficient for 60 points per segment.",
+      "upgrade_plan": {
+        "strategy": "Extend with additional LLM benchmark releases (MLPerf, MMLU, HumanEval, LMSYS)",
+        "target_length": 120,
+        "target_pre_segment": 60,
+        "target_post_segment": 60,
+        "segmentation_candidates": [
+          "GPT-4 release (March 2023)",
+          "Claude 3 release (March 2024)",
+          "Mixture-of-Experts transition (late 2023)"
+        ],
+        "data_sources": [
+          "Epoch AI compute tracker",
+          "Papers With Code SOTA benchmarks",
+          "MLPerf inference results"
+        ],
+        "feasibility": "medium — requires aggregating multiple benchmark sources",
+        "timeline": "2-3 weeks for data collection and preprocessing"
+      },
+      "success_criteria": {
+        "min_total_points": 120,
+        "min_points_per_segment": 60,
+        "precheck_must_pass": true,
+        "verdict_must_be_decidable": true
+      }
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+      "domain": "Cosmologie",
+      "current_status": {
+        "series_length": 100,
+        "points_pre_threshold": "~35",
+        "points_post_threshold": "~65",
+        "verdict": "INDETERMINATE",
+        "blocking_constraint": "Insufficient pre-threshold points; precheck marginal"
+      },
+      "diagnosis": "Pre-threshold segment underpopulated. Pantheon+ has sufficient total SNe Ia but low-z coverage is sparse.",
+      "upgrade_plan": {
+        "strategy": "Augment low-z coverage with Carnegie Supernova Project and CfA surveys; extend z-range below 0.01",
+        "target_length": 150,
+        "target_pre_segment": 60,
+        "target_post_segment": 90,
+        "segmentation_candidates": [
+          "z = 0.05 (standard cosmological transition)",
+          "z = 0.03 (local Hubble flow boundary)",
+          "z = 0.08 (survey completeness threshold)"
+        ],
+        "data_sources": [
+          "Pantheon+ (Scolnic et al. 2022)",
+          "Carnegie Supernova Project DR3",
+          "CfA Supernova Survey (Hicken et al.)"
+        ],
+        "feasibility": "high — data publicly available, needs z-ordered rebinning",
+        "timeline": "1-2 weeks"
+      },
+      "success_criteria": {
+        "min_total_points": 120,
+        "min_points_per_segment": 60,
+        "precheck_must_pass": true,
+        "verdict_must_be_decidable": true
+      }
+    },
+    {
+      "pilot_id": "sector_bio.pilot_pbdb_marine",
+      "domain": "Paleobiologie",
+      "current_status": {
+        "series_length": 100,
+        "points_pre_threshold": "~60",
+        "points_post_threshold": "~40",
+        "verdict": "INDETERMINATE",
+        "blocking_constraint": "Insufficient post-threshold points; recovery phase sparsely sampled"
+      },
+      "diagnosis": "Post-extinction recovery data is temporally sparse. PBDB coverage for Cenozoic marine diversity is lower resolution than Paleozoic.",
+      "upgrade_plan": {
+        "strategy": "Densify post-extinction bins by reducing temporal resolution from stage-level to sub-stage or 5-Myr bins in Cenozoic",
+        "target_length": 140,
+        "target_pre_segment": 70,
+        "target_post_segment": 70,
+        "segmentation_candidates": [
+          "End-Permian extinction (252 Ma)",
+          "End-Cretaceous extinction (66 Ma)",
+          "Late Devonian extinction (375 Ma)"
+        ],
+        "data_sources": [
+          "Paleobiology Database (paleobiodb.org)",
+          "Sepkoski compendium (digitized)",
+          "Alroy et al. (2008) standardized diversity curves"
+        ],
+        "feasibility": "high — PBDB API allows custom temporal binning",
+        "timeline": "1 week"
+      },
+      "success_criteria": {
+        "min_total_points": 120,
+        "min_points_per_segment": 60,
+        "precheck_must_pass": true,
+        "verdict_must_be_decidable": true
+      }
+    }
+  ],
+  "value_proposition": "These three pilots are the best candidates for demonstrating that the ORI-C framework can distinguish: (1) a true indeterminate due to insufficient power, (2) a true reject, and (3) a true positive. This distinction is extremely valuable for framework credibility."
+}

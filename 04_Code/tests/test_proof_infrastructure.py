@@ -598,7 +598,7 @@ class TestProofLevels:
         )
         assert ev.level == "A"
 
-    def test_level_b_short_series(self):
+    def test_level_c_short_series(self):
         ev = classify_evidence_level(
             dataset_id="traffic_pilot",
             n_rows=50,
@@ -607,11 +607,11 @@ class TestProofLevels:
             causal_tests_available=False,
             category="transport",
         )
-        assert ev.level == "B"
+        assert ev.level == "C"
         assert "series_too_short" in ev.reason_for_level
         assert ev.computation_coherent is True
 
-    def test_level_b_precheck_failed(self):
+    def test_level_c_precheck_failed(self):
         ev = classify_evidence_level(
             dataset_id="meteo_pilot",
             n_rows=300,
@@ -619,7 +619,7 @@ class TestProofLevels:
             precheck_passed=False,
             causal_tests_available=False,
         )
-        assert ev.level == "B"
+        assert ev.level == "C"
         assert "precheck_failed" in ev.reason_for_level
 
 
@@ -633,7 +633,7 @@ class TestProofLevelSummary:
         ]
         summary = build_proof_level_summary(evs)
         assert summary.n_level_a == 2
-        assert summary.n_level_b == 2
+        assert summary.n_level_c == 2  # Non-decidable → Level C
         assert summary.level_a_all_accept is True
         assert summary.level_a_verdict == "ACCEPT"
 
