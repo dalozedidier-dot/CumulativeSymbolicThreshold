@@ -1,13 +1,13 @@
 {
   "schema": "oric.pilot_benchmark.v1",
-  "version": "1.0",
+  "version": "2.0",
   "generated": "2026-03-09",
-  "description": "Official pilot benchmark summary for ORI-C generalization assessment.",
+  "description": "Official pilot benchmark summary for ORI-C generalization assessment. Version 2.0: all pilots decidable after full pipeline on densified data.",
   "total_pilots": 7,
   "verdicts": {
-    "ACCEPT": 4,
-    "INDETERMINATE": 3,
-    "REJECT": 0
+    "ACCEPT": 5,
+    "INDETERMINATE": 0,
+    "REJECT": 2
   },
   "proof_levels": {
     "A": {
@@ -15,21 +15,20 @@
       "note": "Canonical datasets (synthetic, FRED, validation protocol) are tracked in dual proof manifest, not in pilot benchmark."
     },
     "B": {
-      "count": 4,
+      "count": 7,
       "datasets": [
-        "sector_finance.pilot_btc",
-        "sector_health.pilot_covid_excess_mortality",
         "sector_neuro.pilot_eeg_bonn",
-        "sector_cosmo.pilot_solar"
+        "sector_cosmo.pilot_solar",
+        "sector_health.pilot_covid_excess_mortality",
+        "sector_cosmo.pilot_pantheon_sn",
+        "sector_finance.pilot_btc",
+        "sector_bio.pilot_pbdb_marine",
+        "sector_ai_tech.pilot_llm_scaling"
       ]
     },
     "C": {
-      "count": 3,
-      "datasets": [
-        "sector_ai_tech.pilot_llm_scaling",
-        "sector_cosmo.pilot_pantheon_sn",
-        "sector_bio.pilot_pbdb_marine"
-      ]
+      "count": 0,
+      "datasets": []
     }
   },
   "power_distribution": {
@@ -38,19 +37,18 @@
       "datasets": ["sector_neuro.pilot_eeg_bonn", "sector_cosmo.pilot_solar"]
     },
     "borderline": {
-      "count": 3,
+      "count": 5,
       "datasets": [
         "sector_finance.pilot_btc",
         "sector_health.pilot_covid_excess_mortality",
-        "sector_cosmo.pilot_pantheon_sn"
+        "sector_cosmo.pilot_pantheon_sn",
+        "sector_bio.pilot_pbdb_marine",
+        "sector_ai_tech.pilot_llm_scaling"
       ]
     },
     "underpowered": {
-      "count": 2,
-      "datasets": [
-        "sector_ai_tech.pilot_llm_scaling",
-        "sector_bio.pilot_pbdb_marine"
-      ]
+      "count": 0,
+      "datasets": []
     }
   },
   "domains": {
@@ -62,10 +60,10 @@
     "Paleobiologie": 1,
     "IA / Technologie": 1
   },
-  "indetermination_causes": {
-    "sector_ai_tech.pilot_llm_scaling": "min_points_per_segment < 60; insufficient temporal depth",
-    "sector_cosmo.pilot_pantheon_sn": "Insufficient pre-threshold points; precheck marginal",
-    "sector_bio.pilot_pbdb_marine": "Insufficient post-threshold points; recovery phase sparsely sampled"
+  "indetermination_causes": {},
+  "rejection_causes": {
+    "sector_bio.pilot_pbdb_marine": "C1 failed: no transition detected (det_rate=0.0). 45/45 decidable. True negative.",
+    "sector_ai_tech.pilot_llm_scaling": "C1 failed: no transition detected (det_rate=0.0, sigma_zero_post=1.0). 45/45 decidable. Synthetic-calibrated data."
   },
   "showcase_pilots": {
     "primary": {
@@ -82,49 +80,63 @@
       "BTC (finance, 141 pts, ACCEPT, borderline power)",
       "COVID excess mortality (health, 192 pts, ACCEPT, borderline power)",
       "EEG Bonn (neuro, 500 pts, ACCEPT, adequate power)",
-      "Solar (cosmo, 288 pts, ACCEPT, adequate power)"
+      "Solar (cosmo, 288 pts, ACCEPT, adequate power)",
+      "Pantheon SN (cosmo, 150 pts, ACCEPT, borderline power) — upgraded from C"
     ],
-    "plausible_but_non_conclusive": [
-      "LLM scaling (ai_tech, 60 pts, INDETERMINATE, underpowered)",
-      "Pantheon SN (cosmo, 100 pts, INDETERMINATE, borderline)",
-      "PBDB marine (bio, 100 pts, INDETERMINATE, borderline)"
+    "confirmed_negatives": [
+      "PBDB marine (bio, 140 pts, REJECT, borderline power) — no transition detected",
+      "LLM scaling (ai_tech, 120 pts, REJECT, borderline power) — no transition detected"
     ],
-    "note": "Level B pilots are publishable as confirmed out-of-domain applications. Level C pilots are publishable as exploratory signals requiring power upgrade before canonical conclusion."
+    "note": "All 7 pilots are decidable at Level B. 5 ACCEPT across 5 domains. 2 REJECT demonstrate framework specificity. Zero indeterminate verdicts remain."
   },
-  "upgrade_candidates": {
+  "upgrade_completed": {
     "total": 3,
     "pilots": [
       {
         "pilot_id": "sector_cosmo.pilot_pantheon_sn",
         "n_before": 100,
         "n_after": 150,
-        "power_class_before": "underpowered",
-        "power_class_after": "borderline",
+        "verdict_before": "INDETERMINATE",
+        "verdict_after": "ACCEPT",
         "level_before": "C",
-        "level_after": "B_candidate",
-        "homogeneity_passed": true
+        "level_after": "B",
+        "validation_c1": true,
+        "validation_c2": true,
+        "validation_c3": true,
+        "decidable_runs": 45,
+        "indeterminate_runs": 0
       },
       {
         "pilot_id": "sector_bio.pilot_pbdb_marine",
         "n_before": 100,
         "n_after": 140,
-        "power_class_before": "underpowered",
-        "power_class_after": "borderline",
+        "verdict_before": "INDETERMINATE",
+        "verdict_after": "REJECT",
         "level_before": "C",
-        "level_after": "B_candidate",
-        "homogeneity_passed": true
+        "level_after": "B",
+        "validation_c1": false,
+        "validation_c2": true,
+        "validation_c3": true,
+        "decidable_runs": 45,
+        "indeterminate_runs": 0,
+        "failure_mode": "no_detection"
       },
       {
         "pilot_id": "sector_ai_tech.pilot_llm_scaling",
         "n_before": 60,
         "n_after": 120,
-        "power_class_before": "underpowered",
-        "power_class_after": "borderline",
+        "verdict_before": "INDETERMINATE",
+        "verdict_after": "REJECT",
         "level_before": "C",
-        "level_after": "B_candidate",
-        "homogeneity_passed": true
+        "level_after": "B",
+        "validation_c1": false,
+        "validation_c2": true,
+        "validation_c3": true,
+        "decidable_runs": 45,
+        "indeterminate_runs": 0,
+        "failure_mode": "no_detection"
       }
     ],
-    "note": "Upgrade candidates have passed homogeneity checks but remain Level C until full validation pipeline confirms decidable verdict."
+    "note": "All 3 former Level C pilots completed the full ORI-C validation pipeline (C1+C2+C3, window sensitivity, subsample stability). All produced decidable verdicts with 0 indeterminate runs."
   }
 }

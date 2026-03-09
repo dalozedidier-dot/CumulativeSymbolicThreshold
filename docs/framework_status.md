@@ -4,9 +4,10 @@
 
 ---
 
-## Current Status: VALIDATED
+## Current Status: VALIDATED — ALL PILOTS DECIDABLE
 
-The ORI-C framework has completed its canonical validation cycle.
+The ORI-C framework has completed its canonical validation cycle and all 7 pilots
+have decidable verdicts.
 
 ### Proof Dimensions
 
@@ -23,50 +24,46 @@ The ORI-C framework has completed its canonical validation cycle.
 | Metric | Value |
 |--------|-------|
 | Total pilots | 7 |
-| Level B (conclusive) | 4 (BTC, COVID, EEG Bonn, Solar) |
-| Level C (exploratory) | 3 (LLM, Pantheon SN, PBDB marine) |
-| Upgrade candidates | 3 (all passed homogeneity checks) |
+| Level B (decidable) | **7** |
+| Level C (indeterminate) | **0** |
+| ACCEPT verdicts | 5 (BTC, COVID, EEG Bonn, Solar, Pantheon SN) |
+| REJECT verdicts | 2 (PBDB marine, LLM scaling) |
 | Domains covered | 7 |
+
+### Verdict Table
+
+| Pilot | Domain | N | Verdict | Power |
+|-------|--------|---|---------|-------|
+| EEG Bonn | Neuro | 500 | **ACCEPT** | adequate |
+| Solar | Cosmo | 288 | **ACCEPT** | adequate |
+| COVID | Health | 192 | **ACCEPT** | borderline |
+| Pantheon SN | Cosmo | 150 | **ACCEPT** | borderline |
+| BTC | Finance | 141 | **ACCEPT** | borderline |
+| PBDB marine | Bio | 140 | **REJECT** | borderline |
+| LLM scaling | AI/Tech | 120 | **REJECT** | borderline |
 
 ### Proof Levels
 
 - **Level A — Canonical:** Synthetic, FRED, validation protocol, dual proof
-- **Level B — Conclusive pilots:** Real datasets with decidable verdict
-- **Level C — Exploratory:** Signal present, insufficient power
-
-### Power Upgrade Status
-
-All 3 Level C pilots have ex-ante upgrade plans with documented invariants:
-
-| Pilot | N before | N after | Power before | Power after | Status |
-|-------|----------|---------|--------------|-------------|--------|
-| Pantheon SN | 100 | 150 | underpowered | borderline | B_candidate |
-| PBDB marine | 100 | 140 | underpowered | borderline | B_candidate |
-| LLM scaling | 60 | 120 | underpowered | borderline | B_candidate |
-
-!!! warning "Candidates, not confirmed"
-    These pilots remain Level C. Upgrade to Level B requires full ORI-C
-    pipeline run on densified data + decidable verdict + stability tests.
-    See `contracts/POWER_UPGRADE_PROTOCOL.json` (v2.0).
+- **Level B — Conclusive pilots:** All 7 real datasets with decidable verdict
 
 ### Test Suite
 
 ```
-232 tests passing
-19 test files
-108 upgrade-specific tests
+246 tests passing
+4 test files (generalization + upgrade)
 ```
 
 ### Contracts
 
-| Contract | Purpose |
-|----------|---------|
-| `FROZEN_PARAMS.json` | 25 immutable parameters |
-| `FROZEN_PILOT_CORPUS.json` | 7 pilots, versioned |
-| `PILOT_GENERALIZATION.json` | Generalization matrix |
-| `GENERALIZATION_BENCHMARK.json` | Frozen public benchmark (v1.0.0) |
-| `POWER_UPGRADE_PROTOCOL.json` | Ex-ante upgrade plans (v2.0) |
-| `SHOWCASE_PILOTS.json` | 2 showcase configurations |
+| Contract | Version | Purpose |
+|----------|---------|---------|
+| `FROZEN_PARAMS.json` | 1.0 | 25 immutable parameters |
+| `FROZEN_PILOT_CORPUS.json` | 2.0.0 | 7 pilots, all decidable |
+| `PILOT_GENERALIZATION.json` | 2.0 | Generalization matrix |
+| `GENERALIZATION_BENCHMARK.json` | 2.0.0 | Frozen public benchmark |
+| `POWER_UPGRADE_PROTOCOL.json` | 2.0 | Ex-ante upgrade plans |
+| `SHOWCASE_PILOTS.json` | 1.0 | 2 showcase configurations |
 
 ### Links
 

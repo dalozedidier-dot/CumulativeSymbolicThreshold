@@ -287,27 +287,28 @@ class TestGeneralizationContract:
             missing = required - set(pilot.keys())
             assert not missing, f"{pilot['pilot_id']} missing: {missing}"
 
-    def test_level_b_are_accept(self, contract):
+    def test_level_b_are_decidable(self, contract):
         for p in contract["generalization_matrix"]:
             if p["proof_level"] == "B":
-                assert p["oric_verdict"] == "ACCEPT", f"{p['pilot_id']} Level B but not ACCEPT"
+                assert p["oric_verdict"] in ("ACCEPT", "REJECT"), (
+                    f"{p['pilot_id']} Level B must be decidable"
+                )
 
-    def test_level_c_are_indeterminate(self, contract):
+    def test_all_pilots_are_level_b(self, contract):
         for p in contract["generalization_matrix"]:
-            if p["proof_level"] == "C":
-                assert p["oric_verdict"] == "INDETERMINATE", f"{p['pilot_id']} Level C but not INDETERMINATE"
-                assert p.get("cause_indetermination"), f"{p['pilot_id']} Level C missing cause"
+            assert p["proof_level"] == "B", f"{p['pilot_id']} should be Level B"
 
     def test_summary_counts_consistent(self, contract):
         matrix = contract["generalization_matrix"]
         summary = contract["summary"]
         assert summary["total_pilots"] == len(matrix)
         assert summary["level_B_accept"] == sum(
-            1 for p in matrix if p["proof_level"] == "B"
+            1 for p in matrix if p["oric_verdict"] == "ACCEPT"
         )
-        assert summary["level_C_indeterminate"] == sum(
-            1 for p in matrix if p["proof_level"] == "C"
+        assert summary.get("level_B_reject", 0) == sum(
+            1 for p in matrix if p["oric_verdict"] == "REJECT"
         )
+        assert summary.get("level_C_indeterminate", 0) == 0
 
 
 class TestPowerUpgradeProtocol:
@@ -342,20 +343,17 @@ class TestPowerUpgradeProtocol:
             assert sc["precheck_must_pass"] is True
             assert sc["verdict_must_be_decidable"] is True
 
-    def test_pilot_ids_match_level_c(self):
+    def test_upgrade_protocol_pilots_are_in_matrix(self):
         gen = json.loads(
             (CONTRACTS / "PILOT_GENERALIZATION.json").read_text()
         )
-        level_c_ids = {
-            p["pilot_id"] for p in gen["generalization_matrix"]
-            if p["proof_level"] == "C"
-        }
+        matrix_ids = {p["pilot_id"] for p in gen["generalization_matrix"]}
         proto = json.loads(
             (CONTRACTS / "POWER_UPGRADE_PROTOCOL.json").read_text()
         )
         upgrade_ids = {p["pilot_id"] for p in proto["pilots"]}
-        assert level_c_ids == upgrade_ids, (
-            f"Mismatch: Level C={level_c_ids}, Upgrade={upgrade_ids}"
+        assert upgrade_ids.issubset(matrix_ids), (
+            f"Upgrade pilots not in matrix: {upgrade_ids - matrix_ids}"
         )
 
 
@@ -394,8 +392,8 @@ class TestBenchmarkSummary:
 
     def test_prudent_reading(self, summary):
         pr = summary["prudent_reading"]
-        assert len(pr["exploitable_positives"]) == 4
-        assert len(pr["plausible_but_non_conclusive"]) == 3
+        assert len(pr["exploitable_positives"]) == 5
+        assert len(pr["confirmed_negatives"]) == 2
 
 
 class TestShowcasePilots:

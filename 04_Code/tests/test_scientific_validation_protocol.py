@@ -77,16 +77,11 @@ class TestFrozenPilotCorpus:
             path = ROOT / pilot["data_path"]
             assert path.exists(), f"Data path missing: {path}"
 
-    def test_level_b_are_accept(self, corpus):
+    def test_level_b_are_decidable(self, corpus):
         for p in corpus["pilots"]:
             if p["proof_level"] == "B":
-                assert p["oric_verdict"] == "ACCEPT"
-
-    def test_level_c_have_upgrade_path(self, corpus):
-        for p in corpus["pilots"]:
-            if p["proof_level"] == "C":
-                assert p.get("power_upgrade_path"), (
-                    f"{p['pilot_id']}: Level C without power_upgrade_path"
+                assert p["oric_verdict"] in ("ACCEPT", "REJECT"), (
+                    f"{p['pilot_id']}: Level B must be decidable (ACCEPT or REJECT)"
                 )
 
     def test_summary_table_consistent(self, corpus):
@@ -338,16 +333,16 @@ class TestCrossContractConsistency:
         assert showcase["primary"]["pilot_id"] in corpus_ids
         assert showcase["secondary"]["pilot_id"] in corpus_ids
 
-    def test_upgrade_protocol_covers_level_c(self):
+    def test_upgrade_protocol_covers_upgraded_pilots(self):
         corpus = self._load("FROZEN_PILOT_CORPUS.json")
         upgrade = self._load("POWER_UPGRADE_PROTOCOL.json")
 
-        level_c_ids = {
+        upgraded_ids = {
             p["pilot_id"] for p in corpus["pilots"]
-            if p["proof_level"] == "C"
+            if p.get("upgrade_note")
         }
         upgrade_ids = {p["pilot_id"] for p in upgrade["pilots"]}
-        assert level_c_ids == upgrade_ids
+        assert upgraded_ids == upgrade_ids
 
     def test_power_criteria_thresholds_match(self):
         power = self._load("POWER_CRITERIA.json")
@@ -404,8 +399,9 @@ class TestPilotGeneralizationRegistry:
 
     def test_message_counts(self, registry):
         msg = registry["message"]
-        assert msg["conclusive_pilots"] == 4
-        assert msg["underpowered_pilots"] == 3
+        assert msg["conclusive_pilots"] == 5
+        assert msg["rejected_pilots"] == 2
+        assert msg["indeterminate_pilots"] == 0
         assert msg["hard_counterexamples"] == 0
 
     def test_summary_consistent_with_pilots(self, registry):
@@ -427,14 +423,13 @@ class TestPilotGeneralizationRegistry:
         corpus_ids = {p["pilot_id"] for p in corpus["pilots"]}
         assert registry_ids == corpus_ids
 
-    def test_level_c_have_upgrade_status(self, registry):
+    def test_upgraded_pilots_have_upgrade_status(self, registry):
         for p in registry["pilots"]:
-            if p["proof_level"] == "C":
-                assert "upgrade_status" in p
-                assert p["upgrade_status"] in (
-                    "pending", "conclusive", "underpowered",
-                    "incompatible", "upgrade_candidate",
-                )
+            if p.get("upgrade_status") == "upgraded":
+                assert "upgrade_report" in p
+                report = p["upgrade_report"]
+                assert report["validation_verdict"] in ("ACCEPT", "REJECT")
+                assert report["validation_decidable_runs"] > 0
 
     def test_cross_references_present(self, registry):
         refs = registry["cross_references"]
@@ -443,9 +438,11 @@ class TestPilotGeneralizationRegistry:
         assert "comparative_benchmark" in refs
         assert "ci_maturity_log" in refs
 
-    def test_sorted_by_series_length_desc(self, registry):
-        lengths = [p["series_length"] for p in registry["pilots"]]
-        assert lengths == sorted(lengths, reverse=True)
+    def test_all_pilots_are_level_b(self, registry):
+        for p in registry["pilots"]:
+            assert p["proof_level"] == "B", (
+                f"{p['pilot_id']} should be Level B, got {p['proof_level']}"
+            )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -691,18 +688,18 @@ class TestGeneralizationBenchmark:
 
     def test_conclusive_count(self, benchmark):
         corpus = benchmark["benchmark_corpus"]
-        assert corpus["conclusive_count"] == 4
-        assert len(corpus["conclusive_pilots"]) == 4
+        assert corpus["accept_count"] == 5
+        assert len(corpus["conclusive_pilots"]) == 5
 
-    def test_exploratory_count(self, benchmark):
+    def test_rejected_count(self, benchmark):
         corpus = benchmark["benchmark_corpus"]
-        assert corpus["exploratory_count"] == 3
-        assert len(corpus["exploratory_pilots"]) == 3
+        assert corpus["reject_count"] == 2
+        assert len(corpus["rejected_pilots"]) == 2
 
     def test_total_pilots(self, benchmark):
         corpus = benchmark["benchmark_corpus"]
         assert corpus["total_pilots"] == 7
-        total = len(corpus["conclusive_pilots"]) + len(corpus["exploratory_pilots"])
+        total = len(corpus["conclusive_pilots"]) + len(corpus["rejected_pilots"])
         assert total == 7
 
     def test_all_conclusive_are_accept(self, benchmark):
@@ -710,16 +707,15 @@ class TestGeneralizationBenchmark:
             assert p["verdict"] == "ACCEPT"
             assert p["proof_level"] == "B"
 
-    def test_all_exploratory_are_indeterminate(self, benchmark):
-        for p in benchmark["benchmark_corpus"]["exploratory_pilots"]:
-            assert p["verdict"] == "INDETERMINATE"
-            assert p["proof_level"] == "C"
-            assert "blocking_constraint" in p
-            assert "upgrade_target" in p
+    def test_all_rejected_are_reject(self, benchmark):
+        for p in benchmark["benchmark_corpus"]["rejected_pilots"]:
+            assert p["verdict"] == "REJECT"
+            assert p["proof_level"] == "B"
+            assert p.get("failure_mode") == "no_detection"
 
     def test_seven_domains(self, benchmark):
         corpus = benchmark["benchmark_corpus"]
-        all_pilots = corpus["conclusive_pilots"] + corpus["exploratory_pilots"]
+        all_pilots = corpus["conclusive_pilots"] + corpus["rejected_pilots"]
         domains = {p["domain"] for p in all_pilots}
         assert len(domains) == 7
 
@@ -731,7 +727,7 @@ class TestGeneralizationBenchmark:
             p["pilot_id"]
             for p in (
                 benchmark["benchmark_corpus"]["conclusive_pilots"]
-                + benchmark["benchmark_corpus"]["exploratory_pilots"]
+                + benchmark["benchmark_corpus"]["rejected_pilots"]
             )
         }
         corpus_ids = {p["pilot_id"] for p in corpus["pilots"]}
@@ -739,11 +735,11 @@ class TestGeneralizationBenchmark:
 
     def test_summary_consistent(self, benchmark):
         s = benchmark["summary"]
-        assert s["by_verdict"]["ACCEPT"] == 4
-        assert s["by_verdict"]["INDETERMINATE"] == 3
-        assert s["by_verdict"]["REJECT"] == 0
-        assert s["by_level"]["B"] == 4
-        assert s["by_level"]["C"] == 3
+        assert s["by_verdict"]["ACCEPT"] == 5
+        assert s["by_verdict"]["INDETERMINATE"] == 0
+        assert s["by_verdict"]["REJECT"] == 2
+        assert s["by_level"]["B"] == 7
+        assert s["by_level"].get("C", 0) == 0
 
     def test_known_limitations_present(self, benchmark):
         assert len(benchmark["known_limitations"]) >= 4

@@ -2,11 +2,11 @@
 the actual state of upgrade results.
 
 Ensures that:
-- The registry version has been bumped
-- Upgrade candidates are properly tracked
-- Registry is consistent with upgrade reports
+- The registry version has been bumped to v3
+- All 3 upgraded pilots have decidable verdicts
+- Registry is consistent with upgrade reports and validation summaries
 - Registry is consistent with frozen corpus
-- Level transitions follow protocol rules
+- All pilots are now Level B
 """
 import json
 from pathlib import Path
@@ -18,12 +18,19 @@ CONTRACTS = ROOT / "contracts"
 RESULTS = ROOT / "05_Results"
 PILOTS = RESULTS / "pilots"
 UPGRADE_DIR = PILOTS / "power_upgrade"
+VALIDATION_DIR = RESULTS / "real_validation"
 
-LEVEL_C_PILOTS = [
+UPGRADED_PILOTS = [
     "sector_cosmo.pilot_pantheon_sn",
     "sector_bio.pilot_pbdb_marine",
     "sector_ai_tech.pilot_llm_scaling",
 ]
+
+EXPECTED_VERDICTS = {
+    "sector_cosmo.pilot_pantheon_sn": "ACCEPT",
+    "sector_bio.pilot_pbdb_marine": "REJECT",
+    "sector_ai_tech.pilot_llm_scaling": "REJECT",
+}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -31,7 +38,7 @@ LEVEL_C_PILOTS = [
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestRegistryStructure:
-    """Validate pilot_generalization_registry.json v2."""
+    """Validate pilot_generalization_registry.json v3."""
 
     @pytest.fixture
     def registry(self):
@@ -42,38 +49,49 @@ class TestRegistryStructure:
     def test_schema(self, registry):
         assert registry["schema"] == "oric.pilot_generalization_registry.v1"
 
-    def test_version_2(self, registry):
+    def test_version_3(self, registry):
         parts = registry["version"].split(".")
-        assert int(parts[0]) >= 2, "Registry must be version 2.0.0+"
+        assert int(parts[0]) >= 3, "Registry must be version 3.0.0+"
 
     def test_seven_pilots(self, registry):
         assert len(registry["pilots"]) == 7
 
+    def test_all_level_b(self, registry):
+        for p in registry["pilots"]:
+            assert p["proof_level"] == "B"
+
+    def test_no_indeterminate(self, registry):
+        for p in registry["pilots"]:
+            assert p["oric_verdict"] != "INDETERMINATE"
+
     def test_upgrade_summary_present(self, registry):
         assert "upgrade_summary" in registry
         us = registry["upgrade_summary"]
-        assert "total_upgrade_candidates" in us
+        assert us["validation_pipeline_completed"] is True
         assert "anti_gaming_note" in us
 
-    def test_upgrade_candidates_count(self, registry):
-        candidates = [
+    def test_upgraded_count(self, registry):
+        upgraded = [
             p for p in registry["pilots"]
-            if p.get("upgrade_status") == "upgrade_candidate"
+            if p.get("upgrade_status") == "upgraded"
         ]
-        assert len(candidates) == 3
+        assert len(upgraded) == 3
 
-    def test_level_b_pilots_have_no_upgrade(self, registry):
-        for p in registry["pilots"]:
-            if p["proof_level"] == "B":
-                assert p.get("upgrade_status") is None
+    def test_summary_counts(self, registry):
+        s = registry["summary"]
+        assert s["by_verdict"]["ACCEPT"] == 5
+        assert s["by_verdict"]["REJECT"] == 2
+        assert s["by_verdict"]["INDETERMINATE"] == 0
+        assert s["by_level"]["B"] == 7
+        assert s["by_level"].get("C", 0) == 0
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 2. Upgrade candidates consistency
+# 2. Upgraded pilots have complete validation data
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestUpgradeCandidatesConsistency:
-    """Ensure upgrade candidates in registry match actual reports."""
+class TestUpgradedPilotsValidation:
+    """Ensure upgraded pilots have full validation reports."""
 
     @pytest.fixture
     def registry(self):
@@ -81,41 +99,85 @@ class TestUpgradeCandidatesConsistency:
             (PILOTS / "pilot_generalization_registry.json").read_text()
         )
 
-    @pytest.mark.parametrize("pilot_id", LEVEL_C_PILOTS)
-    def test_candidate_has_upgrade_report(self, registry, pilot_id):
+    @pytest.mark.parametrize("pilot_id", UPGRADED_PILOTS)
+    def test_has_upgrade_report(self, registry, pilot_id):
         pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pilot_id)
-        assert pilot.get("upgrade_status") == "upgrade_candidate"
+        assert pilot.get("upgrade_status") == "upgraded"
         assert "upgrade_report" in pilot
         report = pilot["upgrade_report"]
         assert report["n_after"] > report["n_before"]
         assert report["homogeneity_passed"] is True
+        assert report["level_after"] == "B"
 
-    @pytest.mark.parametrize("pilot_id", LEVEL_C_PILOTS)
-    def test_level_remains_c_until_validated(self, registry, pilot_id):
-        """Level C pilots must stay at C even if upgrade_candidate."""
+    @pytest.mark.parametrize("pilot_id", UPGRADED_PILOTS)
+    def test_validation_verdict_correct(self, registry, pilot_id):
         pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pilot_id)
-        assert pilot["proof_level"] == "C", (
-            f"{pilot_id} should remain Level C until full validation"
-        )
+        report = pilot["upgrade_report"]
+        assert report["validation_verdict"] == EXPECTED_VERDICTS[pilot_id]
+        assert report["validation_decidable_runs"] == 45
+        assert report["validation_indeterminate"] == 0
 
-    @pytest.mark.parametrize("pilot_id", LEVEL_C_PILOTS)
-    def test_upgrade_report_matches_results(self, registry, pilot_id):
-        """Registry upgrade data must match the actual report file."""
+    @pytest.mark.parametrize("pilot_id", UPGRADED_PILOTS)
+    def test_oric_verdict_matches(self, registry, pilot_id):
         pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pilot_id)
-        report_path = UPGRADE_DIR / pilot_id.replace(".", "/") / "power_upgrade_report.json"
-        assert report_path.exists()
-        report = json.loads(report_path.read_text())
-        assert pilot["upgrade_report"]["n_before"] == report["n_before"]
-        assert pilot["upgrade_report"]["n_after"] == report["n_after"]
-        assert pilot["upgrade_report"]["homogeneity_passed"] == report["homogeneity_passed"]
+        assert pilot["oric_verdict"] == EXPECTED_VERDICTS[pilot_id]
+
+    @pytest.mark.parametrize("pilot_id", UPGRADED_PILOTS)
+    def test_validation_c2_c3_passed(self, registry, pilot_id):
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pilot_id)
+        report = pilot["upgrade_report"]
+        assert report["validation_c2"] is True
+        assert report["validation_c3"] is True
+
+    def test_pantheon_sn_c1_passed(self, registry):
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == "sector_cosmo.pilot_pantheon_sn")
+        assert pilot["upgrade_report"]["validation_c1"] is True
+        assert pilot["upgrade_report"]["detection_rate"] == 1.0
+
+    def test_pbdb_marine_c1_failed(self, registry):
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == "sector_bio.pilot_pbdb_marine")
+        assert pilot["upgrade_report"]["validation_c1"] is False
+        assert pilot["upgrade_report"]["failure_mode"] == "no_detection"
+
+    def test_llm_scaling_c1_failed(self, registry):
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == "sector_ai_tech.pilot_llm_scaling")
+        assert pilot["upgrade_report"]["validation_c1"] is False
+        assert pilot["upgrade_report"]["failure_mode"] == "no_detection"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 3. Registry consistent with frozen corpus
+# 3. Validation summary files exist
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestValidationSummaryFiles:
+    """Ensure validation output files exist for each upgraded pilot."""
+
+    VALIDATION_DIRS = {
+        "sector_cosmo.pilot_pantheon_sn": "pilot_pantheon_sn_densified",
+        "sector_bio.pilot_pbdb_marine": "pilot_pbdb_marine_densified",
+        "sector_ai_tech.pilot_llm_scaling": "pilot_llm_scaling_densified",
+    }
+
+    @pytest.mark.parametrize("pilot_id", UPGRADED_PILOTS)
+    def test_validation_summary_exists(self, pilot_id):
+        dirname = self.VALIDATION_DIRS[pilot_id]
+        path = VALIDATION_DIR / dirname / "real_densified" / "tables" / "validation_summary.json"
+        assert path.exists(), f"Missing validation summary: {path}"
+
+    @pytest.mark.parametrize("pilot_id", UPGRADED_PILOTS)
+    def test_validation_verdict_matches(self, pilot_id):
+        dirname = self.VALIDATION_DIRS[pilot_id]
+        path = VALIDATION_DIR / dirname / "real_densified" / "tables" / "validation_summary.json"
+        summary = json.loads(path.read_text())
+        assert summary["protocol_verdict"] == EXPECTED_VERDICTS[pilot_id]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. Registry consistent with frozen corpus
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestRegistryCorpusConsistency:
-    """Registry must be consistent with FROZEN_PILOT_CORPUS.json."""
+    """Registry must be consistent with FROZEN_PILOT_CORPUS.json v2."""
 
     def test_same_pilot_ids(self):
         registry = json.loads(
@@ -156,13 +218,20 @@ class TestRegistryCorpusConsistency:
                 f"registry={p['proof_level']}, corpus={corp_levels[p['pilot_id']]}"
             )
 
+    def test_corpus_version_2(self):
+        corpus = json.loads(
+            (CONTRACTS / "FROZEN_PILOT_CORPUS.json").read_text()
+        )
+        parts = corpus["version"].split(".")
+        assert int(parts[0]) >= 2, "Corpus must be version 2.0.0+"
+
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 4. Benchmark summary consistency
+# 5. Benchmark summary consistency
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestBenchmarkSummaryConsistency:
-    """Validate pilot_benchmark_summary.json upgrade section."""
+    """Validate pilot_benchmark_summary.json v2."""
 
     @pytest.fixture
     def summary(self):
@@ -170,25 +239,26 @@ class TestBenchmarkSummaryConsistency:
         assert path.exists()
         return json.loads(path.read_text())
 
-    def test_upgrade_candidates_section(self, summary):
-        assert "upgrade_candidates" in summary
-        assert summary["upgrade_candidates"]["total"] == 3
+    def test_upgrade_completed_section(self, summary):
+        assert "upgrade_completed" in summary
+        assert summary["upgrade_completed"]["total"] == 3
 
     def test_upgrade_pilots_listed(self, summary):
-        ids = {p["pilot_id"] for p in summary["upgrade_candidates"]["pilots"]}
-        assert ids == set(LEVEL_C_PILOTS)
+        ids = {p["pilot_id"] for p in summary["upgrade_completed"]["pilots"]}
+        assert ids == set(UPGRADED_PILOTS)
 
-    def test_all_homogeneity_passed(self, summary):
-        for p in summary["upgrade_candidates"]["pilots"]:
-            assert p["homogeneity_passed"] is True
+    def test_verdicts_correct(self, summary):
+        assert summary["verdicts"]["ACCEPT"] == 5
+        assert summary["verdicts"]["REJECT"] == 2
+        assert summary["verdicts"]["INDETERMINATE"] == 0
 
-    def test_all_level_b_candidate(self, summary):
-        for p in summary["upgrade_candidates"]["pilots"]:
-            assert p["level_after"] == "B_candidate"
+    def test_all_level_b(self, summary):
+        assert summary["proof_levels"]["B"]["count"] == 7
+        assert summary["proof_levels"]["C"]["count"] == 0
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 5. Cross-references valid
+# 6. Cross-references valid
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestCrossReferences:

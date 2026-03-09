@@ -1,0 +1,14 @@
+{
+  "validation_protocol_verdict": "ACCEPT",
+  "validation_test_det_rate": 1.0,
+  "validation_stable_fp_rate": 0.0,
+  "validation_placebo_fp_rate": 0.0,
+  "validation_decidable_fraction": 0.0,
+  "validation_contrast_passes": null,
+  "validation_contrast_gap": null,
+  "validation_failure_mode": null,
+  "validation_n_inputs": 1,
+  "validation_n_accept": 1,
+  "validation_n_reject": 0,
+  "validation_n_indeterminate": 0
+}

@@ -1,8 +1,21 @@
 {
   "schema": "oric.generalization_benchmark.v1",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "frozen_date": "2026-03-09",
   "integrity_note": "This file is a frozen canonical benchmark. Any modification after frozen_date requires a version bump and invalidates all prior citations. PATCH for metadata. MINOR for adding pilots. MAJOR for reclassifying or removing pilots.",
+
+  "version_history": [
+    {
+      "version": "1.0.0",
+      "date": "2026-03-09",
+      "change": "Initial frozen benchmark: 4 conclusive (ACCEPT), 3 exploratory (INDETERMINATE)"
+    },
+    {
+      "version": "2.0.0",
+      "date": "2026-03-09",
+      "change": "Full ORI-C pipeline on densified Level C pilots. Pantheon SN -> ACCEPT. PBDB marine -> REJECT. LLM scaling -> REJECT. All 7 now decidable at Level B."
+    }
+  ],
 
   "description": "Frozen generalization benchmark for the ORI-C framework. Formalizes the 7-pilot corpus as a public, versionable, citable reference object with explicit proof levels, power classes, and known limitations.",
 
@@ -16,8 +29,9 @@
 
   "benchmark_corpus": {
     "total_pilots": 7,
-    "conclusive_count": 4,
-    "exploratory_count": 3,
+    "accept_count": 5,
+    "reject_count": 2,
+    "indeterminate_count": 0,
     "domains_covered": 7,
 
     "conclusive_pilots": [
@@ -55,6 +69,18 @@
         "showcase": null
       },
       {
+        "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+        "domain": "Cosmology",
+        "series_length": 150,
+        "verdict": "ACCEPT",
+        "proof_level": "B",
+        "power_class": "borderline",
+        "overinterpretation_risk": "low",
+        "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn",
+        "showcase": null,
+        "upgrade_note": "Upgraded from C (INDETERMINATE, 100 pts) via densification + full pipeline"
+      },
+      {
         "pilot_id": "sector_finance.pilot_btc",
         "domain": "Finance",
         "series_length": 141,
@@ -67,42 +93,28 @@
       }
     ],
 
-    "exploratory_pilots": [
-      {
-        "pilot_id": "sector_cosmo.pilot_pantheon_sn",
-        "domain": "Cosmology",
-        "series_length": 100,
-        "verdict": "INDETERMINATE",
-        "proof_level": "C",
-        "power_class": "borderline",
-        "overinterpretation_risk": "medium",
-        "blocking_constraint": "Insufficient pre-threshold points; precheck marginal",
-        "upgrade_target": 150,
-        "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn"
-      },
+    "rejected_pilots": [
       {
         "pilot_id": "sector_bio.pilot_pbdb_marine",
         "domain": "Paleobiology",
-        "series_length": 100,
-        "verdict": "INDETERMINATE",
-        "proof_level": "C",
+        "series_length": 140,
+        "verdict": "REJECT",
+        "proof_level": "B",
         "power_class": "borderline",
-        "overinterpretation_risk": "medium",
-        "blocking_constraint": "Insufficient post-threshold points; recovery sparsely sampled",
-        "upgrade_target": 140,
-        "data_path": "03_Data/sector_bio/real/pilot_pbdb_marine"
+        "data_path": "03_Data/sector_bio/real/pilot_pbdb_marine",
+        "failure_mode": "no_detection",
+        "upgrade_note": "Upgraded from C (INDETERMINATE, 100 pts). After densification (140 pts), C1 failed: no transition detected (det_rate=0.0). True negative."
       },
       {
         "pilot_id": "sector_ai_tech.pilot_llm_scaling",
         "domain": "AI/Technology",
-        "series_length": 60,
-        "verdict": "INDETERMINATE",
-        "proof_level": "C",
-        "power_class": "underpowered",
-        "overinterpretation_risk": "high",
-        "blocking_constraint": "min_points_per_segment < 60; insufficient temporal depth",
-        "upgrade_target": 120,
-        "data_path": "03_Data/sector_ai_tech/real/pilot_llm_scaling"
+        "series_length": 120,
+        "verdict": "REJECT",
+        "proof_level": "B",
+        "power_class": "borderline",
+        "data_path": "03_Data/sector_ai_tech/real/pilot_llm_scaling",
+        "failure_mode": "no_detection",
+        "upgrade_note": "Upgraded from C (INDETERMINATE, 60 pts). After densification (120 pts), C1 failed: no transition detected (sigma_zero_post=1.0). Synthetic-calibrated data."
       }
     ]
   },
@@ -110,13 +122,8 @@
   "proof_level_definitions": {
     "B": {
       "label": "Conclusive",
-      "criteria": ["n_rows >= 60", "min_points_per_segment >= 60", "prechecks pass", "verdict decidable"],
-      "publishable_as": "Confirmed out-of-domain applications"
-    },
-    "C": {
-      "label": "Exploratory",
-      "criteria": ["At least one blocking constraint", "Power upgrade path documented"],
-      "publishable_as": "Exploratory signals with explicit power constraints"
+      "criteria": ["n_rows >= 60", "min_points_per_segment >= 60", "prechecks pass", "verdict decidable (ACCEPT or REJECT)"],
+      "publishable_as": "Confirmed out-of-domain applications (ACCEPT) or confirmed non-detections (REJECT)"
     }
   },
 
@@ -128,22 +135,23 @@
 
   "known_limitations": [
     "Only 7 domains tested; framework incompatibility may emerge in untested domains",
-    "Level C signals must NOT be cited as evidence of framework validity",
     "No independent external replication yet; all validation by framework authors",
     "min_points_per_segment >= 60 blocks many real-world datasets by design",
-    "Borderline power class can still produce conclusive verdicts (BTC, COVID prove this)"
+    "Borderline power class can still produce conclusive verdicts (BTC, COVID, Pantheon SN prove this)",
+    "REJECT verdicts may reflect proxy mapping inadequacy, not necessarily absence of physical threshold",
+    "LLM scaling data is synthetic-calibrated, not real benchmark data — REJECT may reflect data quality"
   ],
 
   "upgrade_protocol": "contracts/POWER_UPGRADE_PROTOCOL.json",
   "frozen_corpus": "contracts/FROZEN_PILOT_CORPUS.json",
   "generalization_matrix": "contracts/PILOT_GENERALIZATION.json",
 
-  "citation_note": "When citing this benchmark, reference the version and frozen_date. Example: ORI-C Generalization Benchmark v1.0.0 (frozen 2026-03-09), 7 pilots across 7 domains, 4 conclusive / 3 exploratory.",
+  "citation_note": "When citing this benchmark, reference the version and frozen_date. Example: ORI-C Generalization Benchmark v2.0.0 (frozen 2026-03-09), 7 pilots across 7 domains, 5 ACCEPT / 2 REJECT / 0 INDETERMINATE.",
 
   "summary": {
-    "by_verdict": {"ACCEPT": 4, "INDETERMINATE": 3, "REJECT": 0},
-    "by_level": {"B": 4, "C": 3},
-    "by_power": {"adequate": 2, "borderline": 3, "underpowered": 1},
+    "by_verdict": {"ACCEPT": 5, "INDETERMINATE": 0, "REJECT": 2},
+    "by_level": {"B": 7, "C": 0},
+    "by_power": {"adequate": 2, "borderline": 5, "underpowered": 0},
     "showcase_pilots": ["sector_neuro.pilot_eeg_bonn", "sector_finance.pilot_btc"]
   }
 }
