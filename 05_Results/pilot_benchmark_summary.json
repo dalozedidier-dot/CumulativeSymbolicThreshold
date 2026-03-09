@@ -1,0 +1,94 @@
+{
+  "schema": "oric.pilot_benchmark.v1",
+  "version": "1.0",
+  "generated": "2026-03-09",
+  "description": "Official pilot benchmark summary for ORI-C generalization assessment.",
+  "total_pilots": 7,
+  "verdicts": {
+    "ACCEPT": 4,
+    "INDETERMINATE": 3,
+    "REJECT": 0
+  },
+  "proof_levels": {
+    "A": {
+      "count": 0,
+      "note": "Canonical datasets (synthetic, FRED, validation protocol) are tracked in dual proof manifest, not in pilot benchmark."
+    },
+    "B": {
+      "count": 4,
+      "datasets": [
+        "sector_finance.pilot_btc",
+        "sector_health.pilot_covid_excess_mortality",
+        "sector_neuro.pilot_eeg_bonn",
+        "sector_cosmo.pilot_solar"
+      ]
+    },
+    "C": {
+      "count": 3,
+      "datasets": [
+        "sector_ai_tech.pilot_llm_scaling",
+        "sector_cosmo.pilot_pantheon_sn",
+        "sector_bio.pilot_pbdb_marine"
+      ]
+    }
+  },
+  "power_distribution": {
+    "adequate": {
+      "count": 2,
+      "datasets": ["sector_neuro.pilot_eeg_bonn", "sector_cosmo.pilot_solar"]
+    },
+    "borderline": {
+      "count": 3,
+      "datasets": [
+        "sector_finance.pilot_btc",
+        "sector_health.pilot_covid_excess_mortality",
+        "sector_cosmo.pilot_pantheon_sn"
+      ]
+    },
+    "underpowered": {
+      "count": 2,
+      "datasets": [
+        "sector_ai_tech.pilot_llm_scaling",
+        "sector_bio.pilot_pbdb_marine"
+      ]
+    }
+  },
+  "domains": {
+    "Finance": 1,
+    "Sante publique": 1,
+    "Neurosciences": 1,
+    "Astrophysique": 1,
+    "Cosmologie": 1,
+    "Paleobiologie": 1,
+    "IA / Technologie": 1
+  },
+  "indetermination_causes": {
+    "sector_ai_tech.pilot_llm_scaling": "min_points_per_segment < 60; insufficient temporal depth",
+    "sector_cosmo.pilot_pantheon_sn": "Insufficient pre-threshold points; precheck marginal",
+    "sector_bio.pilot_pbdb_marine": "Insufficient post-threshold points; recovery phase sparsely sampled"
+  },
+  "showcase_pilots": {
+    "primary": {
+      "pilot_id": "sector_neuro.pilot_eeg_bonn",
+      "rationale": "Longest pilot (500 segments), strongest detection, outside socio-economic domain, 5 class labels"
+    },
+    "secondary": {
+      "pilot_id": "sector_finance.pilot_btc",
+      "rationale": "Market dynamics, clear regime transition, demonstrates cross-domain portability"
+    }
+  },
+  "prudent_reading": {
+    "exploitable_positives": [
+      "BTC (finance, 141 pts, ACCEPT, borderline power)",
+      "COVID excess mortality (health, 192 pts, ACCEPT, borderline power)",
+      "EEG Bonn (neuro, 500 pts, ACCEPT, adequate power)",
+      "Solar (cosmo, 288 pts, ACCEPT, adequate power)"
+    ],
+    "plausible_but_non_conclusive": [
+      "LLM scaling (ai_tech, 60 pts, INDETERMINATE, underpowered)",
+      "Pantheon SN (cosmo, 100 pts, INDETERMINATE, borderline)",
+      "PBDB marine (bio, 100 pts, INDETERMINATE, borderline)"
+    ],
+    "note": "Level B pilots are publishable as confirmed out-of-domain applications. Level C pilots are publishable as exploratory signals requiring power upgrade before canonical conclusion."
+  }
+}

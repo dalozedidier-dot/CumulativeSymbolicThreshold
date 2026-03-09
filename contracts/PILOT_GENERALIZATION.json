@@ -1,0 +1,168 @@
+{
+  "schema": "oric.pilot_generalization.v1",
+  "version": "1.0",
+  "date": "2026-03-09",
+  "description": "Canonical generalization matrix for ORI-C sector pilots. Classifies each pilot by proof level, power class, and exploitability.",
+  "proof_levels": {
+    "A": {
+      "label": "Canonique",
+      "description": "Canonical demonstration: synthetic + FRED + validation protocol + dual proof. Full statistical support with confusion matrix, sensitivity >= 0.80, specificity >= 0.80, Fisher p < 0.01.",
+      "datasets": ["synthetic", "fred_monthly", "validation_protocol", "dual_proof"]
+    },
+    "B": {
+      "label": "Pilotes reels concluants",
+      "description": "Real pilot datasets outside the canonical core with exploitable verdict. Series length adequate (>= 60 points per segment), prechecks passed, causal tests available, verdict decidable (ACCEPT or REJECT).",
+      "criteria": {
+        "min_points_per_segment": 60,
+        "precheck_passed": true,
+        "verdict_decidable": true,
+        "causal_tests_available": true
+      }
+    },
+    "C": {
+      "label": "Pilotes exploratoires sous precheck",
+      "description": "Pilots showing a signal or plausibility but without canonical proof level. Blocked by power constraints (min_points_per_segment, series length), precheck failures, or insufficient temporal depth. Signal interesting but conclusion at canonical level not possible.",
+      "criteria": {
+        "at_least_one_of": [
+          "series_too_short",
+          "precheck_failed",
+          "insufficient_points_per_segment",
+          "verdict_indeterminate"
+        ]
+      }
+    }
+  },
+  "power_classes": {
+    "adequate": {
+      "description": "Sufficient for full bootstrap + stability battery with narrow CIs",
+      "total_points_min": 200,
+      "min_points_per_segment_met": true
+    },
+    "borderline": {
+      "description": "Sufficient for exploratory analysis; preliminary results only",
+      "total_points_min": 60,
+      "total_points_max": 199,
+      "min_points_per_segment_met": true
+    },
+    "underpowered": {
+      "description": "Below minimum for reliable ORI-C verdict; densification required",
+      "total_points_max": 59,
+      "or_min_points_per_segment_failed": true
+    }
+  },
+  "generalization_matrix": [
+    {
+      "pilot_id": "sector_finance.pilot_btc",
+      "domain": "Finance",
+      "sector": "finance",
+      "series_length": 141,
+      "signal_expected": true,
+      "signal_description": "BTC price regime transition with volatility threshold",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "borderline",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "notes": "Clear regime transition. Borderline power but sufficient for decidable verdict."
+    },
+    {
+      "pilot_id": "sector_health.pilot_covid_excess_mortality",
+      "domain": "Sante publique",
+      "sector": "health",
+      "series_length": 192,
+      "signal_expected": true,
+      "signal_description": "COVID excess mortality threshold across 4 countries (FR, IT, US, BE)",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "borderline",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "notes": "Multi-country validation. Close to adequate power threshold (200)."
+    },
+    {
+      "pilot_id": "sector_neuro.pilot_eeg_bonn",
+      "domain": "Neurosciences",
+      "sector": "neuro",
+      "series_length": 500,
+      "signal_expected": true,
+      "signal_description": "EEG seizure detection with 5 class labels across 500 segments",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "adequate",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "very_low",
+      "notes": "Longest pilot. Strong detection. Out-of-domain (non socio-economic). Showcase candidate."
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_solar",
+      "domain": "Astrophysique",
+      "sector": "cosmo",
+      "series_length": 288,
+      "signal_expected": true,
+      "signal_description": "Solar cycle regime with sunspot number thresholds",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "adequate",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "notes": "Physical system. Adequate power. Clean temporal structure."
+    },
+    {
+      "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+      "domain": "IA / Technologie",
+      "sector": "ai_tech",
+      "series_length": 60,
+      "signal_expected": true,
+      "signal_description": "LLM scaling law transition threshold",
+      "oric_verdict": "INDETERMINATE",
+      "proof_level": "C",
+      "power_class": "underpowered",
+      "cause_indetermination": "min_points_per_segment < 60; insufficient temporal depth",
+      "overinterpretation_risk": "high",
+      "power_upgrade_path": "Extend dataset with more LLM benchmark releases to reach >= 120 points",
+      "notes": "Signal plausible but series too short for canonical conclusion."
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+      "domain": "Cosmologie",
+      "sector": "cosmo",
+      "series_length": 100,
+      "signal_expected": true,
+      "signal_description": "Type Ia supernovae distance-redshift threshold (Pantheon+ dataset)",
+      "oric_verdict": "INDETERMINATE",
+      "proof_level": "C",
+      "power_class": "borderline",
+      "cause_indetermination": "Insufficient usable points before threshold; precheck marginal",
+      "overinterpretation_risk": "medium",
+      "power_upgrade_path": "Increase pre-threshold coverage with extended z-range or complementary SNe datasets",
+      "notes": "Interesting cosmological signal. Needs more points in pre-threshold segment."
+    },
+    {
+      "pilot_id": "sector_bio.pilot_pbdb_marine",
+      "domain": "Paleobiologie",
+      "sector": "bio",
+      "series_length": 100,
+      "signal_expected": true,
+      "signal_description": "Marine biodiversity mass extinction threshold (>400 Myr range)",
+      "oric_verdict": "INDETERMINATE",
+      "proof_level": "C",
+      "power_class": "borderline",
+      "cause_indetermination": "Insufficient usable points after threshold; post-extinction recovery sparsely sampled",
+      "overinterpretation_risk": "medium",
+      "power_upgrade_path": "Densify post-extinction temporal resolution or extend to include Cenozoic recovery data",
+      "notes": "Covers >400 Myr of geological time. Needs more post-threshold points."
+    }
+  ],
+  "summary": {
+    "total_pilots": 7,
+    "level_B_accept": 4,
+    "level_C_indeterminate": 3,
+    "level_C_reject": 0,
+    "power_adequate": 2,
+    "power_borderline": 3,
+    "power_underpowered": 2,
+    "domains_covered": ["Finance", "Sante publique", "Neurosciences", "Astrophysique", "IA / Technologie", "Cosmologie", "Paleobiologie"],
+    "showcase_pilots": ["sector_neuro.pilot_eeg_bonn", "sector_finance.pilot_btc"],
+    "reading_note": "4 pilots (BTC, COVID, EEG, Solar) are exploitable at Level B. 3 pilots (LLM, Pantheon, PBDB) show plausible signals but lack contractual power for canonical conclusion. This separation protects against both overselling pilots and underselling conclusive ones."
+  }
+}

@@ -28,7 +28,10 @@ from .proof_manifest import (
 from .integrity import check_run_integrity, check_dual_proof_integrity, integrity_gate
 from .placebo import generate_placebo, generate_placebo_battery, evaluate_placebo_battery
 from .decidability import DecidabilityMetrics, compute_decidability, AdaptedPrechecks
-from .proof_levels import classify_evidence_level, build_proof_level_summary
+from .proof_levels import (
+    classify_evidence_level, build_proof_level_summary,
+    classify_power, PowerClass,
+)
 from .proof_package import build_proof_package, ProofPackage
 
 __all__ = [
@@ -65,6 +68,8 @@ __all__ = [
     "AdaptedPrechecks",
     "classify_evidence_level",
     "build_proof_level_summary",
+    "classify_power",
+    "PowerClass",
     "build_proof_package",
     "ProofPackage",
 ]
