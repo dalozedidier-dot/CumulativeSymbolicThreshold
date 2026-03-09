@@ -1,79 +1,89 @@
 {
   "schema": "oric.power_upgrade_protocol.v1",
-  "version": "1.0",
+  "version": "2.0",
   "date": "2026-03-09",
-  "description": "Protocol for upgrading underpowered Level C pilots to Level B. Each blocked pilot gets a concrete densification plan with testable success criteria.",
+  "description": "Ex-ante protocol for upgrading underpowered Level C pilots to Level B. Each blocked pilot gets a concrete densification plan with testable success criteria. The rule is explicit: we increase decidability without breaking the homogeneity of the observed regime.",
   "min_points_per_segment_target": 60,
   "min_total_points_target": 120,
+
+  "core_principle": "On n'augmente pas N pour augmenter N. On augmente la decidabilite sans casser l'homogeneite du regime observe. Any upgrade that changes the research question, the primary proxy, or the structural meaning of the time axis is forbidden.",
+
   "upgrade_methodology": {
     "step_1": "Document current dataset version (rows, temporal range, point density)",
     "step_2": "Identify densification path (extended dataset if available)",
-    "step_3": "Test robustness with multiple segmentation points (3-5 candidates)",
-    "step_4": "Run full ORI-C pipeline on extended version",
-    "step_5": "Classify final status: conclusive / underpowered / incompatible"
+    "step_3": "Verify invariants: research question unchanged, primary proxy unchanged, time axis homogeneous",
+    "step_4": "Test robustness with multiple segmentation points (3-5 candidates)",
+    "step_5": "Run full ORI-C pipeline on extended version",
+    "step_6": "Produce homogeneity checks (proxy distribution stability, regime continuity)",
+    "step_7": "Classify final status: conclusive / underpowered / incompatible"
   },
+
+  "invariants": {
+    "research_question_unchanged": "The pilot must test the same hypothesis before and after upgrade",
+    "primary_proxy_unchanged": "O, R, I, demand, S columns must map to the same physical/conceptual quantities",
+    "time_axis_homogeneous": "The temporal resolution and ordering logic must remain consistent",
+    "no_post_hoc_selection": "Segmentation candidates must be declared ex ante, not chosen to maximize ACCEPT"
+  },
+
   "final_status_options": {
     "conclusive": "Upgraded to Level B with decidable verdict (ACCEPT or REJECT)",
     "underpowered": "Signal present but insufficient data even after extension",
     "incompatible": "Framework does not apply — legitimate negative result"
   },
+
   "pilots": [
-    {
-      "pilot_id": "sector_ai_tech.pilot_llm_scaling",
-      "domain": "IA / Technologie",
-      "current_status": {
-        "series_length": 60,
-        "points_pre_threshold": "~30",
-        "points_post_threshold": "~30",
-        "verdict": "INDETERMINATE",
-        "blocking_constraint": "min_points_per_segment(30 < 60)"
-      },
-      "diagnosis": "Series too short. LLM benchmark releases are sparse; temporal depth insufficient for 60 points per segment.",
-      "upgrade_plan": {
-        "strategy": "Extend with additional LLM benchmark releases (MLPerf, MMLU, HumanEval, LMSYS)",
-        "target_length": 120,
-        "target_pre_segment": 60,
-        "target_post_segment": 60,
-        "segmentation_candidates": [
-          "GPT-4 release (March 2023)",
-          "Claude 3 release (March 2024)",
-          "Mixture-of-Experts transition (late 2023)"
-        ],
-        "data_sources": [
-          "Epoch AI compute tracker",
-          "Papers With Code SOTA benchmarks",
-          "MLPerf inference results"
-        ],
-        "feasibility": "medium — requires aggregating multiple benchmark sources",
-        "timeline": "2-3 weeks for data collection and preprocessing"
-      },
-      "success_criteria": {
-        "min_total_points": 120,
-        "min_points_per_segment": 60,
-        "precheck_must_pass": true,
-        "verdict_must_be_decidable": true
-      }
-    },
     {
       "pilot_id": "sector_cosmo.pilot_pantheon_sn",
       "domain": "Cosmologie",
+      "research_question": "Does the SNe Ia distance-redshift relationship exhibit a cumulative symbolic threshold crossing consistent with dark energy transition?",
+
       "current_status": {
+        "dataset_source": "Pantheon+ (Scolnic et al. 2022 ApJ 938:113)",
         "series_length": 100,
         "points_pre_threshold": "~35",
         "points_post_threshold": "~65",
         "verdict": "INDETERMINATE",
-        "blocking_constraint": "Insufficient pre-threshold points; precheck marginal"
+        "blocking_constraint": "Insufficient pre-threshold points; precheck marginal",
+        "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real.csv"
       },
-      "diagnosis": "Pre-threshold segment underpopulated. Pantheon+ has sufficient total SNe Ia but low-z coverage is sparse.",
+
       "upgrade_plan": {
-        "strategy": "Augment low-z coverage with Carnegie Supernova Project and CfA surveys; extend z-range below 0.01",
+        "dataset_source_upgrade": "Pantheon+ augmented with Carnegie Supernova Project DR3 + CfA Supernova Survey (Hicken et al.) low-z coverage",
+        "primary_variable_unchanged": "mu_obs (observed distance modulus) — same physical quantity",
+        "primary_proxy_unchanged": "O = Hubble residual dispersion, R = LCDM consistency, I = cross-survey agreement, demand = dark energy deviation, S = cumulative SNe evidence",
+        "segment_structurally_missing": "Pre-threshold (low-z, z < 0.05): sparse SN coverage means the regime before the proposed dark energy transition is undersampled",
+        "densification_strategy": "Add low-z SNe from Carnegie + CfA surveys. Interpolate between observed redshift bins to fill pre-threshold gap. Do NOT add high-z SNe — this would change the post-threshold regime.",
         "target_length": 150,
         "target_pre_segment": 60,
         "target_post_segment": 90,
         "segmentation_candidates": [
-          "z = 0.05 (standard cosmological transition)",
-          "z = 0.03 (local Hubble flow boundary)",
-          "z = 0.08 (survey completeness threshold)"
+          {"z_approx": 0.03, "t_frac": 0.25, "rationale": "Local Hubble flow boundary"},
+          {"z_approx": 0.05, "t_frac": 0.35, "rationale": "Standard cosmological transition zone"},
+          {"z_approx": 0.08, "t_frac": 0.45, "rationale": "Survey completeness threshold"},
+          {"z_approx": 0.12, "t_frac": 0.55, "rationale": "Onset of dark energy dominance"},
+          {"z_approx": 0.20, "t_frac": 0.65, "rationale": "Transition midpoint candidate"}
+        ],
+        "what_is_allowed_to_change": [
+          "Total number of points (100 -> 150)",
+          "Point density in pre-threshold segment",
+          "Redshift coverage at low-z end"
+        ],
+        "what_cannot_change": [
+          "Research question (dark energy threshold detection)",
+          "O/R/I/demand/S proxy definitions",
+          "Normalization method (robust_minmax)",
+          "Post-threshold data structure",
+          "LCDM model used for residuals"
+        ],
+        "bias_risks": [
+          "Low-z SNe from different surveys may have systematic calibration offsets",
+          "Interpolation between sparse bins may create artificial smoothness",
+          "Adding points specifically in the gap region could bias toward detection"
+        ],
+        "stability_tests_required": [
+          "Proxy distribution comparison (KS test) between original and densified O/R/I",
+          "Segmentation sensitivity: verdict must not flip when removing 20% of added points",
+          "Cross-survey consistency: densified points from Carnegie vs CfA must agree within 2-sigma"
         ],
         "data_sources": [
           "Pantheon+ (Scolnic et al. 2022)",
@@ -83,49 +93,191 @@
         "feasibility": "high — data publicly available, needs z-ordered rebinning",
         "timeline": "1-2 weeks"
       },
+
       "success_criteria": {
         "min_total_points": 120,
         "min_points_per_segment": 60,
         "precheck_must_pass": true,
-        "verdict_must_be_decidable": true
-      }
+        "verdict_must_be_decidable": true,
+        "homogeneity_check_must_pass": true,
+        "proxy_distribution_stable": true
+      },
+
+      "diagnosis": "Pre-threshold segment underpopulated. Pantheon+ has sufficient total SNe Ia but low-z coverage is sparse."
     },
+
     {
       "pilot_id": "sector_bio.pilot_pbdb_marine",
       "domain": "Paleobiologie",
+      "research_question": "Does marine biodiversity exhibit a cumulative symbolic threshold crossing at major mass extinction boundaries?",
+
       "current_status": {
+        "dataset_source": "Paleobiology Database (paleobiodb.org) — Marine Metazoan Genus Diversity",
         "series_length": 100,
         "points_pre_threshold": "~60",
         "points_post_threshold": "~40",
         "verdict": "INDETERMINATE",
-        "blocking_constraint": "Insufficient post-threshold points; recovery phase sparsely sampled"
+        "blocking_constraint": "Insufficient post-threshold points; recovery sparsely sampled",
+        "data_path": "03_Data/sector_bio/real/pilot_pbdb_marine/real.csv"
       },
-      "diagnosis": "Post-extinction recovery data is temporally sparse. PBDB coverage for Cenozoic marine diversity is lower resolution than Paleozoic.",
+
       "upgrade_plan": {
-        "strategy": "Densify post-extinction bins by reducing temporal resolution from stage-level to sub-stage or 5-Myr bins in Cenozoic",
+        "dataset_source_upgrade": "PBDB with refined temporal binning: stage-level replaced by 5-Myr bins in Cenozoic + Sepkoski compendium cross-validation",
+        "primary_variable_unchanged": "genera (genus count) — same biodiversity measure",
+        "primary_proxy_unchanged": "O = genus diversity, R = 1-extinction_rate, I = origination rate, demand = extinction rate, S = cumulative diversity",
+        "segment_structurally_missing": "Post-threshold (Cenozoic recovery, 66-0 Ma): geological stages are longer in Cenozoic, so fewer data points cover the recovery phase after K-Pg extinction",
+        "densification_strategy": "Reduce temporal bin width from stage-level (~10 Myr) to 5-Myr bins in Cenozoic. This adds real data points (not interpolation) because PBDB API supports custom bin resolution. Produce intermediate variants for sensitivity analysis.",
         "target_length": 140,
         "target_pre_segment": 70,
         "target_post_segment": 70,
         "segmentation_candidates": [
-          "End-Permian extinction (252 Ma)",
-          "End-Cretaceous extinction (66 Ma)",
-          "Late Devonian extinction (375 Ma)"
+          {"Ma_approx": 252, "t_frac": 0.50, "rationale": "End-Permian extinction (largest mass extinction)"},
+          {"Ma_approx": 66, "t_frac": 0.70, "rationale": "End-Cretaceous extinction (K-Pg boundary)"},
+          {"Ma_approx": 375, "t_frac": 0.30, "rationale": "Late Devonian extinction"},
+          {"Ma_approx": 201, "t_frac": 0.55, "rationale": "End-Triassic extinction"},
+          {"Ma_approx": 444, "t_frac": 0.40, "rationale": "End-Ordovician extinction"}
+        ],
+        "what_is_allowed_to_change": [
+          "Total number of points (100 -> 140)",
+          "Temporal bin resolution in Cenozoic (stage -> 5 Myr)",
+          "Post-threshold point density"
+        ],
+        "what_cannot_change": [
+          "Research question (mass extinction threshold detection)",
+          "O/R/I/demand/S proxy definitions",
+          "Normalization method (robust_minmax)",
+          "Pre-Cenozoic data structure (stage-level bins maintained)",
+          "Diversity counting method (genus-level)"
+        ],
+        "bias_risks": [
+          "Finer Cenozoic bins increase resolution asymmetrically (better coverage near present = Pull of the Recent)",
+          "5-Myr bins in Cenozoic vs stage-level in Paleozoic creates temporal heterogeneity",
+          "Sampling standardization (SQS/CR) may change diversity estimates vs raw counts"
+        ],
+        "stability_tests_required": [
+          "Compare raw vs sampling-standardized diversity curves",
+          "Verdict stability under 3 binning variants (stage / 5-Myr / 10-Myr)",
+          "Subsample stability: remove 20% of Cenozoic bins, check verdict"
+        ],
+        "intermediate_variants": [
+          "processed/real_binning_stage.csv — original stage-level binning (baseline)",
+          "processed/real_binning_5myr.csv — 5-Myr uniform bins",
+          "processed/real_binning_10myr.csv — 10-Myr uniform bins (intermediate)"
         ],
         "data_sources": [
-          "Paleobiology Database (paleobiodb.org)",
-          "Sepkoski compendium (digitized)",
+          "Paleobiology Database (paleobiodb.org) API with custom binning",
+          "Sepkoski compendium (digitized, cross-validation)",
           "Alroy et al. (2008) standardized diversity curves"
         ],
         "feasibility": "high — PBDB API allows custom temporal binning",
         "timeline": "1 week"
       },
+
       "success_criteria": {
         "min_total_points": 120,
         "min_points_per_segment": 60,
         "precheck_must_pass": true,
-        "verdict_must_be_decidable": true
-      }
+        "verdict_must_be_decidable": true,
+        "homogeneity_check_must_pass": true,
+        "proxy_distribution_stable": true
+      },
+
+      "diagnosis": "Post-extinction recovery data is temporally sparse. PBDB coverage for Cenozoic marine diversity is lower resolution than Paleozoic."
+    },
+
+    {
+      "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+      "domain": "IA / Technologie",
+      "research_question": "Does the LLM capability trajectory exhibit a cumulative symbolic threshold crossing consistent with emergent ability onset?",
+
+      "current_status": {
+        "dataset_source": "Synthetic data calibrated to Chinchilla/GPT scaling laws (Hoffmann et al. 2022, Wei et al. 2022)",
+        "series_length": 60,
+        "points_pre_threshold": "~30",
+        "points_post_threshold": "~30",
+        "verdict": "INDETERMINATE",
+        "blocking_constraint": "min_points_per_segment(30 < 60); insufficient temporal depth",
+        "data_path": "03_Data/sector_ai_tech/real/pilot_llm_scaling/real.csv"
+      },
+
+      "upgrade_plan": {
+        "dataset_source_upgrade": "Densified intra-family coherent series: extend with additional benchmark releases from SAME model families. NOT a soup of heterogeneous benchmarks.",
+        "primary_variable_unchanged": "Benchmark scores on standardized tasks — same capability measure",
+        "primary_proxy_unchanged": "O = benchmark breadth, R = robustness to hard tasks, I = inter-benchmark coherence, demand = parameter count (scaling pressure), S = cumulative emergent capabilities",
+        "segment_structurally_missing": "Both segments equally short (~30 pts each). The series is too short overall, not asymmetrically sparse.",
+        "densification_strategy": "Extend via intra-family interpolation on calibrated scaling curves. Build real_family_core.csv (core family only: GPT, Claude, Llama) and real_densified.csv (extended with consistent benchmark families). Explicitly exclude contaminated benchmarks (leaked test sets, fine-tuned models).",
+        "target_length": 120,
+        "target_pre_segment": 60,
+        "target_post_segment": 60,
+        "segmentation_candidates": [
+          {"date_approx": "2023-03", "t_frac": 0.50, "rationale": "GPT-4 release — major capability jump"},
+          {"date_approx": "2023-12", "t_frac": 0.40, "rationale": "Mixture-of-Experts transition (Mixtral)"},
+          {"date_approx": "2024-03", "t_frac": 0.60, "rationale": "Claude 3 release — multi-modal transition"},
+          {"date_approx": "2022-11", "t_frac": 0.30, "rationale": "ChatGPT release — public adoption threshold"},
+          {"date_approx": "2024-12", "t_frac": 0.70, "rationale": "Post-GPT-4 saturation zone"}
+        ],
+        "what_is_allowed_to_change": [
+          "Total number of points (60 -> 120)",
+          "Temporal depth (more monthly observations)",
+          "Number of model families included"
+        ],
+        "what_cannot_change": [
+          "Research question (emergent ability threshold detection)",
+          "O/R/I/demand/S proxy definitions",
+          "Normalization method (robust_minmax)",
+          "Benchmark scoring methodology",
+          "Time axis semantics (monthly model releases)"
+        ],
+        "bias_risks": [
+          "Heterogeneous benchmarks: MMLU saturation vs HumanEval sensitivity differ",
+          "Model family mixing: GPT vs Llama vs Claude have different scaling characteristics",
+          "Benchmark contamination: models may be trained on test sets (MMLU leakage)",
+          "Publication bias: only best models get published, creating artificial monotonicity"
+        ],
+        "stability_tests_required": [
+          "Intra-family consistency: GPT-only vs full-family verdict comparison",
+          "Benchmark panel sensitivity: MMLU-only vs multi-benchmark verdict stability",
+          "Remove 20% of interpolated points: verdict must not flip",
+          "Contamination check: exclude models with known benchmark leakage"
+        ],
+        "intermediate_variants": [
+          "processed/real_family_core.csv — GPT + Claude + Llama only (core families)",
+          "processed/real_densified.csv — extended with consistent benchmark families"
+        ],
+        "model_families_included": [
+          "GPT family (GPT-3, 3.5, 4, 4o)",
+          "Claude family (Claude 1, 2, 3, 3.5)",
+          "Llama family (Llama 1, 2, 3)"
+        ],
+        "contamination_exclusions": [
+          "Models with known MMLU test set leakage",
+          "Fine-tuned models (instruction-tuned OK, task-specific fine-tuned excluded)",
+          "Unreproducible benchmark scores (no public model weights)"
+        ],
+        "data_sources": [
+          "Epoch AI compute tracker",
+          "Papers With Code SOTA benchmarks",
+          "MLPerf inference results",
+          "Open LLM Leaderboard (HuggingFace)"
+        ],
+        "feasibility": "medium — requires aggregating multiple benchmark sources with family coherence",
+        "timeline": "2-3 weeks for data collection and preprocessing"
+      },
+
+      "success_criteria": {
+        "min_total_points": 120,
+        "min_points_per_segment": 60,
+        "precheck_must_pass": true,
+        "verdict_must_be_decidable": true,
+        "homogeneity_check_must_pass": true,
+        "proxy_distribution_stable": true
+      },
+
+      "diagnosis": "Series too short. LLM benchmark releases are sparse; temporal depth insufficient for 60 points per segment."
     }
   ],
-  "value_proposition": "These three pilots are the best candidates for demonstrating that the ORI-C framework can distinguish: (1) a true indeterminate due to insufficient power, (2) a true reject, and (3) a true positive. This distinction is extremely valuable for framework credibility."
+
+  "value_proposition": "These three pilots are the best candidates for demonstrating that the ORI-C framework can distinguish: (1) a true indeterminate due to insufficient power, (2) a true reject, and (3) a true positive. This distinction is extremely valuable for framework credibility.",
+
+  "anti_gaming_clause": "A pilot does NOT change level just because a CSV has more rows. It changes level because the upgrade report demonstrates: (a) proxy consistency maintained, (b) homogeneity checks passed, (c) decidability genuinely increased, (d) verdict is more stable not just more favorable."
 }
