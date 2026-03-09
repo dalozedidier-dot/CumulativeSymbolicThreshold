@@ -24,6 +24,11 @@ theme:
 
 nav:
   - Home: index.md
+  - Framework Status: framework_status.md
+  - Canonical Proof: canonical_proof.md
+  - Generalization Pilots: generalization_pilots.md
+  - Limitations and Power: limitations_power.md
+  - Replication Protocol: REPLICATION_PROTOCOL.md
   - Installation: installation.md
   - Reproduction: REPRODUCE.md
   - CI Pipelines: CI_PIPELINES.md
