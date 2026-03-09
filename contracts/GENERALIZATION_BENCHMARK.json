@@ -1,0 +1,149 @@
+{
+  "schema": "oric.generalization_benchmark.v1",
+  "version": "1.0.0",
+  "frozen_date": "2026-03-09",
+  "integrity_note": "This file is a frozen canonical benchmark. Any modification after frozen_date requires a version bump and invalidates all prior citations. PATCH for metadata. MINOR for adding pilots. MAJOR for reclassifying or removing pilots.",
+
+  "description": "Frozen generalization benchmark for the ORI-C framework. Formalizes the 7-pilot corpus as a public, versionable, citable reference object with explicit proof levels, power classes, and known limitations.",
+
+  "canonical_core_reference": {
+    "note": "Level A (canonical) is NOT part of this benchmark. It is the anchor against which generalization is measured.",
+    "datasets": ["synthetic", "fred_monthly"],
+    "validation_protocol": "three-arm (test + stable + placebo)",
+    "dual_proof": "synthetic + real aligned",
+    "contract": "contracts/FROZEN_PARAMS.json"
+  },
+
+  "benchmark_corpus": {
+    "total_pilots": 7,
+    "conclusive_count": 4,
+    "exploratory_count": 3,
+    "domains_covered": 7,
+
+    "conclusive_pilots": [
+      {
+        "pilot_id": "sector_neuro.pilot_eeg_bonn",
+        "domain": "Neuroscience",
+        "series_length": 500,
+        "verdict": "ACCEPT",
+        "proof_level": "B",
+        "power_class": "adequate",
+        "overinterpretation_risk": "very_low",
+        "data_path": "03_Data/sector_neuro/real/pilot_eeg_bonn",
+        "showcase": "primary"
+      },
+      {
+        "pilot_id": "sector_cosmo.pilot_solar",
+        "domain": "Astrophysics",
+        "series_length": 288,
+        "verdict": "ACCEPT",
+        "proof_level": "B",
+        "power_class": "adequate",
+        "overinterpretation_risk": "low",
+        "data_path": "03_Data/sector_cosmo/real/pilot_solar",
+        "showcase": null
+      },
+      {
+        "pilot_id": "sector_health.pilot_covid_excess_mortality",
+        "domain": "Public health",
+        "series_length": 192,
+        "verdict": "ACCEPT",
+        "proof_level": "B",
+        "power_class": "borderline",
+        "overinterpretation_risk": "low",
+        "data_path": "03_Data/sector_health/real/pilot_covid_excess_mortality",
+        "showcase": null
+      },
+      {
+        "pilot_id": "sector_finance.pilot_btc",
+        "domain": "Finance",
+        "series_length": 141,
+        "verdict": "ACCEPT",
+        "proof_level": "B",
+        "power_class": "borderline",
+        "overinterpretation_risk": "low",
+        "data_path": "03_Data/sector_finance/real/pilot_btc",
+        "showcase": "secondary"
+      }
+    ],
+
+    "exploratory_pilots": [
+      {
+        "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+        "domain": "Cosmology",
+        "series_length": 100,
+        "verdict": "INDETERMINATE",
+        "proof_level": "C",
+        "power_class": "borderline",
+        "overinterpretation_risk": "medium",
+        "blocking_constraint": "Insufficient pre-threshold points; precheck marginal",
+        "upgrade_target": 150,
+        "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn"
+      },
+      {
+        "pilot_id": "sector_bio.pilot_pbdb_marine",
+        "domain": "Paleobiology",
+        "series_length": 100,
+        "verdict": "INDETERMINATE",
+        "proof_level": "C",
+        "power_class": "borderline",
+        "overinterpretation_risk": "medium",
+        "blocking_constraint": "Insufficient post-threshold points; recovery sparsely sampled",
+        "upgrade_target": 140,
+        "data_path": "03_Data/sector_bio/real/pilot_pbdb_marine"
+      },
+      {
+        "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+        "domain": "AI/Technology",
+        "series_length": 60,
+        "verdict": "INDETERMINATE",
+        "proof_level": "C",
+        "power_class": "underpowered",
+        "overinterpretation_risk": "high",
+        "blocking_constraint": "min_points_per_segment < 60; insufficient temporal depth",
+        "upgrade_target": 120,
+        "data_path": "03_Data/sector_ai_tech/real/pilot_llm_scaling"
+      }
+    ]
+  },
+
+  "proof_level_definitions": {
+    "B": {
+      "label": "Conclusive",
+      "criteria": ["n_rows >= 60", "min_points_per_segment >= 60", "prechecks pass", "verdict decidable"],
+      "publishable_as": "Confirmed out-of-domain applications"
+    },
+    "C": {
+      "label": "Exploratory",
+      "criteria": ["At least one blocking constraint", "Power upgrade path documented"],
+      "publishable_as": "Exploratory signals with explicit power constraints"
+    }
+  },
+
+  "power_class_definitions": {
+    "adequate":     {"min_total_points": 200, "min_points_per_segment": 60},
+    "borderline":   {"min_total_points": 60, "max_total_points": 199, "min_points_per_segment": 60},
+    "underpowered": {"below_borderline": true}
+  },
+
+  "known_limitations": [
+    "Only 7 domains tested; framework incompatibility may emerge in untested domains",
+    "Level C signals must NOT be cited as evidence of framework validity",
+    "No independent external replication yet; all validation by framework authors",
+    "min_points_per_segment >= 60 blocks many real-world datasets by design",
+    "Borderline power class can still produce conclusive verdicts (BTC, COVID prove this)"
+  ],
+
+  "upgrade_protocol": "contracts/POWER_UPGRADE_PROTOCOL.json",
+  "frozen_corpus": "contracts/FROZEN_PILOT_CORPUS.json",
+  "generalization_matrix": "contracts/PILOT_GENERALIZATION.json",
+
+  "citation_note": "When citing this benchmark, reference the version and frozen_date. Example: ORI-C Generalization Benchmark v1.0.0 (frozen 2026-03-09), 7 pilots across 7 domains, 4 conclusive / 3 exploratory.",
+
+  "summary": {
+    "by_verdict": {"ACCEPT": 4, "INDETERMINATE": 3, "REJECT": 0},
+    "by_level": {"B": 4, "C": 3},
+    "by_power": {"adequate": 2, "borderline": 3, "underpowered": 1},
+    "showcase_pilots": ["sector_neuro.pilot_eeg_bonn", "sector_finance.pilot_btc"]
+  }
+}
