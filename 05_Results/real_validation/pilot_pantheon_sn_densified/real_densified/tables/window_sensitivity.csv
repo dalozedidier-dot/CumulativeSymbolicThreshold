@@ -1,0 +1,16 @@
+dataset,window,pre_horizon,post_horizon,verdict,ok_p_source,detection_strength,sigma_zero_post
+test,small,40,40,indetermine_precheck_failed:min_points_per_segment (pre=40<60),welch,,True
+test,medium_lo,60,60,seuil_detecte,welch,1.0,False
+test,medium_hi,100,100,seuil_detecte,welch,1.0,False
+test,wide_pre,150,100,seuil_detecte,welch,1.0,False
+test,wide_post,100,150,seuil_detecte,welch,1.0,False
+stable,small,40,40,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+stable,medium_lo,60,60,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+stable,medium_hi,100,100,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+stable,wide_pre,150,100,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+stable,wide_post,100,150,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+placebo,small,40,40,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+placebo,medium_lo,60,60,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+placebo,medium_hi,100,100,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+placebo,wide_pre,150,100,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True
+placebo,wide_post,100,150,indetermine_precheck_failed:min_points_per_segment (pre=37<60),welch,,True

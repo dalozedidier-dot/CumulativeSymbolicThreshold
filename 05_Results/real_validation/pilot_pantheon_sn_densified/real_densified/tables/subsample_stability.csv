@@ -1,0 +1,46 @@
+dataset,rep,n_rows,verdict,ok_p_source,detection_strength,sigma_zero_post
+test,0,120,seuil_detecte,welch,1.0,False
+test,1,120,seuil_detecte,welch,1.0,False
+test,2,120,seuil_detecte,welch,1.0,False
+test,3,120,seuil_detecte,welch,1.0,False
+test,4,120,seuil_detecte,welch,1.0,False
+test,5,120,seuil_detecte,welch,1.0,False
+test,6,120,seuil_detecte,welch,1.0,False
+test,7,120,seuil_detecte,welch,1.0,False
+test,8,120,seuil_detecte,welch,1.0,False
+test,9,120,seuil_detecte,welch,1.0,False
+test,10,120,seuil_detecte,welch,1.0,False
+test,11,120,seuil_detecte,welch,1.0,False
+test,12,120,seuil_detecte,welch,1.0,False
+test,13,120,seuil_detecte,welch,1.0,False
+test,14,120,seuil_detecte,welch,1.0,False
+stable,0,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,1,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,2,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,3,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,4,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,5,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,6,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,7,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,8,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,9,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,10,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,11,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,12,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,13,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+stable,14,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,0,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,1,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,2,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,3,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,4,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,5,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,6,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,7,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,8,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,9,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,10,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,11,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,12,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,13,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True
+placebo,14,60,indetermine_precheck_failed:min_points_per_segment (pre=30<60),welch,,True

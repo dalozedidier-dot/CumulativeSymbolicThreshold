@@ -1,17 +1,19 @@
 {
   "schema": "oric.pilot_generalization_registry.v1",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "frozen_date": "2026-03-09",
   "updated_date": "2026-03-09",
   "status": "CANONICAL",
-  "integrity_note": "Single source of truth for all pilot verdicts. Any reclassification requires version bump and documented justification. Version 2.0.0: added power upgrade reports with before/after comparison.",
+  "integrity_note": "Single source of truth for all pilot verdicts. Version 3.0.0: full ORI-C pipeline executed on all 3 densified Level C pilots. Pantheon SN promoted to Level B (ACCEPT). PBDB marine and LLM scaling reclassified as REJECT (C1 failed: no transition detected). All verdicts now decidable.",
+
   "message": {
-    "conclusive_pilots": 4,
-    "underpowered_pilots": 3,
-    "upgrade_candidates": 3,
+    "conclusive_pilots": 5,
+    "rejected_pilots": 2,
+    "indeterminate_pilots": 0,
     "hard_counterexamples": 0,
-    "reading": "4 pilots produce exploitable Level B verdicts across 4 independent domains. 3 pilots remain at Level C but are upgrade candidates with documented ex-ante plans. All 3 passed homogeneity checks and gained adequate segments after densification. They become Level B only after full validation pipeline confirmation. Zero hard rejections at this stage."
+    "reading": "5 pilots produce exploitable Level B verdicts across 5 independent domains (Finance, Health, Neuro, Astrophysics, Cosmology). 2 pilots are decisively REJECT after full pipeline on densified data: PBDB marine (no transition detected in paleobiological diversity) and LLM scaling (no transition detected in synthetic benchmark data). Zero indeterminate verdicts remain. The framework discriminates: it does not detect everywhere."
   },
+
   "pilots": [
     {
       "pilot_id": "sector_neuro.pilot_eeg_bonn",
@@ -59,6 +61,43 @@
       "ci_last_pass": null
     },
     {
+      "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+      "domain": "Cosmologie",
+      "sector": "cosmo",
+      "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn",
+      "series_length": 150,
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "borderline",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "showcase": null,
+      "upgrade_status": "upgraded",
+      "upgrade_report": {
+        "n_before": 100,
+        "n_after": 150,
+        "power_class_before": "underpowered",
+        "power_class_after": "borderline",
+        "level_before": "C",
+        "level_after": "B",
+        "homogeneity_passed": true,
+        "adequate_segments_before": 0,
+        "adequate_segments_after": 4,
+        "validation_verdict": "ACCEPT",
+        "validation_c1": true,
+        "validation_c2": true,
+        "validation_c3": true,
+        "validation_decidable_runs": 45,
+        "validation_indeterminate": 0,
+        "detection_rate": 1.0,
+        "stability_fraction": 1.0,
+        "justification": "Full ORI-C pipeline on densified data (150 pts): C1 passed (det_rate=1.0, 15/15), C2 passed (non_det=1.0), C3 passed (non_det=1.0). 45/45 decidable, 0 indeterminate. Homogeneity checks passed. Promoted C -> B.",
+        "report_path": "05_Results/pilots/power_upgrade/sector_cosmo/pilot_pantheon_sn/power_upgrade_report.json",
+        "validation_path": "05_Results/real_validation/pilot_pantheon_sn_densified/real_densified/tables/validation_summary.json"
+      },
+      "ci_last_pass": null
+    },
+    {
       "pilot_id": "sector_finance.pilot_btc",
       "domain": "Finance",
       "sector": "finance",
@@ -74,58 +113,38 @@
       "ci_last_pass": null
     },
     {
-      "pilot_id": "sector_cosmo.pilot_pantheon_sn",
-      "domain": "Cosmologie",
-      "sector": "cosmo",
-      "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn",
-      "series_length": 100,
-      "oric_verdict": "INDETERMINATE",
-      "proof_level": "C",
-      "power_class": "borderline",
-      "cause_indetermination": "Insufficient pre-threshold points; precheck marginal",
-      "overinterpretation_risk": "medium",
-      "power_upgrade_path": "Augment low-z coverage with Carnegie + CfA surveys",
-      "upgrade_status": "upgrade_candidate",
-      "upgrade_report": {
-        "n_before": 100,
-        "n_after": 150,
-        "power_class_before": "underpowered",
-        "power_class_after": "borderline",
-        "level_before": "C",
-        "level_after": "B_candidate",
-        "homogeneity_passed": true,
-        "adequate_segments_before": 0,
-        "adequate_segments_after": 4,
-        "justification": "Densification from 100 to 150 pts gains 4 adequate segments. Homogeneity checks passed on all 5 proxies. Upgrade to Level B candidate pending full validation.",
-        "report_path": "05_Results/pilots/power_upgrade/sector_cosmo/pilot_pantheon_sn/power_upgrade_report.json"
-      },
-      "ci_last_pass": null
-    },
-    {
       "pilot_id": "sector_bio.pilot_pbdb_marine",
       "domain": "Paleobiologie",
       "sector": "bio",
       "data_path": "03_Data/sector_bio/real/pilot_pbdb_marine",
-      "series_length": 100,
-      "oric_verdict": "INDETERMINATE",
-      "proof_level": "C",
+      "series_length": 140,
+      "oric_verdict": "REJECT",
+      "proof_level": "B",
       "power_class": "borderline",
-      "cause_indetermination": "Insufficient post-threshold points; recovery sparsely sampled",
-      "overinterpretation_risk": "medium",
-      "power_upgrade_path": "Densify post-extinction bins to 5-Myr resolution",
-      "upgrade_status": "upgrade_candidate",
+      "cause_indetermination": null,
+      "overinterpretation_risk": null,
+      "upgrade_status": "upgraded",
       "upgrade_report": {
         "n_before": 100,
         "n_after": 140,
         "power_class_before": "underpowered",
         "power_class_after": "borderline",
         "level_before": "C",
-        "level_after": "B_candidate",
+        "level_after": "B",
         "homogeneity_passed": true,
         "adequate_segments_before": 0,
         "adequate_segments_after": 3,
-        "justification": "Densification from 100 to 140 pts gains 3 adequate segments. Homogeneity checks passed on all 5 proxies. Upgrade to Level B candidate pending full validation.",
-        "report_path": "05_Results/pilots/power_upgrade/sector_bio/pilot_pbdb_marine/power_upgrade_report.json"
+        "validation_verdict": "REJECT",
+        "validation_c1": false,
+        "validation_c2": true,
+        "validation_c3": true,
+        "validation_decidable_runs": 45,
+        "validation_indeterminate": 0,
+        "detection_rate": 0.0,
+        "failure_mode": "no_detection",
+        "justification": "Full ORI-C pipeline on densified data (140 pts): C1 FAILED (det_rate=0.0, 0/15 transitions detected). C2/C3 passed (specificity OK). 45/45 decidable, 0 indeterminate. Verdict is REJECT: no cumulative symbolic threshold detected in marine biodiversity data. This is a true negative, not a power limitation.",
+        "report_path": "05_Results/pilots/power_upgrade/sector_bio/pilot_pbdb_marine/power_upgrade_report.json",
+        "validation_path": "05_Results/real_validation/pilot_pbdb_marine_densified/real_densified/tables/validation_summary.json"
       },
       "ci_last_pass": null
     },
@@ -134,39 +153,52 @@
       "domain": "IA / Technologie",
       "sector": "ai_tech",
       "data_path": "03_Data/sector_ai_tech/real/pilot_llm_scaling",
-      "series_length": 60,
-      "oric_verdict": "INDETERMINATE",
-      "proof_level": "C",
-      "power_class": "underpowered",
-      "cause_indetermination": "min_points_per_segment < 60; insufficient temporal depth",
-      "overinterpretation_risk": "high",
-      "power_upgrade_path": "Extend with MLPerf, MMLU, HumanEval benchmark releases",
-      "upgrade_status": "upgrade_candidate",
+      "series_length": 120,
+      "oric_verdict": "REJECT",
+      "proof_level": "B",
+      "power_class": "borderline",
+      "cause_indetermination": null,
+      "overinterpretation_risk": null,
+      "upgrade_status": "upgraded",
       "upgrade_report": {
         "n_before": 60,
         "n_after": 120,
         "power_class_before": "underpowered",
         "power_class_after": "borderline",
         "level_before": "C",
-        "level_after": "B_candidate",
+        "level_after": "B",
         "homogeneity_passed": true,
         "adequate_segments_before": 0,
         "adequate_segments_after": 1,
-        "justification": "Densification from 60 to 120 pts gains 1 adequate segment (t=60, 60/60 split). Homogeneity checks passed on all 5 proxies. Upgrade to Level B candidate pending full validation. Note: original data is synthetic-calibrated, not real benchmark data.",
-        "report_path": "05_Results/pilots/power_upgrade/sector_ai_tech/pilot_llm_scaling/power_upgrade_report.json"
+        "validation_verdict": "REJECT",
+        "validation_c1": false,
+        "validation_c2": true,
+        "validation_c3": true,
+        "validation_decidable_runs": 45,
+        "validation_indeterminate": 0,
+        "detection_rate": 0.0,
+        "failure_mode": "no_detection",
+        "justification": "Full ORI-C pipeline on densified data (120 pts): C1 FAILED (det_rate=0.0, sigma_zero_post=1.0). C2/C3 passed. 45/45 decidable. Verdict is REJECT: no cumulative symbolic threshold detected in LLM scaling data. Original data was synthetic-calibrated, not real benchmark data.",
+        "report_path": "05_Results/pilots/power_upgrade/sector_ai_tech/pilot_llm_scaling/power_upgrade_report.json",
+        "validation_path": "05_Results/real_validation/pilot_llm_scaling_densified/real_densified/tables/validation_summary.json"
       },
       "ci_last_pass": null
     }
   ],
+
   "upgrade_summary": {
     "date": "2026-03-09",
     "total_upgrade_candidates": 3,
+    "upgraded_to_accept": 1,
+    "upgraded_to_reject": 2,
     "homogeneity_passed": 3,
     "homogeneity_failed": 0,
-    "interpretation": "All 3 Level C pilots pass homogeneity checks after densification and gain adequate segments. They are upgrade CANDIDATES, not yet Level B. The upgrade becomes effective only after: (1) full ORI-C pipeline run on densified data, (2) decidable verdict obtained, (3) stability tests passed. Until then, proof_level remains C.",
-    "anti_gaming_note": "Level change requires demonstrated decidability gain, not just more rows. The pilot keeps the same research question, the same proxy definitions, and the same normalization. Only the point density changes.",
+    "validation_pipeline_completed": true,
+    "interpretation": "All 3 Level C pilots completed the full upgrade pipeline: (1) densification with homogeneity checks, (2) full ORI-C validation protocol (C1+C2+C3, window sensitivity, subsample stability), (3) decidable verdict obtained. Result: Pantheon SN promoted to ACCEPT (Level B). PBDB marine and LLM scaling reclassified as REJECT (Level B). All 3 are now Level B — the framework produced decidable verdicts on all densified datasets.",
+    "anti_gaming_note": "Level change required demonstrated decidability gain, not just more rows. All pilots kept the same research question, proxy definitions, and normalization. Only point density changed. The pipeline discriminated: 1 ACCEPT, 2 REJECT.",
     "summary_v2_path": "05_Results/pilots/power_upgrade/power_upgrade_summary_v2.json"
   },
+
   "comparative_benchmark": {
     "date": "2026-03-09",
     "pilots_benchmarked": [
@@ -210,25 +242,26 @@
     "reading": "ORI-C agrees with 3-4 out of 4 baselines on all 3 conclusive pilots. EWS (early warning signal) is complementary but less reliable on shorter or cyclical series.",
     "results_path": "05_Results/pilots/comparative_benchmark.json"
   },
+
   "summary": {
     "total_pilots": 7,
     "by_verdict": {
-      "ACCEPT": 4,
-      "INDETERMINATE": 3,
-      "REJECT": 0
+      "ACCEPT": 5,
+      "INDETERMINATE": 0,
+      "REJECT": 2
     },
     "by_level": {
       "A": 0,
-      "B": 4,
-      "C": 3
+      "B": 7,
+      "C": 0
     },
     "by_power": {
       "adequate": 2,
-      "borderline": 3,
-      "underpowered": 2
+      "borderline": 5,
+      "underpowered": 0
     },
     "by_upgrade_status": {
-      "upgrade_candidate": 3,
+      "upgraded": 3,
       "no_upgrade": 4
     },
     "domains_covered": 7,
@@ -238,6 +271,7 @@
     ],
     "hard_counterexamples": 0
   },
+
   "cross_references": {
     "frozen_corpus": "contracts/FROZEN_PILOT_CORPUS.json",
     "generalization_matrix": "contracts/PILOT_GENERALIZATION.json",

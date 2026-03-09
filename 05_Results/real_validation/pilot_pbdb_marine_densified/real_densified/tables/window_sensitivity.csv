@@ -1,0 +1,16 @@
+dataset,window,pre_horizon,post_horizon,verdict,ok_p_source,detection_strength,sigma_zero_post
+test,small,40,40,indetermine_precheck_failed:min_points_per_segment (pre=40<60),welch,,False
+test,medium_lo,60,60,indetermine_precheck_failed:min_points_per_segment (pre=41<60),welch,,False
+test,medium_hi,100,100,indetermine_precheck_failed:min_points_per_segment (pre=41<60),welch,,False
+test,wide_pre,150,100,indetermine_precheck_failed:min_points_per_segment (pre=41<60),welch,,False
+test,wide_post,100,150,indetermine_precheck_failed:min_points_per_segment (pre=41<60),welch,,False
+stable,small,40,40,indetermine_precheck_failed:min_points_per_segment (pre=29<60),welch,,False
+stable,medium_lo,60,60,indetermine_precheck_failed:min_points_per_segment (pre=29<60),welch,,False
+stable,medium_hi,100,100,indetermine_precheck_failed:min_points_per_segment (pre=29<60),welch,,False
+stable,wide_pre,150,100,indetermine_precheck_failed:min_points_per_segment (pre=29<60),welch,,False
+stable,wide_post,100,150,indetermine_precheck_failed:min_points_per_segment (pre=29<60),welch,,False
+placebo,small,40,40,indetermine_precheck_failed:min_points_per_segment (pre=20<60),welch,,False
+placebo,medium_lo,60,60,indetermine_precheck_failed:min_points_per_segment (pre=20<60),welch,,False
+placebo,medium_hi,100,100,indetermine_precheck_failed:min_points_per_segment (pre=20<60),welch,,False
+placebo,wide_pre,150,100,indetermine_precheck_failed:min_points_per_segment (pre=20<60),welch,,False
+placebo,wide_post,100,150,indetermine_precheck_failed:min_points_per_segment (pre=20<60),welch,,False
