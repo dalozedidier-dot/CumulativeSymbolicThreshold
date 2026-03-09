@@ -90,5 +90,41 @@
       "PBDB marine (bio, 100 pts, INDETERMINATE, borderline)"
     ],
     "note": "Level B pilots are publishable as confirmed out-of-domain applications. Level C pilots are publishable as exploratory signals requiring power upgrade before canonical conclusion."
+  },
+  "upgrade_candidates": {
+    "total": 3,
+    "pilots": [
+      {
+        "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+        "n_before": 100,
+        "n_after": 150,
+        "power_class_before": "underpowered",
+        "power_class_after": "borderline",
+        "level_before": "C",
+        "level_after": "B_candidate",
+        "homogeneity_passed": true
+      },
+      {
+        "pilot_id": "sector_bio.pilot_pbdb_marine",
+        "n_before": 100,
+        "n_after": 140,
+        "power_class_before": "underpowered",
+        "power_class_after": "borderline",
+        "level_before": "C",
+        "level_after": "B_candidate",
+        "homogeneity_passed": true
+      },
+      {
+        "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+        "n_before": 60,
+        "n_after": 120,
+        "power_class_before": "underpowered",
+        "power_class_after": "borderline",
+        "level_before": "C",
+        "level_after": "B_candidate",
+        "homogeneity_passed": true
+      }
+    ],
+    "note": "Upgrade candidates have passed homogeneity checks but remain Level C until full validation pipeline confirms decidable verdict."
   }
 }
