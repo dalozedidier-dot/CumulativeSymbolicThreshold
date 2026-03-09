@@ -1,0 +1,59 @@
+{
+  "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+  "domain": "IA / Technologie",
+  "upgrade_date": "2026-03-09",
+  "research_question": "Does the LLM capability trajectory exhibit a cumulative symbolic threshold crossing consistent with emergent ability onset?",
+
+  "current_dataset": {
+    "file": "real.csv",
+    "source": "Synthetic data calibrated to Chinchilla/GPT scaling laws",
+    "data_status": "SYNTHETIC_CALIBRATED",
+    "n_rows": 60,
+    "columns": ["t", "O", "R", "I", "demand", "S"],
+    "blocking_constraint": "Both segments equally short (~30 pts each); series too short overall"
+  },
+
+  "densified_dataset": {
+    "file": "real_densified.csv",
+    "method": "Intra-family interpolation on calibrated scaling curves",
+    "n_rows": 120,
+    "columns_unchanged": ["O", "R", "I", "demand", "S"]
+  },
+
+  "intermediate_variants": {
+    "processed/real_family_core.csv": "Core families only (GPT + Claude + Llama) — 120 pts",
+    "processed/real_densified.csv": "Extended with consistent benchmark families — 120 pts"
+  },
+
+  "model_families_included": [
+    "GPT family (GPT-3, 3.5, 4, 4o)",
+    "Claude family (Claude 1, 2, 3, 3.5)",
+    "Llama family (Llama 1, 2, 3)"
+  ],
+
+  "contamination_exclusions": [
+    "Models with known MMLU test set leakage",
+    "Fine-tuned models (instruction-tuned OK, task-specific fine-tuned excluded)",
+    "Unreproducible benchmark scores (no public model weights)"
+  ],
+
+  "invariants": {
+    "primary_variable": "Benchmark scores on standardized tasks",
+    "proxy_O": "Benchmark breadth (fraction of tasks solved)",
+    "proxy_R": "Robustness to hard tasks (1 - failure rate)",
+    "proxy_I": "Inter-benchmark coherence (rolling correlation)",
+    "proxy_demand": "Parameter count (scaling pressure, log-normalized)",
+    "proxy_S": "Cumulative emergent capabilities",
+    "normalization": "robust_minmax",
+    "time_axis": "Monthly model releases (index)"
+  },
+
+  "files": {
+    "raw/llm_scaling_original.csv": "Original real.csv preserved as-is",
+    "processed/real_densified.csv": "Densified version (120 pts)",
+    "processed/real_family_core.csv": "Core family variant (120 pts)",
+    "real.csv": "Canonical baseline (60 pts, immutable)",
+    "real_densified.csv": "Upgrade candidate (120 pts)",
+    "proxy_spec.json": "Proxy definitions (unchanged)"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+  "domain": "Cosmologie",
+  "upgrade_date": "2026-03-09",
+  "research_question": "Does the SNe Ia distance-redshift relationship exhibit a cumulative symbolic threshold crossing consistent with dark energy transition?",
+
+  "current_dataset": {
+    "file": "real.csv",
+    "source": "Pantheon+ (Scolnic et al. 2022 ApJ 938:113)",
+    "n_rows": 100,
+    "columns": ["t", "z", "mu_obs", "mu_lcdm", "O", "R", "I", "demand", "S"],
+    "z_range": [0.01, 2.30],
+    "blocking_constraint": "Pre-threshold segment undersampled (~35 pts before z~0.05)"
+  },
+
+  "densified_dataset": {
+    "file": "real_densified.csv",
+    "method": "Interpolation in redshift space, focused on low-z densification",
+    "n_rows": 150,
+    "columns_unchanged": ["O", "R", "I", "demand", "S"],
+    "z_preserved": true
+  },
+
+  "invariants": {
+    "primary_variable": "mu_obs (observed distance modulus)",
+    "proxy_O": "Hubble residual dispersion",
+    "proxy_R": "LCDM consistency",
+    "proxy_I": "Cross-survey agreement",
+    "proxy_demand": "Dark energy deviation",
+    "proxy_S": "Cumulative SNe evidence",
+    "normalization": "robust_minmax",
+    "time_axis": "redshift-ordered index"
+  },
+
+  "files": {
+    "raw/pantheon_original.csv": "Original real.csv preserved as-is",
+    "processed/real_densified.csv": "Densified version (150 pts)",
+    "real.csv": "Canonical baseline (100 pts, immutable)",
+    "real_densified.csv": "Upgrade candidate (150 pts)",
+    "proxy_spec.json": "Proxy definitions (unchanged)"
+  }
+}

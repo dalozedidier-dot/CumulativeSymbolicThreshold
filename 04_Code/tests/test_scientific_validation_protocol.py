@@ -427,11 +427,14 @@ class TestPilotGeneralizationRegistry:
         corpus_ids = {p["pilot_id"] for p in corpus["pilots"]}
         assert registry_ids == corpus_ids
 
-    def test_level_c_have_densification_status(self, registry):
+    def test_level_c_have_upgrade_status(self, registry):
         for p in registry["pilots"]:
             if p["proof_level"] == "C":
-                assert "densification_status" in p
-                assert p["densification_status"] in ("pending", "conclusive", "underpowered", "incompatible")
+                assert "upgrade_status" in p
+                assert p["upgrade_status"] in (
+                    "pending", "conclusive", "underpowered",
+                    "incompatible", "upgrade_candidate",
+                )
 
     def test_cross_references_present(self, registry):
         refs = registry["cross_references"]

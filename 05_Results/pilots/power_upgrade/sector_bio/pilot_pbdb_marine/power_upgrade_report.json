@@ -1,0 +1,175 @@
+{
+  "schema": "oric.power_upgrade_report.v1",
+  "pilot_id": "sector_bio.pilot_pbdb_marine",
+  "domain": "Paleobiologie",
+  "research_question": "Does marine biodiversity exhibit a cumulative symbolic threshold crossing at major mass extinction boundaries?",
+  "n_before": 100,
+  "n_after": 140,
+  "power_class_before": "underpowered",
+  "power_class_after": "borderline",
+  "segment_counts_before": [
+    {
+      "segmentation_point": 25,
+      "n_pre": 25,
+      "n_post": 75,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 35,
+      "n_pre": 35,
+      "n_post": 65,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 40,
+      "n_pre": 40,
+      "n_post": 60,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 45,
+      "n_pre": 45,
+      "n_post": 55,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 50,
+      "n_pre": 50,
+      "n_post": 50,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 55,
+      "n_pre": 55,
+      "n_post": 45,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 65,
+      "n_pre": 65,
+      "n_post": 35,
+      "adequate": false
+    }
+  ],
+  "segment_counts_after": [
+    {
+      "segmentation_point": 35,
+      "n_pre": 35,
+      "n_post": 105,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 49,
+      "n_pre": 49,
+      "n_post": 91,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 56,
+      "n_pre": 56,
+      "n_post": 84,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 63,
+      "n_pre": 63,
+      "n_post": 77,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 70,
+      "n_pre": 70,
+      "n_post": 70,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 77,
+      "n_pre": 77,
+      "n_post": 63,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 91,
+      "n_pre": 91,
+      "n_post": 49,
+      "adequate": false
+    }
+  ],
+  "precheck_before": {
+    "n_rows": 100,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 0,
+    "has_adequate_segment": false,
+    "best_segment": null
+  },
+  "precheck_after": {
+    "n_rows": 140,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 3,
+    "has_adequate_segment": true,
+    "best_segment": {
+      "segmentation_point": 63,
+      "n_pre": 63,
+      "n_post": 77,
+      "adequate": true
+    }
+  },
+  "homogeneity_checks": [
+    {
+      "column": "O",
+      "mean_before": 0.360961,
+      "mean_after": 0.360642,
+      "std_before": 0.225487,
+      "std_after": 0.222738,
+      "mean_shift": 0.000319,
+      "std_ratio": 0.98781,
+      "passed": true
+    },
+    {
+      "column": "R",
+      "mean_before": 0.905211,
+      "mean_after": 0.904627,
+      "std_before": 0.24949,
+      "std_after": 0.231117,
+      "mean_shift": 0.000584,
+      "std_ratio": 0.926358,
+      "passed": true
+    },
+    {
+      "column": "I",
+      "mean_before": 0.226894,
+      "mean_after": 0.225463,
+      "std_before": 0.221996,
+      "std_after": 0.209673,
+      "mean_shift": 0.001431,
+      "std_ratio": 0.944488,
+      "passed": true
+    },
+    {
+      "column": "demand",
+      "mean_before": 0.094789,
+      "mean_after": 0.095373,
+      "std_before": 0.24949,
+      "std_after": 0.231117,
+      "mean_shift": 0.000584,
+      "std_ratio": 0.926358,
+      "passed": true
+    },
+    {
+      "column": "S",
+      "mean_before": 0.40843,
+      "mean_after": 0.408169,
+      "std_before": 0.288276,
+      "std_after": 0.287361,
+      "mean_shift": 0.000261,
+      "std_ratio": 0.996824,
+      "passed": true
+    }
+  ],
+  "homogeneity_passed": true,
+  "upgrade_status": "upgrade_candidate",
+  "level_before": "C",
+  "level_after": "B_candidate",
+  "justification": "Power class: underpowered -> borderline. Adequate segments: 0 -> 3. Homogeneity checks passed. Upgrade to Level B candidate.",
+  "notes": ""
+}

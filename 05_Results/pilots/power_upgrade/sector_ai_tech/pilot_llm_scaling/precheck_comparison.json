@@ -1,0 +1,77 @@
+{
+  "schema": "oric.precheck_comparison.v1",
+  "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+  "precheck_before": {
+    "n_rows": 60,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 0,
+    "has_adequate_segment": false,
+    "best_segment": null
+  },
+  "precheck_after": {
+    "n_rows": 120,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 1,
+    "has_adequate_segment": true,
+    "best_segment": {
+      "segmentation_point": 60,
+      "n_pre": 60,
+      "n_post": 60,
+      "adequate": true
+    }
+  },
+  "homogeneity_checks": [
+    {
+      "column": "O",
+      "mean_before": 0.513333,
+      "mean_after": 0.513445,
+      "std_before": 0.337375,
+      "std_after": 0.334814,
+      "mean_shift": 0.000112,
+      "std_ratio": 0.992407,
+      "passed": true
+    },
+    {
+      "column": "R",
+      "mean_before": 0.565141,
+      "mean_after": 0.565689,
+      "std_before": 0.343639,
+      "std_after": 0.340963,
+      "mean_shift": 0.000547,
+      "std_ratio": 0.992211,
+      "passed": true
+    },
+    {
+      "column": "I",
+      "mean_before": 0.413155,
+      "mean_after": 0.415787,
+      "std_before": 0.441113,
+      "std_after": 0.416625,
+      "mean_shift": 0.002632,
+      "std_ratio": 0.944487,
+      "passed": true
+    },
+    {
+      "column": "demand",
+      "mean_before": 0.760592,
+      "mean_after": 0.762782,
+      "std_before": 0.267387,
+      "std_after": 0.261231,
+      "mean_shift": 0.00219,
+      "std_ratio": 0.976977,
+      "passed": true
+    },
+    {
+      "column": "S",
+      "mean_before": 0.4125,
+      "mean_after": 0.411765,
+      "std_before": 0.456036,
+      "std_after": 0.453464,
+      "mean_shift": 0.000735,
+      "std_ratio": 0.99436,
+      "passed": true
+    }
+  ],
+  "homogeneity_passed": true,
+  "upgrade_status": "upgrade_candidate"
+}

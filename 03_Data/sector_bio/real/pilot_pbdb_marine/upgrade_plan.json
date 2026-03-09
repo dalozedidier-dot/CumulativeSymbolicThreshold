@@ -1,0 +1,51 @@
+{
+  "pilot_id": "sector_bio.pilot_pbdb_marine",
+  "domain": "Paleobiologie",
+  "upgrade_date": "2026-03-09",
+  "research_question": "Does marine biodiversity exhibit a cumulative symbolic threshold crossing at major mass extinction boundaries?",
+
+  "current_dataset": {
+    "file": "real.csv",
+    "source": "Paleobiology Database (paleobiodb.org) — Marine Metazoan Genus Diversity",
+    "n_rows": 100,
+    "columns": ["t", "Ma", "genera", "extinction_rate", "origination_rate", "O", "R", "I", "demand", "S"],
+    "temporal_range": "541 Ma to present",
+    "blocking_constraint": "Post-threshold segment undersampled (~40 pts after K-Pg extinction)"
+  },
+
+  "densified_dataset": {
+    "file": "real_densified.csv",
+    "method": "Temporal bin refinement: stage-level -> 5-Myr bins in Cenozoic",
+    "n_rows": 140,
+    "columns_unchanged": ["O", "R", "I", "demand", "S"],
+    "Ma_preserved": true
+  },
+
+  "intermediate_variants": {
+    "processed/real_binning_stage.csv": "Original stage-level binning (100 pts, baseline)",
+    "processed/real_binning_10myr.csv": "10-Myr uniform bins (110 pts, intermediate)",
+    "processed/real_binning_5myr.csv": "5-Myr uniform bins (140 pts, target)"
+  },
+
+  "invariants": {
+    "primary_variable": "genera (genus count)",
+    "proxy_O": "Sampled genus diversity",
+    "proxy_R": "1 - extinction_rate (resilience)",
+    "proxy_I": "Origination rate (integration)",
+    "proxy_demand": "Extinction rate (external stress)",
+    "proxy_S": "Cumulative diversity (symbolic stock)",
+    "normalization": "robust_minmax",
+    "time_axis": "Ma-ordered index (geological time)"
+  },
+
+  "files": {
+    "raw/pbdb_original.csv": "Original real.csv preserved as-is",
+    "processed/real_densified.csv": "Densified version (140 pts)",
+    "processed/real_binning_stage.csv": "Stage-level baseline (100 pts)",
+    "processed/real_binning_10myr.csv": "10-Myr variant (110 pts)",
+    "processed/real_binning_5myr.csv": "5-Myr variant (140 pts)",
+    "real.csv": "Canonical baseline (100 pts, immutable)",
+    "real_densified.csv": "Upgrade candidate (140 pts)",
+    "proxy_spec.json": "Proxy definitions (unchanged)"
+  }
+}

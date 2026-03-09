@@ -166,20 +166,51 @@ once power constraints are resolved.
 
 ---
 
-## 7. Densification Results
+## 7. Power Upgrade Pipeline (v2.0)
 
-All 3 underpowered pilots were densified via domain-specific interpolation:
+All 3 Level C pilots now have:
 
-| Pilot | Original N | Densified N | Best t_seg | Signal | Status |
-|-------|-----------|-------------|------------|--------|--------|
-| LLM scaling | 60 | 120 | t=60 | 0.412 | conclusive |
-| Pantheon SN | 100 | 150 | t=82 | 0.105 | conclusive |
-| PBDB marine | 100 | 140 | t=70 | 0.060 | conclusive |
+1. **Ex-ante upgrade plans** declaring invariants, bias risks, and stability tests
+   (`contracts/POWER_UPGRADE_PROTOCOL.json` v2.0)
+2. **Structured data directories** with `raw/`, `processed/`, `real_densified.csv`,
+   `upgrade_plan.json`, and `README.md`
+3. **Automated upgrade tool** (`tools/power_upgrade.py`) producing structured reports
+4. **Contractual tests** (108 tests in `test_power_upgrade_protocol.py` +
+   `test_pilot_upgrade_registry.py`)
 
-**Interpretation:** All 3 respond positively to interpolation-based densification.
-This confirms the signals are structurally present but the original sampling was
-insufficient. **This does NOT constitute independent data extension** — real data
-augmentation remains required for Level B upgrade.
+### Upgrade Results
+
+| Pilot | N before | N after | Power before | Power after | Homogeneity | Status |
+|-------|----------|---------|--------------|-------------|-------------|--------|
+| Pantheon SN | 100 | 150 | underpowered | borderline | All passed | B_candidate |
+| PBDB marine | 100 | 140 | underpowered | borderline | All passed | B_candidate |
+| LLM scaling | 60 | 120 | underpowered | borderline | All passed | B_candidate |
+
+### What was densified
+
+- **Pantheon SN:** Low-z interpolation to fill pre-threshold gap
+- **PBDB marine:** Cenozoic bin refinement (stage → 5-Myr) + 2 intermediate variants
+- **LLM scaling:** Intra-family interpolation + core family variant
+
+### What was NOT changed
+
+- Research question (identical for each pilot)
+- Proxy definitions (O, R, I, demand, S mapping)
+- Normalization method (robust_minmax)
+- Time axis semantics
+
+### What remains required for Level B
+
+These pilots are **B_candidate**, not Level B. Upgrade requires:
+
+1. Full ORI-C pipeline run on densified data
+2. Decidable verdict (ACCEPT or REJECT)
+3. Stability tests passed (subsample, window, cross-source)
+4. Version bump in `FROZEN_PILOT_CORPUS.json`
+
+**Anti-gaming rule:** A pilot does not change level just because a CSV has
+more rows. It changes level because the upgrade report demonstrates
+decidability gain with proxy consistency maintained.
 
 ---
 
@@ -224,7 +255,8 @@ As CI history accumulates, the tracker will classify the framework as:
 - `contracts/PILOT_GENERALIZATION.json` — Generalization matrix contract
 - `contracts/FROZEN_PILOT_CORPUS.json` — Frozen corpus v1.0.0
 - `contracts/POWER_UPGRADE_PROTOCOL.json` — Power upgrade protocol
-- `05_Results/pilots/power_upgrade/power_upgrade_summary.json` — Densification results
+- `contracts/GENERALIZATION_BENCHMARK.json` — Frozen public benchmark v1.0.0
+- `05_Results/pilots/power_upgrade/power_upgrade_summary_v2.json` — Upgrade reports
 - `05_Results/pilots/comparative_benchmark.json` — Benchmark results
 - `05_Results/pilots/ci_maturity_log.json` — CI maturity history
 - `src/oric/proof_levels.py` — Level A/B/C classification code

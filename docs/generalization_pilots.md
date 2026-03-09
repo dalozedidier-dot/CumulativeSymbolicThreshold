@@ -96,6 +96,38 @@ The goal is **not** to win everywhere, but to situate ORI-C:
 
 ---
 
+## Power Upgrade Status
+
+All 3 Level C pilots have documented ex-ante upgrade plans
+(`contracts/POWER_UPGRADE_PROTOCOL.json` v2.0).
+
+| Pilot | N before | N after | Power before | Power after | Homogeneity | Status |
+|-------|----------|---------|--------------|-------------|-------------|--------|
+| Pantheon SN | 100 | 150 | underpowered | borderline | Passed | B_candidate |
+| PBDB marine | 100 | 140 | underpowered | borderline | Passed | B_candidate |
+| LLM scaling | 60 | 120 | underpowered | borderline | Passed | B_candidate |
+
+!!! warning "Candidates, not confirmed"
+    These pilots remain at **Level C**. Upgrade to Level B requires:
+    (1) full ORI-C pipeline on densified data, (2) decidable verdict,
+    (3) stability tests passed. A pilot does not change level just because
+    a CSV has more rows.
+
+Each upgrade preserves:
+
+- The **research question** (unchanged)
+- The **proxy definitions** (O, R, I, demand, S mapping identical)
+- The **normalization** (robust_minmax)
+- The **time axis semantics**
+
+Each upgrade documents:
+
+- Bias risks and contamination exclusions
+- Required stability tests (KS, subsample, cross-source)
+- Intermediate variants for sensitivity analysis
+
+Run the upgrade pipeline: `python tools/power_upgrade.py --all`
+
 ---
 
 ## Known Limitations
