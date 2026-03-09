@@ -1,0 +1,37 @@
+{
+  "dataset_id": "sector_health.pilot_covid_excess_mortality.real.v1",
+  "spec_version": "2.1",
+  "sector": "health",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "OWID COVID-19 Dataset — Weekly excess mortality for selected countries",
+    "url": "https://github.com/owid/covid-19-data",
+    "references": ["Mathieu et al. (2021) Nature Human Behaviour 5:947-953"],
+    "license": "CC BY 4.0",
+    "period": "2020-01 to 2023-12 (weekly → monthly aggregated)",
+    "time_step": "monthly"
+  },
+  "columns": [
+    {"source_column": "O", "oric_role": "O", "oric_variable": "O", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "1 - excess_mortality_pct_norm: inverse of excess mortality. High O = health system maintaining normal mortality = organized.",
+     "fragility_note": "Excess mortality depends on baseline calculation method.",
+     "manipulability_note": "Mortality data from national statistical offices; difficult to manipulate."},
+    {"source_column": "R", "oric_role": "R", "oric_variable": "R", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "ICU spare capacity (1 - icu_occupancy_rate). High R = resilient health system with buffer capacity.",
+     "fragility_note": "ICU data reporting varies by country.",
+     "manipulability_note": "Hospital administrative data; verifiable."},
+    {"source_column": "I", "oric_role": "I", "oric_variable": "I", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Vaccination coverage rate (% fully vaccinated). High I = integrated public health response.",
+     "fragility_note": "Vaccination data quality varies by country.",
+     "manipulability_note": "Official government data; independently verifiable."},
+    {"source_column": "demand", "oric_role": "demand", "oric_variable": "demand", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "New cases per million (7-day smoothed, log-transformed). Pandemic demand pressure on health system.",
+     "fragility_note": "Case counts depend on testing rates; more reliable post-2021.",
+     "manipulability_note": "Epidemiological surveillance data."},
+    {"source_column": "S", "oric_role": "S", "oric_variable": "S", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Cumulative months below 10% excess mortality — symbolic stock of health system stability.",
+     "fragility_note": "Threshold-dependent; tested at 5% and 15%.",
+     "manipulability_note": "Cumulative measure; transparent."}
+  ]
+}

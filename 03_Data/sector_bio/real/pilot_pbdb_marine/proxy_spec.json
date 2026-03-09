@@ -1,0 +1,71 @@
+{
+  "dataset_id": "sector_bio.pilot_pbdb_marine.real.v1",
+  "spec_version": "2.1",
+  "sector": "bio",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "Paleobiology Database — Marine Metazoan Genus Diversity (Phanerozoic)",
+    "url": "https://paleobiodb.org/data1.2/diversity/list.csv?base_name=Metazoa&envtype=marine&count=genera",
+    "license": "CC BY 4.0",
+    "period": "541 Ma to present (~100 time bins)",
+    "time_step": "geological stage (~5–10 Myr bins)"
+  },
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_role": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Sampled genus diversity — organization of the marine biosphere.",
+      "fragility_note": "Sensitive to sampling effort (Pull of the Recent); mitigated by stage-level binning.",
+      "manipulability_note": "Based on fossil occurrence counts; not user-controllable."
+    },
+    {
+      "source_column": "R",
+      "oric_role": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "1 − extinction_rate — resilience: low extinction implies high resilience.",
+      "fragility_note": "Extinction rate estimated from diversity changes; smoothing affects magnitude.",
+      "manipulability_note": "Derived from fossil record; robust to manipulation."
+    },
+    {
+      "source_column": "I",
+      "oric_role": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Origination rate — integration: capacity to generate evolutionary novelty.",
+      "fragility_note": "Origination rate inferred from diversity increase; may conflate preservation bias.",
+      "manipulability_note": "Derived from fossil record; robust to manipulation."
+    },
+    {
+      "source_column": "demand",
+      "oric_role": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Extinction rate — external stress on the biosphere.",
+      "fragility_note": "Captures mass extinction events as demand spikes; sensitive to bin resolution.",
+      "manipulability_note": "Physical/geological forcing; not manipulable."
+    },
+    {
+      "source_column": "S",
+      "oric_role": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "robust_minmax",
+      "missing_strategy": "linear_interp",
+      "proxy_description": "Cumulative diversity above minimum — symbolic stock of evolutionary innovation.",
+      "fragility_note": "Cumulative metric; monotonically increasing by construction; robust to point noise.",
+      "manipulability_note": "Constructed cumulatively from diversity; auditable."
+    }
+  ]
+}

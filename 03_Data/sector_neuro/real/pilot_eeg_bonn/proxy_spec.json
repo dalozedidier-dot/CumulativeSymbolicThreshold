@@ -1,0 +1,39 @@
+{
+  "dataset_id": "sector_neuro.pilot_eeg_bonn.real.v1",
+  "spec_version": "2.1",
+  "sector": "neuro",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "Bonn University EEG Dataset (Andrzejak et al. 2001) — Reconstructed from published summary statistics",
+    "references": [
+      "Andrzejak RG et al. (2001) Phys. Rev. E 64:061907",
+      "Original data: http://epileptologie-bonn.de/cms/upload/workgroup/lehnertz/eegdata.html"
+    ],
+    "license": "Public domain academic dataset",
+    "period": "500 EEG segments × 4097 time points, 173.61 Hz",
+    "time_step": "EEG segment index (ordered by class: A→B→C→D→E)"
+  },
+  "columns": [
+    {"source_column": "O", "oric_role": "O", "oric_variable": "O", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "EEG signal amplitude (RMS power) — neural organization/activity level.",
+     "fragility_note": "Amplitude depends on electrode placement and impedance. Consistent within-subject.",
+     "manipulability_note": "Physical measurement; not manipulable."},
+    {"source_column": "R", "oric_role": "R", "oric_variable": "R", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Spectral entropy of EEG — signal complexity as neural resilience. High entropy = diverse frequency content = resilient state.",
+     "fragility_note": "Entropy measure depends on frequency resolution and window size.",
+     "manipulability_note": "Computed from EEG spectrum; not manipulable."},
+    {"source_column": "I", "oric_role": "I", "oric_variable": "I", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Alpha/Beta power ratio — neural integration/coherence. High ratio indicates coordinated oscillatory activity.",
+     "fragility_note": "Band definitions (alpha 8-13Hz, beta 13-30Hz) are standard but arbitrary boundaries.",
+     "manipulability_note": "Spectral measurement; not manipulable."},
+    {"source_column": "demand", "oric_role": "demand", "oric_variable": "demand", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "High-frequency gamma power (30-100Hz) — excitability/stress on neural circuits. High gamma = high neural demand.",
+     "fragility_note": "Gamma band sensitive to muscle artifacts; intracranial EEG (sets C-E) avoids this.",
+     "manipulability_note": "Physical measurement; not manipulable."},
+    {"source_column": "S", "oric_role": "S", "oric_variable": "S", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Cumulative spectral energy anomaly — symbolic stock of neural activation history.",
+     "fragility_note": "Cumulative measure; sensitive to baseline choice.",
+     "manipulability_note": "Computed cumulatively; not manipulable."}
+  ]
+}

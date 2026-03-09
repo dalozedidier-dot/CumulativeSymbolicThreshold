@@ -1,0 +1,40 @@
+{
+  "dataset_id": "sector_cosmo.pilot_pantheon_sn.real.v1",
+  "spec_version": "2.1",
+  "sector": "cosmo",
+  "time_column": "t",
+  "time_mode": "index",
+  "source": {
+    "name": "Pantheon+ SN Ia Hubble Diagram — Reconstructed from published distance moduli",
+    "references": [
+      "Scolnic et al. (2022) ApJ 938:113 (Pantheon+)",
+      "Brout et al. (2022) ApJ 938:110 (Pantheon+SH0ES)",
+      "Riess et al. (1998) AJ 116:1009 (original discovery)"
+    ],
+    "license": "Public — published astrophysical data",
+    "period": "SN Ia from z=0.01 to z=2.3 (sorted by redshift)",
+    "time_step": "redshift bins (logarithmic)"
+  },
+  "columns": [
+    {"source_column": "O", "oric_role": "O", "oric_variable": "O", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Hubble residual dispersion (1 - scatter_norm) in redshift bin. Low scatter = well-organized SN Ia standardization.",
+     "fragility_note": "Dispersion depends on light-curve fitter (SALT2/BayeSN).",
+     "manipulability_note": "Standardized candle physics; not manipulable."},
+    {"source_column": "R", "oric_role": "R", "oric_variable": "R", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Consistency of distance modulus with ΛCDM prediction. High R = resilient cosmological model.",
+     "fragility_note": "Depends on assumed ΛCDM parameters.",
+     "manipulability_note": "Physical measurements; not manipulable."},
+    {"source_column": "I", "oric_role": "I", "oric_variable": "I", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Cross-survey consistency (fraction of SNe agreeing within 2σ) — integration across different telescope surveys.",
+     "fragility_note": "Depends on calibration across surveys.",
+     "manipulability_note": "Multi-survey cross-check; robust."},
+    {"source_column": "demand", "oric_role": "demand", "oric_variable": "demand", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Dark energy equation of state deviation |w+1|. High demand = dark energy dominance deviating from ΛCDM.",
+     "fragility_note": "w(z) depends on model assumptions.",
+     "manipulability_note": "Derived from distance measurements; robust."},
+    {"source_column": "S", "oric_role": "S", "oric_variable": "S", "direction": "positive", "normalization": "robust_minmax", "missing_strategy": "linear_interp",
+     "proxy_description": "Cumulative SNe consistent with accelerating expansion — symbolic stock of evidence for dark energy.",
+     "fragility_note": "Cumulative measure from binned data.",
+     "manipulability_note": "Based on standardized distance measurements."}
+  ]
+}
