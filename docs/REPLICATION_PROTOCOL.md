@@ -1,7 +1,7 @@
 # ORI-C Replication Protocol
 
-**Version**: 1.0
-**Date**: 2026-03-08
+**Version**: 2.0
+**Date**: 2026-03-09
 
 ---
 
@@ -195,6 +195,77 @@ print(f'Benchmarked {results[\"total_pilots\"]} pilots across {len(results[\"met
 
 ---
 
+## One-Command Replication (Recommended)
+
+For a complete end-to-end replication, use the automated script:
+
+```bash
+# Full replication (tests + pilots + benchmark)
+PYTHONPATH=src:04_Code python tools/replicate.py --outdir replication_output
+
+# Fast replication (skip benchmark)
+PYTHONPATH=src:04_Code python tools/replicate.py --outdir replication_output --fast
+
+# Or via Makefile
+make replicate
+```
+
+This script automatically:
+1. Verifies frozen contract integrity (SHA-256 checksums)
+2. Runs the complete test suite
+3. Validates all 7 pilot datasets
+4. Rebuilds and verifies the generalization matrix
+5. Runs the comparative benchmark on 3 showcase pilots
+
+Output: `replication_output/replication_summary.json`
+
+---
+
+## Step 7: Verify Densification Results
+
+The 3 underpowered pilots have been densified. Verify the results:
+
+```bash
+PYTHONPATH=src:04_Code python 04_Code/pipeline/densify_underpowered_pilots.py \
+  --outdir replication_output/power_upgrade
+```
+
+### 7.1 Expected densification outcomes
+
+| Pilot | Original N | Densified N | Status | Best segmentation |
+|-------|-----------|-------------|--------|-------------------|
+| LLM scaling | 60 | 120 | conclusive | t=60 (signal=0.412) |
+| Pantheon SN | 100 | 150 | conclusive | t=82 (signal=0.105) |
+| PBDB marine | 100 | 140 | conclusive | t=70 (signal=0.060) |
+
+**Important:** Densification via interpolation confirms structural compatibility
+but does NOT constitute independent data extension. Level C pilots remain
+indeterminate until real data augmentation is performed.
+
+---
+
+## Step 8: Verify Comparative Benchmark
+
+Run the benchmark on 3 showcase pilots:
+
+```bash
+make benchmark-pilots
+```
+
+### 8.1 Expected benchmark results
+
+| Pilot | ORI-C | CUSUM | Structural Break | Anomaly z-score | EWS |
+|-------|-------|-------|-----------------|-----------------|-----|
+| BTC | ACCEPT | detected | detected | detected | not detected |
+| EEG Bonn | ACCEPT | detected | detected | detected | detected |
+| Solar | ACCEPT | detected | detected | detected | not detected |
+
+ORI-C agrees with 3-4/4 baselines on all pilots. ORI-C does not outperform
+baselines on detection — its value is in structured multi-proxy semantics,
+not raw detection power.
+
+---
+
 ## Notes
 
 - The protocol is **deterministic** given the seed_base (7000).
@@ -206,3 +277,5 @@ print(f'Benchmarked {results[\"total_pilots\"]} pilots across {len(results[\"met
   and should not be modified during replication.
 - The pilot corpus is versioned. Any change to pilot classifications
   requires a version bump in `FROZEN_PILOT_CORPUS.json`.
+- The replication script (`tools/replicate.py`) can be run standalone
+  with no prior knowledge of the project structure.

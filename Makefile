@@ -1,5 +1,6 @@
 .PHONY: install dev test lint format coverage clean release help \
-        smoke real-smoke collect canonical-qcc local-run-sample
+        smoke real-smoke collect canonical-qcc local-run-sample \
+        replicate benchmark-pilots densify-pilots
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -167,6 +168,15 @@ print("Expected files: tables/summary.json, contracts/POWER_CRITERIA.json,")
 print("                contracts/STABILITY_CRITERIA.json, contracts/input_inventory.csv,")
 print("                figures/placeholder.txt, manifest.json")
 EOF
+
+replicate:  ## Run external replication protocol (verifies frozen params, tests, pilots, matrix)
+	PYTHONPATH=src:04_Code python tools/replicate.py --outdir replication_output
+
+benchmark-pilots:  ## Run comparative benchmark on BTC, EEG Bonn, Solar
+	PYTHONPATH=src:04_Code python -c "from pathlib import Path; from oric.comparative_benchmark import run_all_benchmarks; r = run_all_benchmarks(Path('05_Results/pilots'), pilots=[{'pilot_id':'sector_finance.pilot_btc','csv':'03_Data/sector_finance/real/pilot_btc/real.csv','verdict':'ACCEPT'},{'pilot_id':'sector_neuro.pilot_eeg_bonn','csv':'03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv','verdict':'ACCEPT'},{'pilot_id':'sector_cosmo.pilot_solar','csv':'03_Data/sector_cosmo/real/pilot_solar/real.csv','verdict':'ACCEPT'}]); print(f\"Benchmarked {r['total_pilots']} pilots across {len(r['methods'])} methods\")"
+
+densify-pilots:  ## Run densification on 3 underpowered pilots
+	PYTHONPATH=src:04_Code python 04_Code/pipeline/densify_underpowered_pilots.py --outdir 05_Results/pilots/power_upgrade
 
 clean:  ## Remove build artifacts
 	rm -rf build/ dist/ *.egg-info src/*.egg-info

@@ -1,5 +1,5 @@
 """test_scientific_validation_protocol.py — Tests for frozen corpus,
-densification, comparative benchmark, and reference package.
+densification, comparative benchmark, CI maturity, replication, and registry.
 
 Covers:
 - Frozen pilot corpus integrity and versioning
@@ -7,6 +7,11 @@ Covers:
 - Comparative benchmark (CUSUM, structural break, anomaly, EWS)
 - Cross-contract consistency
 - Docs page structure
+- Axe 1: Pilot generalization registry as single source of truth
+- Axe 2: Densification results validation
+- Axe 3: CI maturity tracker
+- Axe 4: External replication package
+- Axe 5: Comparative benchmark results on BTC/EEG/Solar
 """
 import json
 from pathlib import Path
@@ -17,6 +22,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = ROOT / "contracts"
 DOCS = ROOT / "docs"
+RESULTS = ROOT / "05_Results"
+PILOTS = RESULTS / "pilots"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -370,3 +377,286 @@ class TestDocsPages:
         for page in ["framework_status", "canonical_proof",
                       "generalization_pilots", "limitations_power"]:
             assert page in mkdocs, f"mkdocs.yml missing {page}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. Axe 1: Pilot generalization registry
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestPilotGeneralizationRegistry:
+    """Validate 05_Results/pilots/pilot_generalization_registry.json."""
+
+    @pytest.fixture
+    def registry(self):
+        path = PILOTS / "pilot_generalization_registry.json"
+        assert path.exists(), "pilot_generalization_registry.json missing"
+        return json.loads(path.read_text())
+
+    def test_schema(self, registry):
+        assert registry["schema"] == "oric.pilot_generalization_registry.v1"
+
+    def test_version_semver(self, registry):
+        parts = registry["version"].split(".")
+        assert len(parts) == 3
+
+    def test_seven_pilots(self, registry):
+        assert len(registry["pilots"]) == 7
+
+    def test_message_counts(self, registry):
+        msg = registry["message"]
+        assert msg["conclusive_pilots"] == 4
+        assert msg["underpowered_pilots"] == 3
+        assert msg["hard_counterexamples"] == 0
+
+    def test_summary_consistent_with_pilots(self, registry):
+        pilots = registry["pilots"]
+        summary = registry["summary"]
+        assert summary["total_pilots"] == len(pilots)
+        assert summary["by_verdict"]["ACCEPT"] == sum(
+            1 for p in pilots if p["oric_verdict"] == "ACCEPT"
+        )
+        assert summary["by_verdict"]["INDETERMINATE"] == sum(
+            1 for p in pilots if p["oric_verdict"] == "INDETERMINATE"
+        )
+
+    def test_registry_consistent_with_corpus(self, registry):
+        corpus = json.loads(
+            (CONTRACTS / "FROZEN_PILOT_CORPUS.json").read_text()
+        )
+        registry_ids = {p["pilot_id"] for p in registry["pilots"]}
+        corpus_ids = {p["pilot_id"] for p in corpus["pilots"]}
+        assert registry_ids == corpus_ids
+
+    def test_level_c_have_densification_status(self, registry):
+        for p in registry["pilots"]:
+            if p["proof_level"] == "C":
+                assert "densification_status" in p
+                assert p["densification_status"] in ("pending", "conclusive", "underpowered", "incompatible")
+
+    def test_cross_references_present(self, registry):
+        refs = registry["cross_references"]
+        assert "frozen_corpus" in refs
+        assert "generalization_matrix" in refs
+        assert "comparative_benchmark" in refs
+        assert "ci_maturity_log" in refs
+
+    def test_sorted_by_series_length_desc(self, registry):
+        lengths = [p["series_length"] for p in registry["pilots"]]
+        assert lengths == sorted(lengths, reverse=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 7. Axe 2: Densification results
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestDensificationResults:
+    """Validate produced densification results."""
+
+    @pytest.fixture
+    def results(self):
+        path = PILOTS / "power_upgrade" / "power_upgrade_summary.json"
+        assert path.exists(), "power_upgrade_summary.json missing"
+        return json.loads(path.read_text())
+
+    def test_schema(self, results):
+        assert results["schema"] == "oric.power_upgrade_results.v1"
+
+    def test_three_pilots(self, results):
+        assert results["total_pilots"] == 3
+
+    def test_all_conclusive(self, results):
+        assert results["status_counts"]["conclusive"] == 3
+        assert results["status_counts"]["underpowered"] == 0
+        assert results["status_counts"]["incompatible"] == 0
+
+    def test_densified_csvs_exist(self, results):
+        for r in results["results"]:
+            pilot_dir = PILOTS / "power_upgrade" / r["pilot_id"].replace(".", "/")
+            csv = pilot_dir / "densified.csv"
+            assert csv.exists(), f"Densified CSV missing: {csv}"
+
+    def test_signal_strength_positive(self, results):
+        for r in results["results"]:
+            best = r["best_segmentation"]
+            assert best is not None
+            assert best["signal_strength"] > 0.01
+
+    def test_densified_length_meets_target(self, results):
+        for r in results["results"]:
+            assert r["densified_length"] >= r["target_length"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 8. Axe 3: CI maturity tracker
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestCIMaturity:
+    """Test CI maturity tracker module."""
+
+    def test_tracker_record_and_report(self, tmp_path):
+        from oric.ci_maturity import CIMaturityTracker, CIRunRecord
+
+        log_path = tmp_path / "ci_log.json"
+        tracker = CIMaturityTracker(log_path)
+
+        run1 = CIRunRecord(
+            run_id="run1", timestamp="2026-03-09T00:00:00Z",
+            run_status="pass",
+            verdicts={"pilot_a": "ACCEPT", "pilot_b": "INDETERMINATE"},
+            test_count=10, test_passed=10,
+        )
+        tracker.record_run(run1)
+
+        run2 = CIRunRecord(
+            run_id="run2", timestamp="2026-03-09T01:00:00Z",
+            run_status="pass",
+            verdicts={"pilot_a": "ACCEPT", "pilot_b": "INDETERMINATE"},
+            test_count=10, test_passed=10,
+        )
+        tracker.record_run(run2)
+
+        report = tracker.compute_maturity_report()
+        assert report.total_runs == 2
+        assert report.pass_rate == 1.0
+        assert report.verdict_stability == 1.0
+        assert report.regression_count == 0
+        assert report.maturity_level == "emerging"
+
+    def test_verdict_flip_detected(self, tmp_path):
+        from oric.ci_maturity import CIMaturityTracker, CIRunRecord
+
+        log_path = tmp_path / "ci_log.json"
+        tracker = CIMaturityTracker(log_path)
+
+        tracker.record_run(CIRunRecord(
+            run_id="r1", timestamp="t1", run_status="pass",
+            verdicts={"pilot_a": "ACCEPT"},
+        ))
+        tracker.record_run(CIRunRecord(
+            run_id="r2", timestamp="t2", run_status="pass",
+            verdicts={"pilot_a": "REJECT"},  # flip!
+        ))
+
+        report = tracker.compute_maturity_report()
+        assert report.cross_run_verdict_flips == 1
+        assert report.verdict_stability == 0.0
+
+    def test_regression_detection(self, tmp_path):
+        from oric.ci_maturity import CIMaturityTracker, CIRunRecord
+
+        log_path = tmp_path / "ci_log.json"
+        tracker = CIMaturityTracker(log_path)
+        tracker.record_run(CIRunRecord(run_id="r1", timestamp="t1", run_status="pass"))
+        tracker.record_run(CIRunRecord(run_id="r2", timestamp="t2", run_status="fail"))
+
+        report = tracker.compute_maturity_report()
+        assert report.regression_count == 1
+        assert report.regression_rate > 0
+
+    def test_save_report(self, tmp_path):
+        from oric.ci_maturity import CIMaturityTracker, CIRunRecord
+
+        log_path = tmp_path / "ci_log.json"
+        tracker = CIMaturityTracker(log_path)
+        tracker.record_run(CIRunRecord(run_id="r1", timestamp="t1", run_status="pass"))
+
+        report_path = tmp_path / "report.json"
+        report = tracker.save_report(report_path)
+        assert report_path.exists()
+        data = json.loads(report_path.read_text())
+        assert data["schema"] == "oric.ci_maturity_report.v1"
+        assert data["maturity_level"] == "emerging"
+
+    def test_ci_maturity_log_exists(self):
+        log = PILOTS / "ci_maturity_log.json"
+        assert log.exists(), "ci_maturity_log.json missing"
+        data = json.loads(log.read_text())
+        assert data["schema"] == "oric.ci_maturity_log.v1"
+        assert len(data["runs"]) >= 1
+
+    def test_ci_maturity_report_exists(self):
+        report = PILOTS / "ci_maturity_report.json"
+        assert report.exists(), "ci_maturity_report.json missing"
+        data = json.loads(report.read_text())
+        assert data["schema"] == "oric.ci_maturity_report.v1"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 9. Axe 4: External replication package
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestReplicationPackage:
+    """Validate replication infrastructure."""
+
+    def test_replicate_script_exists(self):
+        assert (ROOT / "tools" / "replicate.py").exists()
+
+    def test_replicate_script_importable(self):
+        """Script should parse without errors."""
+        import py_compile
+        py_compile.compile(
+            str(ROOT / "tools" / "replicate.py"),
+            doraise=True,
+        )
+
+    def test_makefile_has_replicate_target(self):
+        makefile = (ROOT / "Makefile").read_text()
+        assert "replicate:" in makefile
+
+    def test_replication_protocol_v2(self):
+        doc = (DOCS / "REPLICATION_PROTOCOL.md").read_text()
+        assert "Version**: 2.0" in doc
+        assert "tools/replicate.py" in doc
+        assert "Step 7" in doc
+        assert "Step 8" in doc
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 10. Axe 5: Comparative benchmark results
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestComparativeBenchmarkResults:
+    """Validate produced benchmark results on BTC/EEG/Solar."""
+
+    @pytest.fixture
+    def benchmark(self):
+        path = PILOTS / "comparative_benchmark.json"
+        assert path.exists(), "comparative_benchmark.json missing"
+        return json.loads(path.read_text())
+
+    def test_schema(self, benchmark):
+        assert benchmark["schema"] == "oric.comparative_benchmark.v1"
+
+    def test_three_pilots_benchmarked(self, benchmark):
+        assert benchmark["total_pilots"] == 3
+
+    def test_five_methods(self, benchmark):
+        assert len(benchmark["methods"]) == 5
+        assert "oric" in benchmark["methods"]
+        assert "cusum_changepoint" in benchmark["methods"]
+
+    def test_all_oric_detected(self, benchmark):
+        for result in benchmark["results"]:
+            oric = next(m for m in result["methods"] if m["method"] == "oric")
+            assert oric["detected"] is True
+
+    def test_btc_included(self, benchmark):
+        ids = {r["pilot_id"] for r in benchmark["results"]}
+        assert "sector_finance.pilot_btc" in ids
+
+    def test_eeg_included(self, benchmark):
+        ids = {r["pilot_id"] for r in benchmark["results"]}
+        assert "sector_neuro.pilot_eeg_bonn" in ids
+
+    def test_solar_included(self, benchmark):
+        ids = {r["pilot_id"] for r in benchmark["results"]}
+        assert "sector_cosmo.pilot_solar" in ids
+
+    def test_registry_has_benchmark_summary(self):
+        registry = json.loads(
+            (PILOTS / "pilot_generalization_registry.json").read_text()
+        )
+        assert "comparative_benchmark" in registry
+        cb = registry["comparative_benchmark"]
+        assert len(cb["pilots_benchmarked"]) == 3
+        assert len(cb["methods"]) == 5

@@ -1,9 +1,10 @@
 # ORI-C Generalization Pilots Report
 
-**Version:** 1.0
+**Version:** 2.0
 **Date:** 2026-03-09
 **Status:** CANONICAL
 **Contract:** `contracts/PILOT_GENERALIZATION.json`
+**Registry:** `05_Results/pilots/pilot_generalization_registry.json`
 
 ---
 
@@ -165,10 +166,68 @@ once power constraints are resolved.
 
 ---
 
+## 7. Densification Results
+
+All 3 underpowered pilots were densified via domain-specific interpolation:
+
+| Pilot | Original N | Densified N | Best t_seg | Signal | Status |
+|-------|-----------|-------------|------------|--------|--------|
+| LLM scaling | 60 | 120 | t=60 | 0.412 | conclusive |
+| Pantheon SN | 100 | 150 | t=82 | 0.105 | conclusive |
+| PBDB marine | 100 | 140 | t=70 | 0.060 | conclusive |
+
+**Interpretation:** All 3 respond positively to interpolation-based densification.
+This confirms the signals are structurally present but the original sampling was
+insufficient. **This does NOT constitute independent data extension** — real data
+augmentation remains required for Level B upgrade.
+
+---
+
+## 8. Comparative Benchmark (BTC / EEG Bonn / Solar)
+
+ORI-C was benchmarked against 4 baseline methods on the 3 showcase pilots:
+
+| Method | BTC | EEG Bonn | Solar |
+|--------|-----|----------|-------|
+| **ORI-C** | ACCEPT | ACCEPT | ACCEPT |
+| CUSUM changepoint | detected (p<0.01) | detected (p<0.01) | detected (p<0.01) |
+| Structural break | detected (p<0.01) | detected (p<0.01) | detected (p<0.01) |
+| Anomaly z-score | detected (z=3.2) | detected (z=5.8) | detected (z=6.3) |
+| Early warning (EWS) | not detected | detected | not detected |
+
+**Reading:** ORI-C agrees with 3–4 out of 4 baselines on all pilots. ORI-C does
+not detect something baselines miss. Its value is in **structured multi-proxy
+semantics** and **built-in prechecks** that reduce false positives — not raw
+detection power. EWS is complementary for pre-transition warning.
+
+---
+
+## 9. CI Maturity
+
+Framework maturity is tracked via `src/oric/ci_maturity.py`:
+
+- **Current maturity level:** emerging (1 baseline run)
+- **Verdict stability:** 1.0 (no flips observed)
+- **Pass rate:** 1.0
+- **Regression count:** 0
+
+As CI history accumulates, the tracker will classify the framework as:
+- **emerging** (<5 runs)
+- **stabilizing** (≥5 runs, ≥80% pass rate, ≥80% verdict stability)
+- **mature** (≥10 runs, ≥95% pass rate, ≥95% verdict stability)
+
+---
+
 ## References
 
+- `05_Results/pilots/pilot_generalization_registry.json` — Single source of truth
 - `contracts/PILOT_GENERALIZATION.json` — Generalization matrix contract
+- `contracts/FROZEN_PILOT_CORPUS.json` — Frozen corpus v1.0.0
 - `contracts/POWER_UPGRADE_PROTOCOL.json` — Power upgrade protocol
-- `contracts/POWER_CRITERIA.json` — Power classification thresholds
-- `05_Results/pilot_benchmark_summary.json` — Machine-readable benchmark summary
+- `05_Results/pilots/power_upgrade/power_upgrade_summary.json` — Densification results
+- `05_Results/pilots/comparative_benchmark.json` — Benchmark results
+- `05_Results/pilots/ci_maturity_log.json` — CI maturity history
 - `src/oric/proof_levels.py` — Level A/B/C classification code
+- `src/oric/comparative_benchmark.py` — Benchmark baselines
+- `src/oric/ci_maturity.py` — CI maturity tracker
+- `tools/replicate.py` — External replication script

@@ -1,0 +1,257 @@
+{
+  "schema": "oric.power_upgrade_results.v1",
+  "total_pilots": 3,
+  "status_counts": {
+    "conclusive": 3,
+    "underpowered": 0,
+    "incompatible": 0
+  },
+  "results": [
+    {
+      "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+      "original_length": 60,
+      "densified_length": 120,
+      "target_length": 120,
+      "segmentation_candidates": [
+        {
+          "segmentation_point": 36,
+          "n_pre": 36,
+          "n_post": 84,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.5238095238095237,
+            "R": 0.5415795118047219,
+            "I": 0.11378864345738299
+          },
+          "signal_strength": 0.39305922635720947
+        },
+        {
+          "segmentation_point": 48,
+          "n_pre": 48,
+          "n_post": 72,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.5889355742296918,
+            "R": 0.5951789215686274,
+            "I": 0.1992800280112046
+          },
+          "signal_strength": 0.4611315079365079
+        },
+        {
+          "segmentation_point": 60,
+          "n_pre": 60,
+          "n_post": 60,
+          "segment_adequate": true,
+          "delta_ori": {
+            "O": 0.5966386554621849,
+            "R": 0.6017661512605041,
+            "I": 0.036953848739495865
+          },
+          "signal_strength": 0.411786218487395
+        },
+        {
+          "segmentation_point": 72,
+          "n_pre": 72,
+          "n_post": 48,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.5854341736694678,
+            "R": 0.6181928886554622,
+            "I": 0.042184047619047815
+          },
+          "signal_strength": 0.415270369981326
+        },
+        {
+          "segmentation_point": 84,
+          "n_pre": 84,
+          "n_post": 36,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.5654261704681871,
+            "R": 0.5820835134053622,
+            "I": -0.065410300120048
+          },
+          "signal_strength": 0.36069979458450047
+        }
+      ],
+      "best_segmentation": {
+        "segmentation_point": 60,
+        "n_pre": 60,
+        "n_post": 60,
+        "segment_adequate": true,
+        "delta_ori": {
+          "O": 0.5966386554621849,
+          "R": 0.6017661512605041,
+          "I": 0.036953848739495865
+        },
+        "signal_strength": 0.411786218487395
+      },
+      "upgrade_status": "conclusive",
+      "notes": "Densified from 60 to 120 points. Best segmentation at t=60 with signal_strength=0.4118."
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+      "original_length": 100,
+      "densified_length": 150,
+      "target_length": 150,
+      "segmentation_candidates": [
+        {
+          "segmentation_point": 37,
+          "n_pre": 37,
+          "n_post": 113,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": -0.16316268321537664,
+            "R": -0.009509068990592118,
+            "I": -0.009001311943290902
+          },
+          "signal_strength": 0.06055768804975322
+        },
+        {
+          "segmentation_point": 52,
+          "n_pre": 52,
+          "n_post": 98,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": -0.2068483316300192,
+            "R": -0.024462243317564747,
+            "I": -0.00875427602119816
+          },
+          "signal_strength": 0.08002161698959404
+        },
+        {
+          "segmentation_point": 67,
+          "n_pre": 67,
+          "n_post": 83,
+          "segment_adequate": true,
+          "delta_ori": {
+            "O": -0.23508223932492484,
+            "R": -0.027546181762007738,
+            "I": -0.00842872678734563
+          },
+          "signal_strength": 0.0903523826247594
+        },
+        {
+          "segmentation_point": 82,
+          "n_pre": 82,
+          "n_post": 68,
+          "segment_adequate": true,
+          "delta_ori": {
+            "O": -0.2750244812379035,
+            "R": -0.030461478243286266,
+            "I": -0.01043924320915135
+          },
+          "signal_strength": 0.10530840089678038
+        },
+        {
+          "segmentation_point": 97,
+          "n_pre": 97,
+          "n_post": 53,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": -0.30991590386013756,
+            "R": -0.03660243051974588,
+            "I": -0.008669985992331819
+          },
+          "signal_strength": 0.11839610679073842
+        }
+      ],
+      "best_segmentation": {
+        "segmentation_point": 82,
+        "n_pre": 82,
+        "n_post": 68,
+        "segment_adequate": true,
+        "delta_ori": {
+          "O": -0.2750244812379035,
+          "R": -0.030461478243286266,
+          "I": -0.01043924320915135
+        },
+        "signal_strength": 0.10530840089678038
+      },
+      "upgrade_status": "conclusive",
+      "notes": "Densified from 100 to 150 points. Best segmentation at t=82 with signal_strength=0.1053."
+    },
+    {
+      "pilot_id": "sector_bio.pilot_pbdb_marine",
+      "original_length": 100,
+      "densified_length": 140,
+      "target_length": 140,
+      "segmentation_candidates": [
+        {
+          "segmentation_point": 42,
+          "n_pre": 42,
+          "n_post": 98,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.19095798240591208,
+            "R": -0.03362348526892778,
+            "I": -0.11576941959085799
+          },
+          "signal_strength": 0.013855025848708772
+        },
+        {
+          "segmentation_point": 56,
+          "n_pre": 56,
+          "n_post": 84,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.21064286874785879,
+            "R": 0.013560657074340399,
+            "I": -0.03600380241521073
+          },
+          "signal_strength": 0.06273324113566282
+        },
+        {
+          "segmentation_point": 70,
+          "n_pre": 70,
+          "n_post": 70,
+          "segment_adequate": true,
+          "delta_ori": {
+            "O": 0.19815168252826298,
+            "R": -0.025131045734840707,
+            "I": 0.008008303699897162
+          },
+          "signal_strength": 0.06034298016443981
+        },
+        {
+          "segmentation_point": 84,
+          "n_pre": 84,
+          "n_post": 56,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.2687542794621445,
+            "R": 0.02015828370160999,
+            "I": -0.060695256337786885
+          },
+          "signal_strength": 0.07607243560865586
+        },
+        {
+          "segmentation_point": 98,
+          "n_pre": 98,
+          "n_post": 42,
+          "segment_adequate": false,
+          "delta_ori": {
+            "O": 0.3703174017765379,
+            "R": 0.025842644227475065,
+            "I": -0.036013012993686644
+          },
+          "signal_strength": 0.1200490110034421
+        }
+      ],
+      "best_segmentation": {
+        "segmentation_point": 70,
+        "n_pre": 70,
+        "n_post": 70,
+        "segment_adequate": true,
+        "delta_ori": {
+          "O": 0.19815168252826298,
+          "R": -0.025131045734840707,
+          "I": 0.008008303699897162
+        },
+        "signal_strength": 0.06034298016443981
+      },
+      "upgrade_status": "conclusive",
+      "notes": "Densified from 100 to 140 points. Best segmentation at t=70 with signal_strength=0.0603."
+    }
+  ]
+}
