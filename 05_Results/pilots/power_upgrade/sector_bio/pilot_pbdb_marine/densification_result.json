@@ -1,0 +1,82 @@
+{
+  "pilot_id": "sector_bio.pilot_pbdb_marine",
+  "original_length": 100,
+  "densified_length": 140,
+  "target_length": 140,
+  "segmentation_candidates": [
+    {
+      "segmentation_point": 42,
+      "n_pre": 42,
+      "n_post": 98,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.19095798240591208,
+        "R": -0.03362348526892778,
+        "I": -0.11576941959085799
+      },
+      "signal_strength": 0.013855025848708772
+    },
+    {
+      "segmentation_point": 56,
+      "n_pre": 56,
+      "n_post": 84,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.21064286874785879,
+        "R": 0.013560657074340399,
+        "I": -0.03600380241521073
+      },
+      "signal_strength": 0.06273324113566282
+    },
+    {
+      "segmentation_point": 70,
+      "n_pre": 70,
+      "n_post": 70,
+      "segment_adequate": true,
+      "delta_ori": {
+        "O": 0.19815168252826298,
+        "R": -0.025131045734840707,
+        "I": 0.008008303699897162
+      },
+      "signal_strength": 0.06034298016443981
+    },
+    {
+      "segmentation_point": 84,
+      "n_pre": 84,
+      "n_post": 56,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.2687542794621445,
+        "R": 0.02015828370160999,
+        "I": -0.060695256337786885
+      },
+      "signal_strength": 0.07607243560865586
+    },
+    {
+      "segmentation_point": 98,
+      "n_pre": 98,
+      "n_post": 42,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.3703174017765379,
+        "R": 0.025842644227475065,
+        "I": -0.036013012993686644
+      },
+      "signal_strength": 0.1200490110034421
+    }
+  ],
+  "best_segmentation": {
+    "segmentation_point": 70,
+    "n_pre": 70,
+    "n_post": 70,
+    "segment_adequate": true,
+    "delta_ori": {
+      "O": 0.19815168252826298,
+      "R": -0.025131045734840707,
+      "I": 0.008008303699897162
+    },
+    "signal_strength": 0.06034298016443981
+  },
+  "upgrade_status": "conclusive",
+  "notes": "Densified from 100 to 140 points. Best segmentation at t=70 with signal_strength=0.0603."
+}

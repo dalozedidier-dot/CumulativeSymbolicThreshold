@@ -1,0 +1,82 @@
+{
+  "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+  "original_length": 100,
+  "densified_length": 150,
+  "target_length": 150,
+  "segmentation_candidates": [
+    {
+      "segmentation_point": 37,
+      "n_pre": 37,
+      "n_post": 113,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": -0.16316268321537664,
+        "R": -0.009509068990592118,
+        "I": -0.009001311943290902
+      },
+      "signal_strength": 0.06055768804975322
+    },
+    {
+      "segmentation_point": 52,
+      "n_pre": 52,
+      "n_post": 98,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": -0.2068483316300192,
+        "R": -0.024462243317564747,
+        "I": -0.00875427602119816
+      },
+      "signal_strength": 0.08002161698959404
+    },
+    {
+      "segmentation_point": 67,
+      "n_pre": 67,
+      "n_post": 83,
+      "segment_adequate": true,
+      "delta_ori": {
+        "O": -0.23508223932492484,
+        "R": -0.027546181762007738,
+        "I": -0.00842872678734563
+      },
+      "signal_strength": 0.0903523826247594
+    },
+    {
+      "segmentation_point": 82,
+      "n_pre": 82,
+      "n_post": 68,
+      "segment_adequate": true,
+      "delta_ori": {
+        "O": -0.2750244812379035,
+        "R": -0.030461478243286266,
+        "I": -0.01043924320915135
+      },
+      "signal_strength": 0.10530840089678038
+    },
+    {
+      "segmentation_point": 97,
+      "n_pre": 97,
+      "n_post": 53,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": -0.30991590386013756,
+        "R": -0.03660243051974588,
+        "I": -0.008669985992331819
+      },
+      "signal_strength": 0.11839610679073842
+    }
+  ],
+  "best_segmentation": {
+    "segmentation_point": 82,
+    "n_pre": 82,
+    "n_post": 68,
+    "segment_adequate": true,
+    "delta_ori": {
+      "O": -0.2750244812379035,
+      "R": -0.030461478243286266,
+      "I": -0.01043924320915135
+    },
+    "signal_strength": 0.10530840089678038
+  },
+  "upgrade_status": "conclusive",
+  "notes": "Densified from 100 to 150 points. Best segmentation at t=82 with signal_strength=0.1053."
+}
