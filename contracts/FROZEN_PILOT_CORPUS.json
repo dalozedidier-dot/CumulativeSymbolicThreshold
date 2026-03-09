@@ -1,0 +1,168 @@
+{
+  "schema": "oric.frozen_pilot_corpus.v1",
+  "version": "1.0.0",
+  "frozen_date": "2026-03-09",
+  "integrity_note": "This file is a versioned point of truth. Any modification after frozen_date invalidates the corpus and requires a new version bump.",
+  "corpus_version_policy": "Semantic versioning. PATCH for metadata fixes (typos, notes). MINOR for adding new pilots. MAJOR for reclassifying existing pilots or changing level criteria.",
+
+  "level_criteria": {
+    "A": {
+      "label": "Canonical",
+      "scope": "Core validation (synthetic + FRED + protocol + dual proof)",
+      "requirements": [
+        "Full statistical support with confusion matrix",
+        "Sensitivity >= 0.80, specificity >= 0.80",
+        "Fisher p < 0.01",
+        "n_rows >= 200",
+        "Prechecks pass, causal tests available"
+      ]
+    },
+    "B": {
+      "label": "Conclusive real pilots",
+      "scope": "Out-of-core real datasets with exploitable verdict",
+      "requirements": [
+        "n_rows >= 60",
+        "min_points_per_segment >= 60",
+        "Prechecks pass",
+        "Causal tests available",
+        "Verdict decidable (ACCEPT or REJECT)"
+      ]
+    },
+    "C": {
+      "label": "Exploratory under precheck",
+      "scope": "Signal or plausibility present, canonical proof level not reached",
+      "requirements": [
+        "At least one blocking constraint identified",
+        "Power upgrade path documented"
+      ]
+    }
+  },
+
+  "power_class_criteria": {
+    "adequate":    {"min_total_points": 200, "min_points_per_segment": 60},
+    "borderline":  {"min_total_points": 60,  "max_total_points": 199, "min_points_per_segment": 60},
+    "underpowered": {"below_borderline": true}
+  },
+
+  "pilots": [
+    {
+      "pilot_id": "sector_neuro.pilot_eeg_bonn",
+      "domain": "Neurosciences",
+      "sector": "neuro",
+      "data_path": "03_Data/sector_neuro/real/pilot_eeg_bonn",
+      "series_length": 500,
+      "signal_expected": true,
+      "signal_description": "EEG seizure detection with 5 class labels across 500 segments",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "adequate",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "very_low",
+      "showcase": "primary"
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_solar",
+      "domain": "Astrophysique",
+      "sector": "cosmo",
+      "data_path": "03_Data/sector_cosmo/real/pilot_solar",
+      "series_length": 288,
+      "signal_expected": true,
+      "signal_description": "Solar cycle regime with sunspot number thresholds",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "adequate",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "showcase": null
+    },
+    {
+      "pilot_id": "sector_health.pilot_covid_excess_mortality",
+      "domain": "Sante publique",
+      "sector": "health",
+      "data_path": "03_Data/sector_health/real/pilot_covid_excess_mortality",
+      "series_length": 192,
+      "signal_expected": true,
+      "signal_description": "COVID excess mortality threshold across 4 countries (FR, IT, US, BE)",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "borderline",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "showcase": null
+    },
+    {
+      "pilot_id": "sector_finance.pilot_btc",
+      "domain": "Finance",
+      "sector": "finance",
+      "data_path": "03_Data/sector_finance/real/pilot_btc",
+      "series_length": 141,
+      "signal_expected": true,
+      "signal_description": "BTC price regime transition with volatility threshold",
+      "oric_verdict": "ACCEPT",
+      "proof_level": "B",
+      "power_class": "borderline",
+      "cause_indetermination": null,
+      "overinterpretation_risk": "low",
+      "showcase": "secondary"
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+      "domain": "Cosmologie",
+      "sector": "cosmo",
+      "data_path": "03_Data/sector_cosmo/real/pilot_pantheon_sn",
+      "series_length": 100,
+      "signal_expected": true,
+      "signal_description": "Type Ia supernovae distance-redshift threshold (Pantheon+)",
+      "oric_verdict": "INDETERMINATE",
+      "proof_level": "C",
+      "power_class": "borderline",
+      "cause_indetermination": "Insufficient pre-threshold points; precheck marginal",
+      "overinterpretation_risk": "medium",
+      "power_upgrade_path": "Augment low-z coverage with Carnegie + CfA surveys",
+      "showcase": null
+    },
+    {
+      "pilot_id": "sector_bio.pilot_pbdb_marine",
+      "domain": "Paleobiologie",
+      "sector": "bio",
+      "data_path": "03_Data/sector_bio/real/pilot_pbdb_marine",
+      "series_length": 100,
+      "signal_expected": true,
+      "signal_description": "Marine biodiversity mass extinction threshold (>400 Myr)",
+      "oric_verdict": "INDETERMINATE",
+      "proof_level": "C",
+      "power_class": "borderline",
+      "cause_indetermination": "Insufficient post-threshold points; recovery sparsely sampled",
+      "overinterpretation_risk": "medium",
+      "power_upgrade_path": "Densify post-extinction bins to 5-Myr resolution",
+      "showcase": null
+    },
+    {
+      "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+      "domain": "IA / Technologie",
+      "sector": "ai_tech",
+      "data_path": "03_Data/sector_ai_tech/real/pilot_llm_scaling",
+      "series_length": 60,
+      "signal_expected": true,
+      "signal_description": "LLM scaling law transition threshold",
+      "oric_verdict": "INDETERMINATE",
+      "proof_level": "C",
+      "power_class": "underpowered",
+      "cause_indetermination": "min_points_per_segment < 60; insufficient temporal depth",
+      "overinterpretation_risk": "high",
+      "power_upgrade_path": "Extend with MLPerf, MMLU, HumanEval benchmark releases",
+      "showcase": null
+    }
+  ],
+
+  "summary_table": {
+    "total_pilots": 7,
+    "by_verdict": {"ACCEPT": 4, "INDETERMINATE": 3, "REJECT": 0},
+    "by_level": {"A": 0, "B": 4, "C": 3},
+    "by_power": {"adequate": 2, "borderline": 3, "underpowered": 2},
+    "domains_covered": 7,
+    "showcase_pilots": ["sector_neuro.pilot_eeg_bonn", "sector_finance.pilot_btc"]
+  },
+
+  "reading_note": "Level B pilots are publishable as confirmed out-of-domain applications. Level C pilots are publishable as exploratory signals with explicit power constraints. This separation protects against overselling and underselling."
+}

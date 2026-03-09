@@ -139,6 +139,62 @@ With the frozen parameters and n=50 replicates:
 
 ---
 
+## Step 6: Replicate the 7 Pilot Benchmarks
+
+The pilot corpus is frozen in `contracts/FROZEN_PILOT_CORPUS.json`.
+
+### 6.1 Run all pilot tests
+```bash
+python -m pytest 04_Code/tests/test_sector_pilots.py -v
+python -m pytest 04_Code/tests/test_pilot_generalization.py -v
+```
+
+### 6.2 Verify generalization matrix
+```bash
+python -c "
+import json
+corpus = json.load(open('contracts/FROZEN_PILOT_CORPUS.json'))
+print(f'Corpus version: {corpus[\"version\"]}')
+print(f'Total pilots: {corpus[\"summary_table\"][\"total_pilots\"]}')
+for p in corpus['pilots']:
+    print(f'  {p[\"pilot_id\"]}: level={p[\"proof_level\"]}, '
+          f'power={p[\"power_class\"]}, verdict={p[\"oric_verdict\"]}')
+"
+```
+
+### 6.3 Expected pilot matrix
+
+| Pilot | Level | Power | Verdict |
+|-------|-------|-------|---------|
+| EEG Bonn | B | adequate | ACCEPT |
+| Solar | B | adequate | ACCEPT |
+| COVID | B | borderline | ACCEPT |
+| BTC | B | borderline | ACCEPT |
+| Pantheon SN | C | borderline | INDETERMINATE |
+| PBDB marine | C | borderline | INDETERMINATE |
+| LLM scaling | C | underpowered | INDETERMINATE |
+
+### 6.4 Run comparative benchmark
+```bash
+python -c "
+from pathlib import Path
+from oric.comparative_benchmark import run_all_benchmarks
+results = run_all_benchmarks(Path('replication_output/benchmark'))
+print(f'Benchmarked {results[\"total_pilots\"]} pilots across {len(results[\"methods\"])} methods')
+"
+```
+
+---
+
+## What Constitutes Successful Pilot Replication
+
+1. All 7 pilot datasets load correctly (proxy_spec + CSV validation)
+2. Generalization matrix matches frozen corpus (same levels, same verdicts)
+3. Comparative benchmark runs on all available pilots
+4. No reclassification without documented justification
+
+---
+
 ## Notes
 
 - The protocol is **deterministic** given the seed_base (7000).
@@ -148,3 +204,5 @@ With the frozen parameters and n=50 replicates:
   the specific conditions that failed.
 - The adapted prechecks for stable regime are part of the frozen protocol
   and should not be modified during replication.
+- The pilot corpus is versioned. Any change to pilot classifications
+  requires a version bump in `FROZEN_PILOT_CORPUS.json`.
