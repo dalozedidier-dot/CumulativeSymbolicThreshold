@@ -24,17 +24,22 @@ theme:
 
 nav:
   - Home: index.md
-  - Framework Status: framework_status.md
-  - Canonical Proof: canonical_proof.md
-  - Generalization Pilots: generalization_pilots.md
-  - Limitations and Power: limitations_power.md
-  - Replication Protocol: REPLICATION_PROTOCOL.md
-  - Installation: installation.md
-  - Reproduction: REPRODUCE.md
-  - CI Pipelines: CI_PIPELINES.md
-  - Symbolic Tests: SYMBOLIC_TESTS.md
-  - Repository Layout: REPO_LAYOUT.md
-  - Point of Truth: ORI_C_POINT_OF_TRUTH.md
+  - Canonical Core:
+      - Framework Status: framework_status.md
+      - Canonical Proof: canonical_proof.md
+      - Validation Report: VALIDATION_CANONICAL_REPORT.md
+      - Point of Truth: ORI_C_POINT_OF_TRUTH.md
+  - Generalization:
+      - Pilot Benchmark: generalization_pilots.md
+      - Limitations and Power: limitations_power.md
+  - Reproduce:
+      - Installation: installation.md
+      - Reproduction Guide: REPRODUCE.md
+      - Replication Protocol: REPLICATION_PROTOCOL.md
+      - CI Pipelines: CI_PIPELINES.md
+  - Reference:
+      - Symbolic Tests: SYMBOLIC_TESTS.md
+      - Repository Layout: REPO_LAYOUT.md
   - API Reference:
       - ori_core: api/ori_core.md
       - symbolic: api/symbolic.md
@@ -60,5 +65,6 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
+  - attr_list
   - toc:
       permalink: true

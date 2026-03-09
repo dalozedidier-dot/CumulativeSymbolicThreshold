@@ -1,7 +1,14 @@
 # Generalization Pilots
 
 **Version:** 1.0.0
+**Frozen benchmark:** `contracts/GENERALIZATION_BENCHMARK.json`
 **Frozen corpus:** `contracts/FROZEN_PILOT_CORPUS.json`
+
+!!! info "Canonical benchmark object"
+    This page documents the **ORI-C Generalization Benchmark v1.0.0**,
+    frozen on 2026-03-09. The benchmark formalizes 7 pilots across 7 domains
+    as a public, versionable, citable reference. When citing, use:
+    *ORI-C Generalization Benchmark v1.0.0 (frozen 2026-03-09)*.
 
 ---
 
@@ -89,9 +96,22 @@ The goal is **not** to win everywhere, but to situate ORI-C:
 
 ---
 
+---
+
+## Known Limitations
+
+- Only 7 domains tested; framework incompatibility may emerge elsewhere
+- Level C signals must **not** be cited as evidence of framework validity
+- No independent external replication yet
+- `min_points_per_segment >= 60` blocks many real-world datasets by design
+- Borderline power can still yield conclusive verdicts (BTC and COVID prove this)
+
+---
+
 ## Links
 
 - [Framework Status](framework_status.md)
 - [Limitations and Power](limitations_power.md)
+- Frozen benchmark: `contracts/GENERALIZATION_BENCHMARK.json`
 - Frozen corpus: `contracts/FROZEN_PILOT_CORPUS.json`
 - Full report: `05_Results/PILOT_GENERALIZATION_REPORT.md`

@@ -660,3 +660,92 @@ class TestComparativeBenchmarkResults:
         cb = registry["comparative_benchmark"]
         assert len(cb["pilots_benchmarked"]) == 3
         assert len(cb["methods"]) == 5
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 11. Frozen Generalization Benchmark
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestGeneralizationBenchmark:
+    """Validate contracts/GENERALIZATION_BENCHMARK.json as frozen canonical object."""
+
+    @pytest.fixture
+    def benchmark(self):
+        path = CONTRACTS / "GENERALIZATION_BENCHMARK.json"
+        assert path.exists(), "GENERALIZATION_BENCHMARK.json missing"
+        return json.loads(path.read_text())
+
+    def test_schema(self, benchmark):
+        assert benchmark["schema"] == "oric.generalization_benchmark.v1"
+
+    def test_version_semver(self, benchmark):
+        parts = benchmark["version"].split(".")
+        assert len(parts) == 3
+        assert all(p.isdigit() for p in parts)
+
+    def test_frozen_date(self, benchmark):
+        assert benchmark["frozen_date"] == "2026-03-09"
+
+    def test_conclusive_count(self, benchmark):
+        corpus = benchmark["benchmark_corpus"]
+        assert corpus["conclusive_count"] == 4
+        assert len(corpus["conclusive_pilots"]) == 4
+
+    def test_exploratory_count(self, benchmark):
+        corpus = benchmark["benchmark_corpus"]
+        assert corpus["exploratory_count"] == 3
+        assert len(corpus["exploratory_pilots"]) == 3
+
+    def test_total_pilots(self, benchmark):
+        corpus = benchmark["benchmark_corpus"]
+        assert corpus["total_pilots"] == 7
+        total = len(corpus["conclusive_pilots"]) + len(corpus["exploratory_pilots"])
+        assert total == 7
+
+    def test_all_conclusive_are_accept(self, benchmark):
+        for p in benchmark["benchmark_corpus"]["conclusive_pilots"]:
+            assert p["verdict"] == "ACCEPT"
+            assert p["proof_level"] == "B"
+
+    def test_all_exploratory_are_indeterminate(self, benchmark):
+        for p in benchmark["benchmark_corpus"]["exploratory_pilots"]:
+            assert p["verdict"] == "INDETERMINATE"
+            assert p["proof_level"] == "C"
+            assert "blocking_constraint" in p
+            assert "upgrade_target" in p
+
+    def test_seven_domains(self, benchmark):
+        corpus = benchmark["benchmark_corpus"]
+        all_pilots = corpus["conclusive_pilots"] + corpus["exploratory_pilots"]
+        domains = {p["domain"] for p in all_pilots}
+        assert len(domains) == 7
+
+    def test_consistent_with_frozen_corpus(self, benchmark):
+        corpus = json.loads(
+            (CONTRACTS / "FROZEN_PILOT_CORPUS.json").read_text()
+        )
+        bench_ids = {
+            p["pilot_id"]
+            for p in (
+                benchmark["benchmark_corpus"]["conclusive_pilots"]
+                + benchmark["benchmark_corpus"]["exploratory_pilots"]
+            )
+        }
+        corpus_ids = {p["pilot_id"] for p in corpus["pilots"]}
+        assert bench_ids == corpus_ids
+
+    def test_summary_consistent(self, benchmark):
+        s = benchmark["summary"]
+        assert s["by_verdict"]["ACCEPT"] == 4
+        assert s["by_verdict"]["INDETERMINATE"] == 3
+        assert s["by_verdict"]["REJECT"] == 0
+        assert s["by_level"]["B"] == 4
+        assert s["by_level"]["C"] == 3
+
+    def test_known_limitations_present(self, benchmark):
+        assert len(benchmark["known_limitations"]) >= 4
+
+    def test_references_valid_contracts(self, benchmark):
+        for ref_key in ["upgrade_protocol", "frozen_corpus", "generalization_matrix"]:
+            path = ROOT / benchmark[ref_key]
+            assert path.exists(), f"Referenced contract missing: {benchmark[ref_key]}"
