@@ -1,0 +1,251 @@
+name: Sector Pilots — Real Data Validation (7 domains)
+
+# Validates all 7 new real-data pilot datasets through the ORI-C pipeline:
+#   1. proxy_spec.json schema validation + CSV header check
+#   2. Data integrity checks (range, NaN, row count)
+#   3. ORI-C pipeline run (run_real_data_demo.py)
+#   4. Causal tests (tests_causaux.py)
+#
+# Datasets:
+#   - cosmo/pilot_solar          (NOAA sunspot cycles 23-24)
+#   - ai_tech/pilot_llm_scaling  (LLM benchmark scaling 2020-2024)
+#   - finance/pilot_btc          (Bitcoin monthly 2013-2024)
+#   - bio/pilot_pbdb_marine      (PBDB Phanerozoic marine diversity)
+#   - neuro/pilot_eeg_bonn       (Bonn EEG dataset)
+#   - cosmo/pilot_pantheon_sn    (Pantheon+ SN Ia)
+#   - health/pilot_covid         (OWID COVID excess mortality)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "03_Data/sector_*/real/pilot_*/**"
+      - "04_Code/pipeline/**"
+      - ".github/workflows/sector_pilots.yml"
+  pull_request:
+    paths:
+      - "03_Data/sector_*/real/pilot_*/**"
+      - "04_Code/pipeline/**"
+      - ".github/workflows/sector_pilots.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: sector-pilots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Shared setup: validate all proxy_spec + CSV integrity ──────────────────
+  data_integrity:
+    name: "Data Integrity — proxy_spec + CSV checks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          python -m pip install "numpy>=1.26" "pandas>=2.0" "pytest>=8.0"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
+
+      - name: Run dataset integrity tests (pytest)
+        run: |
+          PYTHONPATH=src pytest -v 04_Code/tests/test_sector_pilots.py 2>&1
+
+  # ── Matrix strategy: run each pilot in parallel ────────────────────────────
+  pilot_run:
+    name: "${{ matrix.name }}"
+    needs: data_integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Cosmo — Solar Cycles"
+            sector: sector_cosmo
+            pilot: pilot_solar
+            time_col: date
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+          - name: "AI Tech — LLM Scaling"
+            sector: sector_ai_tech
+            pilot: pilot_llm_scaling
+            time_col: t
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+          - name: "Finance — Bitcoin"
+            sector: sector_finance
+            pilot: pilot_btc
+            time_col: t
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+          - name: "Bio — PBDB Marine"
+            sector: sector_bio
+            pilot: pilot_pbdb_marine
+            time_col: t
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+          - name: "Neuro — EEG Bonn"
+            sector: sector_neuro
+            pilot: pilot_eeg_bonn
+            time_col: t
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+          - name: "Cosmo — Pantheon SN Ia"
+            sector: sector_cosmo
+            pilot: pilot_pantheon_sn
+            time_col: t
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+          - name: "Health — COVID Excess Mortality"
+            sector: sector_health
+            pilot: pilot_covid_excess_mortality
+            time_col: t
+            time_mode: index
+            col_O: O
+            col_R: R
+            col_I: I
+            col_demand: demand
+            col_S: S
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install \
+            "numpy>=1.26" "pandas>=2.0" "scipy>=1.11" \
+            "statsmodels>=0.14" "matplotlib>=3.8" "pytest>=8.0"
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e .; fi
+
+      - name: Verify data files exist
+        run: |
+          set -e
+          DATA_DIR="03_Data/${{ matrix.sector }}/real/${{ matrix.pilot }}"
+          CSV="${DATA_DIR}/real.csv"
+          SPEC="${DATA_DIR}/proxy_spec.json"
+          if [ ! -f "$CSV" ]; then echo "ERROR: $CSV not found"; exit 1; fi
+          if [ ! -f "$SPEC" ]; then echo "ERROR: $SPEC not found"; exit 1; fi
+          echo "CSV rows: $(wc -l < "$CSV")"
+          echo "Header: $(head -1 "$CSV")"
+
+      - name: Run ORI-C pipeline
+        run: |
+          set -eo pipefail
+          DATA_DIR="03_Data/${{ matrix.sector }}/real/${{ matrix.pilot }}"
+          OUTDIR="_ci_out/${{ matrix.sector }}/${{ matrix.pilot }}"
+          mkdir -p "$OUTDIR"
+
+          PYTHONPATH=src python 04_Code/pipeline/run_real_data_demo.py \
+            --input "${DATA_DIR}/real.csv" \
+            --outdir "$OUTDIR" \
+            --proxy-spec "${DATA_DIR}/proxy_spec.json" \
+            --col-time "${{ matrix.time_col }}" \
+            --time-mode "${{ matrix.time_mode }}" \
+            --col-O "${{ matrix.col_O }}" \
+            --col-R "${{ matrix.col_R }}" \
+            --col-I "${{ matrix.col_I }}" \
+            --col-demand "${{ matrix.col_demand }}" \
+            --col-S "${{ matrix.col_S }}" \
+            --normalize robust \
+            --control-mode no_symbolic \
+            2>&1 | tee "$OUTDIR/pipeline.log"
+
+      - name: Run causal tests
+        run: |
+          set -eo pipefail
+          OUTDIR="_ci_out/${{ matrix.sector }}/${{ matrix.pilot }}"
+          PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
+            --run-dir "$OUTDIR" \
+            --alpha 0.01 \
+            --lags 1-3 \
+            2>&1 | tee "$OUTDIR/tests_causaux.log"
+
+      - name: Report verdict
+        if: always()
+        run: |
+          OUTDIR="_ci_out/${{ matrix.sector }}/${{ matrix.pilot }}"
+          echo "## ${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$OUTDIR/verdict.txt" ]; then
+            VERDICT=$(cat "$OUTDIR/verdict.txt")
+            echo "Verdict: **${VERDICT}**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Verdict: **NO VERDICT FILE** (pipeline may have failed)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f "$OUTDIR/tables/summary.csv" ]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            cat "$OUTDIR/tables/summary.csv" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot_${{ matrix.pilot }}_${{ github.run_id }}
+          path: _ci_out/${{ matrix.sector }}/${{ matrix.pilot }}
+          retention-days: 14
+          if-no-files-found: warn
+
+  # ── Summary job: aggregate all pilot results ───────────────────────────────
+  summary:
+    name: "Sector Pilots Summary"
+    needs: pilot_run
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Write summary
+        run: |
+          echo "## Sector Pilots — Real Data Validation" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pilot | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Solar Cycles | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| LLM Scaling | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Bitcoin | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| PBDB Marine | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| EEG Bonn | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pantheon SN | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| COVID Mortality | ${{ needs.pilot_run.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
