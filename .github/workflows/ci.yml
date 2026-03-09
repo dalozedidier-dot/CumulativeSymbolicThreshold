@@ -41,7 +41,7 @@ jobs:
       - name: Run pytest with coverage
         run: pytest -q --cov=src/oric --cov-report=xml --cov-report=term-missing src/oric/tests 04_Code/tests 2>&1
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: coverage.xml
           fail_ci_if_error: false
