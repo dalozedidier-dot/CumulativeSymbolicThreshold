@@ -43,51 +43,51 @@ canonical:  ## Run full T1-T8 canonical suite
 smoke:  ## Smoke CI: run real-data smoke matrix (1 dataset/sector, fast)
 	@echo "Running real data smoke matrix (1 dataset per sector)..."
 	@python - <<'EOF'
-import csv, hashlib, json, os, subprocess, sys
-from datetime import datetime
-from pathlib import Path
-
-index = Path("data/real_datasets_index.csv")
-if not index.exists():
-    print("ERROR: data/real_datasets_index.csv not found", file=sys.stderr)
-    sys.exit(1)
-
-seen, errors = set(), []
-with open(index) as f:
-    for row in csv.DictReader(f):
-        if row.get("smoke_candidate", "").strip().lower() != "yes":
-            continue
-        sector = row["sector"].strip()
-        if sector in seen:
-            continue
-        seen.add(sector)
-        ds_path = Path(row["path"].strip())
-        if not ds_path.exists():
-            errors.append(f"MISSING dataset: {ds_path} ({sector})")
-            continue
-        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        run_dir = Path(f"_ci_out/real_smoke/{sector}/{row['dataset_id']}/runs/{ts}")
-        for sub in ("tables", "figures", "contracts"):
-            (run_dir / sub).mkdir(parents=True, exist_ok=True)
-        import shutil
-        shutil.copy("contracts/POWER_CRITERIA.json", run_dir / "contracts/")
-        shutil.copy("contracts/STABILITY_CRITERIA.json", run_dir / "contracts/")
-        summary = {"dataset_id": row["dataset_id"], "sector": sector, "run_mode": "smoke"}
-        (run_dir / "tables" / "summary.json").write_text(json.dumps(summary, indent=2))
-        (run_dir / "figures" / "smoke_placeholder.txt").write_text("smoke run")
-        subprocess.run([
-            sys.executable, "-m", "tools.make_manifest",
-            "--root", str(run_dir), "--out", str(run_dir / "manifest.json"),
-        ], check=True)
-        print(f"  OK  {sector}/{row['dataset_id']} → {run_dir}")
-
-if errors:
-    print("\nErrors:")
-    for e in errors:
-        print(f"  {e}", file=sys.stderr)
-    sys.exit(1)
-print(f"\nSmoke: {len(seen)} sectors checked.")
-EOF
+	import csv, hashlib, json, os, subprocess, sys
+	from datetime import datetime
+	from pathlib import Path
+	
+	index = Path("data/real_datasets_index.csv")
+	if not index.exists():
+	    print("ERROR: data/real_datasets_index.csv not found", file=sys.stderr)
+	    sys.exit(1)
+	
+	seen, errors = set(), []
+	with open(index) as f:
+	    for row in csv.DictReader(f):
+	        if row.get("smoke_candidate", "").strip().lower() != "yes":
+	            continue
+	        sector = row["sector"].strip()
+	        if sector in seen:
+	            continue
+	        seen.add(sector)
+	        ds_path = Path(row["path"].strip())
+	        if not ds_path.exists():
+	            errors.append(f"MISSING dataset: {ds_path} ({sector})")
+	            continue
+	        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+	        run_dir = Path(f"_ci_out/real_smoke/{sector}/{row['dataset_id']}/runs/{ts}")
+	        for sub in ("tables", "figures", "contracts"):
+	            (run_dir / sub).mkdir(parents=True, exist_ok=True)
+	        import shutil
+	        shutil.copy("contracts/POWER_CRITERIA.json", run_dir / "contracts/")
+	        shutil.copy("contracts/STABILITY_CRITERIA.json", run_dir / "contracts/")
+	        summary = {"dataset_id": row["dataset_id"], "sector": sector, "run_mode": "smoke"}
+	        (run_dir / "tables" / "summary.json").write_text(json.dumps(summary, indent=2))
+	        (run_dir / "figures" / "smoke_placeholder.txt").write_text("smoke run")
+	        subprocess.run([
+	            sys.executable, "-m", "tools.make_manifest",
+	            "--root", str(run_dir), "--out", str(run_dir / "manifest.json"),
+	        ], check=True)
+	        print(f"  OK  {sector}/{row['dataset_id']} → {run_dir}")
+	
+	if errors:
+	    print("\nErrors:")
+	    for e in errors:
+	        print(f"  {e}", file=sys.stderr)
+	    sys.exit(1)
+	print(f"\nSmoke: {len(seen)} sectors checked.")
+	EOF
 
 real-smoke:  ## Alias for smoke (real data smoke gate)
 	$(MAKE) smoke
@@ -123,51 +123,51 @@ collect:  ## Collect CI metrics from _collected_artifacts/ into ci_metrics/
 local-run-sample:  ## Reproduce minimal sample run with expected outputs
 	@echo "Running local reproducible sample (data/climate/co2_mm_mlo.csv)..."
 	@python - <<'EOF'
-import csv, hashlib, json, shutil, subprocess, sys
-from datetime import datetime
-from pathlib import Path
-
-dataset = Path("data/climate/co2_mm_mlo.csv")
-if not dataset.exists():
-    print(f"ERROR: {dataset} not found. Check data/climate/", file=sys.stderr)
-    sys.exit(1)
-
-ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-run_dir = Path(f"_ci_out/local_sample/runs/{ts}")
-for sub in ("tables", "figures", "contracts"):
-    (run_dir / sub).mkdir(parents=True, exist_ok=True)
-
-shutil.copy("contracts/POWER_CRITERIA.json", run_dir / "contracts/")
-shutil.copy("contracts/STABILITY_CRITERIA.json", run_dir / "contracts/")
-
-h = hashlib.sha256(dataset.read_bytes()).hexdigest()
-with open(run_dir / "contracts/input_inventory.csv", "w") as f:
-    w = csv.DictWriter(f, fieldnames=["file", "sha256", "size_bytes"])
-    w.writeheader()
-    w.writerow({"file": str(dataset), "sha256": h, "size_bytes": dataset.stat().st_size})
-
-summary = {
-    "dataset_id": "co2_mauna_loa",
-    "sector": "climate",
-    "run_mode": "smoke",
-    "dataset_path": str(dataset),
-}
-(run_dir / "tables/summary.json").write_text(json.dumps(summary, indent=2))
-(run_dir / "figures/placeholder.txt").write_text("local sample run")
-
-subprocess.run([
-    sys.executable, "-m", "tools.make_manifest",
-    "--root", str(run_dir), "--out", str(run_dir / "manifest.json"),
-], check=True)
-subprocess.run([
-    sys.executable, "-m", "tools.enforce_output_contract", "--run-dir", str(run_dir),
-], check=True)
-
-print(f"\nSample run complete: {run_dir}")
-print("Expected files: tables/summary.json, contracts/POWER_CRITERIA.json,")
-print("                contracts/STABILITY_CRITERIA.json, contracts/input_inventory.csv,")
-print("                figures/placeholder.txt, manifest.json")
-EOF
+	import csv, hashlib, json, shutil, subprocess, sys
+	from datetime import datetime
+	from pathlib import Path
+	
+	dataset = Path("data/climate/co2_mm_mlo.csv")
+	if not dataset.exists():
+	    print(f"ERROR: {dataset} not found. Check data/climate/", file=sys.stderr)
+	    sys.exit(1)
+	
+	ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+	run_dir = Path(f"_ci_out/local_sample/runs/{ts}")
+	for sub in ("tables", "figures", "contracts"):
+	    (run_dir / sub).mkdir(parents=True, exist_ok=True)
+	
+	shutil.copy("contracts/POWER_CRITERIA.json", run_dir / "contracts/")
+	shutil.copy("contracts/STABILITY_CRITERIA.json", run_dir / "contracts/")
+	
+	h = hashlib.sha256(dataset.read_bytes()).hexdigest()
+	with open(run_dir / "contracts/input_inventory.csv", "w") as f:
+	    w = csv.DictWriter(f, fieldnames=["file", "sha256", "size_bytes"])
+	    w.writeheader()
+	    w.writerow({"file": str(dataset), "sha256": h, "size_bytes": dataset.stat().st_size})
+	
+	summary = {
+	    "dataset_id": "co2_mauna_loa",
+	    "sector": "climate",
+	    "run_mode": "smoke",
+	    "dataset_path": str(dataset),
+	}
+	(run_dir / "tables/summary.json").write_text(json.dumps(summary, indent=2))
+	(run_dir / "figures/placeholder.txt").write_text("local sample run")
+	
+	subprocess.run([
+	    sys.executable, "-m", "tools.make_manifest",
+	    "--root", str(run_dir), "--out", str(run_dir / "manifest.json"),
+	], check=True)
+	subprocess.run([
+	    sys.executable, "-m", "tools.enforce_output_contract", "--run-dir", str(run_dir),
+	], check=True)
+	
+	print(f"\nSample run complete: {run_dir}")
+	print("Expected files: tables/summary.json, contracts/POWER_CRITERIA.json,")
+	print("                contracts/STABILITY_CRITERIA.json, contracts/input_inventory.csv,")
+	print("                figures/placeholder.txt, manifest.json")
+	EOF
 
 replicate:  ## Run external replication protocol (verifies frozen params, tests, pilots, matrix)
 	PYTHONPATH=src:04_Code python tools/replicate.py --outdir replication_output
