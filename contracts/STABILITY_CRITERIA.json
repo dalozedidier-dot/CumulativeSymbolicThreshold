@@ -1,6 +1,7 @@
 {
   "criteria_version": "stability_v1_relvar_0305_locked",
   "window_min_size_for_check": 5,
+  "relative_variation_max": 0.305,
   "max_relative_variation": 0.305,
   "min_resample_found_rate": 0.5,
   "notes": "Purely mechanical stability criteria. No ORI-C verdict. This file must be staged into each run_dir/contracts and hashed in manifest for auditability.",

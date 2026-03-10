@@ -42,52 +42,7 @@ canonical:  ## Run full T1-T8 canonical suite
 
 smoke:  ## Smoke CI: run real-data smoke matrix (1 dataset/sector, fast)
 	@echo "Running real data smoke matrix (1 dataset per sector)..."
-	@python - <<'EOF'
-	import csv, hashlib, json, os, subprocess, sys
-	from datetime import datetime
-	from pathlib import Path
-	
-	index = Path("data/real_datasets_index.csv")
-	if not index.exists():
-	    print("ERROR: data/real_datasets_index.csv not found", file=sys.stderr)
-	    sys.exit(1)
-	
-	seen, errors = set(), []
-	with open(index) as f:
-	    for row in csv.DictReader(f):
-	        if row.get("smoke_candidate", "").strip().lower() != "yes":
-	            continue
-	        sector = row["sector"].strip()
-	        if sector in seen:
-	            continue
-	        seen.add(sector)
-	        ds_path = Path(row["path"].strip())
-	        if not ds_path.exists():
-	            errors.append(f"MISSING dataset: {ds_path} ({sector})")
-	            continue
-	        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-	        run_dir = Path(f"_ci_out/real_smoke/{sector}/{row['dataset_id']}/runs/{ts}")
-	        for sub in ("tables", "figures", "contracts"):
-	            (run_dir / sub).mkdir(parents=True, exist_ok=True)
-	        import shutil
-	        shutil.copy("contracts/POWER_CRITERIA.json", run_dir / "contracts/")
-	        shutil.copy("contracts/STABILITY_CRITERIA.json", run_dir / "contracts/")
-	        summary = {"dataset_id": row["dataset_id"], "sector": sector, "run_mode": "smoke"}
-	        (run_dir / "tables" / "summary.json").write_text(json.dumps(summary, indent=2))
-	        (run_dir / "figures" / "smoke_placeholder.txt").write_text("smoke run")
-	        subprocess.run([
-	            sys.executable, "-m", "tools.make_manifest",
-	            "--root", str(run_dir), "--out", str(run_dir / "manifest.json"),
-	        ], check=True)
-	        print(f"  OK  {sector}/{row['dataset_id']} → {run_dir}")
-	
-	if errors:
-	    print("\nErrors:")
-	    for e in errors:
-	        print(f"  {e}", file=sys.stderr)
-	    sys.exit(1)
-	print(f"\nSmoke: {len(seen)} sectors checked.")
-	EOF
+	@python -m tools.run_real_smoke_matrix
 
 real-smoke:  ## Alias for smoke (real data smoke gate)
 	$(MAKE) smoke
