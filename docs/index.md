@@ -46,7 +46,7 @@ three-arm validation protocol + dual proof manifest. This is the
 - 25 frozen parameters, no post-hoc tuning
 - [Canonical Proof](canonical_proof.md) | [Validation Report](VALIDATION_CANONICAL_REPORT.md)
 
-### Level B — Conclusive Pilots (4 datasets)
+### Level B — Conclusive Pilots (7 datasets)
 
 Real-world datasets **outside the canonical core** with decidable verdicts.
 These are publishable as confirmed out-of-domain applications.
@@ -57,11 +57,14 @@ These are publishable as confirmed out-of-domain applications.
 | Solar | Astrophysics | 288 | **ACCEPT** | adequate |
 | COVID mortality | Public health | 192 | **ACCEPT** | borderline |
 | BTC | Finance | 141 | **ACCEPT** | borderline |
+| Pantheon SN (densified) | Cosmology | 150 | **ACCEPT** | borderline |
+| PBDB marine (densified) | Paleobiology | 140 | **REJECT** | borderline |
+| LLM scaling (densified) | AI/Tech | 120 | **REJECT** | borderline |
 
-### Level C — Exploratory Pilots (3 datasets)
+### Level C — Exploratory Pilots (historical baseline, pre-upgrade)
 
-Plausible signals but **insufficient statistical power** for a canonical
-conclusion. Published with explicit constraints, never cited as evidence.
+These entries are retained as a **historical snapshot** before densification.
+They should not be read as the current state of evidence.
 
 | Pilot | Domain | N | Verdict | Blocking constraint |
 |-------|--------|---|---------|---------------------|
@@ -69,7 +72,8 @@ conclusion. Published with explicit constraints, never cited as evidence.
 | PBDB marine | Paleobiology | 100 | INDETERMINATE | Post-extinction sparse |
 | LLM scaling | AI/Tech | 60 | INDETERMINATE | Series too short |
 
-Each has a concrete densification plan: [Power Upgrade Protocol](limitations_power.md#power-upgrade-protocol)
+Post-upgrade outcomes are tracked in [Generalization Pilots](generalization_pilots.md)
+and [Framework Status](framework_status.md).
 
 [Full generalization benchmark](generalization_pilots.md){ .md-button }
 [Limitations and power](limitations_power.md){ .md-button }
