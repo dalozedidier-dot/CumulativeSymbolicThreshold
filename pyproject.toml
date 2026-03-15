@@ -84,8 +84,9 @@ extend-ignore = ["E731"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/oric/__init__.py" = ["F401", "F403"]
-"04_Code/tests/test_did_sc.py" = ["E402", "E501"]
-"04_Code/tests/test_oos_panel.py" = ["E402", "E741"]
+"04_Code/tests/*.py" = ["E402"]          # sys.path manipulation before imports
+"04_Code/tests/test_did_sc.py" = ["E501"]
+"04_Code/tests/test_oos_panel.py" = ["E741"]
 "04_Code/tests/test_e2e_pipeline.py" = ["E501"]
 
 # ── Type checking ───────────────────────────────────────
