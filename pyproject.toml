@@ -30,22 +30,21 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy>=1.24",
+    "numpy>=1.26",
     "pandas>=2.0",
-    "scipy>=1.10",
-    "matplotlib>=3.7",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
     "statsmodels>=0.14",
     "scikit-learn>=1.3",
+    "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
-    "flake8>=6.0",
-    "black>=23.0",
+    "ruff>=0.4.0",
     "mypy>=1.5",
-    "isort>=5.12",
 ]
 notebooks = [
     "jupyter>=1.0",
@@ -75,14 +74,19 @@ where = ["src"]
 [tool.setuptools.package-data]
 oric = ["py.typed"]
 
-# ── Formatting ──────────────────────────────────────────
-[tool.black]
+# ── Ruff (replaces flake8 + black + isort) ─────────────
+[tool.ruff]
 line-length = 100
-target-version = ["py312"]
+target-version = "py312"
 
-[tool.isort]
-profile = "black"
-line_length = 100
+[tool.ruff.lint]
+extend-ignore = ["W503", "E731"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/oric/__init__.py" = ["F401", "F403"]
+"04_Code/tests/test_did_sc.py" = ["E402", "E501", "E131"]
+"04_Code/tests/test_oos_panel.py" = ["E402", "E741"]
+"04_Code/tests/test_e2e_pipeline.py" = ["E501"]
 
 # ── Type checking ───────────────────────────────────────
 [tool.mypy]
@@ -93,7 +97,7 @@ disallow_untyped_defs = false     # progressive — set true later
 
 # ── Testing ─────────────────────────────────────────────
 [tool.pytest.ini_options]
-testpaths = ["04_Code/tests", "tools"]
+testpaths = ["src/oric/tests", "04_Code/tests", "tools"]
 addopts = "-q --tb=short"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

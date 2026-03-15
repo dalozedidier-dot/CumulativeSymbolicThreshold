@@ -14,10 +14,8 @@ NOT_DETECTED" — not just "stable is indeterminate".
 """
 from __future__ import annotations
 
-import json
 from collections import Counter
 from dataclasses import dataclass, field, asdict
-from pathlib import Path
 from typing import Any
 
 
@@ -177,22 +175,34 @@ def check_precheck(
 
     # Min points
     if len(c_pre) < prechecks.min_points_per_segment:
-        return False, f"precheck_failed:min_points_pre({len(c_pre)}<{prechecks.min_points_per_segment})"
+        return False, (
+            f"precheck_failed:min_points_pre"
+            f"({len(c_pre)}<{prechecks.min_points_per_segment})"
+        )
     if len(c_post) < prechecks.min_points_per_segment:
-        return False, f"precheck_failed:min_points_post({len(c_post)}<{prechecks.min_points_per_segment})"
+        return False, (
+            f"precheck_failed:min_points_post"
+            f"({len(c_post)}<{prechecks.min_points_per_segment})"
+        )
 
     # NaN fraction
     for label, arr in [("pre", c_pre), ("post", c_post)]:
         nan_frac = np.isnan(arr).mean()
         if nan_frac > prechecks.max_nan_frac:
-            return False, f"precheck_failed:nan_frac_{label}({nan_frac:.3f}>{prechecks.max_nan_frac})"
+            return False, (
+                f"precheck_failed:nan_frac_{label}"
+                f"({nan_frac:.3f}>{prechecks.max_nan_frac})"
+            )
 
     # Min unique values
     for label, arr in [("pre", c_pre), ("post", c_post)]:
         clean = arr[~np.isnan(arr)]
         n_unique = len(np.unique(clean))
         if n_unique < prechecks.min_unique_values_C:
-            return False, f"precheck_failed:min_unique_{label}({n_unique}<{prechecks.min_unique_values_C})"
+            return False, (
+                f"precheck_failed:min_unique_{label}"
+                f"({n_unique}<{prechecks.min_unique_values_C})"
+            )
 
     # Min variance
     for label, arr in [("pre", c_pre), ("post", c_post)]:
@@ -200,7 +210,10 @@ def check_precheck(
         if len(clean) > 1:
             var = float(np.var(clean))
             if var < prechecks.min_variance_C:
-                return False, f"precheck_failed:min_variance_{label}({var:.2e}<{prechecks.min_variance_C:.2e})"
+                return False, (
+                    f"precheck_failed:min_variance_{label}"
+                    f"({var:.2e}<{prechecks.min_variance_C:.2e})"
+                )
 
     return True, None
 

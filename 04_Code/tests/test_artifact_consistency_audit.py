@@ -17,7 +17,6 @@ if str(_TOOLS_DIR) not in sys.path:
 
 from audit_artifact_consistency import (
     run_audit,
-    check_manifest_vs_final_status,
     check_summary_vs_verdict,
     check_synthetic_consistency,
     check_fred_consistency,
