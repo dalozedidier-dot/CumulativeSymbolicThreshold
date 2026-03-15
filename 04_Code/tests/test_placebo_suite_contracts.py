@@ -29,7 +29,6 @@ from oric.placebo import (
     evaluate_placebo_battery,
     ALL_STRATEGIES,
     _STRATEGY_META,
-    PlaceboSpec,
 )
 
 
@@ -41,24 +40,24 @@ def structured_df():
     t = np.arange(n)
 
     # Create autocorrelated series using AR(1) process
-    O = np.zeros(n)
-    O[0] = rng.normal()
+    obs = np.zeros(n)  # O proxy
+    obs[0] = rng.normal()
     for i in range(1, n):
-        O[i] = 0.9 * O[i - 1] + rng.normal(0, 0.1)
+        obs[i] = 0.9 * obs[i - 1] + rng.normal(0, 0.1)
 
     # R depends on O (cross-correlation)
-    R = 0.7 * O + rng.normal(0, 0.1, n)
-    I = 0.5 * R + rng.normal(0, 0.1, n)
+    res = 0.7 * obs + rng.normal(0, 0.1, n)
+    integ = 0.5 * res + rng.normal(0, 0.1, n)
     demand = np.sin(2 * np.pi * t / 100) + rng.normal(0, 0.1, n)
-    S = np.cumsum(demand) / n
+    sym = np.cumsum(demand) / n
 
     return pd.DataFrame({
         "t": t,
-        "O": O,
-        "R": R,
-        "I": I,
+        "O": obs,
+        "R": res,
+        "I": integ,
         "demand": demand,
-        "S": S,
+        "S": sym,
     })
 
 
@@ -67,7 +66,6 @@ def _autocorr_lag1(arr):
     arr = np.asarray(arr, dtype=float)
     if len(arr) < 3:
         return 0.0
-    m = np.mean(arr)
     var = np.var(arr)
     if var < 1e-15:
         return 0.0

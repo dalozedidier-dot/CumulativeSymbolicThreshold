@@ -202,7 +202,9 @@ def build_dual_proof_manifest(
         summary = _read_json(synthetic_dir / "tables" / "validation_summary.json")
         if summary is not None:
             m.synthetic_gate_passed = summary.get("gate_passed")
-            m.synthetic_global_verdict = summary.get("protocol_verdict") or summary.get("global_verdict")
+            m.synthetic_global_verdict = (
+                summary.get("protocol_verdict") or summary.get("global_verdict")
+            )
             m.synthetic_support_level = summary.get("support_level")
             m.synthetic_n_statistical_passed = summary.get("n_statistical_passed")
 

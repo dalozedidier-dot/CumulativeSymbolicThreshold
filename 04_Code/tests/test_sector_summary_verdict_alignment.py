@@ -9,8 +9,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SECTOR_SHARED = _REPO_ROOT / "04_Code" / "sector" / "shared"
 if str(_SECTOR_SHARED) not in sys.path:
@@ -202,7 +200,10 @@ class TestFrenchVerdictInSyncFlow:
             tmp_path,
             summary_data={"verdict": "ACCEPT"},
             verdict_json={
-                "verdict": "indetermine_precheck_failed:min_variance_C (var_pre=0.00e+00, var_post=0.00e+00)",
+                "verdict": (
+                    "indetermine_precheck_failed:min_variance_C"
+                    " (var_pre=0.00e+00, var_post=0.00e+00)"
+                ),
                 "precheck_passed": False,
                 "precheck_reason": "precheck_failed:min_variance_C",
             },
