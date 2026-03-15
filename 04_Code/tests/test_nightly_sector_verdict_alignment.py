@@ -39,7 +39,11 @@ class TestNormalizeVerdictToken:
         ("seuil_detecte", "ACCEPT"),
         ("non_detecte", "REJECT"),
         ("falsifie", "REJECT"),
-        ("indetermine_precheck_failed:min_variance_C (var_pre=0.00e+00, var_post=0.00e+00)", "INDETERMINATE"),
+        (
+            "indetermine_precheck_failed:min_variance_C"
+            " (var_pre=0.00e+00, var_post=0.00e+00)",
+            "INDETERMINATE",
+        ),
         ("indetermine_precheck_failed:min_unique_values_C (pre=1, post=1, min=5)", "INDETERMINATE"),
         ("indetermine_precheck_failed:min_points_per_segment (pre=15<60)", "INDETERMINATE"),
         (None, "INDETERMINATE"),
@@ -180,7 +184,10 @@ class TestSimulatedNightlyChain:
 
         # Step 2: tests_causaux.py writes verdict.json
         report = {
-            "verdict": "indetermine_precheck_failed:min_variance_C (var_pre=0.00e+00, var_post=0.00e+00)",
+            "verdict": (
+                "indetermine_precheck_failed:min_variance_C"
+                " (var_pre=0.00e+00, var_post=0.00e+00)"
+            ),
             "precheck_passed": False,
             "precheck_reason": "precheck_failed:min_variance_C",
             "detection_strength": 0.0,

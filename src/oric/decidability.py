@@ -251,7 +251,9 @@ def build_decidability_report(
             "n_decidable": overall_decidable,
             "n_indeterminate": overall_indeterminate,
             "decidable_fraction": overall_decidable / overall_total if overall_total > 0 else 0.0,
-            "indeterminate_rate": overall_indeterminate / overall_total if overall_total > 0 else 0.0,
+            "indeterminate_rate": (
+                overall_indeterminate / overall_total if overall_total > 0 else 0.0
+            ),
         },
         "per_condition": {
             name: m.to_dict() for name, m in all_metrics.items()

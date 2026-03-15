@@ -26,7 +26,6 @@ from oric.proof_levels import (
     classify_power,
     build_proof_level_summary,
     DatasetEvidence,
-    ProofLevelSummary,
     MIN_ROWS_CANONICAL,
     MIN_ROWS_CONCLUSIVE,
     MIN_POINTS_PER_SEGMENT,

@@ -311,16 +311,16 @@ class TestPBDBBinningVariants:
     """Validate PBDB marine intermediate binning variants."""
 
     def test_stage_binning_exists(self):
-        path = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed" / "real_binning_stage.csv"
-        assert path.exists()
+        base = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed"
+        assert (base / "real_binning_stage.csv").exists()
 
     def test_10myr_binning_exists(self):
-        path = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed" / "real_binning_10myr.csv"
-        assert path.exists()
+        base = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed"
+        assert (base / "real_binning_10myr.csv").exists()
 
     def test_5myr_binning_exists(self):
-        path = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed" / "real_binning_5myr.csv"
-        assert path.exists()
+        base = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed"
+        assert (base / "real_binning_5myr.csv").exists()
 
     def test_binning_order_by_size(self):
         base = DATA / "sector_bio" / "real" / "pilot_pbdb_marine" / "processed"
