@@ -8,14 +8,14 @@ Ce document permet de reproduire tous les résultats du manuscrit à partir du d
 Python >= 3.12
 git clone https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold
 cd CumulativeSymbolicThreshold
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 Vérification de l'intégrité du code :
 
 ```bash
 python -m compileall 04_Code -q   # doit retourner 0 erreur
-python -m pytest 04_Code/tests/ -q  # doit passer (62+ tests)
+pytest -q                          # doit passer
 ```
 
 ## 1. Run canonical — smoke CI (vérification rapide, non conclusive)

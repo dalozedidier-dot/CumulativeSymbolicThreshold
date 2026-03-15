@@ -278,7 +278,6 @@ def run_benchmark_on_series(
     ews = early_warning_signal(series)
 
     methods = [oric_result, cusum, sb, anom, ews]
-    n_detected = sum(1 for m in methods if m.detected)
     baseline_detected = sum(1 for m in methods[1:] if m.detected)
 
     # Comparative analysis
@@ -290,7 +289,10 @@ def run_benchmark_on_series(
         limitation = ""
     elif not oric_result.detected and baseline_detected > 0:
         advantage = ""
-        limitation = f"Baselines detect ({baseline_detected}/4) but ORI-C does not (possible underpowered or false positive in baselines)"
+        limitation = (
+            f"Baselines detect ({baseline_detected}/4) but ORI-C does not "
+            f"(possible underpowered or false positive in baselines)"
+        )
     else:
         advantage = ""
         limitation = "No method detects a clear signal"
@@ -385,7 +387,10 @@ def run_all_benchmarks(
     summary = {
         "schema": "oric.comparative_benchmark.v1",
         "total_pilots": len(results),
-        "methods": ["oric", "cusum_changepoint", "structural_break", "anomaly_zscore", "early_warning"],
+        "methods": [
+            "oric", "cusum_changepoint", "structural_break",
+            "anomaly_zscore", "early_warning",
+        ],
         "results": results,
     }
 

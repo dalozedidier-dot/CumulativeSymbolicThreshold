@@ -13,18 +13,19 @@ dev:  ## Install with dev dependencies
 	pip install -e ".[dev]"
 
 test:  ## Run test suite
-	PYTHONPATH=04_Code pytest -q
+	pytest -q
 
 coverage:  ## Run tests with coverage report
-	PYTHONPATH=04_Code pytest --cov=src/oric --cov-report=term-missing --cov-report=html
+	pytest --cov=src/oric --cov-report=term-missing --cov-report=html
 
-lint:  ## Run linters (flake8 + mypy)
-	flake8 src/ 04_Code/pipeline/ --max-line-length=100 --ignore=E501,W503
+lint:  ## Run linters (ruff + mypy)
+	ruff check .
+	ruff format --check .
 	mypy src/oric/ --ignore-missing-imports
 
-format:  ## Auto-format code (black + isort)
-	black src/ 04_Code/
-	isort src/ 04_Code/
+format:  ## Auto-format code (ruff)
+	ruff check --fix .
+	ruff format .
 
 demo:  ## Run synthetic demo pipeline
 	python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/demo
