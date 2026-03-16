@@ -1,6 +1,6 @@
-.PHONY: install dev test lint format coverage clean release help \
+.PHONY: install dev test lint typecheck format coverage clean release help \
         smoke real-smoke collect canonical-qcc local-run-sample \
-        replicate benchmark-pilots densify-pilots
+        replicate benchmark-pilots densify-pilots ci-local
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -13,15 +13,22 @@ dev:  ## Install with dev dependencies
 	pip install -e ".[dev]"
 
 test:  ## Run test suite
-	pytest -q
+	python -m pytest -q
 
 coverage:  ## Run tests with coverage report
-	pytest --cov=src/oric --cov-report=term-missing --cov-report=html
+	python -m pytest --cov=src/oric --cov-report=term-missing --cov-report=html
 
-lint:  ## Run linters (ruff + mypy)
-	ruff check .
-	ruff format --check .
-	mypy src/oric/ --ignore-missing-imports
+lint:  ## Run linters (ruff)
+	python -m ruff check .
+	python -m ruff format --check .
+
+typecheck:  ## Run type checker (mypy)
+	python -m mypy src/oric/ --ignore-missing-imports
+
+ci-local:  ## Run full local CI: lint + typecheck + test
+	$(MAKE) lint
+	$(MAKE) typecheck
+	$(MAKE) test
 
 format:  ## Auto-format code (ruff)
 	ruff check --fix .
