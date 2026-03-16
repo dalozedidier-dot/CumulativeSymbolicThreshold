@@ -105,7 +105,7 @@ All seeds, manifests, and checksums are frozen:
 | `contracts/` | Frozen parameters, pilot corpus, validation gates |
 | `src/` | Core ORI-C engine (ori_core, symbolic, decision) |
 | `04_Code/pipeline/` | Validation and pilot pipelines |
-| `04_Code/tests/` | Test suite (21 files) |
+| `04_Code/tests/` | Test suite (21 files) + `src/oric/tests/` (1 file) |
 | `05_Results/` | All canonical outputs with SHA-256 manifests |
 | `docs/` | This documentation site |
 
