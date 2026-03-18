@@ -1,0 +1,27 @@
+ZIP propre conservateur du depot
+
+Supprime:
+- __pycache__/
+- *.pyc
+- *.pyo
+- .pytest_cache/
+- .ruff_cache/
+- .mypy_cache/
+- .DS_Store
+
+Conserve volontairement:
+- artefacts scientifiques
+- PDFs
+- HTML
+- ZIPs de donnees et resultats
+- 05_Results et data/bundles
+
+Elements supprimes: 8
+.pytest_cache
+.ruff_cache
+04_Code/tests/__pycache__
+__pycache__
+src/oric/__pycache__
+src/oric/tests/__pycache__
+tools/__pycache__
+tools/tests/__pycache__
