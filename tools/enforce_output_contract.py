@@ -170,11 +170,11 @@ def main() -> int:
         for path_spec, ok in report["checks"].items():
             print(f"  [{'OK' if ok else 'FAIL'}] {path_spec}")
         if report["errors"]:
-            print(f"\nErrors:")
+            print("\nErrors:")
             for e in report["errors"]:
                 print(f"  - {e}")
         if report["warnings"]:
-            print(f"\nWarnings:")
+            print("\nWarnings:")
             for w in report["warnings"]:
                 print(f"  - {w}")
         print()

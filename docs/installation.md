@@ -1,54 +1,54 @@
-# Installation de l'environnement ORI C
+# Installation de l'environnement ORI-C
+
+## Installation canonique (recommandée)
+
+```bash
+pip install -e ".[dev]"
+```
+
+Ceci installe le package `oric` en mode éditable avec toutes les dépendances
+de développement (pytest, ruff, mypy).
 
 ## Méthode Conda
 
-Créer l'environnement:
+Créer l'environnement :
 ```bash
 conda env create -f environment.yml
+conda activate cumulative_symbolic
 ```
 
-Activer:
+L'environnement Conda utilise `pip install -e ".[dev]"` en interne.
+
+## Méthode pip (environnement virtuel)
+
 ```bash
-conda activate ori_c_framework
+python -m venv .venv
+source .venv/bin/activate       # Linux/macOS
+# .venv\Scripts\activate        # Windows
+pip install -e ".[dev]"
 ```
 
-Vérifier:
-```bash
-python -c "import numpy; print(numpy.__version__)"
-```
+## Vérification
 
-## Méthode pip
-
-Créer un environnement virtuel:
 ```bash
-python -m venv ori_c_env
-```
-
-Activer.
-Linux ou macOS:
-```bash
-source ori_c_env/bin/activate
-```
-Windows:
-```bash
-ori_c_env\Scripts\activate
-```
-
-Installer:
-```bash
-pip install -r requirements.txt
+python -c "import oric; print('OK')"
+pytest -q
 ```
 
 ## Exécuter les démos
 
-ORI C:
+ORI-C :
 ```bash
-pip install -r 04_Code/requirements.txt
 python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/ori_c_demo
 python 04_Code/pipeline/tests_causaux.py --outdir 05_Results/ori_c_demo
 ```
 
-Robustesse CSV:
+Robustesse CSV :
 ```bash
 python 04_Code/pipeline/run_robustness.py --input 03_Data/synthetic/synthetic_with_transition.csv --outdir 05_Results
 ```
+
+## Mode legacy (04_Code)
+
+Le répertoire `04_Code/` contient le pipeline historique. Pour une installation
+legacy, voir `04_Code/README.md`.

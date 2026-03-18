@@ -595,11 +595,7 @@ def _run_stress_tests(
     from scipy.stats import spearmanr
 
     rng = np.random.default_rng(seed)
-    feature_names = [
-        "recovery_score", "feedback_score", "regime_score", "demand_response",
-        "stationarity_score", "viability_score", "sigma_persistence", "oric_verdict_score",
-    ]
-    labels = np.array([d["label"] for d in datasets])
+    np.array([d["label"] for d in datasets])
 
     # Baseline features
     base_features = np.array([
@@ -840,7 +836,7 @@ def main() -> int:
 
     # ── Build dataset catalogue ───────────────────────────────────────────
     print("[T9] Building benchmark datasets...")
-    rng_base = np.random.default_rng(args.seed)
+    np.random.default_rng(args.seed)
 
     datasets: list[dict] = []
 
@@ -1042,7 +1038,6 @@ def main() -> int:
 
         # Stability heatmap (features x datasets)
         plt.figure(figsize=(10, 4))
-        import matplotlib.patches as mpatches
         mat = features  # shape (n_datasets, n_features)
         plt.imshow(mat.T, aspect="auto", cmap="RdYlGn", vmin=0, vmax=1)
         plt.xticks(range(len(datasets)), [d["name"][:12] for d in datasets], rotation=45, ha="right", fontsize=7)

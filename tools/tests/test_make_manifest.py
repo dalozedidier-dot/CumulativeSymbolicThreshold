@@ -2,10 +2,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
-from pathlib import Path
 
-import pytest
 
 from tools.make_manifest import build_manifest, sha256_file
 

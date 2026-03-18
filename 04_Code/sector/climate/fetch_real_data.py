@@ -45,8 +45,7 @@ import pandas as pd
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "shared"))
 from fetch_utils import (
-    download_bytes, robust_minmax, minmax, cumsum_norm,
-    rolling_corr, save_real_csv, write_manifest, sha256_bytes,
+    download_bytes, robust_minmax, minmax, save_real_csv, write_manifest, sha256_bytes,
 )
 
 REPO_ROOT = _HERE.parent.parent.parent

@@ -130,17 +130,20 @@ class TestUpgradedPilotsValidation:
         assert report["validation_c3"] is True
 
     def test_pantheon_sn_c1_passed(self, registry):
-        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == "sector_cosmo.pilot_pantheon_sn")
+        pid = "sector_cosmo.pilot_pantheon_sn"
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pid)
         assert pilot["upgrade_report"]["validation_c1"] is True
         assert pilot["upgrade_report"]["detection_rate"] == 1.0
 
     def test_pbdb_marine_c1_failed(self, registry):
-        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == "sector_bio.pilot_pbdb_marine")
+        pid = "sector_bio.pilot_pbdb_marine"
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pid)
         assert pilot["upgrade_report"]["validation_c1"] is False
         assert pilot["upgrade_report"]["failure_mode"] == "no_detection"
 
     def test_llm_scaling_c1_failed(self, registry):
-        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == "sector_ai_tech.pilot_llm_scaling")
+        pid = "sector_ai_tech.pilot_llm_scaling"
+        pilot = next(p for p in registry["pilots"] if p["pilot_id"] == pid)
         assert pilot["upgrade_report"]["validation_c1"] is False
         assert pilot["upgrade_report"]["failure_mode"] == "no_detection"
 

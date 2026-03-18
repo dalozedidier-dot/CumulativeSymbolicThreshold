@@ -222,7 +222,9 @@ def _generate_geneexpr(n: int, seed: int) -> pd.DataFrame:
         decay     = 0.005 * chaperone[t-1]
         chaperone[t] = np.clip(chaperone[t-1] + induction - decay + rng.normal(0, 0.005), 0, 1)
 
-    def norm01(x): lo, hi = x.min(), x.max(); return (x - lo) / (hi - lo + 1e-12)
+    def norm01(x):
+        lo, hi = x.min(), x.max()
+        return (x - lo) / (hi - lo + 1e-12)
 
     df = pd.DataFrame({
         "t":                    t_arr,
@@ -333,7 +335,7 @@ def _generate_ecology(n: int, seed: int) -> pd.DataFrame:
 
     # Derived proxies
     prey_norm = x / (x.max() + 1e-9)
-    pred_norm = y / (y.max() + 1e-9)
+    y / (y.max() + 1e-9)
 
     # Stability index: inverse of coefficient of variation over rolling window
     stability = np.zeros(n)
@@ -363,7 +365,9 @@ def _generate_ecology(n: int, seed: int) -> pd.DataFrame:
     perturbation[perturb_t:] = np.linspace(0, 0.9, n - perturb_t) + rng.normal(0, 0.02, n - perturb_t)
     perturbation = np.clip(perturbation, 0, 1)
 
-    def norm01(x): lo, hi = x.min(), x.max(); return (x - lo) / (hi - lo + 1e-12)
+    def norm01(x):
+        lo, hi = x.min(), x.max()
+        return (x - lo) / (hi - lo + 1e-12)
 
     df = pd.DataFrame({
         "t":              np.arange(n),

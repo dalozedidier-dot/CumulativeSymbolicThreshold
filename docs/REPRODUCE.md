@@ -8,14 +8,14 @@ Ce document permet de reproduire tous les résultats du manuscrit à partir du d
 Python >= 3.12
 git clone https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold
 cd CumulativeSymbolicThreshold
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 Vérification de l'intégrité du code :
 
 ```bash
 python -m compileall 04_Code -q   # doit retourner 0 erreur
-python -m pytest 04_Code/tests/ -q  # doit passer (62+ tests)
+pytest -q                          # doit passer
 ```
 
 ## 1. Run canonical — smoke CI (vérification rapide, non conclusive)
@@ -174,15 +174,16 @@ Pour un run manuel : GitHub Actions → `Real Data Matrix` → `Run workflow` �
 
 ## Versions des dépendances
 
-Voir `requirements.txt`. Versions minimales testées :
+Voir `pyproject.toml` (source d'autorité). Versions minimales :
 
 ```
 numpy>=1.26
-scipy>=1.12
-pandas>=2.2
+scipy>=1.11
+pandas>=2.0
 matplotlib>=3.8
-scikit-learn>=1.4
+scikit-learn>=1.3
 statsmodels>=0.14
+tqdm>=4.66
 ```
 
-Python 3.12 est requis (gate compileall vérifié par CI).
+Python >=3.10 est supporté ; 3.12 est la cible de référence (gate compileall vérifié par CI).

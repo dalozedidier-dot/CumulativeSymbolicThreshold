@@ -581,7 +581,6 @@ class TestDecidabilityReport:
 from oric.proof_levels import (
     classify_evidence_level,
     build_proof_level_summary,
-    DatasetEvidence,
 )
 
 
@@ -650,7 +649,7 @@ class TestProofLevelSummary:
 # 6. proof_package
 # ═══════════════════════════════════════════════════════════════════════════
 
-from oric.proof_package import build_proof_package, ProofPackage
+from oric.proof_package import build_proof_package
 
 
 class TestProofPackage:

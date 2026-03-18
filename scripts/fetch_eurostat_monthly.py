@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-import json
 from pathlib import Path
 
 import pandas as pd
@@ -52,7 +51,7 @@ def fetch_estat(dataset: str, params: dict, session: requests.Session) -> pd.Ser
     # Build series (values are in flattened row-major order; find time offset)
     dim_sizes = [len(dims[d]["category"]["index"]) for d in data["id"]]
     time_idx = data["id"].index("time")
-    n_time = dim_sizes[time_idx]
+    dim_sizes[time_idx]
 
     # For single-filter calls there's usually one value per time point
     values = [value_list.get(str(i)) for i in range(len(time_vals))]
@@ -170,13 +169,13 @@ def main() -> None:
     print(f"Sigma > 0: {(sigma > 0).sum()} / {len(df)} rows  (max {sigma.max():.4f})")
 
     print("\nNext step:")
-    print(f"  PYTHONPATH=04_Code python 04_Code/pipeline/run_real_data_canonical_suite.py \\")
+    print("  PYTHONPATH=04_Code python 04_Code/pipeline/run_real_data_canonical_suite.py \\")
     print(f"    --input {out_path} \\")
-    print(f"    --outdir 05_Results/real/eurostat_monthly \\")
-    print(f"    --col-time date --col-O O --col-R R --col-I I \\")
-    print(f"    --col-demand demand --normalize none \\")
-    print(f"    --baseline-n 60 --pre-horizon 100 --post-horizon 100 --lags 1-6 \\")
-    print(f"    --alpha 0.01 --k 2.5 --m 3")
+    print("    --outdir 05_Results/real/eurostat_monthly \\")
+    print("    --col-time date --col-O O --col-R R --col-I I \\")
+    print("    --col-demand demand --normalize none \\")
+    print("    --baseline-n 60 --pre-horizon 100 --post-horizon 100 --lags 1-6 \\")
+    print("    --alpha 0.01 --k 2.5 --m 3")
 
 
 if __name__ == "__main__":

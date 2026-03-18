@@ -5,7 +5,6 @@ import hashlib
 import json
 from pathlib import Path
 
-import pytest
 
 from tools.verify_audit_invariants import (
     check_contracts,

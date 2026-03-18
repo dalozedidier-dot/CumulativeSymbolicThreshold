@@ -34,7 +34,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
 
-import numpy as np
 from scipy import stats as scipy_stats
 
 from pipeline.ori_c_pipeline import ORICConfig, run_oric

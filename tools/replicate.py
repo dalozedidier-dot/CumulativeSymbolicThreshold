@@ -170,7 +170,7 @@ def step5_run_benchmark(fast: bool = False) -> bool:
         "'csv':'03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv','verdict':'ACCEPT'},"
         "{'pilot_id':'sector_cosmo.pilot_solar',"
         "'csv':'03_Data/sector_cosmo/real/pilot_solar/real.csv','verdict':'ACCEPT'}]); "
-        f"print(f\"Benchmarked {{r['total_pilots']}} pilots across {{len(r['methods'])}} methods\")"
+        "print(f\"Benchmarked {r['total_pilots']} pilots across {len(r['methods'])} methods\")"
     ]
     return _run(cmd, "Comparative benchmark (BTC, EEG, Solar)")
 

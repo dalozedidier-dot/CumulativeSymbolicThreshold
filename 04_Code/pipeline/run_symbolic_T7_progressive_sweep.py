@@ -36,7 +36,6 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy import stats as scipy_stats
 
 from pipeline.ori_c_pipeline import ORICConfig, run_oric
 

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict
 from pathlib import Path
 
 import numpy as np
@@ -341,8 +341,8 @@ def _render_markdown_report(report: UpgradeReport) -> str:
         "",
         "## Summary",
         "",
-        f"| Metric | Before | After |",
-        f"|--------|--------|-------|",
+        "| Metric | Before | After |",
+        "|--------|--------|-------|",
         f"| N rows | {report.n_before} | {report.n_after} |",
         f"| Power class | {report.power_class_before} | {report.power_class_after} |",
         f"| Level | {report.level_before} | {report.level_after} |",

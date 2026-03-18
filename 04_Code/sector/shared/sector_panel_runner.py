@@ -41,7 +41,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 import time
@@ -503,7 +502,7 @@ def run_sector_panel(
          "--seed",         str(seed)],
         cwd=repo_root, label="run_real_data_demo", log_dir=log_dir,
     )
-    real_pipeline_verdict = _read_verdict(real_out) if pipeline_r["ok"] else "INDETERMINATE"
+    _read_verdict(real_out) if pipeline_r["ok"] else "INDETERMINATE"
 
     # ---------------------------------------------------------------------- #
     # 5. Causal tests
@@ -597,7 +596,7 @@ def run_sector_panel(
     print(f"  global_verdict    : {global_verdict}")
     print(f"  support_level     : {support}")
     if smoke_ci:
-        print(f"  ci_smoke_non_blocking: True — exit code 0 regardless of verdict")
+        print("  ci_smoke_non_blocking: True — exit code 0 regardless of verdict")
     print(f"{'='*60}")
 
     _write_global_verdict(

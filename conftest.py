@@ -1,3 +1,9 @@
+# conftest.py — Root pytest configuration.
+#
+# Canonical mode: pip install -e ".[dev]" (editable install makes src/oric
+# importable without sys.path hacks). The sys.path insertion below is a
+# fallback for environments where the editable install is not active.
+
 import sys
 from pathlib import Path
 

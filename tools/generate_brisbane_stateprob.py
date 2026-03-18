@@ -48,14 +48,12 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import math
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
@@ -126,7 +124,7 @@ def _zz_phase(n: int, j: int, k: int) -> np.ndarray:
     for idx in range(dim):
         bit_j = (idx >> (n - 1 - j)) & 1
         bit_k = (idx >> (n - 1 - k)) & 1
-        zz_val = (1 - 2 * bit_j) * (1 - 2 * bit_k)  # ±1
+        (1 - 2 * bit_j) * (1 - 2 * bit_k)  # ±1
         phases[idx] = 1.0  # will be multiplied by caller
     return phases  # placeholder; actual logic inline below
 
@@ -342,8 +340,6 @@ def _build_ising_circuit_qiskit(n_qubits: int, n_trotter: int, J: float, h: floa
                                   dd_seq: Optional[str]) -> Any:
     """Build 1D TFIM Trotter circuit with optional DD (Qiskit circuit object)."""
     from qiskit import QuantumCircuit
-    from qiskit.circuit import Parameter
-    import numpy as _np
 
     theta_zz = J * dt
     phi_x    = h * dt
@@ -401,7 +397,9 @@ def run_aer_backend(
 
     backend = AerSimulator(noise_model=nm, seed_simulator=base_seed)
 
-    J = 1.0; h = 0.5; dt = 0.15
+    J = 1.0
+    h = 0.5
+    dt = 0.15
     rng = np.random.default_rng(base_seed)
     total = len(depths) * n_instances
     done = 0
@@ -475,7 +473,9 @@ def run_brisbane_backend(
     backend = service.backend("ibm_brisbane")
     device_label = "Brisbane"
 
-    J = 1.0; h = 0.5; dt = 0.15
+    J = 1.0
+    h = 0.5
+    dt = 0.15
     rng = np.random.default_rng(base_seed)
 
     # DD options
@@ -665,11 +665,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
     _write_run_inventory(out_dir, depths, args.algo.upper(), device_label, args.instances, args.shots)
-    print(f"\nDone. Feed to workflow with:")
-    print(f"  python -m tools.qcc_stateprob_cross_conditions \\")
+    print("\nDone. Feed to workflow with:")
+    print("  python -m tools.qcc_stateprob_cross_conditions \\")
     print(f"      --dataset {out_dir} \\")
-    print(f"      --pooling pooled-by-depth \\")
-    print(f"      --out-dir _ci_out/brisbane_run")
+    print("      --pooling pooled-by-depth \\")
+    print("      --out-dir _ci_out/brisbane_run")
     return 0
 
 

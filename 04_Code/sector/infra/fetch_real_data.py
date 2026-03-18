@@ -99,7 +99,6 @@ def fetch_finance(outdir: Path, start: str = "2004-01-01") -> pd.DataFrame:
     print("\n[infra/finance] Fetching FRED series (direct CSV, no API key)...")
     print("  Source: FRED / St. Louis Fed — public domain")
 
-    shas: dict[str, str] = {}
     raw: dict[str, pd.Series] = {}
 
     for sid in _FRED_SERIES:

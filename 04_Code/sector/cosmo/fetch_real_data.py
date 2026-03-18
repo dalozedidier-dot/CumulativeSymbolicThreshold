@@ -35,7 +35,6 @@ ORI-C mapping (solar):
 from __future__ import annotations
 
 import argparse
-import io
 import json
 import sys
 from pathlib import Path

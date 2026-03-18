@@ -17,7 +17,7 @@ import argparse
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -230,7 +230,7 @@ def test2_sigma_positive(df_t3: pd.DataFrame, spec: DecisionSpec) -> Dict[str, A
     return {
         "test_id": "T2",
         "metric": "frac_over",
-        "condition_a": f"overload=0.00",
+        "condition_a": "overload=0.00",
         "condition_b": f"overload={stress_over:.2f}",
         "N_a": N_a,
         "N_b": N_b,

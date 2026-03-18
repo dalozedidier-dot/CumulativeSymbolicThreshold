@@ -86,9 +86,7 @@ Usage
 from __future__ import annotations
 
 import argparse
-import csv
 import json
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -267,7 +265,7 @@ def _run_demo(
         "--baseline-n", str(baseline_n),
         "--seed", str(seed),
     ]
-    env = {"PYTHONPATH": str(_REPO_ROOT / "src"), "PATH": "/usr/bin:/usr/local/bin:/bin"}
+    {"PYTHONPATH": str(_REPO_ROOT / "src"), "PATH": "/usr/bin:/usr/local/bin:/bin"}
     try:
         subprocess.run(
             cmd, check=True,

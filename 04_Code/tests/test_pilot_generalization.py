@@ -26,7 +26,6 @@ from oric.proof_levels import (
     classify_power,
     build_proof_level_summary,
     DatasetEvidence,
-    ProofLevelSummary,
     MIN_ROWS_CANONICAL,
     MIN_ROWS_CONCLUSIVE,
     MIN_POINTS_PER_SEGMENT,
@@ -378,12 +377,12 @@ class TestBenchmarkSummary:
 
     def test_level_sum(self, summary):
         levels = summary["proof_levels"]
-        total = sum(l["count"] for l in levels.values())
+        total = sum(lvl["count"] for lvl in levels.values())
         assert total == 7
 
     def test_power_sum(self, summary):
-        pd = summary["power_distribution"]
-        total = sum(p["count"] for p in pd.values())
+        power_dist = summary["power_distribution"]
+        total = sum(p["count"] for p in power_dist.values())
         assert total == 7
 
     def test_showcase_pilots_exist(self, summary):

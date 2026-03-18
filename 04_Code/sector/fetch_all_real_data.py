@@ -143,19 +143,21 @@ def main() -> int:
         ok = status.startswith("OK")
         marker = "✓" if ok else "✗"
         print(f"  {marker} {sector:6s} / {pilot:12s}  {status}")
-        if ok: n_ok += 1
-        else:  n_fail += 1
+        if ok:
+            n_ok += 1
+        else:
+            n_fail += 1
 
     print(f"\n  {n_ok}/{n_ok+n_fail} pilots fetched successfully.")
     if n_fail:
         print("  FAILED pilots — check network connectivity and retry.")
         return 1
 
-    print(f"\n  To run sector suites with real data:")
-    print(f"    python 04_Code/sector/bio/run_sector_suite.py \\")
-    print(f"        --pilot-id epidemic \\")
-    print(f"        --real-csv 03_Data/sector_bio/real/pilot_epidemic/real.csv \\")
-    print(f"        --outdir 05_Results/sector_bio/real_001 --seed 1234")
+    print("\n  To run sector suites with real data:")
+    print("    python 04_Code/sector/bio/run_sector_suite.py \\")
+    print("        --pilot-id epidemic \\")
+    print("        --real-csv 03_Data/sector_bio/real/pilot_epidemic/real.csv \\")
+    print("        --outdir 05_Results/sector_bio/real_001 --seed 1234")
     print()
     return 0
 

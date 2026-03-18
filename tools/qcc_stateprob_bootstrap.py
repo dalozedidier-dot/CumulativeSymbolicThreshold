@@ -2,14 +2,12 @@
 import argparse
 import json
 import math
-import os
 import re
-import shutil
 import statistics
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -251,7 +249,9 @@ def main() -> int:
     tables = run_root / "tables"
     figs = run_root / "figures"
     contracts = run_root / "contracts"
-    _ensure_dir(tables); _ensure_dir(figs); _ensure_dir(contracts)
+    _ensure_dir(tables)
+    _ensure_dir(figs)
+    _ensure_dir(contracts)
 
     # extract dataset
     dataset_path = Path(args.dataset)

@@ -297,7 +297,7 @@ def _aggregate_runs(
     else:
         p_one = p_two / 2.0 if t_stat < 0 else 1.0 - p_two / 2.0
 
-    ci_alpha = 1.0 - ci_level
+    1.0 - ci_level
     ci_low, ci_high = float("nan"), float("nan")
     if se_eff > 0:
         ci_low, ci_high = stats.t.interval(ci_level, df=n - 1, loc=mean_eff, scale=se_eff)

@@ -297,7 +297,7 @@ def _generate_finance(n: int, seed: int) -> pd.DataFrame:
     # Volatility (GARCH-like)
     vol = np.zeros(n)
     vol[0] = 0.01
-    crisis_t = n // 3
+    n // 3
     vol_shock = n // 2
     interv_t  = 2 * n // 3
 

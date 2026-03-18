@@ -856,7 +856,6 @@ def main() -> int:
         "var_S_to_deltaC_p": float(var_p),
         "cointegration_p": float(coint_p),
         "reverse_warning": bool(reverse_warning),
-        "ok_p_source": str(ok_p_source),
     }
 
     pd.DataFrame([row]).to_csv(tabdir / "causal_tests_summary.csv", index=False)

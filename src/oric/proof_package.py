@@ -33,10 +33,8 @@ import json
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
-
 from .proof_manifest import DualProofManifest, build_final_status
-from .integrity import check_all_integrity, integrity_gate, IntegrityCheck
+from .integrity import integrity_gate, IntegrityCheck
 from .proof_levels import ProofLevelSummary
 from .decidability import DecidabilityMetrics
 

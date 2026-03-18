@@ -37,7 +37,6 @@ import argparse
 import io
 import json
 import sys
-import time
 from pathlib import Path
 
 import numpy as np
@@ -46,7 +45,7 @@ import pandas as pd
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent / "shared"))
 from fetch_utils import (
-    download_bytes, robust_minmax, minmax, cumsum_norm,
+    download_bytes, robust_minmax, cumsum_norm,
     rolling_corr, save_real_csv, write_manifest, sha256_bytes,
 )
 

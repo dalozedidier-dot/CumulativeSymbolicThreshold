@@ -561,7 +561,7 @@ class TestCIMaturity:
         tracker.record_run(CIRunRecord(run_id="r1", timestamp="t1", run_status="pass"))
 
         report_path = tmp_path / "report.json"
-        report = tracker.save_report(report_path)
+        tracker.save_report(report_path)
         assert report_path.exists()
         data = json.loads(report_path.read_text())
         assert data["schema"] == "oric.ci_maturity_report.v1"

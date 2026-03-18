@@ -28,7 +28,7 @@ import argparse
 import csv
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict
 
 RUNS_INDEX_FIELDS = [
     "github_run_id","run_dir_name","dataset_id","sector","run_mode",

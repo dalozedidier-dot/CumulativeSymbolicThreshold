@@ -7,7 +7,6 @@ import matplotlib
 matplotlib.use("Agg")
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 SEED = 1235
 rng  = np.random.default_rng(SEED)

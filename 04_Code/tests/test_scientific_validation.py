@@ -24,7 +24,7 @@ _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
-from oric.frozen_params import FROZEN_PARAMS, FrozenValidationParams
+from oric.frozen_params import FrozenValidationParams
 from pipeline.run_scientific_validation_protocol import run_validation_protocol
 
 

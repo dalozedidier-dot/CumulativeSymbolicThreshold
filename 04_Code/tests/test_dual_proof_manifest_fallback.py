@@ -9,8 +9,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
@@ -20,7 +18,6 @@ from oric.proof_manifest import (
     DualProofManifest,
     build_dual_proof_manifest,
     _apply_synthetic_fallback,
-    _is_empty,
 )
 
 

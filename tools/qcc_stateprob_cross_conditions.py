@@ -32,23 +32,19 @@ _out/<root>/runs/<timestamp>/
 from __future__ import annotations
 
 import argparse
-import csv
-import dataclasses
 import glob as _glob_mod
 import hashlib
 import json
 import math
-import os
 import re
 import statistics
 import sys
 import tempfile
-import time
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Optional deps (installed in CI via requirements)
 import numpy as np
@@ -246,7 +242,10 @@ def _build_inventory(pairs: List[Tuple[Path, Path, Dict[str, Any]]]) -> pd.DataF
     depth_cache: Dict[Path, Optional[float]] = {}
 
     for sp, ap, meta in pairs:
-        algo = meta["algo"]; device = meta["device"]; shots = meta["shots"]; instance = meta["instance"]
+        algo = meta["algo"]
+        device = meta["device"]
+        shots = meta["shots"]
+        instance = meta["instance"]
         if ap not in depth_cache:
             depth_cache[ap] = _read_attr_depth(ap)
         depth = depth_cache[ap]
@@ -648,7 +647,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     tables_dir = run_dir / "tables"
     figs_dir = run_dir / "figures"
     contracts_dir = run_dir / "contracts"
-    _ensure_dir(tables_dir); _ensure_dir(figs_dir); _ensure_dir(contracts_dir)
+    _ensure_dir(tables_dir)
+    _ensure_dir(figs_dir)
+    _ensure_dir(contracts_dir)
 
     # params.txt — written early so it exists even on early-return paths
     _git_sha = "unknown"

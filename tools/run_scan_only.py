@@ -216,7 +216,7 @@ def main() -> int:
     ap.add_argument("--power-criteria", default="contracts/POWER_CRITERIA.json")
     args = ap.parse_args()
 
-    run_dir = run_scan(
+    run_scan(
         Path(args.dataset),
         dataset_id=args.dataset_id,
         sector=args.sector,

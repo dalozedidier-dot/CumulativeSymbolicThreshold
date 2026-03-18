@@ -18,7 +18,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 RUNS_INDEX_FIELDS = [
     "github_run_id",

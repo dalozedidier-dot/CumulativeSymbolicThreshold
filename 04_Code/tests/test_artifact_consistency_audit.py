@@ -8,8 +8,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _TOOLS_DIR = _REPO_ROOT / "tools"
 if str(_TOOLS_DIR) not in sys.path:
@@ -17,7 +15,6 @@ if str(_TOOLS_DIR) not in sys.path:
 
 from audit_artifact_consistency import (
     run_audit,
-    check_manifest_vs_final_status,
     check_summary_vs_verdict,
     check_synthetic_consistency,
     check_fred_consistency,

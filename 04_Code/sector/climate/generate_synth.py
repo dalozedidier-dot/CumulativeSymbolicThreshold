@@ -59,7 +59,7 @@ def _generate_co2(n: int, seed: int) -> pd.DataFrame:
             growth   = growth_pre * (1 - 0.5 * progress) + growth_post * 0.5 * progress
         # Monthly step + seasonal cycle + noise
         monthly_growth = growth / 12.0
-        seasonal       = 3.0 * np.sin(2 * np.pi * (t % 12) / 12.0)
+        3.0 * np.sin(2 * np.pi * (t % 12) / 12.0)
         noise          = rng.normal(0, 0.05)
         co2[t]         = co2[t-1] + monthly_growth + noise
 

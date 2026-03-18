@@ -80,24 +80,26 @@ S(t) ─────────────────────────
 ## Quick Start
 
 ```bash
-# 1. Create environment
-conda env create -f environment.yml && conda activate cumulative_symbolic
+# 1. Install (editable + dev dependencies)
+pip install -e ".[dev]"
 
-# 2. Run synthetic demo (full ORI-C pipeline)
+# 2. Run tests
+pytest -q
+
+# 3. Run synthetic demo (full ORI-C pipeline)
 python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/demo
 
-# 3. Causal tests on demo output
+# 4. Causal tests on demo output
 python 04_Code/pipeline/tests_causaux.py --run-dir 05_Results/demo
 
-# 4. Full canonical suite T1–T8
+# 5. Full canonical suite T1–T8
 python 04_Code/pipeline/run_all_tests.py --outdir 05_Results/canonical
 ```
 
-With pip:
+With conda:
 
 ```bash
-pip install -r requirements.txt
-PYTHONPATH=04_Code pytest -q       # run test suite
+conda env create -f environment.yml && conda activate cumulative_symbolic
 ```
 
 ---

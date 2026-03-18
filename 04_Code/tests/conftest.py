@@ -1,3 +1,9 @@
+# conftest.py — Test-local pytest configuration for 04_Code/tests.
+#
+# Canonical mode: pip install -e ".[dev]" from the repository root.
+# The sys.path insertion below is a fallback for environments where
+# the editable install is not active.
+
 import sys
 from pathlib import Path
 

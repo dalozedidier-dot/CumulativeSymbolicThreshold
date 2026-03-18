@@ -128,15 +128,15 @@ def main() -> None:
     print(f"Sigma max: {sigma.max():.4f}")
 
     print("\nNext step:")
-    print(f"  PYTHONPATH=04_Code python 04_Code/pipeline/run_real_data_canonical_suite.py \\")
+    print("  PYTHONPATH=04_Code python 04_Code/pipeline/run_real_data_canonical_suite.py \\")
     print(f"    --input {out_path} \\")
-    print(f"    --outdir 05_Results/real/fred_monthly \\")
-    print(f"    --col-time date --time-mode index \\")
-    print(f"    --col-O O --col-R R --col-I I \\")
-    print(f"    --col-demand demand --col-S S \\")
-    print(f"    --normalize none \\")
-    print(f"    --baseline-n 60 --pre-horizon 120 --post-horizon 120 --lags 1-6 \\")
-    print(f"    --alpha 0.01 --k 2.5 --m 3")
+    print("    --outdir 05_Results/real/fred_monthly \\")
+    print("    --col-time date --time-mode index \\")
+    print("    --col-O O --col-R R --col-I I \\")
+    print("    --col-demand demand --col-S S \\")
+    print("    --normalize none \\")
+    print("    --baseline-n 60 --pre-horizon 120 --post-horizon 120 --lags 1-6 \\")
+    print("    --alpha 0.01 --k 2.5 --m 3")
 
 
 if __name__ == "__main__":

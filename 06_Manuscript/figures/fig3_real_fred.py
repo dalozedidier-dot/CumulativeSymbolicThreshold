@@ -8,7 +8,6 @@ matplotlib.use("Agg")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import os
 
 # ── Style ─────────────────────────────────────────────────────────────
@@ -75,7 +74,8 @@ fig.patch.set_facecolor(BG)
 def style_ax(ax, title, ylabel=""):
     ax.set_facecolor(SURF)
     for sp in ax.spines.values():
-        sp.set_color(MUTED); sp.set_linewidth(0.5)
+        sp.set_color(MUTED)
+        sp.set_linewidth(0.5)
     ax.tick_params(colors=MUTED, labelsize=7)
     ax.set_title(title, color=TEXT, fontfamily="monospace", fontsize=9, pad=6)
     if ylabel:
@@ -111,7 +111,8 @@ ax2 = ax.twinx()
 ax2.set_facecolor(SURF)
 ax2.plot(df["date"], df["S"], color=BLUE, lw=0.8, alpha=0.5, label="S(t) — M2 proxy")
 ax2.tick_params(colors=MUTED, labelsize=7)
-ax2.spines["right"].set_color(MUTED); ax2.spines["right"].set_linewidth(0.5)
+ax2.spines["right"].set_color(MUTED)
+ax2.spines["right"].set_linewidth(0.5)
 ax2.set_ylabel("S(t) [0,1]", color=MUTED, fontfamily="monospace", fontsize=7)
 ax2.yaxis.label.set_color(MUTED)
 

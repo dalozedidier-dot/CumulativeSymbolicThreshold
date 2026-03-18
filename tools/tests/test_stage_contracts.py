@@ -72,7 +72,7 @@ def test_stage_contracts_with_inventory(tmp_path):
     inv = tmp_path / "inventory.csv"
     inv.write_text("path,sha256\nfile.csv,abc\n")
 
-    result = stage_contracts(
+    stage_contracts(
         run_dir, power_criteria=power, stability_criteria=stability, input_inventory=inv
     )
 

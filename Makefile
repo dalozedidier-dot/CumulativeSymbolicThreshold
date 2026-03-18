@@ -1,6 +1,6 @@
-.PHONY: install dev test lint format coverage clean release help \
+.PHONY: install dev test lint typecheck format coverage clean release help \
         smoke real-smoke collect canonical-qcc local-run-sample \
-        replicate benchmark-pilots densify-pilots
+        replicate benchmark-pilots densify-pilots ci-local
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -13,18 +13,26 @@ dev:  ## Install with dev dependencies
 	pip install -e ".[dev]"
 
 test:  ## Run test suite
-	PYTHONPATH=04_Code pytest -q
+	python -m pytest -q
 
 coverage:  ## Run tests with coverage report
-	PYTHONPATH=04_Code pytest --cov=src/oric --cov-report=term-missing --cov-report=html
+	python -m pytest --cov=src/oric --cov-report=term-missing --cov-report=html
 
-lint:  ## Run linters (flake8 + mypy)
-	flake8 src/ 04_Code/pipeline/ --max-line-length=100 --ignore=E501,W503
-	mypy src/oric/ --ignore-missing-imports
+lint:  ## Run linters (ruff)
+	python -m ruff check .
+	python -m ruff format --check .
 
-format:  ## Auto-format code (black + isort)
-	black src/ 04_Code/
-	isort src/ 04_Code/
+typecheck:  ## Run type checker (mypy)
+	python -m mypy src/oric/ --ignore-missing-imports
+
+ci-local:  ## Run full local CI: lint + typecheck + test
+	$(MAKE) lint
+	$(MAKE) typecheck
+	$(MAKE) test
+
+format:  ## Auto-format code (ruff)
+	ruff check --fix .
+	ruff format .
 
 demo:  ## Run synthetic demo pipeline
 	python 04_Code/pipeline/run_ori_c_demo.py --outdir 05_Results/demo

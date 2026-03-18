@@ -441,10 +441,10 @@ def page_results_table(pdf: PdfPages, t_results: list, causal: dict, global_verd
 
     thr = causal.get("threshold_hit_t")
     thr_date = _step_to_date(int(thr)) if thr else "—"
-    core_ids = [r[0] for r in t_results[:3]]
-    sym_ids = [r[0] for r in t_results[3:7]]
+    [r[0] for r in t_results[:3]]
+    [r[0] for r in t_results[3:7]]
     core_v = [r[2] for r in t_results[:3]]
-    sym_v = [r[2] for r in t_results[3:7]]
+    [r[2] for r in t_results[3:7]]
     core_tag = "T1+T2+T3 " + ("ACCEPT" if all(v == "ACCEPT" for v in core_v) else
                                "partial" if "ACCEPT" in core_v else "INDETERMINATE")
     sym_tag = "T4+T5+T6+T7 " + ("ACCEPT" if (t_results[3][2] == "ACCEPT" and
