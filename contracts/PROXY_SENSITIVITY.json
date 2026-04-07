@@ -1,0 +1,21 @@
+{
+  "test_id": "T3b",
+  "test_name": "Proxy Sensitivity Analysis",
+  "description": "For each dataset, replace each proxy (O, R, I, demand, S) with calibrated noise and verify verdict change. A proxy is NECESSARY if noise replacement changes ACCEPT -> non-ACCEPT. A proxy is REDUNDANT if noise replacement keeps ACCEPT.",
+  "version": "1.0",
+  "criteria": {
+    "min_necessary_proxies": 2,
+    "note": "At least 2 proxies should be necessary for a robust ACCEPT verdict"
+  },
+  "noise_calibration": {
+    "method": "AR1_matched",
+    "match_parameters": ["mean", "std", "lag1_autocorrelation"],
+    "clipping": [0.0, 1.0]
+  },
+  "verdict_rules": {
+    "necessary": "ACCEPT -> (REJECT | INDETERMINATE | NOT_DETECTED)",
+    "redundant": "ACCEPT -> ACCEPT",
+    "unclear": "original != ACCEPT"
+  },
+  "seed_base": 8000
+}
