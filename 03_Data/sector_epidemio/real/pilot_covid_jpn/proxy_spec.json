@@ -1,0 +1,66 @@
+{
+  "dataset_id": "covid_owid_jpn",
+  "sector": "sector_epidemio",
+  "spec_version": "1.0",
+  "time_column": "t",
+  "time_mode": "index",
+  "normalization_global": "none",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    }
+  ],
+  "notes": "OWID COVID — JPN. O=1-CFR, R=1-death_rate, I=vacc_coverage, demand=new_cases, S=cumulative_vaccinations."
+}
