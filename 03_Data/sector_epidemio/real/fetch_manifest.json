@@ -1,0 +1,10 @@
+{
+  "fetch_date": "2026-04-07T18:51:58.151811Z",
+  "urls_tried": [
+    "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv"
+  ],
+  "url_used": "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv",
+  "raw_content_sha256": "13553a0827b86aba424e6c105559d90c9e1b174e4cbc4544c3c9af7a24b48d46",
+  "script": "scripts/fetch_new_real_datasets.py",
+  "seed": 8000
+}

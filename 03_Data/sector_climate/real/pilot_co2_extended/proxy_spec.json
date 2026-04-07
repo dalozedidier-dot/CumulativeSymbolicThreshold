@@ -1,0 +1,66 @@
+{
+  "dataset_id": "co2_synthetic_fallback",
+  "sector": "sector_climate",
+  "spec_version": "1.0",
+  "time_column": "t",
+  "time_mode": "index",
+  "normalization_global": "none",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "",
+      "manipulability_note": ""
+    }
+  ],
+  "notes": "Synthetic fallback"
+}
