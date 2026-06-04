@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -131,7 +131,7 @@ jobs:
           [ "$N_STATES" -gt 0 ] || (echo "Aucune paire générée" && exit 1)
 
       - name: Upload données générées
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: brisbane_stateprob_data
           path: _ci_out/brisbane_stateprob/data
@@ -150,7 +150,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -164,7 +164,7 @@ jobs:
           pip install -r requirements-qcc-stateprob.txt
 
       - name: Download données générées
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: brisbane_stateprob_data
           path: _ci_out/brisbane_stateprob/data
@@ -214,7 +214,7 @@ jobs:
           EOF
 
       - name: Upload artefact cross-conditions
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: brisbane_cross_conditions_artifact
           path: _ci_out/brisbane_stateprob
@@ -235,7 +235,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -249,7 +249,7 @@ jobs:
           pip install -r requirements-qcc-stateprob.txt
 
       - name: Download artefact cross-conditions
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: brisbane_cross_conditions_artifact
           path: _ci_out/brisbane_stateprob
@@ -369,7 +369,7 @@ jobs:
             --out-root _ci_out/brisbane_stateprob
 
       - name: Upload artefact final (données + analyse + stabilité)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: brisbane_stateprob_full_artifact
           path: _ci_out/brisbane_stateprob
