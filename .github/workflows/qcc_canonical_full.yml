@@ -131,7 +131,7 @@ jobs:
           [ "$N_STATES" -gt 0 ] || (echo "Aucune paire générée" && exit 1)
 
       - name: Upload données générées
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: brisbane_stateprob_data
           path: _ci_out/brisbane_stateprob/data
@@ -214,7 +214,7 @@ jobs:
           EOF
 
       - name: Upload artefact cross-conditions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: brisbane_cross_conditions_artifact
           path: _ci_out/brisbane_stateprob
@@ -369,7 +369,7 @@ jobs:
             --out-root _ci_out/brisbane_stateprob
 
       - name: Upload artefact final (données + analyse + stabilité)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: brisbane_stateprob_full_artifact
           path: _ci_out/brisbane_stateprob

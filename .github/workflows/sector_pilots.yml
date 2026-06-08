@@ -222,7 +222,7 @@ jobs:
 
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pilot_${{ matrix.pilot }}_${{ github.run_id }}
           path: _ci_out/${{ matrix.sector }}/${{ matrix.pilot }}
