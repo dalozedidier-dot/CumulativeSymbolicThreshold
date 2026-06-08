@@ -57,7 +57,7 @@ jobs:
       # ── Mode A: download from the TRIGGERING workflow_run ──────────────────
       - name: "[workflow_run] Download artifacts from triggering run"
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
