@@ -158,10 +158,9 @@ class CIMaturityTracker:
             report.maturity_level = "mature"
         elif n >= 5 and report.pass_rate >= 0.80 and report.verdict_stability >= 0.80:
             report.maturity_level = "stabilizing"
-        elif n >= 1:
-            report.maturity_level = "emerging"
         else:
-            report.maturity_level = "no_data"
+            # n >= 1 guaranteed: the n == 0 case returns early above
+            report.maturity_level = "emerging"
 
         report.details = {
             "n_runs": n,
