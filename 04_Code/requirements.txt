@@ -1,5 +1,10 @@
-# Legacy pipeline dependencies.
-# Canonical runtime dependencies live in the root pyproject.toml.
-# This file is kept for older scripts and containers that still install with -r.
+# Legacy pipeline dependencies — see root pyproject.toml for canonical versions.
+# Prefer: pip install -e ".[dev]" from the repository root.
 
--r ../requirements.txt
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.8
+scipy>=1.11
+statsmodels>=0.14
+scikit-learn>=1.3
+tqdm>=4.66
