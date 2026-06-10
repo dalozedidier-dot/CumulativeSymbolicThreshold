@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -30,9 +29,8 @@ if str(_CODE) not in sys.path:
     sys.path.insert(0, str(_CODE))
 
 from oric.ori_core_v2 import (  # noqa: E402
-    ModelV2Config, compare_all_variants, run_variant_on_dataframe,
+    compare_all_variants,
 )
-from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
 
 SEED = 8000
 REAL_DATA_SCRIPT = str(_REPO / "04_Code" / "pipeline" / "run_real_data_demo.py")

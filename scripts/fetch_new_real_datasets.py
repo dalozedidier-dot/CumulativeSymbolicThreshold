@@ -23,8 +23,6 @@ import hashlib
 import io
 import json
 import logging
-import os
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -555,7 +553,6 @@ def _seismic_synthetic_fallback(outdir: Path) -> bool:
     rng = np.random.default_rng(SEED + 3)
     n = 660  # ~55 years monthly
     count = rng.poisson(50, n).astype(float)
-    mean_mag = 5.0 + rng.normal(0, 0.3, n)
     cv = _rolling_std(count, 12) / np.maximum(_rolling_mean(count, 12), 1)
     O = _robust_minmax(1.0 / (1.0 + cv))
     R = _robust_minmax(1.0 - rng.uniform(0.1, 0.5, n))

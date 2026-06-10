@@ -103,7 +103,6 @@ def _ccm_predict(x: np.ndarray, y: np.ndarray, E: int, tau: int = 1,
 
 def test_ccm(S: np.ndarray, C: np.ndarray) -> dict:
     """Test CCM in both directions: S xmap C and C xmap S."""
-    best_E = 2
     results_SC = []
     results_CS = []
 
@@ -209,7 +208,7 @@ def test_transfer_entropy(S: np.ndarray, C: np.ndarray,
         S_shuf = rng.permutation(S)
         C_shuf = rng.permutation(C)
         null_sc[i] = _transfer_entropy(S_shuf, C)
-        null_cs[i] = _transfer_entropy(C, S_shuf)
+        null_cs[i] = _transfer_entropy(C_shuf, S)
 
     p_sc = float(np.mean(null_sc >= te_s_to_c))
     p_cs = float(np.mean(null_cs >= te_c_to_s))
