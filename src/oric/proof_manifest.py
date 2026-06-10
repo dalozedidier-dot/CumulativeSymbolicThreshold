@@ -87,7 +87,7 @@ class DualProofManifest:
         self.inconsistencies = []
 
         # Check synthetic fields
-        syn_vals = {
+        syn_vals: dict[str, object] = {
             "synthetic.gate_passed": self.synthetic_gate_passed,
             "synthetic.global_verdict": self.synthetic_global_verdict,
             "synthetic.support_level": self.synthetic_support_level,
@@ -98,7 +98,7 @@ class DualProofManifest:
                 self.empty_fields.append(k)
 
         # Check FRED fields
-        fred_vals = {
+        fred_vals: dict[str, object] = {
             "real_data_fred.global_verdict": self.fred_global_verdict,
             "real_data_fred.support_level": self.fred_support_level,
         }
@@ -107,7 +107,7 @@ class DualProofManifest:
                 self.empty_fields.append(k)
 
         # Check validation fields
-        val_vals = {
+        val_vals: dict[str, object] = {
             "validation.verdict": self.validation_verdict,
             "validation.test_detection_rate": self.validation_test_detection_rate,
             "validation.best_input": self.validation_best_input,
@@ -167,7 +167,8 @@ class DualProofManifest:
 def _read_json(p: Path) -> dict | None:
     if p.exists():
         try:
-            return json.loads(p.read_text(encoding="utf-8"))
+            data = json.loads(p.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else None
         except (json.JSONDecodeError, OSError):
             return None
     return None

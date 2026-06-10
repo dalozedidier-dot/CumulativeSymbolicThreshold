@@ -12,7 +12,9 @@ def compute_stock_S(df: pd.DataFrame, alpha_s: Tuple[float, float, float, float]
             raise KeyError(f"Missing column: {c}")
     w = np.array(alpha_s, dtype=float)
     w = w / w.sum()
-    return (w[0] * df[cols[0]] + w[1] * df[cols[1]] + w[2] * df[cols[2]] + w[3] * df[cols[3]])
+    return pd.Series(
+        w[0] * df[cols[0]] + w[1] * df[cols[1]] + w[2] * df[cols[2]] + w[3] * df[cols[3]]
+    )
 
 
 def compute_order_C(df: pd.DataFrame) -> pd.Series:
@@ -44,7 +46,7 @@ def detect_s_star_piecewise(S: np.ndarray, C: np.ndarray) -> Dict[str, float]:
 
     # Candidate split points between 20% and 80%
     idxs = range(int(0.2 * len(S)), int(0.8 * len(S)))
-    best = (None, -np.inf)
+    best: tuple[float | None, float] = (None, -np.inf)
     for i in idxs:
         s_star = S[i]
         left = S <= s_star

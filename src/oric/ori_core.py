@@ -28,7 +28,7 @@ def compute_sigma(demand: pd.Series, cap: pd.Series, form: str = "relu_diff") ->
     """Compute mismatch Sigma(t) = max(0, demand - cap)."""
     if form != "relu_diff":
         raise ValueError(f"Unknown sigma form: {form}")
-    return np.maximum(0.0, demand - cap)
+    return pd.Series(np.maximum(0.0, demand - cap), index=demand.index)
 
 
 def compute_viability(df: pd.DataFrame, omega: Tuple[float, float, float, float]) -> pd.Series:
@@ -39,7 +39,9 @@ def compute_viability(df: pd.DataFrame, omega: Tuple[float, float, float, float]
             raise KeyError(f"Missing column: {c}")
     w = np.array(omega, dtype=float)
     w = w / w.sum()
-    return (w[0] * df[cols[0]] + w[1] * df[cols[1]] + w[2] * df[cols[2]] + w[3] * df[cols[3]])
+    return pd.Series(
+        w[0] * df[cols[0]] + w[1] * df[cols[1]] + w[2] * df[cols[2]] + w[3] * df[cols[3]]
+    )
 
 
 def summarize_run(df: pd.DataFrame, window_W: int = 20) -> Dict[str, float]:

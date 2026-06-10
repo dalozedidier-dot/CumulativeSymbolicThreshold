@@ -1,12 +1,10 @@
 """Second coverage boost: ci_maturity, comparative_benchmark, integrity edge cases,
 ori_core_v2 threshold hit path.
 """
+
 from __future__ import annotations
 
 import json
-import stat
-import tempfile
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -188,8 +186,9 @@ def _step_series(n=200, step_at=100, amplitude=3.0, noise=0.1, seed=0):
 
 class TestMethodResult:
     def test_to_dict(self):
-        r = MethodResult(method="oric", detected=True, detection_point=42,
-                         statistic=5.0, p_value=0.01)
+        r = MethodResult(
+            method="oric", detected=True, detection_point=42, statistic=5.0, p_value=0.01
+        )
         d = r.to_dict()
         assert d["method"] == "oric"
         assert d["detected"] is True
@@ -296,8 +295,9 @@ class TestRunBenchmarkOnSeries:
 
     def test_detection_point_passed(self):
         series = _step_series()
-        comp = run_benchmark_on_series("dp_test", series, oric_verdict="ACCEPT",
-                                       oric_detection_point=100)
+        comp = run_benchmark_on_series(
+            "dp_test", series, oric_verdict="ACCEPT", oric_detection_point=100
+        )
         assert comp.series_length == len(series)
 
 
@@ -306,8 +306,7 @@ class TestRunPilotBenchmark:
         df = pd.DataFrame({"S": _step_series(n=100), "O": np.ones(100)})
         p = tmp_path / "real.csv"
         df.to_csv(p, index=False)
-        comp = run_pilot_benchmark("test_pilot", p, signal_column="S",
-                                   oric_verdict="ACCEPT")
+        comp = run_pilot_benchmark("test_pilot", p, signal_column="S", oric_verdict="ACCEPT")
         assert comp.pilot_id == "test_pilot"
         assert comp.series_length == 100
 
@@ -398,7 +397,6 @@ from oric.integrity import (
     _read_json_safe,
     _read_text_safe,
     check_all_integrity,
-    check_run_integrity,
 )
 
 
@@ -454,10 +452,15 @@ class TestCheckAllIntegrityWithRunDirs:
     def test_with_run_dirs_and_manifest(self, tmp_path):
         d1 = self._valid_run(tmp_path, "run1")
         mpath = tmp_path / "manifest.json"
-        mpath.write_text(json.dumps({
-            "dual_proof_status": "IN_PROGRESS",
-            "empty_fields": [],
-        }), encoding="utf-8")
+        mpath.write_text(
+            json.dumps(
+                {
+                    "dual_proof_status": "IN_PROGRESS",
+                    "empty_fields": [],
+                }
+            ),
+            encoding="utf-8",
+        )
         results = check_all_integrity([d1], manifest_path=mpath)
         # 1 run + 1 manifest = 2 checks
         assert len(results) == 2
@@ -477,7 +480,6 @@ class TestCompareAllVariantsThresholdHit:
         df = pd.DataFrame({"S": S, "V": V})
         results, out_df = compare_all_variants(df, seed=42)
         # At least one variant should detect (V1 has unbounded C growth)
-        has_accept = any(r["verdict"] == "ACCEPT" for r in results.values())
         # Just verify structure regardless of detection
         for v in ("V1", "V2", "V3", "V4"):
             assert v in results

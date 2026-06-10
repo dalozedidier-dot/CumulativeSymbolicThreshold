@@ -6,20 +6,22 @@ from oric.prereg import PreregSpec
 
 
 def test_smoke_core_and_symbolic():
-    df = pd.DataFrame({
-        "O": [0.8, 0.8, 0.8],
-        "R": [0.7, 0.7, 0.7],
-        "I": [0.6, 0.6, 0.6],
-        "demande_env": [0.2, 0.4, 0.5],
-        "survie": [0.9, 0.8, 0.7],
-        "energie_nette": [0.9, 0.8, 0.7],
-        "integrite": [0.9, 0.8, 0.7],
-        "persistance": [0.9, 0.8, 0.7],
-        "repertoire": [0.2, 0.3, 0.4],
-        "codification": [0.2, 0.3, 0.4],
-        "densite_transmission": [0.2, 0.3, 0.4],
-        "fidelite": [0.2, 0.3, 0.4],
-    })
+    df = pd.DataFrame(
+        {
+            "O": [0.8, 0.8, 0.8],
+            "R": [0.7, 0.7, 0.7],
+            "I": [0.6, 0.6, 0.6],
+            "demande_env": [0.2, 0.4, 0.5],
+            "survie": [0.9, 0.8, 0.7],
+            "energie_nette": [0.9, 0.8, 0.7],
+            "integrite": [0.9, 0.8, 0.7],
+            "persistance": [0.9, 0.8, 0.7],
+            "repertoire": [0.2, 0.3, 0.4],
+            "codification": [0.2, 0.3, 0.4],
+            "densite_transmission": [0.2, 0.3, 0.4],
+            "fidelite": [0.2, 0.3, 0.4],
+        }
+    )
     prereg = PreregSpec()
     cap = compute_cap_projection(df["O"], df["R"], df["I"], form=prereg.cap_form)
     sigma = compute_sigma(df["demande_env"], cap, form=prereg.sigma_form)

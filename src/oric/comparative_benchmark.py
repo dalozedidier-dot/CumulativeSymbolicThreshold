@@ -123,8 +123,8 @@ def structural_break(series: np.ndarray) -> MethodResult:
     for t in range(min_seg, n - min_seg):
         pre = series[:t]
         post = series[t:]
-        stat_val, p = stats.ttest_ind(pre, post, equal_var=False)
-        f = stat_val ** 2
+        res = stats.ttest_ind(pre, post, equal_var=False)
+        f = float(res.statistic) ** 2
         if f > best_f:
             best_f = f
             best_t = t
@@ -140,8 +140,8 @@ def structural_break(series: np.ndarray) -> MethodResult:
     # Get p-value at best breakpoint
     pre = series[:best_t]
     post = series[best_t:]
-    _, p_raw = stats.ttest_ind(pre, post, equal_var=False)
-    p_corrected = min(float(p_raw) * n_tests, 1.0)
+    res_best = stats.ttest_ind(pre, post, equal_var=False)
+    p_corrected = min(float(res_best.pvalue) * n_tests, 1.0)
 
     return MethodResult(
         method="structural_break",
@@ -220,27 +220,27 @@ def early_warning_signal(series: np.ndarray, window: int = 20) -> MethodResult:
         else:
             autocorrs.append(0.0)
 
-    variances = np.array(variances)
-    autocorrs = np.array(autocorrs)
+    variances_arr = np.array(variances)
+    autocorrs_arr = np.array(autocorrs)
 
     # Kendall tau for trend detection
-    t_idx = np.arange(len(variances))
-    tau_var, p_var = stats.kendalltau(t_idx, variances)
-    tau_ac, p_ac = stats.kendalltau(t_idx, autocorrs)
+    t_idx = np.arange(len(variances_arr))
+    tau_var, p_var = stats.kendalltau(t_idx, variances_arr)
+    tau_ac, p_ac = stats.kendalltau(t_idx, autocorrs_arr)
 
     # EWS detected if both variance and autocorrelation show positive trend
     ews_detected = (tau_var > 0.1 and p_var < 0.05) or (tau_ac > 0.1 and p_ac < 0.05)
 
     # Find approximate transition point (max variance increase rate)
-    if len(variances) > 1:
-        var_diff = np.diff(variances)
+    if len(variances_arr) > 1:
+        var_diff = np.diff(variances_arr)
         detection_point = int(np.argmax(var_diff) + window)
     else:
         detection_point = None
 
     return MethodResult(
         method="early_warning",
-        detected=ews_detected,
+        detected=bool(ews_detected),
         detection_point=detection_point if ews_detected else None,
         statistic=float(tau_var),
         p_value=float(p_var),
@@ -322,10 +322,10 @@ def run_pilot_benchmark(
     """Run comparative benchmark on a pilot dataset from CSV."""
     df = pd.read_csv(csv_path)
     if signal_column in df.columns:
-        series = df[signal_column].values.astype(float)
+        series = np.asarray(df[signal_column], dtype=float)
     elif "O" in df.columns:
         # Fallback: use O as primary signal
-        series = df["O"].values.astype(float)
+        series = np.asarray(df["O"], dtype=float)
     else:
         raise ValueError(f"No signal column found in {csv_path}")
 
