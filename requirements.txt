@@ -1,5 +1,6 @@
-# Runtime dependencies — aligned with pyproject.toml [project.dependencies]
-# For development: pip install -e ".[dev]"
+# Runtime dependencies. Canonical source: pyproject.toml [project.dependencies]
+# Install the package for runtime use: pip install .
+# Install development tools: pip install -e ".[dev]"
 
 numpy>=1.26
 pandas>=2.0

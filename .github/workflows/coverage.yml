@@ -1,0 +1,42 @@
+name: Coverage - split reports
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Coverage for packaged source
+        run: |
+          set -euo pipefail
+          pytest -q src/oric/tests             --cov=src/oric             --cov-report=term-missing             --cov-report=xml:coverage-src-oric.xml
+      - name: Coverage for executable repository surface
+        run: |
+          set -euo pipefail
+          pytest -q src/oric/tests 04_Code/tests tools/tests             --cov=src/oric             --cov=04_Code             --cov=tools             --cov-report=term-missing             --cov-report=xml:coverage-repository-wide.xml
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-split-${{ github.run_id }}
+          path: |
+            coverage-src-oric.xml
+            coverage-repository-wide.xml
+          if-no-files-found: error

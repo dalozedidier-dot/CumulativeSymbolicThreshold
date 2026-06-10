@@ -1,22 +1,11 @@
-"""Console-script entry points for the oric package.
+"""Backward-compatible console-script entry points for ORI-C.
 
-These thin wrappers delegate to the scripts in scripts/ so that
-``pip install -e .`` makes ``oric-run-all`` and ``oric-run-tests``
-available on PATH.
+These wrappers intentionally delegate to packaged functions only. They do not
+load repository-local ``scripts/`` files, which makes them safe to test from an
+installed wheel.
 """
 from __future__ import annotations
 
-import runpy
-from pathlib import Path
+from oric.cli import run_all, run_all_tests
 
-_ROOT = Path(__file__).resolve().parent.parent.parent
-
-
-def run_all() -> None:
-    """Entry point for ``oric-run-all``."""
-    runpy.run_path(str(_ROOT / "scripts" / "run_all.py"), run_name="__main__")
-
-
-def run_all_tests() -> None:
-    """Entry point for ``oric-run-tests``."""
-    runpy.run_path(str(_ROOT / "scripts" / "run_all_tests.py"), run_name="__main__")
+__all__ = ["run_all", "run_all_tests"]

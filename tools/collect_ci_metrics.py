@@ -55,6 +55,29 @@ def _first_line(p: Path) -> str:
 def _expected_header(fields: List[str]) -> str:
     return ",".join(fields)
 
+
+def _validate_row(row: Dict[str, str], fields: List[str], row_name: str) -> None:
+    """Fail fast when a row would corrupt the append-only metrics schema."""
+    keys = set(row)
+    expected = set(fields)
+    missing = sorted(expected - keys)
+    extra = sorted(keys - expected)
+    if missing or extra:
+        raise SystemExit(
+            f"Invalid {row_name}: missing={missing!r} extra={extra!r}. Refusing to append."
+        )
+    gid = row.get("github_run_id", "")
+    if gid and not gid.isdigit():
+        raise SystemExit(f"Invalid {row_name}: github_run_id={gid!r} is not numeric.")
+    all_pass = row.get("all_pass", "")
+    if all_pass not in ("", "True", "False", "true", "false"):
+        raise SystemExit(f"Invalid {row_name}: all_pass={all_pass!r}.")
+
+
+def _validate_rows(rows: List[Dict[str, str]], fields: List[str], label: str) -> None:
+    for i, row in enumerate(rows, start=1):
+        _validate_row(row, fields, f"{label}[{i}]")
+
 def _ensure_csv_with_header(p: Path, fields: List[str]) -> None:
     _ensure_dir(p)
     if not p.exists():
@@ -273,6 +296,9 @@ def main() -> None:
         hist_rows.append({"timestamp": now, **row})
 
     if idx_rows:
+        _validate_rows(idx_rows, RUNS_INDEX_FIELDS, "runs_index")
+        _validate_rows(hist_rows, HISTORY_FIELDS, "history")
+
         with runs_index.open("a", encoding="utf-8", newline="") as f:
             w=csv.DictWriter(f, fieldnames=RUNS_INDEX_FIELDS)
             for r in idx_rows:
