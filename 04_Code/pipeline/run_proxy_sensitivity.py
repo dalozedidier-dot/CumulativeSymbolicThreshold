@@ -15,7 +15,6 @@ import argparse
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -161,7 +160,7 @@ def run_sensitivity_for_dataset(dataset_dir: Path, outdir: Path, seed: int) -> d
             note = f"Noise replacement changes verdict {orig_v} -> {noise_v}: proxy is NECESSARY"
         elif orig_v == "ACCEPT" and noise_v == "ACCEPT":
             necessary = False
-            note = f"Noise replacement keeps verdict ACCEPT: proxy may be REDUNDANT"
+            note = "Noise replacement keeps verdict ACCEPT: proxy may be REDUNDANT"
         else:
             necessary = None
             note = f"Original={orig_v}, Noise={noise_v}: sensitivity unclear"
@@ -228,7 +227,7 @@ def main() -> int:
 
     # Generate markdown report
     report_lines = ["# Proxy Sensitivity Report (T3b)\n"]
-    report_lines.append(f"Date: auto-generated\n")
+    report_lines.append("Date: auto-generated\n")
     report_lines.append(f"Datasets analyzed: {len(all_results)}\n")
     report_lines.append(f"Seed: {args.seed}\n\n")
 
