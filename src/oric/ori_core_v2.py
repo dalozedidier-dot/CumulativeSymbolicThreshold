@@ -97,6 +97,7 @@ def compute_C_trajectory(
         elif cfg.variant == "V4":
             # SDE stochastique
             drift = cfg.C_beta * s_t - cfg.C_gamma * v_t
+            assert rng is not None  # rng is initialised whenever variant == "V4"
             diffusion = cfg.sigma_C * rng.normal(0, 1)
             C[t] = c_prev + drift + diffusion
 
@@ -155,8 +156,8 @@ def run_variant_on_dataframe(
             seed=cfg.seed, k=cfg.k, m=cfg.m, baseline_n=cfg.baseline_n,
         )
 
-    S = df["S"].values.astype(float) if "S" in df.columns else np.zeros(len(df))
-    V = df["V"].values.astype(float) if "V" in df.columns else np.ones(len(df)) * 0.5
+    S = np.asarray(df["S"], dtype=float) if "S" in df.columns else np.zeros(len(df))
+    V = np.asarray(df["V"], dtype=float) if "V" in df.columns else np.ones(len(df)) * 0.5
 
     C = compute_C_trajectory(S, V, cfg)
     delta_C = np.diff(C, prepend=0.0)
@@ -176,12 +177,13 @@ def run_variant_on_dataframe(
 def compare_all_variants(
     df: pd.DataFrame,
     seed: int = 8000,
-) -> dict:
-    """Run all 4 variants and return comparison summary."""
+) -> tuple[dict, pd.DataFrame]:
+    """Run all 4 variants and return (comparison summary, augmented dataframe)."""
     base_cfg = ModelV2Config(seed=seed)
-    results = {}
+    results: dict = {}
 
-    for variant in ["V1", "V2", "V3", "V4"]:
+    variants: tuple[Literal["V1", "V2", "V3", "V4"], ...] = ("V1", "V2", "V3", "V4")
+    for variant in variants:
         df = run_variant_on_dataframe(df, variant, base_cfg)
 
         c_col = f"C_{variant}"
@@ -192,7 +194,7 @@ def compare_all_variants(
         if (df[hit_col] > 0).any():
             hit_idx = int(df.index[df[hit_col] > 0][0])
 
-        c_vals = df[c_col].values
+        c_vals = np.asarray(df[c_col], dtype=float)
         n = len(c_vals)
         mid = n // 2
 

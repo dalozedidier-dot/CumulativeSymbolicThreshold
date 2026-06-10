@@ -21,7 +21,7 @@ must exceed the contractual threshold.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 import pandas as pd
@@ -212,7 +212,7 @@ def make_block_shuffle(df: pd.DataFrame, seed: int,
 
 # ── Battery runner ─────────────────────────────────────────────────────────
 
-_GENERATORS = {
+_GENERATORS: dict[str, Callable[..., tuple[pd.DataFrame, PlaceboSpec]]] = {
     "cyclic_shift": make_cyclic_shift,
     "temporal_permute": make_temporal_permute,
     "phase_randomize": make_phase_randomize,

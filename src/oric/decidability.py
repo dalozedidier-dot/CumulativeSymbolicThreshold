@@ -101,17 +101,17 @@ def compute_decidability(
         m.top_indeterminate_reason = reason_counts.most_common(1)[0][0]
 
     # Diagnostics
-    c_vars = [r.get("c_variance") for r in runs
+    c_vars = [float(r["c_variance"]) for r in runs
               if r.get("c_variance") is not None]
     if c_vars:
         m.mean_c_variance = sum(c_vars) / len(c_vars)
 
-    n_uniques = [r.get("n_unique_c") for r in runs
+    n_uniques = [float(r["n_unique_c"]) for r in runs
                  if r.get("n_unique_c") is not None]
     if n_uniques:
         m.mean_n_unique_c = sum(n_uniques) / len(n_uniques)
 
-    n_rows_list = [r.get("n_rows") for r in runs
+    n_rows_list = [float(r["n_rows"]) for r in runs
                    if r.get("n_rows") is not None]
     if n_rows_list:
         m.mean_series_length = sum(n_rows_list) / len(n_rows_list)
@@ -245,7 +245,7 @@ def build_decidability_report(
     # Sort by frequency
     sorted_reasons = sorted(all_reasons.items(), key=lambda x: -x[1])
 
-    report = {
+    report: dict[str, Any] = {
         "overall": {
             "n_total": overall_total,
             "n_decidable": overall_decidable,

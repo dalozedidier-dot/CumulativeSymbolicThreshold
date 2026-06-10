@@ -12,12 +12,11 @@ Targets:
   integrity.py     (78%)
   ci_maturity.py   (87%)
 """
+
 from __future__ import annotations
 
 import json
 import math
-import tempfile
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -43,23 +42,25 @@ class TestCapProjection:
         assert abs(float(cap.iloc[0]) - 0.04) < 1e-9
 
     def test_geom_mean_form(self):
-        cap = compute_cap_projection(_series([1.0]), _series([1.0]), _series([1.0]),
-                                     form="geom_mean")
+        cap = compute_cap_projection(
+            _series([1.0]), _series([1.0]), _series([1.0]), form="geom_mean"
+        )
         assert abs(float(cap.iloc[0]) - 1.0) < 1e-9
 
     def test_weighted_sum_form(self):
-        cap = compute_cap_projection(_series([1.0]), _series([1.0]), _series([1.0]),
-                                     form="weighted_sum")
+        cap = compute_cap_projection(
+            _series([1.0]), _series([1.0]), _series([1.0]), form="weighted_sum"
+        )
         assert abs(float(cap.iloc[0]) - 1.0) < 1e-9
 
     def test_unknown_form_raises(self):
         with pytest.raises(ValueError, match="Unknown cap form"):
-            compute_cap_projection(_series([0.5]), _series([0.4]), _series([0.2]),
-                                   form="invalid")
+            compute_cap_projection(_series([0.5]), _series([0.4]), _series([0.2]), form="invalid")
 
     def test_geom_mean_values(self):
-        cap = compute_cap_projection(_series([0.8]), _series([0.5]), _series([0.2]),
-                                     form="geom_mean")
+        cap = compute_cap_projection(
+            _series([0.8]), _series([0.5]), _series([0.2]), form="geom_mean"
+        )
         expected = (0.8 * 0.5 * 0.2) ** (1.0 / 3.0)
         assert abs(float(cap.iloc[0]) - expected) < 1e-9
 
@@ -80,12 +81,14 @@ class TestComputeSigma:
 
 class TestComputeViability:
     def _df(self):
-        return pd.DataFrame({
-            "survie": [0.8],
-            "energie_nette": [0.6],
-            "integrite": [0.7],
-            "persistance": [0.9],
-        })
+        return pd.DataFrame(
+            {
+                "survie": [0.8],
+                "energie_nette": [0.6],
+                "integrite": [0.7],
+                "persistance": [0.9],
+            }
+        )
 
     def test_equal_weights(self):
         v = compute_viability(self._df(), (0.25, 0.25, 0.25, 0.25))
@@ -106,10 +109,12 @@ class TestComputeViability:
 class TestSummarizeRun:
     def _df(self, n=50):
         rng = np.random.default_rng(0)
-        return pd.DataFrame({
-            "Sigma": rng.uniform(0, 0.5, n),
-            "V": rng.uniform(0.3, 0.9, n),
-        })
+        return pd.DataFrame(
+            {
+                "Sigma": rng.uniform(0, 0.5, n),
+                "V": rng.uniform(0.3, 0.9, n),
+            }
+        )
 
     def test_basic_keys(self):
         result = summarize_run(self._df())
@@ -138,12 +143,14 @@ from oric.symbolic import compute_stock_S, compute_order_C, detect_s_star_piecew
 
 class TestComputeStockS:
     def _df(self):
-        return pd.DataFrame({
-            "repertoire": [0.5],
-            "codification": [0.3],
-            "densite_transmission": [0.4],
-            "fidelite": [0.6],
-        })
+        return pd.DataFrame(
+            {
+                "repertoire": [0.5],
+                "codification": [0.3],
+                "densite_transmission": [0.4],
+                "fidelite": [0.6],
+            }
+        )
 
     def test_basic(self):
         s = compute_stock_S(self._df(), (1.0, 1.0, 1.0, 1.0))
@@ -157,10 +164,12 @@ class TestComputeStockS:
 
 class TestComputeOrderC:
     def test_accumulates_joint_gains(self):
-        df = pd.DataFrame({
-            "S": [0.0, 0.2, 0.4, 0.3, 0.5],
-            "V": [0.5, 0.6, 0.7, 0.6, 0.8],
-        })
+        df = pd.DataFrame(
+            {
+                "S": [0.0, 0.2, 0.4, 0.3, 0.5],
+                "V": [0.5, 0.6, 0.7, 0.6, 0.8],
+            }
+        )
         c = compute_order_C(df)
         assert len(c) == 5
         assert c.iloc[0] == 0.0  # starts at 0
@@ -202,12 +211,20 @@ class TestDetectSStarPiecewise:
 
 # ─── decision ────────────────────────────────────────────────────────────────
 
-from oric.decision import DecisionResult, hierarchical_verdict
+from oric.decision import hierarchical_verdict
 
 
 class TestHierarchicalVerdict:
-    def _call(self, p_welch=float("nan"), boot_lo=float("nan"), boot_hi=float("nan"),
-              boot_mid=float("nan"), mw_p=float("nan"), alpha=0.01, sesoi=0.05):
+    def _call(
+        self,
+        p_welch=float("nan"),
+        boot_lo=float("nan"),
+        boot_hi=float("nan"),
+        boot_mid=float("nan"),
+        mw_p=float("nan"),
+        alpha=0.01,
+        sesoi=0.05,
+    ):
         return hierarchical_verdict(p_welch, boot_lo, boot_hi, boot_mid, mw_p, alpha, sesoi)
 
     def test_welch_accept(self):
@@ -261,9 +278,20 @@ class TestHierarchicalVerdict:
     def test_to_dict_keys(self):
         r = self._call(p_welch=0.005, boot_lo=0.1, boot_hi=0.9, boot_mid=0.3, sesoi=0.1)
         d = r.to_dict()
-        for k in ("p_effective", "p_source", "ci_lo", "ci_hi", "boot_mid",
-                  "ci_excludes_zero", "sesoi_ok", "ok_p", "ok_ci", "ok_sesoi",
-                  "verdict_triplet", "indeterminate"):
+        for k in (
+            "p_effective",
+            "p_source",
+            "ci_lo",
+            "ci_hi",
+            "boot_mid",
+            "ci_excludes_zero",
+            "sesoi_ok",
+            "ok_p",
+            "ok_ci",
+            "ok_sesoi",
+            "verdict_triplet",
+            "indeterminate",
+        ):
             assert k in d
 
 
@@ -522,8 +550,9 @@ class TestIntegrityCheck:
 
 
 class TestCheckRunIntegrity:
-    def _run_dir(self, tmp_path, verdict="ACCEPT", summary_verdict="ACCEPT",
-                 precheck=None, json_verdict=None):
+    def _run_dir(
+        self, tmp_path, verdict="ACCEPT", summary_verdict="ACCEPT", precheck=None, json_verdict=None
+    ):
         d = tmp_path / "run"
         d.mkdir()
         (d / "verdict.txt").write_text(verdict, encoding="utf-8")
@@ -535,9 +564,7 @@ class TestCheckRunIntegrity:
         if json_verdict is not None:
             jv = {"verdict": json_verdict}
             (tables / "verdict.json").write_text(json.dumps(jv), encoding="utf-8")
-        (tables / "validation_summary.json").write_text(
-            json.dumps(payload), encoding="utf-8"
-        )
+        (tables / "validation_summary.json").write_text(json.dumps(payload), encoding="utf-8")
         return d
 
     def test_passes_on_valid_run(self, tmp_path):
@@ -571,14 +598,14 @@ class TestCheckRunIntegrity:
         assert any("summary.json verdict" in e for e in result.errors)
 
     def test_precheck_false_with_accept(self, tmp_path):
-        d = self._run_dir(tmp_path, verdict="ACCEPT", summary_verdict="ACCEPT",
-                          precheck=False)
+        d = self._run_dir(tmp_path, verdict="ACCEPT", summary_verdict="ACCEPT", precheck=False)
         result = check_run_integrity(d)
         assert not result.passed
 
     def test_verdict_json_mismatch(self, tmp_path):
-        d = self._run_dir(tmp_path, verdict="ACCEPT", summary_verdict="ACCEPT",
-                          json_verdict="REJECT")
+        d = self._run_dir(
+            tmp_path, verdict="ACCEPT", summary_verdict="ACCEPT", json_verdict="REJECT"
+        )
         result = check_run_integrity(d)
         assert not result.passed
 
@@ -596,9 +623,7 @@ class TestCheckRunIntegrity:
                 "placebo": {"metrics": {"detection_rate": 0.1}},
             },
         }
-        (tables / "validation_summary.json").write_text(
-            json.dumps(payload), encoding="utf-8"
-        )
+        (tables / "validation_summary.json").write_text(json.dumps(payload), encoding="utf-8")
         result = check_run_integrity(d)
         assert result.passed
 
@@ -614,9 +639,7 @@ class TestCheckRunIntegrity:
                 "test": {"metrics": {"detection_rate": 0.3}},
             },
         }
-        (tables / "validation_summary.json").write_text(
-            json.dumps(payload), encoding="utf-8"
-        )
+        (tables / "validation_summary.json").write_text(json.dumps(payload), encoding="utf-8")
         result = check_run_integrity(d)
         assert not result.passed
 
@@ -632,9 +655,7 @@ class TestCheckRunIntegrity:
                 "placebo": {"metrics": {"detection_rate": 0.9}},
             },
         }
-        (tables / "validation_summary.json").write_text(
-            json.dumps(payload), encoding="utf-8"
-        )
+        (tables / "validation_summary.json").write_text(json.dumps(payload), encoding="utf-8")
         result = check_run_integrity(d)
         assert not result.passed
 
@@ -722,8 +743,9 @@ class TestCheckAllIntegrity:
 
     def test_with_manifest(self, tmp_path):
         mpath = tmp_path / "manifest.json"
-        mpath.write_text(json.dumps({"dual_proof_status": "IN_PROGRESS",
-                                     "empty_fields": []}), encoding="utf-8")
+        mpath.write_text(
+            json.dumps({"dual_proof_status": "IN_PROGRESS", "empty_fields": []}), encoding="utf-8"
+        )
         results = check_all_integrity([], manifest_path=mpath)
         assert len(results) == 1
 
@@ -835,10 +857,12 @@ class TestDetectThreshold:
 class TestRunVariantOnDataframe:
     def _df(self, n=80):
         rng = np.random.default_rng(42)
-        return pd.DataFrame({
-            "S": rng.uniform(0, 1, n),
-            "V": rng.uniform(0.3, 0.8, n),
-        })
+        return pd.DataFrame(
+            {
+                "S": rng.uniform(0, 1, n),
+                "V": rng.uniform(0.3, 0.8, n),
+            }
+        )
 
     def test_adds_columns(self):
         df = self._df()
@@ -849,7 +873,7 @@ class TestRunVariantOnDataframe:
 
     def test_preserves_original(self):
         df = self._df()
-        out = run_variant_on_dataframe(df, "V2")
+        run_variant_on_dataframe(df, "V2")
         assert list(df.columns) == ["S", "V"]
 
     def test_no_S_column_uses_zeros(self):
@@ -870,11 +894,12 @@ class TestRunVariantOnDataframe:
 
     def test_threshold_hit_recorded(self):
         n = 100
-        rng = np.random.default_rng(7)
-        df = pd.DataFrame({
-            "S": np.concatenate([np.zeros(50), np.full(50, 2.0)]),
-            "V": np.full(n, 0.01),
-        })
+        df = pd.DataFrame(
+            {
+                "S": np.concatenate([np.zeros(50), np.full(50, 2.0)]),
+                "V": np.full(n, 0.01),
+            }
+        )
         out = run_variant_on_dataframe(df, "V1")
         # hit may or may not trigger depending on dynamics; just check dtype
         assert out["threshold_hit_V1"].dtype in (np.int64, np.float64, object, int)
@@ -884,10 +909,12 @@ class TestCompareAllVariants:
     def test_returns_all_variants(self):
         rng = np.random.default_rng(0)
         n = 100
-        df = pd.DataFrame({
-            "S": rng.uniform(0, 1, n),
-            "V": rng.uniform(0.3, 0.8, n),
-        })
+        df = pd.DataFrame(
+            {
+                "S": rng.uniform(0, 1, n),
+                "V": rng.uniform(0.3, 0.8, n),
+            }
+        )
         results, _ = compare_all_variants(df)
         for v in ("V1", "V2", "V3", "V4"):
             assert v in results
@@ -895,10 +922,12 @@ class TestCompareAllVariants:
     def test_result_keys(self):
         rng = np.random.default_rng(0)
         n = 80
-        df = pd.DataFrame({
-            "S": rng.uniform(0, 1, n),
-            "V": rng.uniform(0.3, 0.8, n),
-        })
+        df = pd.DataFrame(
+            {
+                "S": rng.uniform(0, 1, n),
+                "V": rng.uniform(0.3, 0.8, n),
+            }
+        )
         results, _ = compare_all_variants(df)
         for v, res in results.items():
             assert "verdict" in res
@@ -908,10 +937,12 @@ class TestCompareAllVariants:
     def test_verdict_values(self):
         rng = np.random.default_rng(0)
         n = 80
-        df = pd.DataFrame({
-            "S": rng.uniform(0, 1, n),
-            "V": rng.uniform(0.3, 0.8, n),
-        })
+        df = pd.DataFrame(
+            {
+                "S": rng.uniform(0, 1, n),
+                "V": rng.uniform(0.3, 0.8, n),
+            }
+        )
         results, _ = compare_all_variants(df)
         for v, res in results.items():
             assert res["verdict"] in ("ACCEPT", "INDETERMINATE")

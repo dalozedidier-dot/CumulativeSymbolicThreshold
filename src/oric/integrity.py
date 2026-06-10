@@ -46,7 +46,8 @@ def _read_json_safe(p: Path) -> dict | None:
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
     except (json.JSONDecodeError, OSError):
         return None
 
