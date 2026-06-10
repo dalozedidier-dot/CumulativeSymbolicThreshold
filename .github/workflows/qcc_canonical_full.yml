@@ -164,7 +164,7 @@ jobs:
           pip install -r requirements-qcc-stateprob.txt
 
       - name: Download données générées
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: brisbane_stateprob_data
           path: _ci_out/brisbane_stateprob/data
@@ -249,7 +249,7 @@ jobs:
           pip install -r requirements-qcc-stateprob.txt
 
       - name: Download artefact cross-conditions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: brisbane_cross_conditions_artifact
           path: _ci_out/brisbane_stateprob
