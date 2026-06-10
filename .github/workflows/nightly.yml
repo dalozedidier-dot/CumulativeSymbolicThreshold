@@ -106,7 +106,7 @@ jobs:
 
       - name: Upload synthetic artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_synthetic_${{ github.run_id }}
           path: _ci_out/synthetic
@@ -187,7 +187,7 @@ jobs:
 
       - name: Upload real data artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_real_fred_${{ github.run_id }}
           path: _ci_out/real/fred_monthly
@@ -265,7 +265,7 @@ jobs:
 
       - name: Upload protocol artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_validation_protocol_${{ github.run_id }}
           path: _ci_out/real/validation_protocol
@@ -304,7 +304,7 @@ jobs:
             --normalize robust --control-mode no_symbolic
           PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
             --run-dir _ci_out/real/cpi --alpha 0.01 --lags 1-3
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly_real_cpi_${{ github.run_id }}
@@ -343,7 +343,7 @@ jobs:
             --normalize robust --control-mode no_symbolic
           PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
             --run-dir _ci_out/real/energie --alpha 0.01 --lags 1-3
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly_real_energie_${{ github.run_id }}
@@ -382,7 +382,7 @@ jobs:
             --normalize robust --control-mode no_symbolic
           PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
             --run-dir _ci_out/real/meteo --alpha 0.01 --lags 1-3
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly_real_meteo_${{ github.run_id }}
@@ -421,7 +421,7 @@ jobs:
             --normalize robust --control-mode no_symbolic
           PYTHONPATH=src python 04_Code/pipeline/tests_causaux.py \
             --run-dir _ci_out/real/trafic --alpha 0.01 --lags 1-3
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly_real_trafic_${{ github.run_id }}
@@ -674,7 +674,7 @@ jobs:
           PYEOF
 
       - name: Upload combined dual proof artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly_dual_proof_${{ github.run_id }}
           path: _combined
