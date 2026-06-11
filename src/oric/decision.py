@@ -124,6 +124,9 @@ def hierarchical_verdict(
     -------
     DecisionResult with all derived boolean fields and the p_source provenance tag.
     """
+    if not (0 < alpha < 1):
+        raise ValueError(f"alpha must be in (0, 1), got {alpha}")
+
     # ── CI evaluation ──────────────────────────────────────────────────────────
     ci_excludes_zero = bool(
         math.isfinite(boot_lo) and math.isfinite(boot_hi) and boot_lo > 0.0

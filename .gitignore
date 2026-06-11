@@ -69,3 +69,4 @@ credentials.json
 # data/finance/                 — small reference datasets (tracked)
 # data/survey/                  — survey datasets (tracked)
 # data/qcc/                     — QCC reference data (tracked)
+.claude/worktrees/

@@ -1,0 +1,3 @@
+# placebo
+
+::: oric.placebo

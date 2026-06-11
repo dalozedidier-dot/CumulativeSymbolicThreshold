@@ -38,6 +38,10 @@ def compute_viability(df: pd.DataFrame, omega: Tuple[float, float, float, float]
         if c not in df.columns:
             raise KeyError(f"Missing column: {c}")
     w = np.array(omega, dtype=float)
+    if np.any(w < 0):
+        raise ValueError(f"omega weights must be non-negative, got {omega}")
+    if w.sum() == 0:
+        raise ValueError("omega weights must not all be zero")
     w = w / w.sum()
     return pd.Series(
         w[0] * df[cols[0]] + w[1] * df[cols[1]] + w[2] * df[cols[2]] + w[3] * df[cols[3]]

@@ -41,12 +41,27 @@ nav:
       - Symbolic Tests: SYMBOLIC_TESTS.md
       - Repository Layout: REPO_LAYOUT.md
   - API Reference:
-      - ori_core: api/ori_core.md
-      - symbolic: api/symbolic.md
-      - decision: api/decision.md
-      - proxy_spec: api/proxy_spec.md
-      - prereg: api/prereg.md
-      - randomization: api/randomization.md
+      - Core:
+          - ori_core: api/ori_core.md
+          - ori_core_v2: api/ori_core_v2.md
+          - symbolic: api/symbolic.md
+          - frozen_params: api/frozen_params.md
+      - Decision & Proof:
+          - decision: api/decision.md
+          - proof_manifest: api/proof_manifest.md
+          - proof_package: api/proof_package.md
+          - proof_levels: api/proof_levels.md
+          - integrity: api/integrity.md
+      - Data & Validation:
+          - proxy_spec: api/proxy_spec.md
+          - placebo: api/placebo.md
+          - decidability: api/decidability.md
+          - comparative_benchmark: api/comparative_benchmark.md
+      - Utilities:
+          - prereg: api/prereg.md
+          - randomization: api/randomization.md
+          - logger: api/logger.md
+          - ci_maturity: api/ci_maturity.md
 
 plugins:
   - search

@@ -1,0 +1,66 @@
+{
+  "dataset_id": "epidemic_BE",
+  "sector": "sector_health",
+  "spec_version": "1.0",
+  "time_column": "date",
+  "time_mode": "value",
+  "normalization_global": "none",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Healthcare system output proxy (Belgium COVID-19 epidemic). Derived from ECDC daily data; already in [0,1].",
+      "manipulability_note": "Testing capacity constraints early in pandemic (early 2020) affect confirmed case counts underlying this proxy."
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Epidemic resilience proxy (Belgium COVID-19). Already in [0,1]; captures health system reserve capacity.",
+      "manipulability_note": "Hospital capacity reporting changed across Belgian waves; underreporting likely in wave 1 (Mar-May 2020)."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Integration/interaction proxy (Belgium COVID-19). Already in [0,1]; captures viral spread network dynamics.",
+      "manipulability_note": "Contact tracing completeness varied across epidemic phases; proxy reflects official data quality."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Healthcare demand proxy (Belgium COVID-19). Raw values were outside [0,1] (ranged up to ~21); min-max normalization applied.",
+      "manipulability_note": "ICU bed demand figures depend on admission thresholds, which changed with Belgian crisis standards."
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "none",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Epidemic stability proxy (Belgium COVID-19). Already in [0,1]; captures suppression level.",
+      "manipulability_note": "Vaccination rollout starting late 2020 structurally shifts this proxy; pre/post-vaccine periods not distinguished."
+    }
+  ],
+  "notes": "Belgium COVID-19 epidemic pilot dataset sourced from ECDC daily surveillance data, covering daily observations from 2019-12-31 to approximately mid-2021 (350 rows). O=healthcare output proxy, R=epidemic resilience proxy, I=integration/interaction proxy, demand=healthcare demand proxy (normalized from raw), S=epidemic stability proxy. Most columns were already in [0,1]; demand required min-max normalization. Dataset spans the first two major COVID-19 epidemic waves in Belgium."
+}

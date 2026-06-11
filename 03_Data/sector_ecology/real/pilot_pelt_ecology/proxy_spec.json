@@ -1,0 +1,66 @@
+{
+  "dataset_id": "pelt_ecology",
+  "sector": "sector_ecology",
+  "spec_version": "1.0",
+  "time_column": "date",
+  "time_mode": "value",
+  "normalization_global": "minmax",
+  "columns": [
+    {
+      "source_column": "O",
+      "oric_variable": "O",
+      "direction": "positive",
+      "normalization": "minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Annual ecosystem output proxy (Pelt dataset). Raw values spanned negatives and values > 1; per-column min-max normalization applied.",
+      "manipulability_note": "Annual aggregation may mask intra-year seasonal dynamics."
+    },
+    {
+      "source_column": "R",
+      "oric_variable": "R",
+      "direction": "positive",
+      "normalization": "minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Resilience proxy (Pelt dataset). Raw values outside [0,1]; min-max normalized.",
+      "manipulability_note": "Resilience interpretation depends on population model assumptions underlying Pelt dataset."
+    },
+    {
+      "source_column": "I",
+      "oric_variable": "I",
+      "direction": "positive",
+      "normalization": "minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Integration/interaction proxy (Pelt dataset). Raw values outside [0,1]; min-max normalized.",
+      "manipulability_note": "Species interaction strength estimates are model-dependent."
+    },
+    {
+      "source_column": "demand",
+      "oric_variable": "demand",
+      "direction": "positive",
+      "normalization": "minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Resource demand proxy (Pelt dataset). Raw values outside [0,1]; min-max normalized.",
+      "manipulability_note": "Demand proxy derived from harvested pelt counts; susceptible to market price fluctuations."
+    },
+    {
+      "source_column": "S",
+      "oric_variable": "S",
+      "direction": "positive",
+      "normalization": "minmax",
+      "missing_strategy": "linear_interp",
+      "scale_lo": null,
+      "scale_hi": null,
+      "fragility_note": "Stability proxy (Pelt dataset). Was already in [0,1] range in raw data.",
+      "manipulability_note": "Pelt harvest records from Hudson Bay Company may underrepresent true population levels."
+    }
+  ],
+  "notes": "Pelt ecology pilot dataset derived from the classic Hudson Bay Company lynx-hare pelt records (Pelt dataset), covering annual observations from 1845 to 1935 (91 rows). O=ecosystem output proxy, R=resilience proxy, I=integration/interaction proxy, demand=resource demand proxy, S=stability proxy. All ORIC columns were outside [0,1] in raw form (negatives and values > 1) and have been normalized per-column using min-max scaling. This is a canonical ecological time series illustrating predator-prey dynamics and population cycles."
+}
