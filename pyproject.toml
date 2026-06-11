@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Operating System :: OS Independent",
@@ -78,6 +79,7 @@ oric = ["py.typed"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = [".claude/worktrees"]
 
 [tool.ruff.lint]
 extend-ignore = ["E731"]

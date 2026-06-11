@@ -6,6 +6,21 @@ import pandas as pd
 
 
 def compute_stock_S(df: pd.DataFrame, alpha_s: Tuple[float, float, float, float]) -> pd.Series:
+    """Compute symbolic stock S(t) as a weighted sum of four symbolic components.
+
+    Parameters
+    ----------
+    df:
+        Must contain columns: repertoire, codification, densite_transmission, fidelite.
+    alpha_s:
+        Weights for each component (repertoire, codification, transmission density, fidelity).
+        Will be normalised to sum to 1.
+
+    Returns
+    -------
+    pd.Series
+        S(t) values indexed identically to df.
+    """
     cols = ["repertoire", "codification", "densite_transmission", "fidelite"]
     for c in cols:
         if c not in df.columns:

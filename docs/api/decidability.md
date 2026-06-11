@@ -1,0 +1,3 @@
+# decidability
+
+::: oric.decidability

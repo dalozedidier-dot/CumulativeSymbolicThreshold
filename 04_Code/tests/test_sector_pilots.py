@@ -70,6 +70,20 @@ PILOTS = [
         "min_rows": 150,
         "oric_cols": ["O", "R", "I", "demand", "S"],
     },
+    {
+        "id": "pelt_ecology",
+        "sector": "sector_ecology",
+        "pilot": "pilot_pelt_ecology",
+        "min_rows": 90,
+        "oric_cols": ["O", "R", "I", "demand", "S"],
+    },
+    {
+        "id": "epidemic_BE",
+        "sector": "sector_health",
+        "pilot": "pilot_epidemic_BE",
+        "min_rows": 300,
+        "oric_cols": ["O", "R", "I", "demand", "S"],
+    },
 ]
 
 
