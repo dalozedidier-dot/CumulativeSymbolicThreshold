@@ -98,6 +98,28 @@ def test_synthetic_demo_with_transition(tmp_path):
 
 # ── OOS panel ──────────────────────────────────────────────────────────────────
 
+@pytest.mark.parametrize(
+    ("script", "extra_args"),
+    [
+        ("run_symbolic_T4_s_rich_poor.py", []),
+        ("run_symbolic_T5_injection.py", ["--t0", "30"]),
+    ],
+)
+def test_symbolic_canonical_scripts_generate_boxplots(tmp_path, script, extra_args):
+    """T4/T5 must remain compatible with the Matplotlib version used by CI."""
+    outdir = tmp_path / script.removesuffix(".py")
+    res = _run(
+        _PIPELINE / script,
+        "--outdir", str(outdir),
+        "--n", "4",
+        "--seed", "42",
+        "--t-steps", "80",
+        *extra_args,
+    )
+    assert res.returncode == 0, f"Script failed:\n{res.stderr}"
+    assert (outdir / "figures" / "c_end_boxplot.png").exists()
+
+
 @pytest.mark.skipif(not _PANEL.exists(), reason="panel CSV not found")
 def test_oos_panel_runs_and_produces_valid_verdict(tmp_path):
     outdir = tmp_path / "oos_panel"

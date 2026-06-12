@@ -212,7 +212,10 @@ def main() -> int:
     (outdir / "verdict.txt").write_text(verdict_token, encoding="utf-8")
 
     plt.figure(figsize=(8, 5))
-    plt.boxplot([res["C_end_control"].to_numpy(), res["C_end_injection"].to_numpy()], labels=["control", "injection"])
+    plt.boxplot(
+        [res["C_end_control"].to_numpy(), res["C_end_injection"].to_numpy()],
+        tick_labels=["control", "injection"],
+    )
     plt.ylabel("C_end")
     plt.title("C_end: control vs injection")
     plt.tight_layout()

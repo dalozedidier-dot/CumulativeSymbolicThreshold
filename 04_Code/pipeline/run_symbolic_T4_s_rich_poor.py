@@ -224,7 +224,10 @@ def main() -> int:
 
     # Simple plot
     plt.figure(figsize=(8, 5))
-    plt.boxplot([res["C_end_poor"].to_numpy(), res["C_end_rich"].to_numpy()], labels=["poor", "rich"])
+    plt.boxplot(
+        [res["C_end_poor"].to_numpy(), res["C_end_rich"].to_numpy()],
+        tick_labels=["poor", "rich"],
+    )
     plt.ylabel("C_end")
     plt.title("C_end: S0 poor vs rich")
     plt.tight_layout()
