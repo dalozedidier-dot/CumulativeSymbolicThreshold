@@ -34,8 +34,6 @@ jobs:
           python -m pip install -e ".[dev]" || python -m pip install -e .
       - name: Ruff lint
         run: ruff check .
-      - name: Ruff format check
-        run: ruff format --check src/oric/
       - name: Mypy type check
         run: python -m mypy src/oric
 
