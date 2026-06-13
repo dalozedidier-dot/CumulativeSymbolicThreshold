@@ -157,8 +157,12 @@ jobs:
       - name: Check downloaded artifacts
         run: |
           set -euo pipefail
-          if [ ! -d _collected_artifacts ] || [ -z "$(ls -A _collected_artifacts)" ]; then
-            echo "WARNING: no artifacts were downloaded — nothing to collect"
+          valid_run_dir=$(find _collected_artifacts -type f -name "manifest.json" \
+            -exec sh -c 'run_dir=$(dirname "$1"); test -f "$run_dir/tables/summary.json" && printf "%s\n" "$run_dir"' _ {} \; \
+            2>/dev/null | head -n 1 || true)
+
+          if [ -z "$valid_run_dir" ]; then
+            echo "WARNING: no artifacts with manifest.json + tables/summary.json were downloaded — nothing to collect"
             echo "SKIP=true" >> $GITHUB_ENV
           else
             echo "Artifact tree:"
@@ -389,11 +393,8 @@ jobs:
           print(f"Run dirs found in artifacts: {len(all_run_dirs)}")
 
           if not all_run_dirs:
-              print("ERROR: no run directories with manifest + summary found")
-              print("Searched under:", collected_root)
-              for p in sorted(collected_root.rglob("*"))[:20]:
-                  print(" ", p)
-              sys.exit(1)
+              print("No run directories with manifest + summary found — nothing to collect")
+              sys.exit(0)
 
           new_history = []
           new_index = []
