@@ -98,6 +98,24 @@ Pantheon's crossing rate looks high, but a spectrally matched surrogate reaches 
 ~17 % of the time: **the crossing is not distinguishable from the series' own
 autocorrelation** at α = 0.01.
 
+## 3c. Joint confirmatory verdict — both headline ACCEPTs are NOT_CONFIRMED
+
+The four controls are combined under a frozen joint rule
+(`oric.confirmatory`, `run_confirmatory_suite.py`): a series is **CONFIRMED** only
+if Test A (global) **and** Test B (surrogate null) **and** Test C (multiverse)
+**and** Test D (effect size) all pass. Run on the two headline ACCEPTs:
+
+| Series | A (accum. fpr) | B (surrogate p) | C (multiverse) | D (effect/SESOI) | **Joint** |
+|--------|----------------|-----------------|----------------|------------------|-----------|
+| Pantheon SN | FAIL (1.0) | FAIL (p=0.17) | PASS (robust+) | PASS (exceeds) | **NOT_CONFIRMED** |
+| FRED monthly | FAIL (1.0) | FAIL (p=1.0) | FAIL (robust−) | PASS (exceeds) | **NOT_CONFIRMED** |
+
+Pantheon is robust to proxies and has a large C effect, but fails both
+transition-specific controls. The **limiting factor is Test A** — a property of
+the detector itself (the bare ΔC integrator), not of any one series — so **no
+pilot can be confirmed until the detector distinguishes accumulation from
+bifurcation.**
+
 ## 4. What "solidly confirmed" still requires
 
 Implemented:
@@ -114,9 +132,20 @@ Pantheon SN `ROBUST_POSITIVE` (27/27) — but n.s. against the surrogate null
 proxies is **necessary but not sufficient**: confirmation requires Test A reject +
 Test B p < 0.01 + Test C `ROBUST_POSITIVE` jointly.
 
+Joint confirmatory suite (`run_confirmatory_suite.py`) combines the controls under
+the frozen joint rule; both headline ACCEPTs come out **NOT_CONFIRMED** (§3c).
+
 Still outstanding (roadmap, not yet done):
+- ⬜ **Fix the detector first** — a localized / de-trended transition statistic
+  (e.g. concentration of ΔC change, slope-break detection) so Test A can pass.
+  This is the prerequisite for every per-series confirmation below.
 - ⬜ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
-- ⬜ A pre-registered **out-of-sample directional prediction**, verified on held-out data (T3 is `INDETERMINATE`)
+- ⬜ A pre-registered **out-of-sample directional prediction** (T3 is `INDETERMINATE`).
+  **Deliberately not shipped yet:** because C is an integrator, a naive OOS
+  *crossing* prediction inherits the same trend confound as Test A and would
+  demonstrate the confound rather than confirm a transition. It must be built on
+  the localized statistic above (predict a *localized regime change*, not "C keeps
+  rising"), evaluated against the accumulation-vs-bifurcation taxonomy.
 - ⬜ Column-level proxy alternatives in the multiverse (k interchangeable source columns per variable, where available)
 - ⬜ Independent third-party replication via the Docker/Zenodo bundle
 

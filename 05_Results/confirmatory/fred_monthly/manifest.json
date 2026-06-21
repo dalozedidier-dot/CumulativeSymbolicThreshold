@@ -1,0 +1,14 @@
+{
+  "test_id": "confirmatory_suite",
+  "schema": "oric.confirmatory.manifest.v1",
+  "input": "03_Data/real/fred_monthly/real.csv",
+  "seed": 1234,
+  "n_surrogates": 500,
+  "verdict": "NOT_CONFIRMED",
+  "failing_tests": [
+    "A_accumulation_specificity",
+    "B_surrogate_null",
+    "C_multiverse"
+  ],
+  "json_sha256": "2fc7c3bcad743fa20b3003e181a81ab4b24bf45b39df842a7af95e594b22a253"
+}

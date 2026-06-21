@@ -69,6 +69,7 @@ from .multiverse import (
 from .effect_size import (
     cohens_d, hedges_g, achieved_power, effect_size_report, EffectSizeReport,
 )
+from .confirmatory import run_confirmatory_suite
 
 __all__ = [
     # Core computations
@@ -158,6 +159,8 @@ __all__ = [
     "achieved_power",
     "effect_size_report",
     "EffectSizeReport",
+    # Joint confirmatory verdict
+    "run_confirmatory_suite",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",
