@@ -1,0 +1,84 @@
+{
+  "schema": "oric.accumulation_control.v1",
+  "params": {
+    "n": 220,
+    "seed": 1234,
+    "k": 2.5,
+    "m": 3,
+    "baseline_n": 30,
+    "n_surrogates": 200
+  },
+  "outcomes": [
+    {
+      "name": "acc_logistic_growth",
+      "kind": "logistic_growth",
+      "label": 0,
+      "detector_fired": true,
+      "crossing_rate": 0.377273,
+      "max_run": 79,
+      "surrogate_p_rate": 0.447761,
+      "surrogate_p_maxrun": 0.094527,
+      "surrogate_significant": false
+    },
+    {
+      "name": "acc_gompertz",
+      "kind": "gompertz",
+      "label": 0,
+      "detector_fired": true,
+      "crossing_rate": 0.354545,
+      "max_run": 67,
+      "surrogate_p_rate": 0.39801,
+      "surrogate_p_maxrun": 0.228856,
+      "surrogate_significant": false
+    },
+    {
+      "name": "acc_exponential_saturation",
+      "kind": "exponential_saturation",
+      "label": 0,
+      "detector_fired": true,
+      "crossing_rate": 0.418182,
+      "max_run": 88,
+      "surrogate_p_rate": 0.452736,
+      "surrogate_p_maxrun": 0.099502,
+      "surrogate_significant": false
+    },
+    {
+      "name": "acc_linear_ramp",
+      "kind": "linear_ramp",
+      "label": 0,
+      "detector_fired": true,
+      "crossing_rate": 0.054545,
+      "max_run": 3,
+      "surrogate_p_rate": 0.427861,
+      "surrogate_p_maxrun": 0.542289,
+      "surrogate_significant": false
+    },
+    {
+      "name": "bif_sharp_regime_switch",
+      "kind": "sharp_regime_switch",
+      "label": 1,
+      "detector_fired": true,
+      "crossing_rate": 0.472727,
+      "max_run": 103,
+      "surrogate_p_rate": 0.393035,
+      "surrogate_p_maxrun": 0.189055,
+      "surrogate_significant": false
+    },
+    {
+      "name": "bif_delayed_bifurcation",
+      "kind": "delayed_bifurcation",
+      "label": 1,
+      "detector_fired": true,
+      "crossing_rate": 0.322727,
+      "max_run": 70,
+      "surrogate_p_rate": 0.517413,
+      "surrogate_p_maxrun": 0.169154,
+      "surrogate_significant": false
+    }
+  ],
+  "accumulation_fpr": 1.0,
+  "bifurcation_tpr": 1.0,
+  "separates": false,
+  "accumulation_fpr_max": 0.25,
+  "refutes_current_form": true
+}

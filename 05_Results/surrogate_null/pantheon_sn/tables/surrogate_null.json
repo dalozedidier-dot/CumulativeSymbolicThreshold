@@ -1,0 +1,34 @@
+{
+  "statistic": "crossing_rate",
+  "observed": 0.42,
+  "null_mean": 0.14285333333333333,
+  "null_std": 0.19795227438282526,
+  "null_q95": 0.49333333333333335,
+  "null_q99": 0.52,
+  "null_max": 0.56,
+  "p_value": 0.16766467065868262,
+  "n_surrogates": 500,
+  "surrogate_columns": [
+    "O",
+    "R",
+    "I",
+    "demand"
+  ],
+  "k": 2.5,
+  "m": 3,
+  "baseline_n": 30,
+  "significant_at_01": false,
+  "observed_crossing": {
+    "threshold": -0.021751715417690484,
+    "baseline_mu": -0.041094050732847186,
+    "baseline_sigma": 0.00773693412606268,
+    "n_steps": 150,
+    "n_crossings": 63,
+    "crossing_rate": 0.42,
+    "max_run": 58,
+    "sustained_hit": true
+  },
+  "notes": "IAAFT surrogates preserve per-channel amplitude distribution and power spectrum; p is the one-sided upper-tail probability that a spectrally matched surrogate reaches the observed crossing statistic.",
+  "input": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real_densified.csv",
+  "n_rows": 150
+}

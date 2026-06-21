@@ -1,0 +1,12 @@
+{
+  "test_id": "surrogate_null",
+  "schema": "oric.surrogate_null.manifest.v1",
+  "input": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real_densified.csv",
+  "seed": 1234,
+  "n_surrogates": 500,
+  "statistic": "crossing_rate",
+  "observed": 0.42,
+  "p_value": 0.16766467065868262,
+  "significant_at_01": false,
+  "json_sha256": "5c1378b449d1deb6806687cfee9f924e297fc052274eacaf40489eca78689589"
+}

@@ -23,8 +23,10 @@
 
 **A pre-registered, falsifiable scientific framework** for testing the ORI-C hypothesis: beyond a critical threshold of symbolic accumulation, the symbolic transmission channel becomes self-reinforcing — a measurable phase transition from a pre-threshold regime to a cumulative symbolic regime.
 
-> **Current synthetic verdict (T1–T8):** `ACCEPT` — `full_statistical_support`
-> **Current real-data verdict (FRED monthly pilot):** `ACCEPT` — `real_data_canonical_support`
+> **Evidentiary status (see [`docs/EVIDENTIARY_STATUS.md`](docs/EVIDENTIARY_STATUS.md)):** the framework is a *built, falsifiable test machine* that is currently **exploratory / indicative**, not solidly confirmed.
+> - **Synthetic T1–T8:** indicative — *no* `full_statistical` proof run with the obligatory triplet (p + CI₉₉ % + SESOI + power) exists in `05_Results/` yet.
+> - **Real data:** mixed — of 3 densified pilots, 1 ACCEPT (Pantheon SN, **config-fragile**: 15/15 in `test` config vs 0/15 in `stable`) and 2 REJECT (LLM scaling, PBDB marine).
+> - **Decisive controls now implemented and *not yet passed* by the bare detector:** the smooth-accumulation specificity test shows `ΔC > μ+k·σ` fires on every non-bifurcating accumulation (`accumulation_fpr = 1.0` — a trend-detector confound), and Pantheon's crossing is not significant against an IAAFT spectral null (p = 0.17). Details and reproduction in [`docs/EVIDENTIARY_STATUS.md`](docs/EVIDENTIARY_STATUS.md).
 
 [Theory](#theory) · [Quick Start](#quick-start) · [Tests T1–T8](#tests-t1t8) · [Real Data](#real-data) · [Examples](#examples) · [Structure](#structure) · [Citation](#citation)
 

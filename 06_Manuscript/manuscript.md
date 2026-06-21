@@ -231,8 +231,12 @@ effet de S sur V, imposer Σ > 0 ; sinon V peut rester plat et le test est mal p
 | T9 — Cross-domain vivant-like | AUC ≤ 0.5 sur 12 contrôles (6 pos / 6 nég) | H5 (discrimination) |
 
 T9 constitue la validation la plus exigeante : 6 contrôles positifs (systèmes régulés, dont
-données réelles FRED monthly) versus 6 contrôles négatifs (bruit blanc, bruit rose, marche
-aléatoire, sinus, Poisson, chaos). Une AUC ≥ 0.80 et un FPR ≤ 0.10 sont requis pour ACCEPT.
+données réelles FRED monthly) versus 6 contrôles négatifs stochastiques/chaotiques (bruit
+blanc, bruit rose/rouge, marche aléatoire, sinus, Poisson, chaos) **plus 4 contrôles
+négatifs d'accumulation lisse non bifurquante** (croissance logistique, Gompertz, saturation
+exponentielle, rampe linéaire — ajoutés ex ante en v1.1 des critères ; voir §3.2.1 et
+l'addendum de préenregistrement). Une AUC ≥ 0.80, un FPR ≤ 0.10 et une `accumulation_fpr`
+≤ 0.25 sont requis pour ACCEPT.
 
 ### 2.5 Proxies et proxy_spec
 
@@ -289,6 +293,38 @@ le seuil). Verdict T7 : ACCEPT.
 | max_consecutive_exceeded | 1 | 175 |
 | threshold_detected | False | **True** |
 | Verdict T7 | INDETERMINATE | **ACCEPT** |
+
+#### 3.2.1 Contrôle décisif : accumulation lisse vs bifurcation, et loi nulle du franchissement
+
+Le « 176/250 pas dépassent le seuil » du Cas B n'a de valeur probante qu'à deux
+conditions, désormais testées et **gelées ex ante**
+(`02_Protocol/PREREG_ADDENDUM_2026-06_ACCUMULATION_SURROGATE.md`).
+
+**(a) Spécificité d'accumulation.** L'opérateur d'ordre est un intégrateur,
+`C(t+1) = C(t) + β·S − γ·V` : tout forçage monotone produit un `C` croissant
+« auto-renforçant ». On ajoute donc ≥ 3 contrôles négatifs d'**accumulation lisse
+non bifurquante** (croissance logistique, Gompertz, saturation exponentielle,
+rampe linéaire bruitée — `oric.accumulation_controls`). Résultat
+(`run_accumulation_control.py`) : le critère brut `ΔC > μ + k·σ` se déclenche sur
+**toutes** ces accumulations (`accumulation_fpr = 1.0` ; la croissance logistique
+seule produit un franchissement soutenu de 70+ pas, sans aucune bifurcation), et
+ne **sépare pas** l'accumulation lisse d'une bascule réelle (`separates = False`).
+Par la règle gelée (`accumulation_fpr > 0.25`), **le détecteur brut, dans sa forme
+actuelle, ne se distingue pas d'un détecteur de tendance** : c'est exactement le
+symptôme attendu du piège d'intégration, et il rejoint la fragilité Pantheon
+(15/15 en config `test` vs 0/15 en config `stable`).
+
+**(b) Loi nulle du franchissement (IAAFT).** On compare le taux de franchissement
+réel à celui de surrogates IAAFT (Schreiber & Schmitz 1996) préservant, par canal,
+la distribution d'amplitude **et** le spectre de puissance (donc l'autocorrélation
+linéaire). Sur Pantheon SN densifié, le taux observé (0.42) n'est **pas
+significatif** face à la loi nulle (moyenne 0.14, q99 = 0.52 ; p = 0.17 ≮ 0.01) :
+le franchissement est attribuable à l'autocorrélation propre de la série, non à
+une transition.
+
+Ces deux contrôles sont la cible prioritaire d'un futur proof run `full_statistical` ;
+en l'état, ils **ne sont pas franchis** par le détecteur brut. Voir
+`docs/EVIDENTIARY_STATUS.md`.
 
 ### 3.3 Pilote FRED : ce que ça prouve et ce que ça ne prouve pas
 

@@ -1,0 +1,19 @@
+{
+  "test_id": "accumulation_control",
+  "schema": "oric.accumulation_control.manifest.v1",
+  "seed": 1234,
+  "n_steps": 220,
+  "n_surrogates": 200,
+  "fast_mode": false,
+  "accumulation_fpr_max": 0.25,
+  "accumulation_fpr": 1.0,
+  "bifurcation_tpr": 1.0,
+  "separates": false,
+  "refutes_current_form": true,
+  "output_files": {
+    "json": "tables/accumulation_control.json",
+    "csv": "tables/accumulation_control.csv",
+    "figure": "figures/accumulation_delta_c.png"
+  },
+  "json_sha256": "55d8805b7cd76ffc5691b2d72b1bf229cb89b58317ccaab055ade5a9b15a82e2"
+}
