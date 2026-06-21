@@ -1,13 +1,25 @@
 # Framework Status
 
-**Last updated:** 2026-03-09
+**Last updated:** 2026-06-21
 
 ---
 
-## Current Status: VALIDATED — ALL PILOTS DECIDABLE
+> ⚠️ **Read [`EVIDENTIARY_STATUS.md`](EVIDENTIARY_STATUS.md) first — it governs the
+> interpretation of everything below.** The table headings here ("VALIDATED",
+> "ACCEPT", "Fisher p < 10⁻⁴⁰") describe the *exploratory* pipeline state. They do
+> **not** mean *solidly confirmed*: no `full_statistical` proof run with the
+> obligatory triplet (p + CI₉₉ % + SESOI + power) exists, the synthetic p-values
+> are N-driven artefacts, the one densified-pilot ACCEPT (Pantheon SN) is
+> config-fragile (15/15 vs 0/15), and the decisive smooth-accumulation /
+> surrogate-null controls are now implemented and **not yet passed** by the bare
+> detector.
 
-The ORI-C framework has completed its canonical validation cycle and all 7 pilots
-have decidable verdicts.
+## Current Status: EXPLORATORY / INDICATIVE — pilots decidable, confirmatory controls pending
+
+The ORI-C framework has completed its *exploratory* cycle and all 7 pilots have
+decidable verdicts at Level B. The *confirmatory* controls (accumulation
+specificity, IAAFT surrogate null, out-of-sample prediction) remain outstanding —
+see `EVIDENTIARY_STATUS.md`.
 
 ### Proof Dimensions
 

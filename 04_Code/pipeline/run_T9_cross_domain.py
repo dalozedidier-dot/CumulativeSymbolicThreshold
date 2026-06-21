@@ -62,6 +62,7 @@ sys.path.insert(0, str(_REPO / "src"))
 sys.path.insert(0, str(_HERE))
 
 from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
+from oric.accumulation_controls import gen_accumulation, NON_BIFURCATING  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -772,6 +773,13 @@ def _verdict_from_metrics(
     # Anti-gaming block (fpr alone)
     blocks["anti_gaming"] = "ACCEPT" if metrics.get("fpr_negatives", 1) <= c["fpr_negatives_max"] else "REJECT"
 
+    # Accumulation-specificity block: the 8-feature classifier must NOT flag
+    # smooth, monotone, non-bifurcating accumulations as vivant-like. This is the
+    # decisive separation between a transition detector and a trend detector.
+    acc_max = c.get("accumulation_fpr_max", 0.25)
+    acc_pass = metrics.get("accumulation_meta_fpr", 0.0) <= acc_max
+    blocks["accumulation_specificity"] = "ACCEPT" if acc_pass else "REJECT"
+
     # Global
     if all(v == "ACCEPT" for v in blocks.values()):
         global_verdict = "ACCEPT"
@@ -789,6 +797,7 @@ def _verdict_from_metrics(
             "spearman_stability_min": c["spearman_stability_min"],
             "jaccard_topk_min": c["jaccard_topk_min"],
             "verdict_flip_rate_max": c["verdict_flip_rate_max"],
+            "accumulation_fpr_max": acc_max,
         },
         "values": {
             "balanced_accuracy": round(metrics.get("balanced_accuracy", 0), 4),
@@ -797,6 +806,8 @@ def _verdict_from_metrics(
             "spearman_median": round(stress.get("spearman_median", 0), 4),
             "jaccard_median": round(stress.get("jaccard_median", 0), 4),
             "flip_rate_median": round(stress.get("flip_rate_median", 1), 4),
+            "accumulation_meta_fpr": round(metrics.get("accumulation_meta_fpr", 0), 4),
+            "accumulation_bare_detector_fpr": round(metrics.get("accumulation_bare_detector_fpr", 0), 4),
         },
     }
 
@@ -864,6 +875,16 @@ def main() -> int:
     _add("neg_poisson",         0, _gen_negative_poisson(n_steps, args.seed + 14), args.seed + 14, "negative")
     _add("neg_chaotic_logistic",0, _gen_negative_chaotic(n_steps, args.seed + 15), args.seed + 15, "negative")
 
+    # Smooth, monotone, NON-bifurcating accumulation controls (ex-ante extension —
+    # see 02_Protocol/PREREG_ADDENDUM_2026-06_ACCUMULATION_SURROGATE.md). ORI-C's
+    # order variable is an integrator C(t+1)=C(t)+βS−γV, so any monotone driver
+    # yields a growing "self-reinforcing" C. These controls test whether ORI-C
+    # separates a smooth accumulation from a genuine phase transition, or merely
+    # detects a trend. Class "negative_accumulation"; they must read as negatives.
+    for j, _kind in enumerate(NON_BIFURCATING):
+        _add(f"neg_acc_{_kind}", 0, gen_accumulation(_kind, n_steps, args.seed + 20 + j),
+             args.seed + 20 + j, "negative_accumulation")
+
     if len(datasets) < 8:
         print(f"[T9] FATAL: only {len(datasets)} datasets available (need >= 8)")
         return 1
@@ -918,6 +939,25 @@ def main() -> int:
             pred = 1 if scores[i] >= threshold else 0
             w.writerow([d["name"], d["class"], d["label"], round(float(scores[i]), 6), pred])
 
+    # ── Accumulation specificity (decisive trend-vs-transition diagnostic) ──
+    # Smooth, monotone, NON-bifurcating accumulations must read as negatives.
+    #   accumulation_meta_fpr  : 8-feature T9 classifier false-positive rate
+    #   accumulation_bare_fpr  : bare ΔC>μ+k·σ detector firing rate (feature 7,
+    #                            oric_verdict_score) — this is the path the real
+    #                            pilots use, and the standalone accumulation
+    #                            control (run_accumulation_control.py) shows it
+    #                            fires on every smooth accumulation.
+    acc_idx = [i for i, d in enumerate(datasets) if d["class"] == "negative_accumulation"]
+    if acc_idx:
+        acc_meta_fp = float(np.mean([1.0 if scores[i] >= threshold else 0.0 for i in acc_idx]))
+        acc_bare_fp = float(np.mean([1.0 if features[i, 7] > 0.0 else 0.0 for i in acc_idx]))
+    else:
+        acc_meta_fp, acc_bare_fp = 0.0, 0.0
+    metrics["accumulation_meta_fpr"] = acc_meta_fp
+    metrics["accumulation_bare_detector_fpr"] = acc_bare_fp
+    print(f"  accumulation_meta_fpr          : {acc_meta_fp:.3f}  (8-feature classifier on smooth accumulations)")
+    print(f"  accumulation_bare_detector_fpr : {acc_bare_fp:.3f}  (bare ΔC criterion — real pilots' path)")
+
     # ── Baselines ────────────────────────────────────────────────────────
     print("[T9] Computing baselines...")
     baselines = _compute_baselines(datasets, labels)
@@ -964,6 +1004,8 @@ def main() -> int:
         "jaccard_topk_median": stress["jaccard_median"],
         "verdict_flip_rate_median": stress["flip_rate_median"],
         "oric_beats_baselines_fraction": round(beats_frac, 3),
+        "accumulation_meta_fpr": round(metrics.get("accumulation_meta_fpr", 0), 4),
+        "accumulation_bare_detector_fpr": round(metrics.get("accumulation_bare_detector_fpr", 0), 4),
         "baseline_aucs": baselines,
         "stress_config_results": stress["config_results"],
         "ablations": ablations,
@@ -977,9 +1019,10 @@ def main() -> int:
 
     print(f"\n{'='*55}")
     print(f"  T9 VERDICT: {verdict['global']}")
-    print(f"  discrimination: {verdict['blocks']['discrimination']}")
-    print(f"  robustness    : {verdict['blocks']['robustness']}")
-    print(f"  anti_gaming   : {verdict['blocks']['anti_gaming']}")
+    print(f"  discrimination          : {verdict['blocks']['discrimination']}")
+    print(f"  robustness              : {verdict['blocks']['robustness']}")
+    print(f"  anti_gaming             : {verdict['blocks']['anti_gaming']}")
+    print(f"  accumulation_specificity: {verdict['blocks'].get('accumulation_specificity', 'n/a')}")
     # ORI-C rule: --fast is smoke_ci. It validates execution + artefacts, not proof.
     # Therefore, a proof-grade REJECT must not hard-fail CI in --fast.
     # We downgrade global REJECT -> INDETERMINATE in smoke_ci, while preserving block statuses

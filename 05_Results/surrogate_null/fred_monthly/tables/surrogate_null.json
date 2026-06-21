@@ -1,0 +1,34 @@
+{
+  "statistic": "crossing_rate",
+  "observed": 0.0,
+  "null_mean": 0.1408583333333333,
+  "null_std": 0.18242760950123021,
+  "null_q95": 0.44385416666666655,
+  "null_q99": 0.48335416666666664,
+  "null_max": 0.5041666666666667,
+  "p_value": 1.0,
+  "n_surrogates": 500,
+  "surrogate_columns": [
+    "O",
+    "R",
+    "I",
+    "demand"
+  ],
+  "k": 2.5,
+  "m": 3,
+  "baseline_n": 30,
+  "significant_at_01": false,
+  "observed_crossing": {
+    "threshold": 0.1706731400815354,
+    "baseline_mu": 0.02733038846467226,
+    "baseline_sigma": 0.05733710064674525,
+    "n_steps": 480,
+    "n_crossings": 0,
+    "crossing_rate": 0.0,
+    "max_run": 0,
+    "sustained_hit": false
+  },
+  "notes": "IAAFT surrogates preserve per-channel amplitude distribution and power spectrum; p is the one-sided upper-tail probability that a spectrally matched surrogate reaches the observed crossing statistic.",
+  "input": "03_Data/real/fred_monthly/real.csv",
+  "n_rows": 480
+}

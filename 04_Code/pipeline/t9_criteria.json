@@ -1,11 +1,15 @@
 {
   "_note": "T9 verdict criteria — FROZEN at protocol registration. Do not modify post-observation.",
-  "_version": "1.0",
+  "_version": "1.1",
+  "_changelog": {
+    "1.1": "Ex-ante extension (2026-06, before any T9 full_statistical proof run): added the negative_accumulation class (4 smooth, monotone, non-bifurcating accumulation controls) and the accumulation_specificity sub-block with accumulation_fpr_max. Rationale: ORI-C's order variable is an integrator C(t+1)=C(t)+βS−γV, so any monotone driver yields a growing self-reinforcing C; the original 6 negatives (white/pink/red noise, random walk, sinusoid, Poisson, chaotic map) are all stationary/oscillatory/chaotic and cannot separate a transition detector from a trend detector. See 02_Protocol/PREREG_ADDENDUM_2026-06_ACCUMULATION_SURROGATE.md."
+  },
   "balanced_accuracy_min": 0.80,
   "fpr_negatives_max": 0.10,
   "spearman_stability_min": 0.80,
   "jaccard_topk_min": 0.60,
   "verdict_flip_rate_max": 0.10,
+  "accumulation_fpr_max": 0.25,
   "oric_beats_baseline_fraction": 0.50,
   "sub_blocks": {
     "discrimination": {
@@ -19,6 +23,11 @@
     "anti_gaming": {
       "criteria": ["fpr_negatives_max"],
       "all_must_pass": true
+    },
+    "accumulation_specificity": {
+      "criteria": ["accumulation_fpr_max"],
+      "all_must_pass": true,
+      "_note": "8-feature classifier false-positive rate on the smooth non-bifurcating accumulation controls. The bare ΔC detector firing rate on the same controls is reported separately as accumulation_bare_detector_fpr (diagnostic, not a gate)."
     }
   },
   "stress_configs": [

@@ -54,6 +54,15 @@ from .ori_core_v2 import (
     run_variant_on_dataframe, compare_all_variants,
 )
 from .frozen_params import FrozenValidationParams, FROZEN_PARAMS, load_frozen_params
+from .surrogates import (
+    iaaft_surrogate, iaaft_surrogates,
+    threshold_crossing_statistic, surrogate_null_test,
+    CrossingStatistic, SurrogateNullResult,
+)
+from .accumulation_controls import (
+    gen_accumulation, accumulation_control_catalogue,
+    run_accumulation_control_suite, NON_BIFURCATING, BIFURCATING,
+)
 
 __all__ = [
     # Core computations
@@ -119,6 +128,19 @@ __all__ = [
     "run_benchmark_on_series",
     "run_pilot_benchmark",
     "run_all_benchmarks",
+    # Surrogates & null distribution
+    "iaaft_surrogate",
+    "iaaft_surrogates",
+    "threshold_crossing_statistic",
+    "surrogate_null_test",
+    "CrossingStatistic",
+    "SurrogateNullResult",
+    # Accumulation controls (trend-vs-transition discrimination)
+    "gen_accumulation",
+    "accumulation_control_catalogue",
+    "run_accumulation_control_suite",
+    "NON_BIFURCATING",
+    "BIFURCATING",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",
