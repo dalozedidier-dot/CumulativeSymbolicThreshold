@@ -41,9 +41,10 @@ to within the convergence tolerance.
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from typing import Sequence
+from typing import Callable, Sequence
 
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +120,113 @@ def iaaft_surrogates(
     """Generate ``n_surrogates`` independent IAAFT surrogates of ``x``."""
     rng = np.random.default_rng() if rng is None else rng
     return [iaaft_surrogate(x, n_iter=n_iter, rng=rng) for _ in range(int(n_surrogates))]
+
+
+# ---------------------------------------------------------------------------
+# Trend-preserving surrogate (harder null — research axis 5)
+# ---------------------------------------------------------------------------
+
+def trend_preserving_surrogate(
+    x: np.ndarray,
+    *,
+    bandwidth: float,
+    rng: np.random.Generator | None = None,
+    n_iter: int = 100,
+) -> np.ndarray:
+    """Return a surrogate that **keeps the smooth trend** but scrambles the residual.
+
+    A plain IAAFT surrogate of a trending series destroys the trend, so a test
+    against it confounds "has a trend" with "has a transition". This surrogate
+    instead decomposes ``x = trend + residual`` (Gaussian smooth of width
+    ``bandwidth``), IAAFT-randomizes only the residual, and re-adds the original
+    trend:
+
+        surrogate = trend(x) + IAAFT(x − trend(x)).
+
+    It therefore preserves the slow drift **and** the residual's amplitude
+    distribution and power spectrum (its linear autocorrelation), while
+    destroying the *time-localization* of the fluctuations — i.e. it removes
+    critical slowing down and any localized rupture. A statistic that beats this
+    null isolates the localized transition from the trend (Schreiber & Schmitz
+    1996 for the residual surrogate; the trend split follows the standard
+    early-warning detrending of Dakos et al. 2012).
+    """
+    x = np.asarray(x, dtype=float)
+    trend = gaussian_filter1d(x, sigma=max(1e-6, float(bandwidth)), mode="reflect")
+    resid = x - trend
+    return trend + iaaft_surrogate(resid, n_iter=n_iter, rng=rng)
+
+
+# ---------------------------------------------------------------------------
+# General surrogate null test for a 1-D statistic (research axes 2 & 5)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class SeriesSurrogateResult:
+    """Result of a generic one-sided surrogate null test on a 1-D series statistic."""
+    statistic: str
+    observed: float
+    null_mean: float
+    null_std: float
+    null_q95: float
+    null_q99: float
+    p_value: float
+    n_surrogates: int
+    surrogate_kind: str
+    significant_at_05: bool
+    significant_at_01: bool
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def _make_series_surrogate(x, kind, rng, *, bandwidth, n_iter):
+    if callable(kind):
+        return np.asarray(kind(x, rng), dtype=float)
+    if kind == "iaaft":
+        return iaaft_surrogate(x, n_iter=n_iter, rng=rng)
+    if kind == "trend_preserving":
+        bw = bandwidth if bandwidth is not None else max(2.0, x.size / 10.0)
+        return trend_preserving_surrogate(x, bandwidth=bw, rng=rng, n_iter=n_iter)
+    raise ValueError(f"unknown surrogate kind: {kind!r}")
+
+
+def series_surrogate_test(
+    x: np.ndarray,
+    statistic_fn: Callable[[np.ndarray], float],
+    *,
+    surrogate: str | Callable = "trend_preserving",
+    n_surrogates: int = 200,
+    rng: np.random.Generator | None = None,
+    bandwidth: float | None = None,
+    n_iter: int = 100,
+    statistic_name: str = "statistic",
+) -> SeriesSurrogateResult:
+    """One-sided upper-tail surrogate null test for an arbitrary series statistic.
+
+    ``statistic_fn`` maps a 1-D array to a scalar (e.g. the composite CSD trend).
+    ``surrogate`` is ``"trend_preserving"``, ``"iaaft"``, or a callable
+    ``(x, rng) -> surrogate``. Returns the empirical p-value
+    ``p = (1 + #{stat_surr ≥ stat_obs}) / (n_surrogates + 1)``.
+    """
+    x = np.asarray(x, dtype=float)
+    x = np.where(np.isfinite(x), x, 0.0)
+    rng = np.random.default_rng() if rng is None else rng
+    observed = float(statistic_fn(x))
+    null = np.empty(int(n_surrogates), dtype=float)
+    for j in range(int(n_surrogates)):
+        surr = _make_series_surrogate(x, surrogate, rng, bandwidth=bandwidth, n_iter=n_iter)
+        null[j] = float(statistic_fn(surr))
+    n_ge = int(np.count_nonzero(null >= observed))
+    p_value = (1 + n_ge) / (int(n_surrogates) + 1)
+    kind_name = surrogate if isinstance(surrogate, str) else getattr(surrogate, "__name__", "callable")
+    return SeriesSurrogateResult(
+        statistic=statistic_name, observed=observed,
+        null_mean=float(np.mean(null)), null_std=float(np.std(null)),
+        null_q95=float(np.quantile(null, 0.95)), null_q99=float(np.quantile(null, 0.99)),
+        p_value=float(p_value), n_surrogates=int(n_surrogates), surrogate_kind=kind_name,
+        significant_at_05=bool(p_value < 0.05), significant_at_01=bool(p_value < 0.01),
+    )
 
 
 # ---------------------------------------------------------------------------
