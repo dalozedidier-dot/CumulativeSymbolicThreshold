@@ -70,6 +70,16 @@ from .effect_size import (
     cohens_d, hedges_g, achieved_power, effect_size_report, EffectSizeReport,
 )
 from .confirmatory import run_confirmatory_suite
+from .endogenous import (
+    EndogenousConfig,
+    equilibria,
+    bistable_window,
+    simulate,
+    run_endogenous,
+    drive_from_sigma,
+    make_ramp,
+    hysteresis_sweep,
+)
 
 __all__ = [
     # Core computations
@@ -161,6 +171,15 @@ __all__ = [
     "EffectSizeReport",
     # Joint confirmatory verdict
     "run_confirmatory_suite",
+    # Endogenous bistable model (genuine saddle-node + hysteresis)
+    "EndogenousConfig",
+    "equilibria",
+    "bistable_window",
+    "simulate",
+    "run_endogenous",
+    "drive_from_sigma",
+    "make_ramp",
+    "hysteresis_sweep",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",
