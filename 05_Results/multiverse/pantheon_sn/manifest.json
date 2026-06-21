@@ -1,0 +1,10 @@
+{
+  "test_id": "multiverse",
+  "schema": "oric.multiverse.manifest.v1",
+  "input": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real_densified.csv",
+  "seed": 1234,
+  "n_specs": 27,
+  "fired_fraction": 1.0,
+  "robustness": "ROBUST_POSITIVE",
+  "json_sha256": "0db110e40c7a3d166abb1a827a09eca59a27a7f6b5458f9c901ff5825d4154d9"
+}

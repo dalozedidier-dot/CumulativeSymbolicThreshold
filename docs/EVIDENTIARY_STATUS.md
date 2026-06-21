@@ -100,16 +100,23 @@ autocorrelation** at α = 0.01.
 
 ## 4. What "solidly confirmed" still requires
 
-Implemented in this iteration:
+Implemented:
 - ✅ Smooth non-bifurcating accumulation controls (`accumulation_controls.py`, T9)
 - ✅ IAAFT surrogate null for threshold crossing (`surrogates.py`)
+- ✅ **Specification-curve / multiverse** over defensible analytic choices (`multiverse.py`)
 - ✅ Governance aligned to the real probative state (this document)
 - ✅ Frozen ex-ante protocol separating exploratory from confirmatory
+
+Multiverse outcome (exploratory): FRED `ROBUST_NEGATIVE` (0/27 specs fire);
+Pantheon SN `ROBUST_POSITIVE` (27/27) — but n.s. against the surrogate null
+(p = 0.17), i.e. a robust *trend*, not a confirmed transition. Robustness to
+proxies is **necessary but not sufficient**: confirmation requires Test A reject +
+Test B p < 0.01 + Test C `ROBUST_POSITIVE` jointly.
 
 Still outstanding (roadmap, not yet done):
 - ⬜ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
 - ⬜ A pre-registered **out-of-sample directional prediction**, verified on held-out data (T3 is `INDETERMINATE`)
-- ⬜ A **specification-curve / multiverse** over ≥ k defensible proxies per variable
+- ⬜ Column-level proxy alternatives in the multiverse (k interchangeable source columns per variable, where available)
 - ⬜ Power reported per pilot, with effect-size-vs-SESOI rather than p on real data
 - ⬜ Independent third-party replication via the Docker/Zenodo bundle
 

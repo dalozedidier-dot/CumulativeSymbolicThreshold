@@ -63,6 +63,9 @@ from .accumulation_controls import (
     gen_accumulation, accumulation_control_catalogue,
     run_accumulation_control_suite, NON_BIFURCATING, BIFURCATING,
 )
+from .multiverse import (
+    Specification, specification_grid, apply_specification, run_multiverse,
+)
 
 __all__ = [
     # Core computations
@@ -141,6 +144,11 @@ __all__ = [
     "run_accumulation_control_suite",
     "NON_BIFURCATING",
     "BIFURCATING",
+    # Multiverse / specification curve
+    "Specification",
+    "specification_grid",
+    "apply_specification",
+    "run_multiverse",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",

@@ -98,6 +98,44 @@ python 04_Code/pipeline/run_surrogate_null.py --input <real.csv> --outdir <out> 
 
 ---
 
+## Test C — Specification curve / multiverse robustness
+
+### Procedure (frozen)
+
+Run ORI-C across a pre-declared grid of **equally defensible** analytic choices —
+orthogonal to the frozen detector parameters (k, m, baseline_n):
+
+- `normalize` ∈ {robust_minmax, zscore, minmax}
+- `smooth` ∈ {none, ma3, ma5}
+- `demand_to_cap_ratio` ∈ {0.85, 0.90, 0.95}
+
+→ 27 specifications (`oric.multiverse.specification_grid`). For each, record whether
+the sustained crossing fires and its crossing rate.
+
+### Criterion (frozen)
+
+- `ROBUST_POSITIVE` iff the detector fires in **≥ 80 %** of specifications;
+  `ROBUST_NEGATIVE` iff **≤ 20 %**; otherwise **`FRAGILE`** — the verdict depends on
+  an arbitrary proxy choice and **does not confirm**.
+- Robustness is **necessary but not sufficient**: a `ROBUST_POSITIVE` that fails
+  Test A (accumulation specificity) or Test B (surrogate null) is a robust *trend*,
+  not a confirmed transition. Confirmation requires Test A reject + Test B p < 0.01
+  + Test C `ROBUST_POSITIVE`.
+
+### Runner
+
+```
+python 04_Code/pipeline/run_multiverse.py --input <real.csv> --outdir <out>
+```
+
+### Current outcome (exploratory)
+
+- FRED monthly: `ROBUST_NEGATIVE` (0/27 fire on the default detector path).
+- Pantheon SN densified: `ROBUST_POSITIVE` (27/27, rate 0.39–0.45) — **but** Test B
+  gives p = 0.17 (n.s.): a robust trend, not a confirmed transition.
+
+---
+
 ## Reporting denominator (frozen)
 
 Real-data confirmation is reported as an **honest fraction**: *k of N

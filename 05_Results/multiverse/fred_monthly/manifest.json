@@ -1,0 +1,10 @@
+{
+  "test_id": "multiverse",
+  "schema": "oric.multiverse.manifest.v1",
+  "input": "03_Data/real/fred_monthly/real.csv",
+  "seed": 1234,
+  "n_specs": 27,
+  "fired_fraction": 0.0,
+  "robustness": "ROBUST_NEGATIVE",
+  "json_sha256": "919685d2caf44c7011f633f93730bea2af31ef13a2bf3159ef32e3f9c82c48e5"
+}
