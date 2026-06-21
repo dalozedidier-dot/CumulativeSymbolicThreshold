@@ -724,18 +724,18 @@ def fetch_finance(outdir: Path) -> bool:
             vix_df["ym"] = vix_df["Date"].dt.year * 100 + vix_df["Date"].dt.month
             sp_df["ym"] = sp_df["Date"].dt.year * 100 + sp_df["Date"].dt.month
             merged = pd.merge(
-                vix_df[["ym", "Close"]].rename(columns={"Close": "vix"}),
-                sp_df[["ym", "Close"]].rename(columns={"Close": "sp500"}),
+                vix_df.reindex(columns=["ym", "Close"]).rename(columns={"Close": "vix"}),
+                sp_df.reindex(columns=["ym", "Close"]).rename(columns={"Close": "sp500"}),
                 on="ym", how="inner"
             ).sort_values("ym").reset_index(drop=True)
         elif sp_df is not None:
             sp_df["ym"] = sp_df["Date"].dt.year * 100 + sp_df["Date"].dt.month
-            merged = sp_df[["ym", "Close"]].rename(columns={"Close": "sp500"})
+            merged = sp_df.reindex(columns=["ym", "Close"]).rename(columns={"Close": "sp500"})
             merged["vix"] = 20.0  # default
             merged = merged.sort_values("ym").reset_index(drop=True)
         else:
             vix_df["ym"] = vix_df["Date"].dt.year * 100 + vix_df["Date"].dt.month
-            merged = vix_df[["ym", "Close"]].rename(columns={"Close": "vix"})
+            merged = vix_df.reindex(columns=["ym", "Close"]).rename(columns={"Close": "vix"})
             merged["sp500"] = 3000.0
             merged = merged.sort_values("ym").reset_index(drop=True)
 

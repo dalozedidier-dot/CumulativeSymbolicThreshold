@@ -161,16 +161,18 @@ def step5_run_benchmark(fast: bool = False) -> bool:
     print("\n--- Step 5: Run comparative benchmark ---")
     cmd = [
         sys.executable, "-c",
-        "from pathlib import Path; "
-        "from oric.comparative_benchmark import run_all_benchmarks; "
-        "r = run_all_benchmarks(Path('replication_output/benchmark'), "
-        "pilots=[{'pilot_id':'sector_finance.pilot_btc',"
-        "'csv':'03_Data/sector_finance/real/pilot_btc/real.csv','verdict':'ACCEPT'},"
-        "{'pilot_id':'sector_neuro.pilot_eeg_bonn',"
-        "'csv':'03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv','verdict':'ACCEPT'},"
-        "{'pilot_id':'sector_cosmo.pilot_solar',"
-        "'csv':'03_Data/sector_cosmo/real/pilot_solar/real.csv','verdict':'ACCEPT'}]); "
-        "print(f\"Benchmarked {r['total_pilots']} pilots across {len(r['methods'])} methods\")"
+        (
+            "from pathlib import Path; "
+            "from oric.comparative_benchmark import run_all_benchmarks; "
+            "r = run_all_benchmarks(Path('replication_output/benchmark'), "
+            "pilots=[{'pilot_id':'sector_finance.pilot_btc',"
+            "'csv':'03_Data/sector_finance/real/pilot_btc/real.csv','verdict':'ACCEPT'},"
+            "{'pilot_id':'sector_neuro.pilot_eeg_bonn',"
+            "'csv':'03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv','verdict':'ACCEPT'},"
+            "{'pilot_id':'sector_cosmo.pilot_solar',"
+            "'csv':'03_Data/sector_cosmo/real/pilot_solar/real.csv','verdict':'ACCEPT'}]); "
+            "print(f\"Benchmarked {r['total_pilots']} pilots across {len(r['methods'])} methods\")"
+        ),
     ]
     return _run(cmd, "Comparative benchmark (BTC, EEG, Solar)")
 

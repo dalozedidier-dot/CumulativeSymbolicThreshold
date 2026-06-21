@@ -225,7 +225,6 @@ def _generate_stellar(n: int, seed: int) -> pd.DataFrame:
     O_arr[:W] = O_arr[W]
 
     # R: resilience = how quickly flux returns to baseline after flare
-    R_arr = np.zeros(n)
     rolling_median = np.zeros(n)
     for tt in range(W, n):
         rolling_median[tt] = np.median(flux[tt-W:tt])

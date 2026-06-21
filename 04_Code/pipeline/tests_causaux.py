@@ -551,7 +551,6 @@ def main() -> int:
 
     # Determine threshold hit
     thr_idx: int | None = None
-    thr_val = float("nan")
     if "threshold_hit" in df_t.columns and bool((df_t["threshold_hit"] > 0).any()):
         thr_idx = int(df_t.index[df_t["threshold_hit"] > 0][0])
         thr_val = float(df_t["threshold_value"].iloc[0]) if "threshold_value" in df_t.columns else float("nan")
