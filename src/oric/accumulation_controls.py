@@ -251,7 +251,7 @@ def run_accumulation_control_suite(
     """
     from oric.surrogates import threshold_crossing_statistic, surrogate_null_test  # local
     try:  # importable as pipeline.* (pytest / repo root on path) or flat (script dir on path)
-        from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
+        from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations  # type: ignore
     except ModuleNotFoundError:  # pragma: no cover - layout-dependent
         from ori_c_pipeline import ORICConfig, run_oric_from_observations  # type: ignore
     if run_fn is None:
