@@ -111,8 +111,12 @@ def main() -> int:
 
     with open(tables / "accumulation_control.csv", "w", newline="") as f:
         w = csv.writer(f)
-        cols = ["name", "kind", "label", "detector_fired", "crossing_rate",
-                "max_run", "surrogate_p_rate", "surrogate_p_maxrun", "surrogate_significant"]
+        cols = [
+            "name", "kind", "label", "detector_fired", "raw_detector_fired",
+            "crossing_rate", "max_run", "acceleration_concentration",
+            "acceleration_peak_fraction", "surrogate_p_rate", "surrogate_p_maxrun",
+            "surrogate_significant",
+        ]
         w.writerow(cols)
         for o in result["outcomes"]:
             w.writerow([o[c] for c in cols])
@@ -134,6 +138,9 @@ def main() -> int:
         "accumulation_fpr_max": ACCUMULATION_FPR_MAX,
         "accumulation_fpr": result["accumulation_fpr"],
         "bifurcation_tpr": result["bifurcation_tpr"],
+        "raw_accumulation_fpr": result.get("raw_accumulation_fpr"),
+        "raw_bifurcation_tpr": result.get("raw_bifurcation_tpr"),
+        "detector_note": result.get("detector_note"),
         "separates": result["separates"],
         "refutes_current_form": result["refutes_current_form"],
         "output_files": {
@@ -152,9 +159,12 @@ def main() -> int:
     print(f"  separates        = {result['separates']}")
     print(f"  VERDICT          = {verdict}")
     if refuted:
-        print("  ** accumulation_fpr exceeds the frozen ceiling: the bare ΔC")
-        print("     criterion does not distinguish smooth accumulation from a")
-        print("     genuine transition (trend-detector confound). **")
+        print("  ** accumulation_fpr exceeds the frozen ceiling: the localized")
+        print("     transition gate still does not distinguish smooth accumulation")
+        print("     from a genuine transition. **")
+    if result.get("raw_accumulation_fpr", 0) > ACCUMULATION_FPR_MAX:
+        print("  NOTE: raw_accumulation_fpr still records the older sustained ΔC")
+        print("        crossing behaviour for audit continuity.")
     print(f"{'='*60}\n")
 
     # This control is diagnostic, not a CI gate: always exit 0 so the honest

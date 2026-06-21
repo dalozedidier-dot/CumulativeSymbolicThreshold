@@ -1,8 +1,11 @@
 # ORI-C Generalization Pilots Report
 
+> **Status note:** this report is retained as an exploratory pilot benchmark. Its `ACCEPT` / `REJECT` tokens are operational pipeline outputs, not confirmed scientific claims. The governing status is `docs/EVIDENTIARY_STATUS.md`: after the localized-transition correction, Test A passes on the shipped accumulation controls, but Pantheon SN and FRED remain `NOT_CONFIRMED` under the joint confirmatory rule.
+
+
 **Version:** 3.0
 **Date:** 2026-03-09
-**Status:** CANONICAL — ALL PILOTS DECIDABLE
+**Status:** EXPLORATORY — ALL PILOTS DECIDABLE, NOT CONFIRMED
 **Contract:** `contracts/PILOT_GENERALIZATION.json`
 **Registry:** `05_Results/pilots/pilot_generalization_registry.json`
 
@@ -10,7 +13,7 @@
 
 ## 1. Why These Pilots Were Chosen
 
-The ORI-C framework was validated canonically on synthetic data, FRED economic data,
+The ORI-C framework has exploratory canonical runs on synthetic data, FRED economic data,
 and a formal three-condition validation protocol. To demonstrate **portability beyond
 the canonical domain**, seven real-data pilots were selected across six independent
 scientific domains:
@@ -55,7 +58,7 @@ framework should be able to detect (or explicitly fail to detect for principled 
 - **5 ACCEPT:** BTC, COVID, EEG Bonn, Solar, Pantheon SN
 - **2 REJECT:** PBDB marine, LLM scaling
 - Decidable verdict, prechecks passed, full ORI-C pipeline completed
-- **Publishable** as confirmed out-of-domain applications (ACCEPT) or confirmed non-detections (REJECT)
+- **Exploratory** as out-of-domain applications. Do not describe these as confirmed until the joint confirmatory suite passes.
 
 ### Power Classes
 

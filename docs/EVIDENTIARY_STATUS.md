@@ -9,7 +9,7 @@ manuscript §3.1) summarise verdicts, **this page governs their interpretation.*
 
 > **One-line status:** the framework is a *built, falsifiable test machine* that is
 > **exploratory / indicative**, not *solidly confirmed*. The decisive confirmatory
-> controls are now implemented, and the bare detector **does not yet pass them**.
+> controls are now implemented. The old bare sustained ΔC crossing failed the trend control, so the current code adds a conservative localized-transition gate. This fixes Test A on the synthetic trend-vs-transition controls, but the headline real pilots remain **NOT_CONFIRMED** because the surrogate-null and multiverse gates still fail where applicable.
 
 ---
 
@@ -49,11 +49,11 @@ A detection that flips from 100 % to 0 % across configurations is **not a robust
 signature**. The broader 7-pilot benchmark (5 ACCEPT / 2 REJECT) is entirely
 **Level B, borderline power, no Level A canonical proof run**.
 
-## 3. The decisive controls — and the current (failing) outcome
+## 3. The decisive controls and the current outcome
 
 Two confirmatory tests requested by external review are now implemented and
 frozen ex ante (`02_Protocol/PREREG_ADDENDUM_2026-06_ACCUMULATION_SURROGATE.md`).
-**Run honestly, the bare detector does not pass them.**
+The old bare detector failed the accumulation control. The current code now records both values: `raw_detector_fired` for audit continuity and `detector_fired` for the conservative localized-transition gate.
 
 ### 3a. Smooth-accumulation specificity (trend vs transition)
 
@@ -70,16 +70,12 @@ Gompertz, exponential saturation, noisy linear ramp) were added. Result
 
 | Metric | Value | Meaning |
 |--------|-------|---------|
-| `accumulation_fpr` (bare ΔC criterion) | **1.00** | every smooth accumulation flagged as a sustained "transition" |
-| `bifurcation_tpr` | 1.00 | genuine bifurcations also flagged |
-| `separates` | **False** | the criterion does **not** distinguish trend from transition |
-| T9 8-feature classifier FPR on the same controls | **0.50** | the richer classifier is also confounded |
+| `raw_accumulation_fpr` (old bare ΔC criterion) | **1.00** | every smooth accumulation is still flagged by the old sustained-crossing rule |
+| `accumulation_fpr` (localized gate) | **0.00** | smooth accumulations are rejected by the current conservative transition gate |
+| `bifurcation_tpr` (localized gate) | **1.00** | the two synthetic bifurcations remain detected |
+| `separates` | **True** | the current gate separates smooth accumulation from localized bifurcation on this control catalogue |
 
-`logistic_growth` — a pure saturating S-curve with **no bifurcation whatsoever** —
-produces a **70+ step sustained crossing**, indistinguishable from a genuine
-regime switch. **Per the frozen rule (`accumulation_fpr > 0.25`), this refutes the
-hypothesis in its current bare form:** the detector cannot be distinguished from a
-trend detector.
+`logistic_growth` remains the audit warning case: the old bare sustained ΔC crossing still fires on a pure saturating S-curve with no bifurcation. The new gate therefore keeps `raw_detector_fired` visible, but makes `detector_fired` depend on temporal localization of the change. This is a code-level correction of the trend-detector confound, not yet a full empirical confirmation of ORI-C on real data.
 
 ### 3b. Surrogate null for the threshold crossing (IAAFT)
 
@@ -103,18 +99,14 @@ autocorrelation** at α = 0.01.
 The four controls are combined under a frozen joint rule
 (`oric.confirmatory`, `run_confirmatory_suite.py`): a series is **CONFIRMED** only
 if Test A (global) **and** Test B (surrogate null) **and** Test C (multiverse)
-**and** Test D (effect size) all pass. Run on the two headline ACCEPTs:
+**and** Test D (effect size) all pass. A fast rerun after the localized-gate correction gives:
 
 | Series | A (accum. fpr) | B (surrogate p) | C (multiverse) | D (effect/SESOI) | **Joint** |
 |--------|----------------|-----------------|----------------|------------------|-----------|
-| Pantheon SN | FAIL (1.0) | FAIL (p=0.17) | PASS (robust+) | PASS (exceeds) | **NOT_CONFIRMED** |
-| FRED monthly | FAIL (1.0) | FAIL (p=1.0) | FAIL (robust−) | PASS (exceeds) | **NOT_CONFIRMED** |
+| Pantheon SN | PASS (0.0) | FAIL (p≈0.24 in fast rerun; earlier full run p≈0.17) | PASS (robust+) | PASS (exceeds) | **NOT_CONFIRMED** |
+| FRED monthly | PASS (0.0) | FAIL (p=1.0) | FAIL (robust−) | PASS (exceeds) | **NOT_CONFIRMED** |
 
-Pantheon is robust to proxies and has a large C effect, but fails both
-transition-specific controls. The **limiting factor is Test A** — a property of
-the detector itself (the bare ΔC integrator), not of any one series — so **no
-pilot can be confirmed until the detector distinguishes accumulation from
-bifurcation.**
+Pantheon is robust to proxies and has a large C effect, and Test A now passes after the localized-gate correction. It still fails the surrogate-null gate, so it should be described as a robust signal or promising pilot, not as confirmed evidence of a transition. FRED remains not confirmed because it fails the surrogate-null and multiverse gates.
 
 ## 4. What "solidly confirmed" still requires
 
@@ -133,12 +125,11 @@ proxies is **necessary but not sufficient**: confirmation requires Test A reject
 Test B p < 0.01 + Test C `ROBUST_POSITIVE` jointly.
 
 Joint confirmatory suite (`run_confirmatory_suite.py`) combines the controls under
-the frozen joint rule; both headline ACCEPTs come out **NOT_CONFIRMED** (§3c).
+the frozen joint rule; after the detector correction, both headline ACCEPTs still come out **NOT_CONFIRMED** (§3c).
 
 Still outstanding (roadmap, not yet done):
-- ⬜ **Fix the detector first** — a localized / de-trended transition statistic
-  (e.g. concentration of ΔC change, slope-break detection) so Test A can pass.
-  This is the prerequisite for every per-series confirmation below.
+- ✅ **Detector correction added**: the current code uses a localized-transition gate and keeps the old bare ΔC crossing as `raw_detector_fired` for audit continuity. Test A now separates the shipped synthetic accumulation controls from the shipped bifurcation controls.
+- ⬜ Re-run the confirmatory suite in non-fast mode with high surrogate counts and store the resulting artefacts under `05_Results/`.
 - ⬜ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
 - ⬜ A pre-registered **out-of-sample directional prediction** (T3 is `INDETERMINATE`).
   **Deliberately not shipped yet:** because C is an integrator, a naive OOS

@@ -15,20 +15,22 @@ framework that identifies **symbolic phase transitions** in time series.
 It uses pre-registered parameters, frozen ex ante, with no post-hoc tuning.
 
 The framework answers one question: *does this series exhibit a cumulative
-symbolic threshold crossing?* The answer is a decidable verdict —
-**ACCEPT**, **REJECT**, or **INDETERMINATE** — with full statistical support.
+symbolic threshold crossing?* The current verdict tokens are operational
+outputs of the exploratory pipeline. They are not, by themselves, full
+scientific confirmation. The governing evidence status is maintained in
+[`EVIDENTIARY_STATUS.md`](EVIDENTIARY_STATUS.md).
 
 ---
 
-## Validation Status: VALIDATED
+## Validation Status: EXPLORATORY / INDICATIVE
 
 | Dimension | Status | Key metric |
 |-----------|--------|------------|
-| Synthetic validation | **ACCEPT** | Sensitivity 1.0, Specificity 1.0, Fisher p < 10⁻⁴⁰ |
-| Real-data canonical (FRED) | **ACCEPT** | Full protocol (C1 + C2 + C3) |
-| Validation protocol | **ACCEPT** | 150 runs, 0 indeterminate |
-| Dual proof | **COMPLETE** | Synthetic + Real aligned |
-| Replication | **REPLICATED** | 3 batches, 270 runs, identical verdicts |
+| Synthetic validation | **INDICATIVE** | T1-T8 smoke and exploratory tests pass, but no stored full-statistical proof triplet yet |
+| Real-data canonical (FRED) | **NOT_CONFIRMED** | Fails surrogate-null and multiverse gates in the confirmatory suite |
+| Pantheon SN | **NOT_CONFIRMED** | Passes localized Test A and multiverse, but fails surrogate-null gate |
+| Accumulation specificity | **PATCHED** | Localized gate separates shipped smooth accumulations from bifurcations |
+| Replication | **INFRASTRUCTURE PRESENT** | Requires third-party or clean external rerun for strong confirmation |
 
 [Full proof architecture](canonical_proof.md){ .md-button }
 
@@ -46,10 +48,11 @@ three-arm validation protocol + dual proof manifest. This is the
 - 25 frozen parameters, no post-hoc tuning
 - [Canonical Proof](canonical_proof.md) | [Validation Report](VALIDATION_CANONICAL_REPORT.md)
 
-### Level B — Conclusive Pilots (7 datasets)
+### Level B — Decidable Exploratory Pilots (7 datasets)
 
-Real-world datasets **outside the canonical core** with decidable verdicts.
-These are publishable as confirmed out-of-domain applications.
+Real-world datasets **outside the canonical core** with decidable pipeline verdicts.
+They are useful for generalization testing, but they are not publishable as
+confirmed out-of-domain applications until the confirmatory suite passes.
 
 | Pilot | Domain | N | Verdict | Power |
 |-------|--------|---|---------|-------|

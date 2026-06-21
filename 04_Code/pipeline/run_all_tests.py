@@ -56,6 +56,14 @@ def _maybe_summary_json(test_dir: Path) -> Optional[Path]:
     return cand2 if cand2.exists() else None
 
 
+
+def _display_path(path: Path, root: Path) -> str:
+    """Return a stable path for manifests without failing on absolute outdirs."""
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
 def _github_trace() -> dict:
     """Best-effort GitHub Actions trace. Safe outside CI."""
     return {
@@ -372,9 +380,9 @@ def main() -> int:
         rows.append(
             {
                 "test_id": t["id"],
-                "script": str(t["script"].relative_to(root)),
-                "outdir": str(test_dir.relative_to(root)),
-                "summary_json": str(sj.relative_to(root)) if sj else "",
+                "script": _display_path(t["script"], root),
+                "outdir": _display_path(test_dir, root),
+                "summary_json": _display_path(sj, root) if sj else "",
                 "seed": t.get("seed_used", args.seed),
                 "seed_formula": t.get("seed_formula", "base+0"),
                 "n_runs": int(t.get("n_runs_used", 1)),

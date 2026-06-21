@@ -11,25 +11,22 @@
 > obligatory triplet (p + CI₉₉ % + SESOI + power) exists, the synthetic p-values
 > are N-driven artefacts, the one densified-pilot ACCEPT (Pantheon SN) is
 > config-fragile (15/15 vs 0/15), and the decisive smooth-accumulation /
-> surrogate-null controls are now implemented and **not yet passed** by the bare
-> detector.
+> surrogate-null controls are now implemented. The old bare detector fails the trend control; the current code adds a localized-transition gate that passes the shipped accumulation-specificity control, but the headline real pilots remain NOT_CONFIRMED because other confirmatory gates still fail.
 
-## Current Status: EXPLORATORY / INDICATIVE — pilots decidable, confirmatory controls pending
+## Current Status: EXPLORATORY / INDICATIVE — detector specificity patched, real pilots not confirmed
 
 The ORI-C framework has completed its *exploratory* cycle and all 7 pilots have
-decidable verdicts at Level B. The *confirmatory* controls (accumulation
-specificity, IAAFT surrogate null, out-of-sample prediction) remain outstanding —
-see `EVIDENTIARY_STATUS.md`.
+decidable verdicts at Level B. The accumulation-specificity confound has been corrected in code by a localized-transition gate, while the IAAFT surrogate-null, full-statistical proof run and independent replication remain outstanding. See `EVIDENTIARY_STATUS.md`.
 
 ### Proof Dimensions
 
 | Dimension | Status | Key metric |
 |-----------|--------|------------|
-| Synthetic validation | **ACCEPT** | Sensitivity 1.0, Specificity 1.0, Fisher p < 10⁻⁴⁰ |
-| FRED canonical | **ACCEPT** | Full protocol (C1+C2+C3) |
-| Validation protocol | **ACCEPT** | 150 runs, 0 indeterminate |
-| Dual proof | **COMPLETE** | Synthetic + Real aligned |
-| Replication | **REPLICATED** | 3 batches, 270 runs, identical verdicts |
+| Synthetic validation | **INDICATIVE** | T1-T8 smoke and exploratory tests pass, but no stored full-statistical proof triplet yet |
+| Accumulation specificity | **PATCHED** | Localized gate passes shipped smooth-accumulation controls |
+| FRED canonical | **NOT_CONFIRMED** | Fails surrogate-null and multiverse gates in confirmatory rerun |
+| Pantheon SN | **NOT_CONFIRMED** | Passes Test A and multiverse, fails surrogate-null gate |
+| Replication | **INFRASTRUCTURE PRESENT** | Needs clean external rerun for strong confirmation |
 
 ### Pilot Generalization
 

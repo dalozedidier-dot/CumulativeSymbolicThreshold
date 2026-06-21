@@ -204,9 +204,12 @@ class ControlOutcome:
     name: str
     kind: str
     label: int
-    detector_fired: bool                # sustained ΔC > μ+k·σ for m steps
+    detector_fired: bool                # localized sustained transition gate
+    raw_detector_fired: bool            # bare sustained ΔC > μ+k·σ for m steps
     crossing_rate: float
     max_run: int
+    acceleration_concentration: float
+    acceleration_peak_fraction: float
     surrogate_p_rate: float | None      # IAAFT null p for the crossing rate
     surrogate_p_maxrun: float | None    # IAAFT null p for the longest sustained run
     surrogate_significant: bool | None  # any statistic significant at α=0.01
@@ -217,8 +220,11 @@ class ControlOutcome:
             "kind": self.kind,
             "label": self.label,
             "detector_fired": self.detector_fired,
+            "raw_detector_fired": self.raw_detector_fired,
             "crossing_rate": round(self.crossing_rate, 6),
             "max_run": self.max_run,
+            "acceleration_concentration": round(self.acceleration_concentration, 6),
+            "acceleration_peak_fraction": round(self.acceleration_peak_fraction, 6),
             "surrogate_p_rate": (round(self.surrogate_p_rate, 6) if self.surrogate_p_rate is not None else None),
             "surrogate_p_maxrun": (round(self.surrogate_p_maxrun, 6) if self.surrogate_p_maxrun is not None else None),
             "surrogate_significant": self.surrogate_significant,
@@ -249,7 +255,11 @@ def run_accumulation_control_suite(
       - ``separates``: True iff every non-bifurcating accumulation is rejected
         AND every genuine bifurcation is flagged.
     """
-    from oric.surrogates import threshold_crossing_statistic, surrogate_null_test  # local
+    from oric.surrogates import (
+        localized_transition_statistic,
+        surrogate_null_test,
+        threshold_crossing_statistic,
+    )  # local
     try:  # importable as pipeline.* (pytest / repo root on path) or flat (script dir on path)
         from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations  # type: ignore
     except ModuleNotFoundError:  # pragma: no cover - layout-dependent
@@ -268,6 +278,9 @@ def run_accumulation_control_suite(
             out = out.copy()
             out["delta_C"] = out["C"].diff().fillna(0.0)
         cs = threshold_crossing_statistic(out["delta_C"].to_numpy(), k=k, m=m, baseline_n=baseline_n)
+        loc = localized_transition_statistic(
+            out["delta_C"].to_numpy(), k=k, m=m, baseline_n=baseline_n
+        )
 
         surr_p_rate: float | None = None
         surr_p_maxrun: float | None = None
@@ -287,8 +300,11 @@ def run_accumulation_control_suite(
 
         outcomes.append(ControlOutcome(
             name=entry.name, kind=entry.kind, label=entry.label,
-            detector_fired=cs.sustained_hit, crossing_rate=cs.crossing_rate,
-            max_run=cs.max_run, surrogate_p_rate=surr_p_rate,
+            detector_fired=loc.localized_hit, raw_detector_fired=cs.sustained_hit,
+            crossing_rate=cs.crossing_rate, max_run=cs.max_run,
+            acceleration_concentration=loc.acceleration_concentration,
+            acceleration_peak_fraction=loc.acceleration_peak_fraction,
+            surrogate_p_rate=surr_p_rate,
             surrogate_p_maxrun=surr_p_maxrun, surrogate_significant=surr_sig,
         ))
 
@@ -296,6 +312,8 @@ def run_accumulation_control_suite(
     pos = [o for o in outcomes if o.label == 1]
     accumulation_fpr = (sum(o.detector_fired for o in neg) / len(neg)) if neg else 0.0
     bifurcation_tpr = (sum(o.detector_fired for o in pos) / len(pos)) if pos else 0.0
+    raw_accumulation_fpr = (sum(o.raw_detector_fired for o in neg) / len(neg)) if neg else 0.0
+    raw_bifurcation_tpr = (sum(o.raw_detector_fired for o in pos) / len(pos)) if pos else 0.0
     separates = all(not o.detector_fired for o in neg) and all(o.detector_fired for o in pos)
 
     return {
@@ -305,5 +323,11 @@ def run_accumulation_control_suite(
         "outcomes": [o.to_dict() for o in outcomes],
         "accumulation_fpr": round(accumulation_fpr, 4),
         "bifurcation_tpr": round(bifurcation_tpr, 4),
+        "raw_accumulation_fpr": round(raw_accumulation_fpr, 4),
+        "raw_bifurcation_tpr": round(raw_bifurcation_tpr, 4),
+        "detector_note": (
+            "detector_fired is the conservative localized transition gate; "
+            "raw_detector_fired preserves the older sustained ΔC crossing."
+        ),
         "separates": bool(separates),
     }

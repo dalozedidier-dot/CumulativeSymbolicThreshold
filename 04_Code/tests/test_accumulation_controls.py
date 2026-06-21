@@ -83,3 +83,21 @@ def test_suite_with_surrogates_attaches_pvalues():
     for o in res["outcomes"]:
         assert o["surrogate_p_rate"] is None or 0.0 < o["surrogate_p_rate"] <= 1.0
         assert o["surrogate_p_maxrun"] is None or 0.0 < o["surrogate_p_maxrun"] <= 1.0
+
+
+def test_localized_gate_separates_accumulation_from_bifurcation():
+    res = run_accumulation_control_suite(n=220, seed=1234, n_surrogates=0)
+    assert res["raw_accumulation_fpr"] == 1.0
+    assert res["accumulation_fpr"] <= 0.25
+    assert res["bifurcation_tpr"] == 1.0
+    assert res["separates"] is True
+
+
+def test_localized_gate_records_audit_metrics():
+    res = run_accumulation_control_suite(n=160, seed=11, n_surrogates=0)
+    for outcome in res["outcomes"]:
+        assert "raw_detector_fired" in outcome
+        assert "acceleration_concentration" in outcome
+        assert "acceleration_peak_fraction" in outcome
+        assert 0.0 <= outcome["acceleration_concentration"] <= 1.0
+        assert 0.0 <= outcome["acceleration_peak_fraction"] <= 1.0

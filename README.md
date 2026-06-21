@@ -26,8 +26,8 @@
 > **Evidentiary status (see [`docs/EVIDENTIARY_STATUS.md`](docs/EVIDENTIARY_STATUS.md)):** the framework is a *built, falsifiable test machine* that is currently **exploratory / indicative**, not solidly confirmed.
 > - **Synthetic T1–T8:** indicative — *no* `full_statistical` proof run with the obligatory triplet (p + CI₉₉ % + SESOI + power) exists in `05_Results/` yet.
 > - **Real data:** mixed — of 3 densified pilots, 1 ACCEPT (Pantheon SN, **config-fragile**: 15/15 in `test` config vs 0/15 in `stable`) and 2 REJECT (LLM scaling, PBDB marine).
-> - **Decisive controls now implemented and *not yet passed* by the bare detector:** the smooth-accumulation specificity test shows `ΔC > μ+k·σ` fires on every non-bifurcating accumulation (`accumulation_fpr = 1.0` — a trend-detector confound), and Pantheon's crossing is not significant against an IAAFT spectral null (p = 0.17).
-> - **Joint confirmatory verdict (Tests A–D, `run_confirmatory_suite.py`): both headline ACCEPTs are `NOT_CONFIRMED`** — Pantheon SN is robust to proxies with a large C effect but fails the two transition-specific controls; FRED fails three. Details and reproduction in [`docs/EVIDENTIARY_STATUS.md`](docs/EVIDENTIARY_STATUS.md).
+> - **Decisive controls now implemented:** the old bare sustained `ΔC > μ+k·σ` rule still fires on every non-bifurcating accumulation (`raw_accumulation_fpr = 1.0`), but the current localized-transition gate separates the shipped smooth accumulations from the shipped bifurcations (`accumulation_fpr = 0.0`, `bifurcation_tpr = 1.0`).
+> - **Joint confirmatory verdict (Tests A–D, `run_confirmatory_suite.py`): both headline ACCEPTs remain `NOT_CONFIRMED`**. Pantheon SN passes Test A after the correction and remains robust to proxies with a large C effect, but it still fails the IAAFT surrogate null; FRED fails the surrogate-null and multiverse gates. Details and reproduction in [`docs/EVIDENTIARY_STATUS.md`](docs/EVIDENTIARY_STATUS.md).
 
 [Theory](#theory) · [Quick Start](#quick-start) · [Tests T1–T8](#tests-t1t8) · [Real Data](#real-data) · [Examples](#examples) · [Structure](#structure) · [Citation](#citation)
 

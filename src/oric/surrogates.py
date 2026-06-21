@@ -190,6 +190,134 @@ def threshold_crossing_statistic(
     )
 
 
+
+
+@dataclass(frozen=True)
+class LocalizedTransitionStatistic:
+    """Localized-transition diagnostic built on top of ΔC.
+
+    The raw ORI-C detector asks whether ΔC crosses a baseline threshold for m
+    consecutive steps. That is necessary but not sufficient: a smooth
+    accumulation can keep ΔC elevated for a long interval and therefore look
+    like a sustained transition.
+
+    This diagnostic adds a localization gate. It asks whether the positive
+    acceleration of smoothed ΔC is concentrated in a short time window. A true
+    regime transition should concentrate the change; a smooth trend should
+    spread it across many steps.
+    """
+
+    crossing: CrossingStatistic
+    smoothing_window: int
+    acceleration_window: int
+    acceleration_concentration: float
+    acceleration_peak_fraction: float
+    min_concentration: float
+    localized_hit: bool
+
+    def to_dict(self) -> dict:
+        return {
+            "crossing": self.crossing.to_dict(),
+            "smoothing_window": self.smoothing_window,
+            "acceleration_window": self.acceleration_window,
+            "acceleration_concentration": self.acceleration_concentration,
+            "acceleration_peak_fraction": self.acceleration_peak_fraction,
+            "min_concentration": self.min_concentration,
+            "localized_hit": self.localized_hit,
+        }
+
+
+def _rolling_median(x: np.ndarray, window: int) -> np.ndarray:
+    """Small dependency-free centered rolling median."""
+    n = int(x.size)
+    if n == 0:
+        return x.copy()
+    w = max(1, int(window))
+    if w % 2 == 0:
+        w += 1
+    half = w // 2
+    out = np.empty(n, dtype=float)
+    for i in range(n):
+        lo = max(0, i - half)
+        hi = min(n, i + half + 1)
+        out[i] = float(np.median(x[lo:hi]))
+    return out
+
+
+def localized_transition_statistic(
+    delta_C: Sequence[float] | np.ndarray,
+    *,
+    k: float = 2.5,
+    m: int = 3,
+    baseline_n: int = 30,
+    smoothing_window: int | None = None,
+    acceleration_window: int | None = None,
+    min_concentration: float = 0.45,
+) -> LocalizedTransitionStatistic:
+    """Return a sustained-crossing plus localization statistic for ΔC.
+
+    The statistic intentionally remains conservative. It first requires the
+    pre-existing sustained threshold crossing, then requires a localized burst
+    in the first difference of smoothed ΔC. This rejects broad smooth trends
+    that keep ΔC high for a long time but do not contain a concentrated change
+    in regime.
+    """
+    x = np.asarray(delta_C, dtype=float)
+    x = np.where(np.isfinite(x), x, 0.0)
+    n = int(x.size)
+    crossing = threshold_crossing_statistic(x, k=k, m=m, baseline_n=baseline_n)
+
+    if n < 8:
+        return LocalizedTransitionStatistic(
+            crossing=crossing,
+            smoothing_window=max(1, n),
+            acceleration_window=max(1, n - 1),
+            acceleration_concentration=0.0,
+            acceleration_peak_fraction=0.0,
+            min_concentration=float(min_concentration),
+            localized_hit=False,
+        )
+
+    smooth_w = (
+        int(smoothing_window) if smoothing_window is not None else max(5, round(n * 0.05))
+    )
+    if smooth_w % 2 == 0:
+        smooth_w += 1
+    acc_w = (
+        int(acceleration_window)
+        if acceleration_window is not None
+        else max(5, round(n * 0.045))
+    )
+
+    smoothed = _rolling_median(x, smooth_w)
+    acceleration = np.diff(smoothed)
+    positive_acceleration = np.maximum(acceleration, 0.0)
+    total = float(np.sum(positive_acceleration))
+
+    if total <= 1e-12:
+        concentration = 0.0
+        peak_fraction = 0.0
+    else:
+        aw = max(1, min(int(acc_w), positive_acceleration.size))
+        if positive_acceleration.size >= aw:
+            window_sums = np.convolve(positive_acceleration, np.ones(aw), mode="valid")
+            concentration = float(np.max(window_sums) / total)
+        else:  # pragma: no cover - guarded above, kept for safety
+            concentration = 1.0
+        peak_fraction = float(np.max(positive_acceleration) / total)
+
+    localized_hit = bool(crossing.sustained_hit and concentration >= float(min_concentration))
+    return LocalizedTransitionStatistic(
+        crossing=crossing,
+        smoothing_window=int(smooth_w),
+        acceleration_window=int(acc_w),
+        acceleration_concentration=round(concentration, 6),
+        acceleration_peak_fraction=round(peak_fraction, 6),
+        min_concentration=float(min_concentration),
+        localized_hit=localized_hit,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Surrogate null test on the ORI-C detector
 # ---------------------------------------------------------------------------
