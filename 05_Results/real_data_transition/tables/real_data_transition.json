@@ -1,0 +1,41 @@
+{
+  "schema": "oric.real_data_transition.v1",
+  "run_mode": "full_statistical",
+  "dataset": "bonn_eeg_andrzejak_2001",
+  "input": "03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv",
+  "signal": "amplitude_uV",
+  "n": 500,
+  "alpha": 0.01,
+  "window": 30,
+  "ground_truth_onset": 400,
+  "seizure_end": 500,
+  "seizure_series": {
+    "statistic": 44.09041162104186,
+    "null_q99": 6.770347325768856,
+    "p_value": 0.005,
+    "significant": true,
+    "detected_onset": 406,
+    "onset_error": 6,
+    "onset_within_tolerance": true,
+    "onset_tolerance": 30
+  },
+  "primary_control": "healthy_A_B",
+  "controls": {
+    "healthy_A_B": {
+      "statistic": 1.6868772340044433,
+      "p_value": 0.29,
+      "significant": false,
+      "role": "matched no-transition control"
+    },
+    "interictal_C_D": {
+      "statistic": 2.3221918707232736,
+      "p_value": 0.03,
+      "significant": false,
+      "role": "epileptogenic-zone intermediate (known-abnormal)"
+    }
+  },
+  "surrogate_null": "trend_preserving",
+  "passes": true,
+  "verdict": "REAL_ONSET_CONFIRMED",
+  "joint_rule": "PASS iff the seizure series is significant at alpha AND its detected onset is within tolerance of the ground-truth ictal onset AND the matched healthy control is non-significant AND the seizure statistic exceeds 5x every control's (interictal C/D is a known-abnormal intermediate, reported but not gating)."
+}
