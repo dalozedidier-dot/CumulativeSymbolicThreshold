@@ -136,6 +136,28 @@ python 04_Code/pipeline/run_multiverse.py --input <real.csv> --outdir <out>
 
 ---
 
+## Test D — Effect size vs SESOI + power (real-data reporting rule, frozen)
+
+On real data the decision is **never** the p-value. For the order variable C
+(post-threshold vs pre-threshold) report the standardised effect (in robust-SD
+units) with its 99 % CI, against the frozen SESOI
+(`sesoi_c_robust_sd = 0.30`), plus the achieved power
+(`oric.effect_size.effect_size_report`; `run_effect_size_report.py`).
+
+Verdict (frozen):
+- `EFFECT_EXCEEDS_SESOI` iff the full 99 % CI lies beyond the SESOI (direct,
+  power-independent evidence);
+- else `UNDERPOWERED` iff power to detect the SESOI `< 0.70`
+  (indeterminate — *not* absence of effect);
+- else `EFFECT_BELOW_SESOI`.
+
+**This is a magnitude statement, not a transition claim.** A large
+`EFFECT_EXCEEDS_SESOI` on C is exactly what a trend/integrator produces; it
+confirms a *transition* only in conjunction with Test A (reject) and Test B
+(p < 0.01). Exploratory outcome: Pantheon SN C-jump = +0.89 robust-SD,
+99 % CI [0.52, 1.35] → `EFFECT_EXCEEDS_SESOI` in magnitude, yet Test B gives
+p = 0.17 → not a confirmed transition.
+
 ## Reporting denominator (frozen)
 
 Real-data confirmation is reported as an **honest fraction**: *k of N

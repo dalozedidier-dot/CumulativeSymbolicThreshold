@@ -66,6 +66,9 @@ from .accumulation_controls import (
 from .multiverse import (
     Specification, specification_grid, apply_specification, run_multiverse,
 )
+from .effect_size import (
+    cohens_d, hedges_g, achieved_power, effect_size_report, EffectSizeReport,
+)
 
 __all__ = [
     # Core computations
@@ -149,6 +152,12 @@ __all__ = [
     "specification_grid",
     "apply_specification",
     "run_multiverse",
+    # Effect size vs SESOI + power
+    "cohens_d",
+    "hedges_g",
+    "achieved_power",
+    "effect_size_report",
+    "EffectSizeReport",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",

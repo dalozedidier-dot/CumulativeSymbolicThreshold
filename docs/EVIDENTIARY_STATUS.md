@@ -104,6 +104,7 @@ Implemented:
 - ✅ Smooth non-bifurcating accumulation controls (`accumulation_controls.py`, T9)
 - ✅ IAAFT surrogate null for threshold crossing (`surrogates.py`)
 - ✅ **Specification-curve / multiverse** over defensible analytic choices (`multiverse.py`)
+- ✅ **Effect size vs SESOI + achieved power** for real-data reporting (`effect_size.py`)
 - ✅ Governance aligned to the real probative state (this document)
 - ✅ Frozen ex-ante protocol separating exploratory from confirmatory
 
@@ -117,7 +118,6 @@ Still outstanding (roadmap, not yet done):
 - ⬜ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
 - ⬜ A pre-registered **out-of-sample directional prediction**, verified on held-out data (T3 is `INDETERMINATE`)
 - ⬜ Column-level proxy alternatives in the multiverse (k interchangeable source columns per variable, where available)
-- ⬜ Power reported per pilot, with effect-size-vs-SESOI rather than p on real data
 - ⬜ Independent third-party replication via the Docker/Zenodo bundle
 
 ## 5. Reproduce
