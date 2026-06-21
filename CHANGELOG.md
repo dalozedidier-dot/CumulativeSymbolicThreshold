@@ -1,5 +1,31 @@
 # Changelog
 
+## [Unreleased] — 2026-06-21 — Decisive falsification controls + honest governance
+
+### Added
+- **Smooth non-bifurcating accumulation controls** (`src/oric/accumulation_controls.py`,
+  `run_accumulation_control.py`, T9 `accumulation_specificity` block) — the decisive
+  trend-vs-transition test. Honest outcome: the bare ΔC criterion fires on every smooth
+  accumulation (`accumulation_fpr = 1.0`).
+- **IAAFT surrogate null** for threshold crossing (`src/oric/surrogates.py`,
+  `run_surrogate_null.py`) — Schreiber–Schmitz surrogates preserving spectrum + amplitude
+  distribution. Pantheon crossing p = 0.17 (n.s.).
+- **Specification-curve / multiverse** (`src/oric/multiverse.py`, `run_multiverse.py`) —
+  27 defensible analytic choices; ROBUST_POSITIVE/NEGATIVE/FRAGILE verdict.
+- **Effect size vs SESOI + power** (`src/oric/effect_size.py`, `run_effect_size_report.py`) —
+  real-data reporting rule (never p): EFFECT_EXCEEDS_SESOI / UNDERPOWERED / EFFECT_BELOW_SESOI.
+- **Joint confirmatory suite** (`src/oric/confirmatory.py`, `run_confirmatory_suite.py`) —
+  combines Tests A–D under a frozen joint rule. Both headline ACCEPTs (Pantheon SN, FRED)
+  come out **NOT_CONFIRMED**.
+- `02_Protocol/PREREG_ADDENDUM_2026-06_ACCUMULATION_SURROGATE.md` (Tests A–D, frozen ex ante);
+  `docs/EVIDENTIARY_STATUS.md` (single source of truth); 34 new tests.
+
+### Changed
+- **Governance aligned to the real probative state:** README and `docs/framework_status.md`
+  corrected from `ACCEPT — full_statistical_support` to an honest exploratory/indicative
+  status (no `full_statistical` run exists; real data mixed and config-fragile).
+- Manuscript §2.4 / §3.2.1 updated for the new controls and the negative finding.
+
 ## [1.3.0] — 2026-03-07 — Multi-domain validation + repo consolidation
 
 ### Added

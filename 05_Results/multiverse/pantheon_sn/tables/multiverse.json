@@ -1,0 +1,288 @@
+{
+  "schema": "oric.multiverse.v1",
+  "n_specs": 27,
+  "fired_fraction": 1.0,
+  "robust_fraction_threshold": 0.8,
+  "robustness": "ROBUST_POSITIVE",
+  "crossing_rate_quartiles": {
+    "min": 0.393333,
+    "q25": 0.4,
+    "median": 0.413333,
+    "q75": 0.42,
+    "max": 0.446667
+  },
+  "outcomes": [
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.4,
+      "max_run": 41
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.413333,
+      "max_run": 41
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.44,
+      "max_run": 41
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.413333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.42,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.426667,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.4,
+      "max_run": 45
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.42,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "robust_minmax",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.42,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.393333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.393333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.446667,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.393333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.4,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.426667,
+      "max_run": 60
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.406667,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.413333,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "zscore",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.42,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.393333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.393333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "none",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.446667,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.393333,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.4,
+      "max_run": 44
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "ma3",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.426667,
+      "max_run": 60
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.85
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.406667,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.9
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.413333,
+      "max_run": 59
+    },
+    {
+      "spec": {
+        "normalize": "minmax",
+        "smooth": "ma5",
+        "demand_to_cap_ratio": 0.95
+      },
+      "detector_fired": true,
+      "crossing_rate": 0.42,
+      "max_run": 59
+    }
+  ],
+  "input": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real_densified.csv",
+  "n_rows": 150
+}

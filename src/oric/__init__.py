@@ -63,6 +63,13 @@ from .accumulation_controls import (
     gen_accumulation, accumulation_control_catalogue,
     run_accumulation_control_suite, NON_BIFURCATING, BIFURCATING,
 )
+from .multiverse import (
+    Specification, specification_grid, apply_specification, run_multiverse,
+)
+from .effect_size import (
+    cohens_d, hedges_g, achieved_power, effect_size_report, EffectSizeReport,
+)
+from .confirmatory import run_confirmatory_suite
 
 __all__ = [
     # Core computations
@@ -141,6 +148,19 @@ __all__ = [
     "run_accumulation_control_suite",
     "NON_BIFURCATING",
     "BIFURCATING",
+    # Multiverse / specification curve
+    "Specification",
+    "specification_grid",
+    "apply_specification",
+    "run_multiverse",
+    # Effect size vs SESOI + power
+    "cohens_d",
+    "hedges_g",
+    "achieved_power",
+    "effect_size_report",
+    "EffectSizeReport",
+    # Joint confirmatory verdict
+    "run_confirmatory_suite",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",

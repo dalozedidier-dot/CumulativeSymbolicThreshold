@@ -1,0 +1,41 @@
+{
+  "schema": "oric.confirmatory.v1",
+  "confirmed": false,
+  "verdict": "NOT_CONFIRMED",
+  "failing_tests": [
+    "A_accumulation_specificity",
+    "B_surrogate_null"
+  ],
+  "limiting_factor": "A_accumulation_specificity",
+  "tests": {
+    "A_accumulation_specificity": {
+      "pass": false,
+      "accumulation_fpr": 1.0,
+      "scope": "global_detector_property"
+    },
+    "B_surrogate_null": {
+      "pass": false,
+      "p_value": 0.16766467065868262,
+      "observed": 0.42,
+      "null_q99": 0.52
+    },
+    "C_multiverse": {
+      "pass": true,
+      "robustness": "ROBUST_POSITIVE",
+      "fired_fraction": 1.0
+    },
+    "D_effect_size": {
+      "pass": true,
+      "verdict": "EFFECT_EXCEEDS_SESOI",
+      "standardised_effect": 0.8935477876460788,
+      "ci": [
+        0.49202249967777695,
+        1.3480638829795888
+      ],
+      "power_at_sesoi": 0.09432367570719648
+    }
+  },
+  "joint_rule": "CONFIRMED iff A(global) AND B AND C AND D all pass.",
+  "input": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real_densified.csv",
+  "n_rows": 150
+}

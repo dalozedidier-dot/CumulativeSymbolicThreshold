@@ -98,6 +98,66 @@ python 04_Code/pipeline/run_surrogate_null.py --input <real.csv> --outdir <out> 
 
 ---
 
+## Test C — Specification curve / multiverse robustness
+
+### Procedure (frozen)
+
+Run ORI-C across a pre-declared grid of **equally defensible** analytic choices —
+orthogonal to the frozen detector parameters (k, m, baseline_n):
+
+- `normalize` ∈ {robust_minmax, zscore, minmax}
+- `smooth` ∈ {none, ma3, ma5}
+- `demand_to_cap_ratio` ∈ {0.85, 0.90, 0.95}
+
+→ 27 specifications (`oric.multiverse.specification_grid`). For each, record whether
+the sustained crossing fires and its crossing rate.
+
+### Criterion (frozen)
+
+- `ROBUST_POSITIVE` iff the detector fires in **≥ 80 %** of specifications;
+  `ROBUST_NEGATIVE` iff **≤ 20 %**; otherwise **`FRAGILE`** — the verdict depends on
+  an arbitrary proxy choice and **does not confirm**.
+- Robustness is **necessary but not sufficient**: a `ROBUST_POSITIVE` that fails
+  Test A (accumulation specificity) or Test B (surrogate null) is a robust *trend*,
+  not a confirmed transition. Confirmation requires Test A reject + Test B p < 0.01
+  + Test C `ROBUST_POSITIVE`.
+
+### Runner
+
+```
+python 04_Code/pipeline/run_multiverse.py --input <real.csv> --outdir <out>
+```
+
+### Current outcome (exploratory)
+
+- FRED monthly: `ROBUST_NEGATIVE` (0/27 fire on the default detector path).
+- Pantheon SN densified: `ROBUST_POSITIVE` (27/27, rate 0.39–0.45) — **but** Test B
+  gives p = 0.17 (n.s.): a robust trend, not a confirmed transition.
+
+---
+
+## Test D — Effect size vs SESOI + power (real-data reporting rule, frozen)
+
+On real data the decision is **never** the p-value. For the order variable C
+(post-threshold vs pre-threshold) report the standardised effect (in robust-SD
+units) with its 99 % CI, against the frozen SESOI
+(`sesoi_c_robust_sd = 0.30`), plus the achieved power
+(`oric.effect_size.effect_size_report`; `run_effect_size_report.py`).
+
+Verdict (frozen):
+- `EFFECT_EXCEEDS_SESOI` iff the full 99 % CI lies beyond the SESOI (direct,
+  power-independent evidence);
+- else `UNDERPOWERED` iff power to detect the SESOI `< 0.70`
+  (indeterminate — *not* absence of effect);
+- else `EFFECT_BELOW_SESOI`.
+
+**This is a magnitude statement, not a transition claim.** A large
+`EFFECT_EXCEEDS_SESOI` on C is exactly what a trend/integrator produces; it
+confirms a *transition* only in conjunction with Test A (reject) and Test B
+(p < 0.01). Exploratory outcome: Pantheon SN C-jump = +0.89 robust-SD,
+99 % CI [0.52, 1.35] → `EFFECT_EXCEEDS_SESOI` in magnitude, yet Test B gives
+p = 0.17 → not a confirmed transition.
+
 ## Reporting denominator (frozen)
 
 Real-data confirmation is reported as an **honest fraction**: *k of N

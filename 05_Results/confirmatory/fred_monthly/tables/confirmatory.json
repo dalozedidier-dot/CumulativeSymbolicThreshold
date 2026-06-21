@@ -1,0 +1,42 @@
+{
+  "schema": "oric.confirmatory.v1",
+  "confirmed": false,
+  "verdict": "NOT_CONFIRMED",
+  "failing_tests": [
+    "A_accumulation_specificity",
+    "B_surrogate_null",
+    "C_multiverse"
+  ],
+  "limiting_factor": "A_accumulation_specificity",
+  "tests": {
+    "A_accumulation_specificity": {
+      "pass": false,
+      "accumulation_fpr": 1.0,
+      "scope": "global_detector_property"
+    },
+    "B_surrogate_null": {
+      "pass": false,
+      "p_value": 1.0,
+      "observed": 0.0,
+      "null_q99": 0.48335416666666664
+    },
+    "C_multiverse": {
+      "pass": false,
+      "robustness": "ROBUST_NEGATIVE",
+      "fired_fraction": 0.0
+    },
+    "D_effect_size": {
+      "pass": true,
+      "verdict": "EFFECT_EXCEEDS_SESOI",
+      "standardised_effect": -1.14419721108317,
+      "ci": [
+        -1.2506212728088288,
+        -1.1001655923634157
+      ],
+      "power_at_sesoi": 0.6371273965403804
+    }
+  },
+  "joint_rule": "CONFIRMED iff A(global) AND B AND C AND D all pass.",
+  "input": "03_Data/real/fred_monthly/real.csv",
+  "n_rows": 480
+}
