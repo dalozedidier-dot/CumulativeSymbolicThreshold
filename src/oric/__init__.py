@@ -58,6 +58,7 @@ from .surrogates import (
     iaaft_surrogate, iaaft_surrogates,
     threshold_crossing_statistic, surrogate_null_test,
     CrossingStatistic, SurrogateNullResult,
+    trend_preserving_surrogate, series_surrogate_test, SeriesSurrogateResult,
 )
 from .accumulation_controls import (
     gen_accumulation, accumulation_control_catalogue,
@@ -78,7 +79,21 @@ from .endogenous import (
     run_endogenous,
     drive_from_sigma,
     make_ramp,
+    fold_approach,
+    matched_fold_pair,
     hysteresis_sweep,
+)
+from .early_warning import (
+    EarlyWarningResult,
+    early_warning,
+    early_warning_before_jump,
+    composite_csd_statistic,
+    csd_surrogate_test,
+    gaussian_detrend,
+    rolling_autocorr1,
+    rolling_variance,
+    kendall_trend,
+    find_jump,
 )
 
 __all__ = [
@@ -152,6 +167,10 @@ __all__ = [
     "surrogate_null_test",
     "CrossingStatistic",
     "SurrogateNullResult",
+    # Harder nulls: trend-preserving surrogate + generic series test
+    "trend_preserving_surrogate",
+    "series_surrogate_test",
+    "SeriesSurrogateResult",
     # Accumulation controls (trend-vs-transition discrimination)
     "gen_accumulation",
     "accumulation_control_catalogue",
@@ -179,7 +198,20 @@ __all__ = [
     "run_endogenous",
     "drive_from_sigma",
     "make_ramp",
+    "fold_approach",
+    "matched_fold_pair",
     "hysteresis_sweep",
+    # Critical-slowing-down early-warning detector (primary)
+    "EarlyWarningResult",
+    "early_warning",
+    "early_warning_before_jump",
+    "composite_csd_statistic",
+    "csd_surrogate_test",
+    "gaussian_detrend",
+    "rolling_autocorr1",
+    "rolling_variance",
+    "kendall_trend",
+    "find_jump",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",

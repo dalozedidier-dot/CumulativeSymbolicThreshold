@@ -242,6 +242,52 @@ def make_ramp(n: int, a_start: float, a_end: float, *, hold_frac: float = 0.0) -
     return np.concatenate([np.full(hold, a_start), mid, np.full(n - hold - body, a_end)])
 
 
+def _fold_setup(cfg: EndogenousConfig, n: int, cross: bool,
+                a_start: float | None, a_end: float | None) -> tuple[np.ndarray, float]:
+    """Return (a_traj, C0) for a low-branch run-up toward (or across) the upper fold."""
+    win = bistable_window(cfg)
+    if win is None:
+        raise ValueError("configuration is not bistable; cannot build a fold approach")
+    a_low, a_high = win
+    if a_start is None:
+        a_start = a_low + 0.15 * (a_high - a_low)
+    if a_end is None:
+        a_end = a_high * 1.08 if cross else a_low + 0.92 * (a_high - a_low)
+    stable = [c for c, s in equilibria(float(a_start), cfg) if s]
+    C0 = min(stable) if stable else 0.0
+    return make_ramp(int(n), float(a_start), float(a_end)), float(C0)
+
+
+def fold_approach(cfg: EndogenousConfig, *, n: int = 600, cross: bool = False,
+                  a_start: float | None = None, a_end: float | None = None,
+                  rng: np.random.Generator | None = None) -> pd.DataFrame:
+    """Generate a low-branch run-up toward the fold (the canonical transition setup).
+
+    The system starts on its **low** stable branch and the control parameter ``a``
+    is ramped up. With ``cross=False`` it approaches the upper fold without crossing
+    (pure pre-transition run-up, for CSD); with ``cross=True`` it crosses the fold
+    and jumps to the high branch. Returns a DataFrame (t, a, C, delta_C).
+    """
+    a_traj, C0 = _fold_setup(cfg, n, cross, a_start, a_end)
+    return run_endogenous(a_traj, replace(cfg, C0=C0), rng=rng)
+
+
+def matched_fold_pair(cfg: EndogenousConfig, *, n: int = 600, cross: bool = False,
+                      a_start: float | None = None, a_end: float | None = None,
+                      seed: int | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return (bistable, linear-twin) runs on the **same** drive, start, and noise.
+
+    The matched twin (feedback off) is the decisive negative control: identical
+    control trajectory ``a(t)``, identical initial ``C0`` (the bistable low branch),
+    and identical noise stream — so any difference is the endogenous feedback alone.
+    """
+    a_traj, C0 = _fold_setup(cfg, n, cross, a_start, a_end)
+    cfg_b = replace(cfg, C0=C0)
+    df_b = run_endogenous(a_traj, cfg_b, rng=np.random.default_rng(seed))
+    df_t = run_endogenous(a_traj, cfg_b.linear_twin(), rng=np.random.default_rng(seed))
+    return df_b, df_t
+
+
 def hysteresis_sweep(cfg: EndogenousConfig, *, a_min: float, a_max: float,
                      n_up: int = 400, n_down: int = 400,
                      rng: np.random.Generator | None = None) -> dict:
