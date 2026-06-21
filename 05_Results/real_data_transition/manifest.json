@@ -1,0 +1,8 @@
+{
+  "test_id": "real_data_transition",
+  "schema": "oric.real_data_transition.manifest.v1",
+  "run_mode": "full_statistical",
+  "input": "03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv",
+  "verdict": "REAL_ONSET_CONFIRMED",
+  "json_sha256": "f7efd50bfdf5ad883af90aeaf7f9ad468b79b45b7ce42f1aa21a5f4eee5c93f6"
+}

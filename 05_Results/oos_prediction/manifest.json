@@ -1,0 +1,9 @@
+{
+  "test_id": "oos_prediction",
+  "schema": "oric.oos_prediction.manifest.v1",
+  "run_mode": "full_statistical",
+  "n_replicates": 50,
+  "lead": 40,
+  "verdict": "OOS_SKILL_INCONCLUSIVE",
+  "json_sha256": "911428fe2e762918e2d1901f0ed50c085f257ea9f201bcf2b845dd2b671b2558"
+}

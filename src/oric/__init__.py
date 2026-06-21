@@ -95,6 +95,12 @@ from .early_warning import (
     kendall_trend,
     find_jump,
 )
+from .oos_prediction import (
+    TransitionPrediction,
+    PredictionScore,
+    predict_transition,
+    score_prediction,
+)
 
 __all__ = [
     # Core computations
@@ -212,6 +218,11 @@ __all__ = [
     "rolling_variance",
     "kendall_trend",
     "find_jump",
+    # Out-of-sample directional prediction
+    "TransitionPrediction",
+    "PredictionScore",
+    "predict_transition",
+    "score_prediction",
     # Utilities
     "RandomizationEngine",
     "ExperimentLogger",
