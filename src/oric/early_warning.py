@@ -54,8 +54,8 @@ def gaussian_detrend(x: np.ndarray, bandwidth: float) -> np.ndarray:
     if x.size == 0:
         return x.copy()
     bw = max(1e-6, float(bandwidth))
-    trend = gaussian_filter1d(x, sigma=bw, mode="reflect")
-    return x - trend
+    trend = np.asarray(gaussian_filter1d(x, sigma=bw, mode="reflect"), dtype=float)
+    return np.asarray(x - trend, dtype=float)
 
 
 def rolling_variance(x: np.ndarray, window: int) -> np.ndarray:
@@ -64,7 +64,7 @@ def rolling_variance(x: np.ndarray, window: int) -> np.ndarray:
     if x.size < window:
         return np.empty(0, dtype=float)
     w = np.lib.stride_tricks.sliding_window_view(x, window)
-    return w.var(axis=1)
+    return np.asarray(w.var(axis=1), dtype=float)
 
 
 def rolling_autocorr1(x: np.ndarray, window: int) -> np.ndarray:
