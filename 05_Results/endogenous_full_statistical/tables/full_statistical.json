@@ -1,0 +1,43 @@
+{
+  "schema": "oric.endogenous_full_statistical.v1",
+  "run_mode": "full_statistical",
+  "model": "endogenous_bistable",
+  "n_replicates": 50,
+  "n_steps": 1500,
+  "n_surrogates": 199,
+  "seed_base": 7000,
+  "statistic": "composite_csd_tau",
+  "triplet": {
+    "p_value_mann_whitney": 1.3835767729548305e-10,
+    "standardised_effect": 1.1256850153390165,
+    "ci99": [
+      0.8261122460169793,
+      1.8154879212240638
+    ],
+    "sesoi_robust_sd": 0.3,
+    "achieved_power_at_sesoi": 0.13545478796921798,
+    "power_gate": 0.7,
+    "effect_verdict": "EFFECT_EXCEEDS_SESOI"
+  },
+  "detection": {
+    "bistable_tpr": 0.36,
+    "twin_fpr": 0.08,
+    "fpr_ceiling": 0.2,
+    "surrogate_null": "trend_preserving"
+  },
+  "csd_tau": {
+    "bistable_mean": 0.5215529504637852,
+    "bistable_sd": 0.2367407265001443,
+    "twin_mean": 0.08908027629761199,
+    "twin_sd": 0.32632315631026265
+  },
+  "bifurcation_signatures": {
+    "hysteresis_area_bistable": 3.6692066963112744,
+    "hysteresis_area_twin": 0.35730272122324397,
+    "steady_state_jump_bistable": 2.479790273385117,
+    "steady_state_jump_twin": 0.0
+  },
+  "passes": true,
+  "verdict": "DEMONSTRATION_CONFIRMED",
+  "joint_rule": "PASS iff effect EXCEEDS_SESOI (99% CI beyond SESOI) AND power>=gate AND Mann-Whitney p<alpha AND twin FPR<=ceiling."
+}

@@ -13,14 +13,23 @@ manuscript §3.1) summarise verdicts, **this page governs their interpretation.*
 
 ---
 
-## 1. No `full_statistical` proof run exists
+## 1. `full_statistical` proof run — synthetic demonstration now exists; real pilots still pending
 
 By the project's own governance rule (manuscript §2.3; `run_mode` field), a
 publishable verdict requires a `full_statistical` run (N ≥ 50) carrying the
 **obligatory triplet** — *p-value + CI₉₉ % + SESOI + power*.
 
-- **There is no file in `05_Results/` with `run_mode: full_statistical`.** Every
-  committed verdict was produced in `smoke_ci` mode or by the validation
+- **A `full_statistical` run now exists for the endogenous bistable demonstration
+  model** (`05_Results/endogenous_full_statistical/`,
+  `run_endogenous_full_statistical.py`, N = 50): the critical-slowing-down effect
+  of the bistable fold approach vs its matched linear twin is
+  `standardised_effect ≈ +1.13`, 99 % CI `[+0.83, +1.82]` (entirely beyond the
+  frozen SESOI 0.30 ⇒ `EFFECT_EXCEEDS_SESOI`), Mann–Whitney `p ≈ 1.4e-10`, with
+  twin false-positive rate 0.08 ≤ the 0.20 ceiling. This is a demonstration on a
+  model that genuinely instantiates a bifurcation (see §3d), not yet a real-pilot
+  confirmation.
+- **No real-data pilot has a `run_mode: full_statistical` run.** Every committed
+  *real-pilot* verdict was produced in `smoke_ci` mode or by the validation
   protocol, neither of which stores the triplet.
 - Synthetic p-values such as `2.6e-301` or `8.9e-51` are **artefacts of very large
   N**; without an effect size against a pre-declared SESOI they carry no
@@ -109,6 +118,32 @@ under `05_Results/confirmatory/`) after the localized-gate correction gives:
 
 Pantheon is robust to proxies and has a large C effect, and Test A now passes after the localized-gate correction. It still fails the surrogate-null gate, so it should be described as a robust signal or promising pilot, not as confirmed evidence of a transition. FRED remains not confirmed because it fails the surrogate-null and multiverse gates.
 
+## 3d. Endogenous mechanism — the model now instantiates a genuine bifurcation
+
+The original simulator has **no state-dependent feedback** (`S` is a leaky
+integrator of an exogenous Σ; `C` a cumulative sum of `S`), so it cannot produce
+a fold, hysteresis or critical slowing down endogenously — any "bifurcation" was
+a steep curve imposed on the `demand` input, and the detector only separated
+"steep step" from "smooth ramp" on that input. `oric.endogenous` adds the missing
+positive feedback (`dC/dt = a − b·C + r·C^p/(C^p+h^p)`, May 1977; Scheffer 2009),
+giving a true saddle-node with two stable branches over a window of the control
+parameter `a = a0 + g·S`. The matched **linear twin** (feedback off, `r=0`) is the
+decisive negative control: same drive, start and noise, no fold.
+
+`oric.early_warning` then makes **critical slowing down the primary detector**
+(rising lag-1 autocorrelation and variance), with significance assessed against a
+**trend-preserving surrogate null** (`oric.surrogates.trend_preserving_surrogate`)
+that keeps the trend and residual spectrum but destroys the localized rupture —
+FPR controlled at the nominal level on clean trend+AR(1) nulls.
+
+The `full_statistical` demonstration (§1; `05_Results/endogenous_full_statistical/`)
+confirms, over N = 50, that the bistable approach beats its linear twin on this
+detector with a large effect whose 99 % CI lies entirely beyond the SESOI, while
+the twin's false-positive rate stays under the frozen ceiling — and corroborates
+with a hysteresis loop (area 3.67 vs 0.36) and a steady-state discontinuity at the
+fold (jump 2.48 vs 0.0). This shows the framework's *mechanism* is now
+demonstrable; it does not by itself confirm ORI-C on real data.
+
 ## 4. What "solidly confirmed" still requires
 
 Implemented:
@@ -131,7 +166,10 @@ the frozen joint rule; after the detector correction, both headline ACCEPTs stil
 Still outstanding (roadmap, not yet done):
 - ✅ **Detector correction added**: the current code uses a localized-transition gate and keeps the old bare ΔC crossing as `raw_detector_fired` for audit continuity. Test A now separates the shipped synthetic accumulation controls from the shipped bifurcation controls.
 - ✅ Re-run the confirmatory suite in non-fast mode with high surrogate counts and store the resulting artefacts under `05_Results/` (done — `05_Results/confirmatory/{pantheon_sn,fred_monthly}/`, 500 IAAFT surrogates, seed 1234; Test A now PASS, joint still NOT_CONFIRMED).
-- ⬜ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
+- ✅ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
+  — done for the **endogenous bistable demonstration** model
+  (`05_Results/endogenous_full_statistical/`, N = 50; §1, §3d). A real-pilot
+  `full_statistical` run remains outstanding.
 - ⬜ A pre-registered **out-of-sample directional prediction** (T3 is `INDETERMINATE`).
   **Deliberately not shipped yet:** because C is an integrator, a naive OOS
   *crossing* prediction inherits the same trend confound as Test A and would

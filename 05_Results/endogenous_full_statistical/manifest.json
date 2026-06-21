@@ -1,0 +1,10 @@
+{
+  "test_id": "endogenous_full_statistical",
+  "schema": "oric.endogenous_full_statistical.manifest.v1",
+  "run_mode": "full_statistical",
+  "n_replicates": 50,
+  "n_surrogates": 199,
+  "seed_base": 7000,
+  "verdict": "DEMONSTRATION_CONFIRMED",
+  "json_sha256": "129f0518430935940cf6812b445971b7306b8c6f86e31777b31a0af79deb7fc9"
+}
