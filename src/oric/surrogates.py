@@ -152,9 +152,10 @@ def trend_preserving_surrogate(
     early-warning detrending of Dakos et al. 2012).
     """
     x = np.asarray(x, dtype=float)
-    trend = gaussian_filter1d(x, sigma=max(1e-6, float(bandwidth)), mode="reflect")
+    trend = np.asarray(gaussian_filter1d(x, sigma=max(1e-6, float(bandwidth)), mode="reflect"),
+                       dtype=float)
     resid = x - trend
-    return trend + iaaft_surrogate(resid, n_iter=n_iter, rng=rng)
+    return np.asarray(trend + iaaft_surrogate(resid, n_iter=n_iter, rng=rng), dtype=float)
 
 
 # ---------------------------------------------------------------------------

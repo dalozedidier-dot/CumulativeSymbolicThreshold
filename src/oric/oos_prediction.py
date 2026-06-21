@@ -123,9 +123,9 @@ def score_prediction(
     """
     has_transition = actual_onset is not None
     timing_error: int | None = None
-    if pred.predicted and has_transition:
+    if pred.predicted and actual_onset is not None:
         if pred.predicted_onset is not None:
-            timing_error = int(abs(pred.predicted_onset - int(actual_onset)))
+            timing_error = int(abs(pred.predicted_onset - actual_onset))
             outcome = "hit" if timing_error <= int(timing_tolerance) else "miss"
         else:
             outcome = "hit"  # correct direction, no timing estimate

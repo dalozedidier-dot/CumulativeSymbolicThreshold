@@ -102,7 +102,7 @@ class EndogenousConfig:
 def _hill(C: np.ndarray | float, r: float, h: float, p: float) -> np.ndarray | float:
     """Self-reinforcement term r·C^p/(C^p + h^p) (0 for C ≤ 0)."""
     Cp = np.power(np.clip(C, 0.0, None), p)
-    return r * Cp / (Cp + h**p)
+    return np.asarray(r * Cp / (Cp + h**p), dtype=float)
 
 
 def field(C: np.ndarray | float, a: float, cfg: EndogenousConfig) -> np.ndarray | float:
@@ -307,8 +307,9 @@ def hysteresis_sweep(cfg: EndogenousConfig, *, a_min: float, a_max: float,
     a_grid = np.linspace(a_min, a_max, 200)
     up_interp = np.interp(a_grid, up, C_up)
     down_interp = np.interp(a_grid, down[::-1], C_down[::-1])
-    area = float(np.trapezoid(np.abs(down_interp - up_interp), a_grid)) \
-        if hasattr(np, "trapezoid") else float(np.trapz(np.abs(down_interp - up_interp), a_grid))
+    # numpy >= 2 renamed trapz -> trapezoid; getattr keeps both paths type-clean.
+    trapz_fn = getattr(np, "trapezoid", None) or getattr(np, "trapz")
+    area = float(trapz_fn(np.abs(down_interp - up_interp), a_grid))
     return {
         "a_grid": a_grid, "C_up": up_interp, "C_down": down_interp,
         "hysteresis_area": area, "a_min": float(a_min), "a_max": float(a_max),
