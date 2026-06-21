@@ -1,7 +1,6 @@
 """Regression tests for run_all_tests path serialization."""
 from __future__ import annotations
 
-from pathlib import Path
 
 from pipeline.run_all_tests import _display_path
 
