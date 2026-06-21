@@ -3,14 +3,13 @@
   "confirmed": false,
   "verdict": "NOT_CONFIRMED",
   "failing_tests": [
-    "A_accumulation_specificity",
     "B_surrogate_null"
   ],
-  "limiting_factor": "A_accumulation_specificity",
+  "limiting_factor": "B_surrogate_null",
   "tests": {
     "A_accumulation_specificity": {
-      "pass": false,
-      "accumulation_fpr": 1.0,
+      "pass": true,
+      "accumulation_fpr": 0.0,
       "scope": "global_detector_property"
     },
     "B_surrogate_null": {

@@ -24,8 +24,9 @@ locale (ACCEPT / INDETERMINATE / REJECT) intégrée en verdict global par règle
 déclarée à l'avance.
 (3) Une distinction normative entre *smoke CI* (vérification d'artefacts, non conclusive) et
 *proof runs* (statistiques complètes, seules autorisées à produire des conclusions).
-(4) Un pilote sur données réelles mensuelles FRED (480 points, US 1986–2025) comme contrôle
-positif T9.
+(4) Un pilote sur données réelles mensuelles FRED (480 points, US 1986–2025), d'abord proposé
+comme contrôle positif T9 mais que la suite confirmatoire classe **NOT_CONFIRMED** (multivers
+ROBUST_NEGATIVE, loi nulle IAAFT non franchie) — voir §3.3 et `docs/EVIDENTIARY_STATUS.md`.
 
 **Limites principales.**
 Le cadre ne prétend pas mesurer la causalité moléculaire entre S et C. La viabilité V est une
@@ -230,8 +231,9 @@ effet de S sur V, imposer Σ > 0 ; sinon V peut rester plat et le test est mal p
 | T8 — Reinjection recovery | Pente de récupération ≤ 0 après réinjection | H4 (récupération) |
 | T9 — Cross-domain vivant-like | AUC ≤ 0.5 sur 12 contrôles (6 pos / 6 nég) | H5 (discrimination) |
 
-T9 constitue la validation la plus exigeante : 6 contrôles positifs (systèmes régulés, dont
-données réelles FRED monthly) versus 6 contrôles négatifs stochastiques/chaotiques (bruit
+T9 constitue la validation la plus exigeante : 6 contrôles positifs (systèmes régulés ; le
+pilote réel FRED monthly, d'abord rangé ici, ressort toutefois NOT_CONFIRMED à la suite
+confirmatoire — §3.3) versus 6 contrôles négatifs stochastiques/chaotiques (bruit
 blanc, bruit rose/rouge, marche aléatoire, sinus, Poisson, chaos) **plus 4 contrôles
 négatifs d'accumulation lisse non bifurquante** (croissance logistique, Gompertz, saturation
 exponentielle, rampe linéaire — ajoutés ex ante en v1.1 des critères ; voir §3.2.1 et
@@ -254,8 +256,10 @@ Un proxy_spec manquant ou invalide bloque le CI.
 
 ### 3.1 Tableau récapitulatif T1–T9
 
-Le tableau ci-dessous rapporte les verdicts produits en mode `full_statistical` (N ≥ 50).
-Les runs `smoke_ci` (CI standard) ne sont pas rapportés ici — voir artefacts CI.
+Le tableau ci-dessous rapporte des verdicts **indicatifs** (mode `smoke_ci` / protocole de
+validation). **Aucun run `full_statistical` (N ≥ 50) portant le triplet obligatoire
+(p + CI₉₉% + SESOI + power) n'a encore été exécuté et stocké dans `05_Results/`** ; chaque
+verdict marqué * reste donc à confirmer (voir `docs/EVIDENTIARY_STATUS.md` §1).
 
 | Test | Script | Seed | N runs | Verdict | Métriques clés |
 |------|--------|------|--------|---------|----------------|
@@ -305,14 +309,16 @@ conditions, désormais testées et **gelées ex ante**
 « auto-renforçant ». On ajoute donc ≥ 3 contrôles négatifs d'**accumulation lisse
 non bifurquante** (croissance logistique, Gompertz, saturation exponentielle,
 rampe linéaire bruitée — `oric.accumulation_controls`). Résultat
-(`run_accumulation_control.py`) : le critère brut `ΔC > μ + k·σ` se déclenche sur
-**toutes** ces accumulations (`accumulation_fpr = 1.0` ; la croissance logistique
-seule produit un franchissement soutenu de 70+ pas, sans aucune bifurcation), et
-ne **sépare pas** l'accumulation lisse d'une bascule réelle (`separates = False`).
-Par la règle gelée (`accumulation_fpr > 0.25`), **le détecteur brut, dans sa forme
-actuelle, ne se distingue pas d'un détecteur de tendance** : c'est exactement le
-symptôme attendu du piège d'intégration, et il rejoint la fragilité Pantheon
-(15/15 en config `test` vs 0/15 en config `stable`).
+(`run_accumulation_control.py`) : le critère **brut** `ΔC > μ + k·σ` se déclenche sur
+**toutes** ces accumulations (`raw_accumulation_fpr = 1.0` ; la croissance logistique
+seule produit un franchissement soutenu de 70+ pas, sans aucune bifurcation) — symptôme
+exact du piège d'intégration, qui rejoignait la fragilité Pantheon (15/15 en config `test`
+vs 0/15 en config `stable`). La correction de juin 2026 ajoute une **porte de transition
+localisée** (l'accélération positive de `ΔC` lissé doit être concentrée dans une fenêtre
+temporelle courte) : sur ce même catalogue, `accumulation_fpr = 0.0`, `bifurcation_tpr = 1.0`
+et `separates = True` — la porte localisée sépare les accumulations lisses des bifurcations
+synthétiques. Il s'agit d'une **correction au niveau du code** du confond
+tendance-vs-transition, et non encore d'une confirmation empirique d'ORI-C sur données réelles.
 
 **(b) Loi nulle du franchissement (IAAFT).** On compare le taux de franchissement
 réel à celui de surrogates IAAFT (Schreiber & Schmitz 1996) préservant, par canal,
@@ -322,9 +328,10 @@ significatif** face à la loi nulle (moyenne 0.14, q99 = 0.52 ; p = 0.17 ≮ 0.0
 le franchissement est attribuable à l'autocorrélation propre de la série, non à
 une transition.
 
-Ces deux contrôles sont la cible prioritaire d'un futur proof run `full_statistical` ;
-en l'état, ils **ne sont pas franchis** par le détecteur brut. Voir
-`docs/EVIDENTIARY_STATUS.md`.
+État actuel (voir `docs/EVIDENTIARY_STATUS.md` §3) : la spécificité d'accumulation (a) est
+désormais franchie par la porte localisée sur le catalogue synthétique, mais la loi nulle
+IAAFT (b) **n'est pas franchie** sur les pilotes réels (Pantheon p ≈ 0.17 ; FRED p = 1.0).
+La confirmation conjointe reste donc la cible d'un futur proof run `full_statistical`.
 
 ### 3.3 Pilote FRED : ce que ça prouve et ce que ça ne prouve pas
 
@@ -333,10 +340,18 @@ Proxies : INDPRO (O), TCU (R), T10YFF (I), CPIAUCSL (demand), M2SL (S).
 Tous normalisés [0,1] par pipeline upstream. Bris structurel M2 (mai 2020) signalé dans
 `event_calendar.json`.
 
-**Ce que le pilote FRED prouve (sous condition de proof run) :**
-Le système US macroéconomique sur données réelles mensuelles produit des signatures ORI-C
-cohérentes avec un régime de stress symbolique accumulé — AUC T9 ≥ 0.80 sur contrôles
-positifs réels vs négatifs stochastiques (à confirmer sur proof run complet).
+**Verdict de la suite confirmatoire (`run_confirmatory_suite.py`) : NOT_CONFIRMED.**
+Après la correction de la porte localisée, FRED franchit le Test A (spécificité
+d'accumulation, `accumulation_fpr = 0.0`) et le Test D (taille d'effet vs SESOI), mais
+**échoue** au Test B (loi nulle IAAFT, p = 1.0 ; taux de franchissement observé 0.0) et au
+Test C (multivers ROBUST_NEGATIVE, 0/27 spécifications déclenchent). FRED n'est donc **pas**
+un contrôle positif confirmé : sur ce pilote, ORI-C ne détecte aucune transition distincte de
+la structure linéaire/tendancielle de la série.
+
+**Ce que le pilote FRED montre malgré tout :**
+Le pipeline s'exécute de bout en bout sur 480 points de données réelles mensuelles avec des
+proxies déclarés ex ante ; il sert de cas réel d'**épreuve** (et non de preuve) pour le
+protocole.
 
 **Ce que le pilote FRED ne prouve pas :**
 - Il ne prouve pas que M2 *est* le stock symbolique au sens théorique — M2 est un proxy
@@ -441,8 +456,9 @@ contrôles, toute affirmation d'AUC ≥ 0.80 serait non interprétable.
 ### 4.4 Statut de T9 — extension planifiée (non bloquante pour v1.0)
 
 T9 (*cross-domain vivant-like*) constitue le test de discrimination le plus exigeant du
-protocole. Sa validation complète (12 contrôles, AUC ≥ 0.80, FPR ≤ 0.10) est en cours
-d'exécution sur données réelles FRED comme contrôle positif.
+protocole. Sa validation complète (12 contrôles, AUC ≥ 0.80, FPR ≤ 0.10) reste à exécuter en
+mode `full_statistical`. Le pilote réel FRED, d'abord envisagé comme contrôle positif, ressort
+NOT_CONFIRMED à la suite confirmatoire (§3.3) et ne peut donc pas tenir ce rôle en l'état.
 
 **Choix de gouvernance pour v1.0 (Option A) :**
 Le tableau de résultats principal (§3.1) rapporte T1–T8. T9 est présenté avec le statut
