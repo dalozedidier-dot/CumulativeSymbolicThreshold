@@ -99,11 +99,12 @@ autocorrelation** at α = 0.01.
 The four controls are combined under a frozen joint rule
 (`oric.confirmatory`, `run_confirmatory_suite.py`): a series is **CONFIRMED** only
 if Test A (global) **and** Test B (surrogate null) **and** Test C (multiverse)
-**and** Test D (effect size) all pass. A fast rerun after the localized-gate correction gives:
+**and** Test D (effect size) all pass. A full rerun (500 IAAFT surrogates per series, stored
+under `05_Results/confirmatory/`) after the localized-gate correction gives:
 
 | Series | A (accum. fpr) | B (surrogate p) | C (multiverse) | D (effect/SESOI) | **Joint** |
 |--------|----------------|-----------------|----------------|------------------|-----------|
-| Pantheon SN | PASS (0.0) | FAIL (p≈0.24 in fast rerun; earlier full run p≈0.17) | PASS (robust+) | PASS (exceeds) | **NOT_CONFIRMED** |
+| Pantheon SN | PASS (0.0) | FAIL (p≈0.17) | PASS (robust+) | PASS (exceeds) | **NOT_CONFIRMED** |
 | FRED monthly | PASS (0.0) | FAIL (p=1.0) | FAIL (robust−) | PASS (exceeds) | **NOT_CONFIRMED** |
 
 Pantheon is robust to proxies and has a large C effect, and Test A now passes after the localized-gate correction. It still fails the surrogate-null gate, so it should be described as a robust signal or promising pilot, not as confirmed evidence of a transition. FRED remains not confirmed because it fails the surrogate-null and multiverse gates.
@@ -129,7 +130,7 @@ the frozen joint rule; after the detector correction, both headline ACCEPTs stil
 
 Still outstanding (roadmap, not yet done):
 - ✅ **Detector correction added**: the current code uses a localized-transition gate and keeps the old bare ΔC crossing as `raw_detector_fired` for audit continuity. Test A now separates the shipped synthetic accumulation controls from the shipped bifurcation controls.
-- ⬜ Re-run the confirmatory suite in non-fast mode with high surrogate counts and store the resulting artefacts under `05_Results/`.
+- ✅ Re-run the confirmatory suite in non-fast mode with high surrogate counts and store the resulting artefacts under `05_Results/` (done — `05_Results/confirmatory/{pantheon_sn,fred_monthly}/`, 500 IAAFT surrogates, seed 1234; Test A now PASS, joint still NOT_CONFIRMED).
 - ⬜ A `full_statistical` proof run storing the complete triplet (p + CI₉₉ % + SESOI + power)
 - ⬜ A pre-registered **out-of-sample directional prediction** (T3 is `INDETERMINATE`).
   **Deliberately not shipped yet:** because C is an integrator, a naive OOS

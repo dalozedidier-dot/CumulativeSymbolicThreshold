@@ -6,8 +6,7 @@
   "n_surrogates": 500,
   "verdict": "NOT_CONFIRMED",
   "failing_tests": [
-    "A_accumulation_specificity",
     "B_surrogate_null"
   ],
-  "json_sha256": "5f1ebb840100dcc479f4c2be87b839b1f63faf44a98c9b9f0fd76fa1ef9ba545"
+  "json_sha256": "aae5e6cb2c0fdc22fad07cd509849d3d3a4b763b5d245918d2c36580c59da01c"
 }
