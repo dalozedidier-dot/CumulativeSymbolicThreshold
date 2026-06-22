@@ -72,6 +72,10 @@ on:
         required: false
         default: "1337"
 
+env:
+  # Shared dependency-version ceiling for every pip install in this workflow.
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
 jobs:
 
   # ── Job 1 : génération des données StateProb ───────────────────────────────
@@ -95,7 +99,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install deps
         run: |
@@ -155,7 +159,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install deps
         run: |
@@ -240,7 +244,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install deps
         run: |

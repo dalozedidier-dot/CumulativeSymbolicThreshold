@@ -38,6 +38,10 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
+# ── Matplotlib config/font cache (generated, machine-specific) ───────────────
+.mplconfig/
+.matplotlib/
+
 # ── Environment files ────────────────────────────────────────────────────────
 .venv/
 .env

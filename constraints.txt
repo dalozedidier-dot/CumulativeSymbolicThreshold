@@ -1,0 +1,53 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# constraints.txt — single shared dependency-version ceiling for ALL workflows
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# WHY THIS FILE EXISTS
+#   pyproject.toml / requirements.txt declare only LOWER bounds (`>=`). With no
+#   upper bound, every CI job, the nightly proof and the Docker build silently
+#   install whatever is newest on PyPI at run time — so a future pandas 3.0 or
+#   numpy 3.0 could change numeric/RNG behaviour and move a scientific verdict
+#   without a single line of code changing. That is the opposite of a
+#   pre-registered, reproducible protocol.
+#
+#   This file pins the *upper* bound of every dependency that can affect results
+#   or the toolchain, to the major/minor families the protocol was developed and
+#   validated against (pandas 2.x, numpy 2.x, scipy 1.x …). It is a constraints
+#   file, not a requirements file: it never installs anything by itself, it only
+#   bounds versions that something else (pyproject / requirements*.txt) requests.
+#
+# HOW IT IS WIRED IN (every workflow + Docker)
+#   Each workflow sets   env: PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+#   and the Dockerfile   ENV PIP_CONSTRAINT=/app/constraints.txt
+#   so that EVERY `pip install` in the project resolves against these bounds with
+#   no need to touch individual install commands. Locally:  make constraints-check
+#
+# HOW TO BUMP
+#   Raising a ceiling (e.g. allowing pandas 3.x) is a deliberate, reviewable act:
+#   bump the bound here, run the FULL suite (unit + canonical + nightly) on the
+#   new family, and only then merge. See docs/PYTHON_POLICY.md for the analogous
+#   interpreter policy. For a fully-frozen exact lock, generate one on a canonical
+#   Python 3.12 host with `pip freeze` and commit it as constraints.lock.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Scientific runtime (results-affecting — keep on the validated families) ──
+numpy>=1.26,<3            # validated on the numpy 2.x ABI; exclude a future 3.0
+pandas>=2.0,<3            # protocol developed on pandas 2.x; 3.0 changes defaults
+scipy>=1.11,<2            # stats/IAAFT/permutation paths validated on scipy 1.x
+matplotlib>=3.8,<4        # figure generation only; cap the major
+statsmodels>=0.14,<1      # Granger / VAR / cointegration backend
+scikit-learn>=1.3,<2      # benchmark + early-warning helpers
+tqdm>=4.66,<5             # progress bars only
+
+# ── Test + coverage tooling (keep CI gates stable across runs) ──
+pytest>=8.0,<9            # collection/marker semantics validated on pytest 8.x
+pytest-cov>=4.1,<7
+coverage>=7.0,<8
+
+# ── Lint + type tooling (rule sets evolve fast — pin the family) ──
+ruff>=0.4,<1              # pre-1.0: cap below the next minor-breaking line
+mypy>=1.5,<2
+
+# NOTE: type-stub packages (pandas-stubs, scipy-stubs) are intentionally left
+# unconstrained — they are dev-only, do not affect runtime or results, and track
+# their parent library's releases.

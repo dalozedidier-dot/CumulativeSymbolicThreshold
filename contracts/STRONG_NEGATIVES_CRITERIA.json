@@ -1,0 +1,33 @@
+{
+  "schema": "oric.strong_negatives.criteria.v1",
+  "criteria_version": "strong_negatives_v1_fpr010_tpr050_locked",
+  "note": "Frozen ex ante. Specificity battery: the localized-transition gate must stay silent on adversarial non-transition processes while still flagging genuine bifurcations. Never adjusted post-hoc to match observed data.",
+  "fpr_max": 0.10,
+  "tpr_min": 0.50,
+  "frozen_params": {
+    "k": 2.5,
+    "m": 3,
+    "baseline_n": 30,
+    "n": 220,
+    "seed": 1234
+  },
+  "negatives": {
+    "smooth": ["logistic_growth", "gompertz", "exponential_saturation", "linear_ramp"],
+    "stochastic": ["random_walk", "ar1_red_noise", "brownian_drift", "pink_noise", "white_noise"],
+    "structured": ["sinusoid", "sawtooth"]
+  },
+  "positive_contrast": ["sharp_regime_switch", "delayed_bifurcation"],
+  "verdict_tokens": {
+    "STRONG_NEGATIVES_CLEAN": "localized FPR <= fpr_max AND bifurcation TPR >= tpr_min",
+    "STRONG_NEGATIVES_LEAK": "localized FPR > fpr_max (specificity refuted)",
+    "STRONG_NEGATIVES_INSENSITIVE": "bifurcation TPR < tpr_min (detector dead — vacuous)"
+  },
+  "shipped_result": {
+    "verdict": "STRONG_NEGATIVES_CLEAN",
+    "strong_negatives_fpr": 0.0,
+    "raw_strong_negatives_fpr": 0.5455,
+    "bifurcation_tpr": 1.0,
+    "interpretation": "The localized gate fires on 0/11 strong negatives (incl. unit-root random walk, AR(1) red noise, 1/f noise, sinusoid, sawtooth) while the bare sustained-crossing gate leaks on 54.5% of them, and both genuine bifurcations are still flagged."
+  },
+  "rationale": "fpr_max=0.10 allows at most a single marginal false positive across an 11-process adversarial battery; tpr_min=0.50 guards against a trivially-silent detector. A LEAK is an honest negative reported at equal status to CLEAN (see docs/EVIDENCE_LADDER.md rung 7)."
+}

@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  # Shared dependency-version ceiling for every pip install in this workflow.
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
 jobs:
   compileall:
     runs-on: ubuntu-latest
@@ -37,13 +41,36 @@ jobs:
       - name: Mypy type check
         run: python -m mypy src/oric
 
+  # ── Smoke tier: fastest signal, fail-fast before the full gate ──────────────
+  smoke:
+    needs: compileall
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then python -m pip install -e ".[dev]"; fi
+      - name: Run smoke tier (-m smoke)
+        run: pytest -q -m smoke src/oric/tests 04_Code/tests
+
   unit_tests:
-    needs: [compileall, lint_typecheck]
+    # The full coverage gate runs the WHOLE suite (smoke + full + scientific),
+    # so tiering never lowers measured coverage. See docs/TESTING.md.
+    needs: [compileall, lint_typecheck, smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        # Python policy: 3.12 ONLY — see docs/PYTHON_POLICY.md
+        python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v5

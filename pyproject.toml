@@ -8,7 +8,11 @@ version = "1.3.0"
 description = "Cumulative Symbolic Threshold — A falsifiable protocol for O·R·I dynamics"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+# Python policy: 3.12 ONLY (single canonical interpreter).
+# This is the version pinned across every workflow, the Docker image,
+# environment.yml, ruff (target-version) and mypy (python_version).
+# See docs/PYTHON_POLICY.md. Changing this requires updating all of them.
+requires-python = ">=3.12,<3.13"
 authors = [
     {name = "Didier Daloze", email = "contact@ori-c.be"}
 ]
@@ -21,10 +25,8 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.12 :: Only",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Operating System :: OS Independent",
@@ -109,8 +111,11 @@ disallow_untyped_defs = false     # progressive — set true later
 [tool.pytest.ini_options]
 testpaths = ["src/oric/tests", "04_Code/tests", "tools"]
 addopts = "-q --tb=short"
+# Test tiers — see docs/TESTING.md.  `make test-smoke|test-full|test-scientific`.
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "smoke: minimal fast confidence check (imports + core pipeline). Run with -m smoke",
+    "scientific: heavy statistical proofs (N>=50, surrogates, multiverse, OOS). Run with -m scientific",
 ]
 
 # ── Coverage ────────────────────────────────────────────

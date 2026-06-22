@@ -1,6 +1,6 @@
 {
   "title": "Cumulative Symbolic Threshold: Architecture, threshold, and test protocol for O-R-I dynamics (ORI-C)",
-  "description": "A pre-registered, falsifiable scientific framework for testing the ORI-C hypothesis: beyond a critical threshold of symbolic accumulation, the symbolic transmission channel becomes self-reinforcing — a measurable phase transition from a pre-threshold regime to a cumulative symbolic regime. Includes a full test suite (T1–T8), causal test pipeline, real-data integration for multiple sectors, and canonical CI/CD workflows.",
+  "description": "A pre-registered, falsifiable scientific framework for testing the ORI-C hypothesis: beyond a critical threshold of symbolic accumulation, the symbolic transmission channel becomes self-reinforcing — a measurable phase transition from a pre-threshold regime to a cumulative symbolic regime. Includes a full test suite (T1–T8), causal test pipeline, real-data integration for multiple sectors, and canonical CI/CD workflows. This release adds a self-contained external-replication bundle: a Python-3.12-only, constraints-pinned, reproducible Docker image and a one-command driver (scripts/run_replication.sh), a strong-negatives specificity battery (unit-root random walk, AR(1) red noise, 1/f noise, sinusoid, sawtooth, smooth accumulations), a pre-registered out-of-sample directional prediction, and an explicit evidence ladder (docs/EVIDENCE_LADDER.md). The honest headline outcome is NOT_CONFIRMED on real data — reported at equal status to a positive.",
   "version": "v1.3",
   "upload_type": "software",
   "access_right": "open",
@@ -22,13 +22,23 @@
     "exogenous intervention",
     "causal testing",
     "reproducibility",
-    "open science"
+    "open science",
+    "Docker",
+    "computational reproducibility",
+    "surrogate data",
+    "out-of-sample prediction",
+    "specificity controls"
   ],
   "related_identifiers": [
     {
       "identifier": "10.17605/OSF.IO/G62PZ",
       "relation": "isSupplementTo",
       "scheme": "doi"
+    },
+    {
+      "identifier": "https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold",
+      "relation": "isSupplementTo",
+      "scheme": "url"
     }
   ],
   "communities": [

@@ -1,6 +1,12 @@
 .PHONY: install dev test lint typecheck format coverage clean release help \
         smoke real-smoke collect canonical-qcc local-run-sample \
-        replicate benchmark-pilots densify-pilots ci-local
+        replicate benchmark-pilots densify-pilots ci-local \
+        constraints-check test-smoke test-full test-scientific \
+        run-replication bundle replicate-docker
+
+# Every `pip install` in this Makefile honours the shared dependency-version
+# ceiling, exactly like the CI workflows (which set PIP_CONSTRAINT in env).
+export PIP_CONSTRAINT := $(CURDIR)/constraints.txt
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -12,11 +18,25 @@ install:  ## Install package in editable mode
 dev:  ## Install with dev dependencies
 	pip install -e ".[dev]"
 
-test:  ## Run test suite
+test:  ## Run the full test suite (smoke + unit + scientific)
 	python -m pytest -q
+
+# ── Test tiers (see docs/TESTING.md) ──────────────────────────────────────────
+test-smoke:  ## Fast confidence check — only @pytest.mark.smoke tests
+	python -m pytest -q -m smoke
+
+test-full:  ## Everything EXCEPT the heavy scientific tier (the PR/dev default)
+	python -m pytest -q -m "not scientific"
+
+test-scientific:  ## Heavy statistical tier — only @pytest.mark.scientific tests
+	python -m pytest -q -m scientific
 
 coverage:  ## Run tests with coverage report
 	python -m pytest --cov=src/oric --cov-report=term-missing --cov-report=html
+
+constraints-check:  ## Verify constraints.txt is internally consistent + installable
+	python -m pip install --dry-run --constraint constraints.txt -r requirements.txt \
+		&& echo "OK: requirements.txt resolves under constraints.txt"
 
 lint:  ## Run linters (ruff)
 	python -m ruff check .
@@ -134,6 +154,17 @@ local-run-sample:  ## Reproduce minimal sample run with expected outputs
 
 replicate:  ## Run external replication protocol (verifies frozen params, tests, pilots, matrix)
 	PYTHONPATH=src:04_Code python tools/replicate.py --outdir replication_output
+
+run-replication:  ## Smoke-tier external replication driver (verify + canonical + negatives)
+	bash scripts/run_replication.sh replication_output
+
+bundle:  ## Build the self-contained Zenodo replication bundle (dist/*.zip)
+	python scripts/make_replication_bundle.py
+
+replicate-docker:  ## Build the image and run the one-command external replication
+	docker build -t oric:latest .
+	docker run --rm -v "$(CURDIR)/replication_output:/app/replication_output" \
+		oric:latest bash scripts/run_replication.sh
 
 benchmark-pilots:  ## Run comparative benchmark on BTC, EEG Bonn, Solar
 	PYTHONPATH=src:04_Code python -c "from pathlib import Path; from oric.comparative_benchmark import run_all_benchmarks; r = run_all_benchmarks(Path('05_Results/pilots'), pilots=[{'pilot_id':'sector_finance.pilot_btc','csv':'03_Data/sector_finance/real/pilot_btc/real.csv','verdict':'ACCEPT'},{'pilot_id':'sector_neuro.pilot_eeg_bonn','csv':'03_Data/sector_neuro/real/pilot_eeg_bonn/real.csv','verdict':'ACCEPT'},{'pilot_id':'sector_cosmo.pilot_solar','csv':'03_Data/sector_cosmo/real/pilot_solar/real.csv','verdict':'ACCEPT'}]); print(f\"Benchmarked {r['total_pilots']} pilots across {len(r['methods'])} methods\")"

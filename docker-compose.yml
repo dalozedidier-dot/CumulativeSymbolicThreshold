@@ -39,3 +39,13 @@ services:
       --time-mode index
       --normalize robust_minmax
       --control-mode no_symbolic
+
+  # One-command external replication (smoke tier). Writes the verdict bundle to
+  # ./replication_output. See docs/REPLICATION_BUNDLE.md.
+  oric-replicate:
+    build: .
+    image: oric:latest
+    volumes:
+      - ./replication_output:/app/replication_output
+      - ./03_Data:/app/03_Data:ro
+    command: bash scripts/run_replication.sh

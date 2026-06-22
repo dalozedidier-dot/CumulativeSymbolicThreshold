@@ -28,6 +28,8 @@ nav:
       - Framework Status: framework_status.md
       - Canonical Proof: canonical_proof.md
       - Validation Report: VALIDATION_CANONICAL_REPORT.md
+      - Evidence Ladder: EVIDENCE_LADDER.md
+      - Evidentiary Status: EVIDENTIARY_STATUS.md
       - Point of Truth: ORI_C_POINT_OF_TRUTH.md
   - Generalization:
       - Pilot Benchmark: generalization_pilots.md
@@ -36,10 +38,13 @@ nav:
       - Installation: installation.md
       - Reproduction Guide: REPRODUCE.md
       - Replication Protocol: REPLICATION_PROTOCOL.md
+      - Replication Bundle (Docker/Zenodo): REPLICATION_BUNDLE.md
+      - Python Policy: PYTHON_POLICY.md
       - CI Pipelines: CI_PIPELINES.md
   - Reference:
       - Symbolic Tests: SYMBOLIC_TESTS.md
       - Repository Layout: REPO_LAYOUT.md
+      - Test Tiers: TESTING.md
   - API Reference:
       - Core:
           - ori_core: api/ori_core.md

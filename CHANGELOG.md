@@ -1,5 +1,52 @@
 # Changelog
 
+## [Unreleased] — 2026-06-22 — Reproducibility hardening + external replication bundle
+
+### Added
+- **Strong-negatives specificity battery** (`src/oric/strong_negatives.py`,
+  `04_Code/pipeline/run_strong_negatives.py`, `contracts/STRONG_NEGATIVES_CRITERIA.json`):
+  11 adversarial non-transition processes (unit-root random walk, AR(1) red noise,
+  Brownian drift, 1/f pink noise, white noise, sinusoid, sawtooth + the 4 smooth
+  accumulations) vs a 2-bifurcation positive contrast. Shipped result
+  `STRONG_NEGATIVES_CLEAN`: the localized gate fires on **0/11** while the bare
+  sustained-crossing gate leaks on **54.5 %**, with `bifurcation_tpr = 1.0`.
+- **Pre-registered out-of-sample prediction** (`02_Protocol/PREREG_OOS_2026-06_LOCALIZED_TRANSITION.md`,
+  `contracts/OOS_PREREG.json`): freezes the localized-regime-change OOS protocol
+  (synthetic, decisive) and a FRED train/test forward prediction (registered,
+  pending), with code/contract consistency tests.
+- **`docs/EVIDENCE_LADDER.md`**: a frozen 0–9 rung ordering of evidence strength,
+  each rung mapped to a machine token, with ORI-C's current honest position
+  (cleared synthetic mechanism rungs; **NOT_CONFIRMED** on real data).
+- **External replication bundle**: reproducible `Dockerfile`/`docker-compose.yml`
+  (`oric-replicate` service), `scripts/run_replication.sh` (one-command driver),
+  `scripts/make_replication_bundle.py` (self-contained, sha256-manifested Zenodo
+  zip), `docs/REPLICATION_BUNDLE.md`, and `make run-replication|bundle|replicate-docker`.
+- **Shared dependency-constraints ceiling** (`constraints.txt`) wired into every
+  workflow via `PIP_CONSTRAINT` and the Docker build — caps dependency majors
+  (e.g. excludes pandas 3.0 / numpy 3.0) so a verdict cannot move with a silent
+  upstream release. `make constraints-check`.
+- **Test tiers** smoke · full · scientific (`docs/TESTING.md`, central marking in
+  `conftest.py`, `make test-smoke|test-full|test-scientific`, CI `smoke` job).
+- **`docs/PYTHON_POLICY.md`** — the Python-3.12-only policy.
+
+### Changed
+- **Python policy frozen to 3.12 only**: `requires-python = ">=3.12,<3.13"`,
+  classifiers, and every workflow/`environment.yml`/Docker pinned to 3.12 (CI
+  matrix collapsed from 3.10/3.11/3.12; qcc/collector bumped from 3.11).
+- **`collector.yml`** now listens to the *active* nightly workflow name
+  (`Nightly — Full Canonical Proof (Synthetic + Real Data)`) and scans
+  `nightly.yml` — previously it referenced a disabled workflow, so the nightly
+  never triggered metric collection.
+- **`tools/verify_audit_invariants.py`**: `--no-stability` now *really* skips all
+  stability requirements (contract + manifest category + sampled-hash checks),
+  not just the stability-summary check (7 new tests).
+
+### Fixed / Removed
+- Untracked the accidentally committed matplotlib cache (`.mplconfig/`) and added
+  it to `.gitignore`.
+- Archived stale root-level one-off reports to `docs/archive/` and
+  `docs/maintenance/`, reducing root documentary noise.
+
 ## [Unreleased] — 2026-06-21 — Decisive falsification controls + honest governance
 
 ### Added
