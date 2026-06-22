@@ -24,6 +24,7 @@ level means and how to earn it*.
 | 4 | **Real-data exploratory pilot** | A real series runs; Level B, borderline power. Single ACCEPTs may be config-fragile. | pilot `ACCEPT`/`REJECT` (Level B) | `run_real_data_demo.py` |
 | 5 | **Real-data canonical** | Granger S→ΔC, VAR, cointegration C–S, bootstrap CI, threshold — CORE **and** SYMBOLIC accept. | `run_mode: real_data_canonical` → `real_data_canonical_support` | `run_real_data_canonical_suite.py`, nightly |
 | 6 | **Confirmed transition** | **Joint** rule, all four + negatives + OOS (see below). | confirmatory `CONFIRMED` | `run_confirmatory_suite.py` (+ 7, 8) |
+| 5–6 | **Registered real-data A/B/C block** | One frozen-ex-ante block: A (test, dated transition) detected + B (stable) & C (placebo) silent + IAAFT surrogate `p<0.01` + classical-panel comparison + real OOS. | `REAL_BLOCK_CONFIRMED` | `run_registered_block.py` (against `contracts/REAL_DATA_REGISTRATION.json`) |
 | 7 | **Strong-negatives clean** | The pre-registered strong-negatives battery does **not** fire (specificity). | `STRONG_NEGATIVES_CLEAN` | `run_strong_negatives.py` |
 | 8 | **Pre-registered out-of-sample skill** | A *frozen-before-outcome* directional prediction shows positive, specific skill above the surrogate chance level. | `OOS_SKILL_DEMONSTRATED` | `run_oos_prediction.py` (against `02_Protocol/PREREG_OOS_*`) |
 | 9 | **Independent external replication** | A third party reproduces the headline rung from the Docker/Zenodo bundle, offline, byte-for-byte on the frozen inputs. | external sign-off | `make replicate` / `Dockerfile` / `.zenodo.json` |
@@ -60,6 +61,7 @@ Test B is a robust *trend*, not a confirmed transition.
 | 3 Synthetic full-statistical | ✅ | endogenous bistable N=50, effect ≈ +1.13, CI₉₉ [0.83, 1.82], twin FPR 0.08 |
 | 4 Real exploratory | ◑ | 5 ACCEPT / 2 REJECT, Level B, the one densified ACCEPT (Pantheon) is config-fragile |
 | 5 Real canonical | ⬜ | no real pilot has a `full_statistical`/canonical proof run yet |
+| 5–6 Registered A/B/C block | ❌ | frozen FRED block → **`REAL_BLOCK_REJECTED`**: ORI-C silent on A (crossing 0.0, surrogate p=1.0) — but **specific** (silent on B/C while the classical panel false-fires 8×). `contracts/REAL_DATA_REGISTRATION.json` |
 | 6 Confirmed transition | ❌ | both headline ACCEPTs are **NOT_CONFIRMED** (Test B fails: Pantheon p≈0.17, FRED p=1.0) |
 | 7 Strong-negatives clean | ◑ | battery shipped (`run_strong_negatives.py`); the localized gate is clean, the legacy bare-ΔΣC gate is not |
 | 8 OOS pre-registered | ◑ | prediction frozen (`02_Protocol/PREREG_OOS_2026-06_LOCALIZED_TRANSITION.md`); current skill `OOS_SKILL_INCONCLUSIVE` |

@@ -56,6 +56,7 @@ _SCIENTIFIC_MODULES = {
     "test_pilot_generalization",
     "test_power_upgrade_protocol",
     "test_strong_negatives",
+    "test_registered_block",
 }
 
 
