@@ -82,16 +82,15 @@ def generate(
     # ── Demand: slightly above Cap baseline, with a late-period surge ────
     cap = O * R * I
     demand = cap * 0.85 + rng.normal(0, noise_scale * 0.5, n)
-    if n >= 50:
-        # moderate demand surge in the last third
-        surge_start = int(n * 0.65)
-        demand[surge_start:] += np.linspace(0.0, 0.12, n - surge_start)
+    # moderate demand surge in the last third (n is guaranteed > 50 above)
+    surge_start = int(n * 0.65)
+    demand[surge_start:] += np.linspace(0.0, 0.12, n - surge_start)
     demand = np.clip(demand, 0.0, 1.0)
 
     # ── Symbolic stock S ──────────────────────────────────────────────────
     S = np.ones(n) * base_S + rng.normal(0, noise_scale * 0.5, n)
 
-    if transition and t0 < n:
+    if transition:
         # Three-step ramp then sustained accumulation
         ramp_steps = min(3, n - t0)
         ramp_heights = [0.15, 0.20, 0.25]

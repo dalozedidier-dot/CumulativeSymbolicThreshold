@@ -87,6 +87,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 import tempfile
@@ -872,14 +873,13 @@ def _safe_float(v: object) -> float | None:
     """Return v as float, or None if NaN / not a number."""
     try:
         f = float(v)  # type: ignore[arg-type]
-        return None if (f != f) else f  # NaN check
+        return None if math.isnan(f) else f  # NaN check
     except (TypeError, ValueError):
         return None
 
 
 def _json_dumps_safe(obj: object, **kwargs: object) -> str:
     """json.dumps that converts NaN/Inf to None (valid JSON)."""
-    import math
 
     def _sanitize(o: object) -> object:
         if isinstance(o, float) and (math.isnan(o) or math.isinf(o)):
@@ -1197,7 +1197,7 @@ def main() -> int:
         td = test_m.get("n_decidable", "?")
         ti = test_m.get("n_indeterminate", "?")
         dr = test_m.get("detection_rate")
-        dr_s = "NaN" if dr is None or (isinstance(dr, float) and dr != dr) else f"{dr:.3f}"
+        dr_s = "NaN" if dr is None or (isinstance(dr, float) and math.isnan(dr)) else f"{dr:.3f}"
         modal = test_m.get("modal_verdict", "")
         print(f"Protocol verdict for {stem}: {summary.get('protocol_verdict')}  "
               f"(det_rate={dr_s}, decidable={td}, indeterminate={ti}, modal={modal})")
@@ -1218,7 +1218,7 @@ def main() -> int:
             return 0.0
         try:
             f = float(v)
-            return 0.0 if f != f else f
+            return 0.0 if math.isnan(f) else f
         except (TypeError, ValueError):
             return 0.0
 

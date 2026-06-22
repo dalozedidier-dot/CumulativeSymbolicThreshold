@@ -74,9 +74,10 @@ def _fetch_mlperf_or_synth(outdir: Path, raw_dir: Path) -> tuple[pd.DataFrame, b
                 if len(parts) >= 3:
                     rows.append(parts)
         if len(rows) >= 5:
-            # Build minimal time series from benchmark rounds
-            df = pd.DataFrame(rows[:50])
-            # Cannot reliably parse without knowing exact format → fall through
+            # A markdown table was detected, but reliable parsing needs the
+            # exact column layout, so we fall through to the calibrated
+            # synthetic series below instead of using the parsed rows.
+            pass
     except Exception:
         pass
 

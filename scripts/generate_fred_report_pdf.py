@@ -706,7 +706,9 @@ def main() -> int:
     print(source_label)
 
     # Load FRED data for plots
-    df = pd.read_csv(data_csv, parse_dates=["date"] if "date" in open(data_csv).readline() else [])
+    with open(data_csv) as _hdr:
+        _has_date_col = "date" in _hdr.readline()
+    df = pd.read_csv(data_csv, parse_dates=["date"] if _has_date_col else [])
     if "date" in df.columns:
         df = df.sort_values("date").reset_index(drop=True)
 

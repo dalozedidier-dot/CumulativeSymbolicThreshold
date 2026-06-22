@@ -19,6 +19,7 @@ INCONSISTENT, and dual_proof_status = "DUAL_PROOF_INCOMPLETE".
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,7 @@ def _is_empty(v: Any) -> bool:
         return True
     if isinstance(v, str) and v.strip() == "":
         return True
-    if isinstance(v, float) and v != v:
+    if isinstance(v, float) and math.isnan(v):
         return True
     return False
 
@@ -179,7 +180,7 @@ def _safe_float(v: Any) -> float | None:
         return None
     try:
         f = float(v)
-        return None if f != f else f
+        return None if math.isnan(f) else f
     except (TypeError, ValueError):
         return None
 
