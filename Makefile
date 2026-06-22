@@ -3,7 +3,7 @@
         replicate benchmark-pilots densify-pilots ci-local \
         constraints-check test-smoke test-full test-scientific \
         run-replication bundle replicate-docker \
-        data-pack-build data-pack-check extract-bundles
+        data-pack-build data-pack-check extract-bundles real-registered
 
 # Every `pip install` in this Makefile honours the shared dependency-version
 # ceiling, exactly like the CI workflows (which set PIP_CONSTRAINT in env).
@@ -183,6 +183,12 @@ benchmark-pilots:  ## Run comparative benchmark on BTC, EEG Bonn, Solar
 densify-pilots:  ## Run densification on 3 underpowered pilots
 	PYTHONPATH=src:04_Code python 04_Code/pipeline/densify_underpowered_pilots.py --outdir 05_Results/pilots/power_upgrade
 
+real-registered:  ## Run the FROZEN registered real-data A/B/C block (~3-8 min, 10-min package)
+	PYTHONPATH=src:04_Code python 04_Code/pipeline/run_registered_block.py \
+		--outdir 05_Results/registered_block --fast
+
+clean:  ## Remove build artifacts
+	rm -rf build/ dist/ *.egg-info src/*.egg-info
 clean:  ## Remove build artifacts and regenerable local outputs
 	rm -rf build/ dist/ *.egg-info src/*.egg-info _ci_out/ replication_output/ data/bundles_extracted/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

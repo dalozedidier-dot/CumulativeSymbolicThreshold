@@ -1,5 +1,30 @@
 # Changelog
 
+## [Unreleased] — 2026-06-22 — Registered real-data A/B/C block (the real rung)
+
+### Added
+- **Frozen, pre-registered real-data A/B/C block** — the apparatus to move from
+  *exploratory* toward *strongly supported on real data*. Everything is frozen ex
+  ante in `contracts/REAL_DATA_REGISTRATION.json` +
+  `02_Protocol/PREREG_REAL_DATA_2026-06_FRED_TRIAD.md`:
+  - **A** = FRED monthly with a *dated* hypothesis (2008 GFC, t ∈ [272, 281], t*=272);
+  - **B** = pre-onset segment of A + independent `ecology_pelt` (stable, expected silent);
+  - **C** = cyclic-shift surrogate of A (placebo, expected silent);
+  - classical panel **CUSUM · PELT (dependency-free AMOC) · EWS · structural break**,
+    IAAFT surrogate null, and a real out-of-sample split (train < t*, test ≥ t*);
+  - one frozen aggregation rule → `REAL_BLOCK_CONFIRMED` / `_REJECTED` / `_INDETERMINATE`.
+  `src/oric/registered_block.py`, `04_Code/pipeline/run_registered_block.py`,
+  `make real-registered` (≈3–8 min, 10-minute third-party package), opt-in
+  `ORIC_REGISTERED=1` step in `scripts/run_replication.sh`, 8 tests.
+- `pelt_changepoint` — a dependency-free PELT/AMOC Gaussian change-point (no `ruptures`).
+
+### Outcome (honest, registered)
+- On FRED the block returns **`REAL_BLOCK_REJECTED`**: ORI-C does not fire on A
+  (crossing 0.0, IAAFT p=1.0, no OOS skill) **yet is specific** — silent on B and C
+  while the classical panel false-fires 8× on the controls. FRED was chosen
+  *because* it is the hard, anti-cherry-pick case; the frozen apparatus is the
+  deliverable, not a manufactured positive.
+
 ## [Unreleased] — 2026-06-22 — Reproducibility hardening + external replication bundle
 
 ### Added

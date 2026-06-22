@@ -80,6 +80,12 @@ step "strong_negatives" python 04_Code/pipeline/run_strong_negatives.py --outdir
 say "4. Decisive trend-vs-transition accumulation control"
 step "accumulation_control" python 04_Code/pipeline/run_accumulation_control.py --outdir "$OUTDIR/accumulation_control" --fast --seed "$SEED"
 
+# Opt-in: the frozen registered real-data A/B/C block (adds a few minutes).
+if [ "${ORIC_REGISTERED:-0}" = "1" ]; then
+  say "5. Registered real-data A/B/C block (FRED, frozen)"
+  step "registered_block" python 04_Code/pipeline/run_registered_block.py --outdir "$OUTDIR/registered_block" --fast
+fi
+
 say "Replication summary"
 python - "$OUTDIR" <<'PY'
 import json, sys

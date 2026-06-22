@@ -1,0 +1,65 @@
+{
+  "schema": "oric.real_data_registration.v1",
+  "status": "FROZEN",
+  "freeze_date": "2026-06-22",
+  "title": "Registered real-data A/B/C block — FRED monthly, 2008 GFC dated hypothesis",
+  "human_readable": "02_Protocol/PREREG_REAL_DATA_2026-06_FRED_TRIAD.md",
+
+  "dataset_A": {
+    "id": "fred_monthly",
+    "path": "03_Data/real/fred_monthly/real.csv",
+    "span": "1986-01 .. 2025-12 (480 monthly rows)",
+    "cols": {"time": "t", "O": "O", "R": "R", "I": "I", "demand": "demand", "S": "S"}
+  },
+  "external_stable": {
+    "id": "ecology_pelt",
+    "path": "03_Data/real/validation_candidates/ecology_pelt_oric.csv",
+    "role": "independent stable control (no expected transition)"
+  },
+
+  "dated_hypothesis": {
+    "t1": 272,
+    "t2": 281,
+    "t_star": 272,
+    "label": "2008 Global Financial Crisis (2008-09 → 2009-06)",
+    "rationale": "The most documented macro regime transition in the FRED span. t1=2008-09 (Lehman), t2=2009-06, t*=2008-09. Frozen BEFORE running the detector."
+  },
+
+  "proxy_spec": {
+    "normalization": "robust",
+    "control_mode": "no_symbolic",
+    "note": "Column mapping is fixed by dataset_A.cols; no proxy is chosen after seeing results."
+  },
+
+  "criteria": {
+    "k": 2.5,
+    "m": 3,
+    "baseline_n": 50,
+    "alpha": 0.01,
+    "seed": 1234,
+    "n_surrogates": 200,
+    "onset_tolerance": 18,
+    "shift_divisor": 3
+  },
+
+  "controls": {
+    "B_stable": "pre-onset segment of A (rows t < t1) — quiescent regime, expected NO detection",
+    "B_external": "ecology_pelt (independent), expected NO detection",
+    "C_placebo": "cyclic shift of A by N // shift_divisor — autocorrelation preserved, onset alignment destroyed, expected NO detection"
+  },
+
+  "classical_benchmarks": ["cusum_changepoint", "pelt_changepoint", "early_warning_signal", "structural_break"],
+  "surrogate": {"kind": "IAAFT", "statistic": "crossing_rate", "alpha": 0.01},
+  "oos": {
+    "split": "train indices < t_star, test indices >= t_star",
+    "predictor": "localized critical-slowing-down (oric.oos_prediction.predict_transition)",
+    "alpha": 0.05
+  },
+
+  "aggregation_rule": "REAL_BLOCK_CONFIRMED iff (A fires a localized transition inside [t1,t2]±onset_tolerance) AND (B stable + external silent) AND (C placebo silent) AND (IAAFT surrogate p < alpha) AND (pre-t* OOS directional skill). Else REAL_BLOCK_REJECTED. REAL_BLOCK_INDETERMINATE if the run is undecidable.",
+  "verdict_tokens": ["REAL_BLOCK_CONFIRMED", "REAL_BLOCK_REJECTED", "REAL_BLOCK_INDETERMINATE"],
+
+  "honest_expectation": "FRED is the HARD case: exploratory analysis already shows ROBUST_NEGATIVE (multiverse 0/27) and an IAAFT surrogate p = 1.0. It is registered here precisely because it is the anti-cherry-pick choice — the apparatus and the frozen rule are the deliverable, not a manufactured positive. A REJECTED verdict is reported at equal status to a confirmation.",
+
+  "amendment_policy": "Any change to dataset, hypothesis window, proxy/normalization, criteria, benchmark panel, surrogate config or aggregation rule requires a NEW dated registration. This file is append-only by supersession."
+}
