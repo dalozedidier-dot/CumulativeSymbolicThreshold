@@ -43,8 +43,12 @@ def _find_latest_run_dir(out_root: Path) -> Path:
 
 # ── Invariant 1: contracts staged ────────────────────────────────────────────
 
-REQUIRED_CONTRACTS = [
+# POWER_CRITERIA is always required; STABILITY_CRITERIA is only required when the
+# stability battery is part of the audit (i.e. NOT in --no-stability scan mode).
+REQUIRED_CONTRACTS_ALWAYS = [
     "contracts/POWER_CRITERIA.json",
+]
+REQUIRED_CONTRACTS_STABILITY = [
     "contracts/STABILITY_CRITERIA.json",
 ]
 
@@ -54,10 +58,17 @@ RECOMMENDED_CONTRACTS = [
 ]
 
 
-def check_contracts(run_dir: Path) -> List[str]:
-    """Return list of error messages for missing required contracts."""
+def check_contracts(run_dir: Path, *, require_stability: bool = True) -> List[str]:
+    """Return list of error messages for missing required contracts.
+
+    In scan-only mode (require_stability=False) the stability contract is not
+    required, because no stability battery was run.
+    """
+    required = list(REQUIRED_CONTRACTS_ALWAYS)
+    if require_stability:
+        required += REQUIRED_CONTRACTS_STABILITY
     errors = []
-    for rel in REQUIRED_CONTRACTS:
+    for rel in required:
         p = run_dir / rel
         if not p.exists():
             errors.append(f"MISSING required contract: {rel}")
@@ -85,11 +96,18 @@ def check_stability(run_dir: Path, *, require_stability: bool = True) -> List[st
 
 # ── Invariant 3: manifest hashes ─────────────────────────────────────────────
 
-REQUIRED_HASH_CATEGORIES = ["contracts/", "tables/", "figures/", "stability/"]
+REQUIRED_HASH_CATEGORIES_ALWAYS = ["contracts/", "tables/", "figures/"]
+REQUIRED_HASH_CATEGORIES_STABILITY = ["stability/"]
 
 
-def check_manifest(run_dir: Path) -> List[str]:
-    """Check manifest.json exists, is valid, and covers required categories."""
+def check_manifest(run_dir: Path, *, require_stability: bool = True) -> List[str]:
+    """Check manifest.json exists, is valid, and covers required categories.
+
+    In scan-only mode (require_stability=False) the manifest is not required to
+    cover the ``stability/`` category, and any ``stability/`` entries it does
+    carry are excluded from the sampled hash verification (they may legitimately
+    be absent on disk when the stability battery was not run).
+    """
     errors = []
     manifest_path = run_dir / "manifest.json"
     if not manifest_path.exists():
@@ -113,14 +131,23 @@ def check_manifest(run_dir: Path) -> List[str]:
         return errors
 
     # Check that each required category has at least one entry
-    for category in REQUIRED_HASH_CATEGORIES:
+    required_categories = list(REQUIRED_HASH_CATEGORIES_ALWAYS)
+    if require_stability:
+        required_categories += REQUIRED_HASH_CATEGORIES_STABILITY
+    for category in required_categories:
         has_entry = any(p.startswith(category) for p in file_paths)
         if not has_entry:
             errors.append(f"manifest.json missing entries for category: {category}")
 
+    # In scan-only mode, stability artifacts are out of audit scope: do not
+    # sample-verify them (they may not be staged on disk).
+    sampleable_paths = file_paths
+    if not require_stability:
+        sampleable_paths = [p for p in file_paths if not p.startswith("stability/")]
+
     # Verify sha256 hashes for a sample of files
-    sample_size = min(5, len(file_paths))
-    for rel_path in file_paths[:sample_size]:
+    sample_size = min(5, len(sampleable_paths))
+    for rel_path in sampleable_paths[:sample_size]:
         abs_path = run_dir / rel_path
         if not abs_path.exists():
             errors.append(f"manifest references missing file: {rel_path}")
@@ -244,10 +271,14 @@ def verify(
     all_warnings: List[str] = []
 
     # 1. Contracts
-    contract_errors = check_contracts(run_dir)
+    contract_errors = check_contracts(run_dir, require_stability=require_stability)
     all_errors.extend(contract_errors)
 
-    for rel in RECOMMENDED_CONTRACTS:
+    recommended_contracts = list(RECOMMENDED_CONTRACTS)
+    if not require_stability:
+        # In scan-only mode the stability contract is informative, not required.
+        recommended_contracts += REQUIRED_CONTRACTS_STABILITY
+    for rel in recommended_contracts:
         if not (run_dir / rel).exists():
             all_warnings.append(f"RECOMMENDED contract missing: {rel}")
 
@@ -262,7 +293,7 @@ def verify(
         all_errors.extend(contract_reflect_errors)
 
     # 3. Manifest
-    manifest_errors = check_manifest(run_dir)
+    manifest_errors = check_manifest(run_dir, require_stability=require_stability)
     all_errors.extend(manifest_errors)
 
     # 4. Standard outputs

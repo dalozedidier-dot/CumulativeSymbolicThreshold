@@ -33,6 +33,10 @@ concurrency:
   group: sector-pilots-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Shared dependency-version ceiling for every pip install in this workflow.
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
 jobs:
   # ── Shared setup: validate all proxy_spec + CSV integrity ──────────────────
   data_integrity:

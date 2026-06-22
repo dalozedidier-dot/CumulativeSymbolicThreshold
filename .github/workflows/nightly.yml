@@ -25,6 +25,10 @@ concurrency:
   group: nightly-canonical
   cancel-in-progress: false
 
+env:
+  # Shared dependency-version ceiling for every pip install in this workflow.
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
 jobs:
   # ── JOB 1: Synthetic simulation suite (full_statistical) ────────────────────
   synthetic_full:

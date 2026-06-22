@@ -15,7 +15,7 @@ validation results using the frozen protocol and parameters.
 ## Prerequisites
 
 1. Clone the repository
-2. Python ≥ 3.11 with: `numpy`, `pandas`, `scipy`, `pytest`
+2. **Python 3.12 only** (see `docs/PYTHON_POLICY.md`) with: `numpy`, `pandas`, `scipy`, `pytest`
 3. No external data required for synthetic validation (data is generated)
 
 ---

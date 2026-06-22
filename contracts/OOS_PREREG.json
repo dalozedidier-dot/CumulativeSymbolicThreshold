@@ -1,0 +1,56 @@
+{
+  "schema": "oric.oos_prereg.v1",
+  "status": "FROZEN",
+  "freeze_date": "2026-06-22",
+  "title": "Pre-registered out-of-sample directional prediction of a localized regime change",
+  "applies_to": "ORI-C v1.3+",
+  "human_readable": "02_Protocol/PREREG_OOS_2026-06_LOCALIZED_TRANSITION.md",
+
+  "what_is_predicted": "A LOCALIZED regime change (critical slowing down → rupture), predicted from the pre-event run-up window ALONE — explicitly NOT 'C keeps rising'. This avoids the integrator/trend confound that makes a naive crossing prediction trivial.",
+
+  "predictor": {
+    "name": "trend_preserving_csd_surrogate_null",
+    "statistic": "rising rolling lag-1 autocorrelation + variance (critical slowing down)",
+    "null": "trend_preserving_surrogate (keeps trend + residual spectrum, destroys the localized rupture)",
+    "decision": "predict transition iff surrogate-null p < alpha",
+    "implemented_by": "oric.oos_prediction.predict_transition / score_prediction",
+    "runner": "04_Code/pipeline/run_oos_prediction.py"
+  },
+
+  "primary_synthetic": {
+    "model": "endogenous_bistable (saddle-node fold)",
+    "negative_control": "matched linear twin (feedback off, r=0) — same drive/start/noise, no fold",
+    "frozen_params": {
+      "seed_base": 7000,
+      "n_replicates": 50,
+      "n_surrogates": 99,
+      "lead": 60,
+      "alpha": 0.05,
+      "n_steps": 1500,
+      "noise_sd": 0.05,
+      "timing_tolerance": 500
+    },
+    "observation_rule": "Only C[:jump - lead] is visible to the predictor; the held-out window contains the truth.",
+    "decision_rule": "OOS_SKILL_DEMONSTRATED iff (bistable_tpr > twin_fpr) AND (one-sided Fisher exact p < 0.05); else OOS_SKILL_INCONCLUSIVE.",
+    "verdict_tokens": ["OOS_SKILL_DEMONSTRATED", "OOS_SKILL_INCONCLUSIVE"]
+  },
+
+  "secondary_real_data": {
+    "status": "REGISTERED_PENDING",
+    "dataset": "03_Data/real/fred_monthly/real.csv (FRED monthly)",
+    "split": {"train": "first 70% of the series (index order)", "test": "final 30%, held out, untouched until scoring"},
+    "rule": "Apply the SAME localized predictor to the training window only; a positive call is scored against whether a localized regime change occurs in the held-out window. Decision rule and split are frozen here BEFORE scoring; neither may be tuned to the outcome.",
+    "note": "Registered as a forward prediction: committing the rule and split before the result is the pre-registration. Evaluation is future work and must use the localized predictor, never a naive crossing."
+  },
+
+  "exploratory_outcome_before_freeze": {
+    "run": "05_Results/oos_prediction/ (lead=40, exploratory)",
+    "bistable_tpr": 0.1429,
+    "twin_fpr": 0.0612,
+    "fisher_exact_p": 0.1586,
+    "verdict": "OOS_SKILL_INCONCLUSIVE",
+    "honest_note": "Reported at equal status to a positive. Per-trajectory CSD prediction is modest-power at short lead (Boettiger & Hastings 2012). The frozen confirmatory protocol above (lead=60) governs future runs; this pre-freeze result does not count as confirmation."
+  },
+
+  "amendment_policy": "Any change to predictor, params, split or decision rule requires a NEW dated pre-registration. This file is append-only by supersession."
+}

@@ -97,6 +97,25 @@ def test_check_contracts_present(tmp_path):
     assert errors == []
 
 
+def test_check_contracts_no_stability_only_needs_power(tmp_path):
+    """--no-stability: STABILITY_CRITERIA.json is NOT required (scan-only)."""
+    run_dir = tmp_path / "run"
+    (run_dir / "contracts").mkdir(parents=True)
+    (run_dir / "contracts" / "POWER_CRITERIA.json").write_text("{}")
+    # STABILITY_CRITERIA.json deliberately absent
+    errors = check_contracts(run_dir, require_stability=False)
+    assert errors == []
+
+
+def test_check_contracts_no_stability_still_needs_power(tmp_path):
+    """--no-stability does not waive POWER_CRITERIA.json."""
+    run_dir = tmp_path / "run"
+    (run_dir / "contracts").mkdir(parents=True)
+    errors = check_contracts(run_dir, require_stability=False)
+    assert any("POWER_CRITERIA" in e for e in errors)
+    assert not any("STABILITY_CRITERIA" in e for e in errors)
+
+
 # ── check_stability ───────────────────────────────────────────────────────────
 
 def test_check_stability_missing(tmp_path):
@@ -217,6 +236,32 @@ def test_check_manifest_valid(tmp_path):
     assert errors == []
 
 
+def test_check_manifest_no_stability_category_ok_in_scan_mode(tmp_path):
+    """--no-stability: a manifest without a stability/ category must NOT fail."""
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    manifest = {"files": [
+        {"path": "contracts/POWER_CRITERIA.json", "sha256": "abc"},
+        {"path": "tables/summary.json", "sha256": "def"},
+        {"path": "figures/x.txt", "sha256": "ghi"},
+    ]}
+    (run_dir / "manifest.json").write_text(json.dumps(manifest))
+    # Default (require_stability=True) fails; scan-only passes the category check.
+    assert any("stability/" in e for e in check_manifest(run_dir))
+    errors = check_manifest(run_dir, require_stability=False)
+    assert not any("missing entries for category: stability/" in e for e in errors)
+
+
+def test_check_manifest_no_stability_skips_missing_stability_file(tmp_path):
+    """--no-stability: a manifest stability/ entry whose file is absent on disk
+    must NOT raise 'manifest references missing file'."""
+    run_dir = _make_run_dir(tmp_path)
+    import shutil
+    shutil.rmtree(run_dir / "stability")  # file gone, but still listed in manifest
+    errors = check_manifest(run_dir, require_stability=False)
+    assert errors == []
+
+
 def test_check_manifest_hash_mismatch(tmp_path):
     run_dir = _make_run_dir(tmp_path)
     # Tamper: change manifest hash for first file
@@ -251,6 +296,39 @@ def test_verify_no_stability_mode(tmp_path):
     # stability check is skipped; other checks may warn but no errors for stability
     assert result["checks"]["stability"] is True
     assert result["checks"]["stability_reflects_contract"] is True
+    # The whole point of --no-stability: the audit must PASS with stability absent.
+    assert result["passed"] is True, result["errors"]
+    assert result["checks"]["manifest"] is True
+    assert result["checks"]["contracts"] is True
+
+
+def test_verify_no_stability_mode_scan_only_run_dir(tmp_path):
+    """A genuine scan-only run dir (no stability artifacts, no STABILITY_CRITERIA,
+    no stability/ in manifest) must PASS under --no-stability and FAIL otherwise."""
+    run_dir = tmp_path / "runs" / "20260101_000000"
+    for sub in ("contracts", "tables", "figures"):
+        (run_dir / sub).mkdir(parents=True, exist_ok=True)
+
+    power_bytes = json.dumps({"schema": "qcc.power_criteria.v1"}).encode()
+    (run_dir / "contracts" / "POWER_CRITERIA.json").write_bytes(power_bytes)
+    summary_bytes = json.dumps({"dataset_id": "ds", "run_mode": "scan_only"}).encode()
+    (run_dir / "tables" / "summary.json").write_bytes(summary_bytes)
+    fig_bytes = b"placeholder"
+    (run_dir / "figures" / "placeholder.txt").write_bytes(fig_bytes)
+
+    files = [
+        {"path": "contracts/POWER_CRITERIA.json", "sha256": _sha256(power_bytes)},
+        {"path": "tables/summary.json", "sha256": _sha256(summary_bytes)},
+        {"path": "figures/placeholder.txt", "sha256": _sha256(fig_bytes)},
+    ]
+    (run_dir / "manifest.json").write_text(json.dumps({"files": files}), encoding="utf-8")
+
+    scan = verify(run_dir, require_stability=False)
+    assert scan["passed"] is True, scan["errors"]
+
+    full = verify(run_dir, require_stability=True)
+    assert full["passed"] is False
+    assert full["checks"]["stability"] is False
 
 
 def test_verify_missing_contracts_fails(tmp_path):

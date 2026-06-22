@@ -15,8 +15,10 @@ name: Collector — Append-only CI Metrics History
 on:
   workflow_run:
     workflows:
+      # NOTE: these MUST match the active workflows' `name:` exactly, otherwise
+      # the collector never fires. The nightly workflow lives in nightly.yml.
       - "QCC Canonical Full — Run + Stability + Checks + Manifest"
-      - "Real Data Canonical (Nightly/Weekly)"
+      - "Nightly — Full Canonical Proof (Synthetic + Real Data)"
     types: [completed]
   schedule:
     - cron: "0 6 * * *"   # Daily 06:00 UTC — catch any missed runs
@@ -30,6 +32,10 @@ on:
 permissions:
   contents: write   # needed to commit ci_metrics/ back to main
   actions: read     # needed to read artifacts from other workflow runs
+
+env:
+  # Shared dependency-version ceiling for every pip install in this workflow.
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
 
 jobs:
   collect:
@@ -52,7 +58,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       # ── Mode A: download from the TRIGGERING workflow_run ──────────────────
       - name: "[workflow_run] Download artifacts from triggering run"
@@ -88,7 +94,7 @@ jobs:
 
           echo "Scanning canonical workflows since $SINCE"
 
-          for workflow_file in qcc_canonical_full.yml real_canonical_schedule.yml; do
+          for workflow_file in qcc_canonical_full.yml nightly.yml; do
             echo "── Workflow: $workflow_file"
 
             # List recent successful runs — try REST API first, fall back to gh run list
