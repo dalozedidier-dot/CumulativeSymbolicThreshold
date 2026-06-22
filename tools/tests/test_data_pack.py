@@ -58,3 +58,20 @@ def test_verify_detects_tampering(tmp_path, monkeypatch):
     monkeypatch.setattr(vdp, "MANIFEST", fake)
     errors = vdp.verify()
     assert any(("SHA256 mismatch" in e) or ("BYTES mismatch" in e) for e in errors)
+
+
+def test_builder_falls_back_without_git(monkeypatch):
+    """The data-pack builder must work from source archives without .git."""
+
+    import subprocess
+
+    def fail_git() -> list[str]:
+        raise subprocess.CalledProcessError(128, ["git", "ls-files"])
+
+    monkeypatch.setattr(bdpm, "_git_tracked_files", fail_git)
+    monkeypatch.setattr(bdpm, "_filesystem_files", lambda: ["data/finance/^spx_m.csv"])
+
+    fresh = bdpm.build(generated_utc="2000-01-01T00:00:00+00:00")
+    assert fresh["n_entries"] == 1
+    assert fresh["entries"][0]["path"] == "data/finance/^spx_m.csv"
+    assert fresh["entries"][0]["bytes"] > 0

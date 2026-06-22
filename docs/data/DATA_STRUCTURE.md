@@ -31,7 +31,7 @@ too large / binary to commit alongside the source code:
 |---|---|
 | `data/qcc/` | QCC Brisbane StateProb reference artifacts (ZIP + CSV + PDF) |
 | `data/bundles/` | Sector pilot bundle ZIPs (downloaded by `scripts/`) |
-| `data/bundles_extracted/` | Extracted contents of sector bundles |
+| `data/bundles_extracted/` | Regenerable extracted contents of sector bundles. Recreate with `python -m tools.extract_bundles`. |
 | `data/climate/`, `data/finance/`, `data/survey/` | Raw data pulled from FRED, Eurostat, Eurobarometer |
 | `data/real_datasets_index.csv` | Index of all registered real datasets |
 

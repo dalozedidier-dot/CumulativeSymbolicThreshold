@@ -154,6 +154,15 @@ bash scripts/run_replication.sh                               # offline run
 Outputs land in `replication_output/REPLICATION_SUMMARY.json`. The driver exits
 non-zero on a TECHNICAL error, but exits 0 on an honest scientific negative.
 
+The default canonical suite is deliberately ultra-small (`ORIC_REPLICATION_N_RUNS=5`,
+`ORIC_REPLICATION_N_SWEEP=5`, `ORIC_REPLICATION_N_STEPS=160`) so external reviewers
+can verify the machine quickly. For the heavier CI smoke setting, run:
+
+```bash
+ORIC_REPLICATION_N_RUNS=20 ORIC_REPLICATION_N_SWEEP=15 ORIC_REPLICATION_N_STEPS=220 \
+  bash scripts/run_replication.sh replication_output_smoke20
+```
+
 ## What you should see
 
 The smoke-tier driver reproduces the **specificity** rungs:

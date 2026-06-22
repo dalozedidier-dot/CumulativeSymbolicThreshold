@@ -40,14 +40,51 @@ def _ts() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
 
-def _run_script(script_path: Path, outdir: Path, extra_args: List[str], log_path: Path) -> None:
+def _run_script(
+    script_path: Path,
+    outdir: Path,
+    extra_args: List[str],
+    log_path: Path,
+    *,
+    timeout_seconds: int | None = None,
+) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     cmd = [sys.executable, str(script_path), "--outdir", str(outdir)] + extra_args
     with log_path.open("w", encoding="utf-8") as f:
         f.write("CMD: " + " ".join(cmd) + "\n")
         f.flush()
-        subprocess.run(cmd, check=True, stdout=f, stderr=subprocess.STDOUT)
+        try:
+            subprocess.run(
+                cmd,
+                check=True,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            f.write(f"\nTIMEOUT: step exceeded {timeout_seconds}s\n")
+            f.flush()
+            raise
 
+
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw in (None, ""):
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        print(f"WARNING: ignoring invalid {name}={raw!r}; using {default}", file=sys.stderr)
+        return default
+
+
+def _write_jsonl(path: Path, row: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, sort_keys=True) + "\n")
+        f.flush()
 
 def _maybe_summary_json(test_dir: Path) -> Optional[Path]:
     cand = test_dir / "tables" / "summary.json"
@@ -84,6 +121,30 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=1234)
     ap.add_argument("--fast", action="store_true", help="smaller n for CI quick runs")
     ap.add_argument(
+        "--n-runs-smoke",
+        type=int,
+        default=_env_int("ORIC_SMOKE_N_RUNS", 20),
+        help="n_runs for symbolic statistical tests in --fast mode (default: 20; env ORIC_SMOKE_N_RUNS)",
+    )
+    ap.add_argument(
+        "--n-sweep-smoke",
+        type=int,
+        default=_env_int("ORIC_SMOKE_N_SWEEP", 15),
+        help="n for T7 sweep in --fast mode (default: 15; env ORIC_SMOKE_N_SWEEP)",
+    )
+    ap.add_argument(
+        "--n-steps-smoke",
+        type=int,
+        default=_env_int("ORIC_SMOKE_N_STEPS", 220),
+        help="time steps for --fast mode (default: 220; env ORIC_SMOKE_N_STEPS)",
+    )
+    ap.add_argument(
+        "--step-timeout-seconds",
+        type=int,
+        default=_env_int("ORIC_STEP_TIMEOUT_SECONDS", 0),
+        help="per-step subprocess timeout; 0 disables (env ORIC_STEP_TIMEOUT_SECONDS)",
+    )
+    ap.add_argument(
         "--n-runs-min",
         type=int,
         default=None,
@@ -99,11 +160,21 @@ def main() -> int:
     if args.fast and args.n_runs_min is not None:
         print(
             "ERROR: --fast and --n-runs-min are mutually exclusive. "
-            "--fast intentionally runs with n=20 (smoke_ci). "
+            "--fast intentionally runs smoke_ci with configurable small n. "
             "Remove --fast to enforce full_statistical mode.",
             file=sys.stderr,
         )
         return 1
+
+    if args.fast:
+        for name in ("n_runs_smoke", "n_sweep_smoke", "n_steps_smoke"):
+            if int(getattr(args, name)) < 1:
+                print(f"ERROR: --{name.replace('_', '-')} must be >= 1", file=sys.stderr)
+                return 1
+    if args.step_timeout_seconds < 0:
+        print("ERROR: --step-timeout-seconds must be >= 0", file=sys.stderr)
+        return 1
+    step_timeout = args.step_timeout_seconds or None
 
     root = Path(__file__).resolve().parents[2]
     out_root = root / args.outdir
@@ -115,10 +186,10 @@ def main() -> int:
     scripts_dir = root / "04_Code" / "pipeline"
     in_path = root / args.input
 
-    n_symbolic = 20 if args.fast else 60
-    n_sweep = 15 if args.fast else 50
+    n_symbolic = int(args.n_runs_smoke) if args.fast else 60
+    n_sweep = int(args.n_sweep_smoke) if args.fast else 50
 
-    t_steps = 220 if args.fast else 260
+    t_steps = int(args.n_steps_smoke) if args.fast else 260
     t0 = int(t_steps * 0.35)
 
     tests: List[Dict] = []
@@ -358,10 +429,12 @@ def main() -> int:
     suite_t0 = time.monotonic()
     print(
         f"[ORI-C] run_mode={run_mode} | {n_tests} test(s) | base_seed={args.seed} | "
-        f"run_dir={_display_path(run_dir, root)}",
+        f"run_dir={_display_path(run_dir, root)} | "
+        f"step_timeout={step_timeout or 'disabled'}",
         flush=True,
     )
 
+    progress_path = run_dir / "progress.jsonl"
     rows = []
     for i, t in enumerate(tests, start=1):
         test_dir = run_dir / t["id"]
@@ -374,9 +447,18 @@ def main() -> int:
         print(
             f"[ORI-C][step {i}/{n_tests}] {t['id']} "
             f"({t.get('test_type', '?')}, seed={t.get('seed_used', args.seed)}, "
-            f"n_runs={t.get('n_runs_used', 1)}) — running …",
+            f"n_runs={t.get('n_runs_used', 1)}) - running ...",
             flush=True,
         )
+        _write_jsonl(progress_path, {
+            "event": "start",
+            "step": i,
+            "n_steps": n_tests,
+            "test_id": t["id"],
+            "seed": t.get("seed_used", args.seed),
+            "n_runs": int(t.get("n_runs_used", 1)),
+            "time_utc": datetime.now(timezone.utc).isoformat(),
+        })
 
         step_status = "ok"
         if t.get("test_type") == "proof_only":
@@ -384,7 +466,7 @@ def main() -> int:
             # by design and must NOT abort the suite (the aggregator only reads
             # T1–T8 and T9 is never a blocking gate for the global verdict).
             try:
-                _run_script(t["script"], test_dir, t["args"], log_path)
+                _run_script(t["script"], test_dir, t["args"], log_path, timeout_seconds=step_timeout)
             except subprocess.CalledProcessError as exc:
                 step_status = f"proof_only_exit_{exc.returncode}"
                 print(
@@ -392,7 +474,7 @@ def main() -> int:
                     "Verdict captured in test dir; not blocking the suite."
                 )
         else:
-            _run_script(t["script"], test_dir, t["args"], log_path)
+            _run_script(t["script"], test_dir, t["args"], log_path, timeout_seconds=step_timeout)
 
         sj = _maybe_summary_json(test_dir)
         vt = test_dir / "verdict.txt"
@@ -401,10 +483,21 @@ def main() -> int:
         step_dt = time.monotonic() - step_t0
         print(
             f"[ORI-C][step {i}/{n_tests}] {t['id']} done in {step_dt:.1f}s "
-            f"→ verdict={verdict_token or '(none)'} [{step_status}] "
+            f"-> verdict={verdict_token or '(none)'} [{step_status}] "
             f"(log: {_display_path(log_path, root)})",
             flush=True,
         )
+        _write_jsonl(progress_path, {
+            "event": "done",
+            "step": i,
+            "n_steps": n_tests,
+            "test_id": t["id"],
+            "status": step_status,
+            "duration_seconds": round(step_dt, 3),
+            "verdict": verdict_token,
+            "log": _display_path(log_path, root),
+            "time_utc": datetime.now(timezone.utc).isoformat(),
+        })
         rows.append(
             {
                 "test_id": t["id"],
@@ -457,6 +550,7 @@ def main() -> int:
         ),
         "trace": _github_trace(),
         "seed_table": seed_table,
+        "progress_jsonl": _display_path(progress_path, root),
         "tests": rows,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

@@ -183,8 +183,8 @@ benchmark-pilots:  ## Run comparative benchmark on BTC, EEG Bonn, Solar
 densify-pilots:  ## Run densification on 3 underpowered pilots
 	PYTHONPATH=src:04_Code python 04_Code/pipeline/densify_underpowered_pilots.py --outdir 05_Results/pilots/power_upgrade
 
-clean:  ## Remove build artifacts
-	rm -rf build/ dist/ *.egg-info src/*.egg-info
+clean:  ## Remove build artifacts and regenerable local outputs
+	rm -rf build/ dist/ *.egg-info src/*.egg-info _ci_out/ replication_output/ data/bundles_extracted/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 

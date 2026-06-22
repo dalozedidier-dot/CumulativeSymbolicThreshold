@@ -37,21 +37,17 @@ hashing the zip already pins every member, and the extraction is deterministic.
 | `*.png` figures under `05_Results/` | the reporting/plotting steps of each pipeline |
 | caches (`__pycache__/`, `.pytest_cache/`, `.mplconfig/`, …) | the toolchain |
 
-### Known exception (debt, flagged): `data/bundles_extracted/`
+### Fresh checkout behavior
 
-These 234 files are *regenerable* (every one is a member of a committed zip, see
-`python -m tools.extract_bundles --verify`) yet they are **currently force-tracked**.
-The reason is pragmatic: `data/real_datasets_index.csv` points three
-`smoke_candidate` datasets directly at extracted paths, so `make smoke` needs the
-tree present on a fresh checkout. The clean fix (point the index at the zips and
-extract in CI, then untrack the tree) is left as a follow-up; until then this is
-documented here so the contradiction with `.gitignore` is explicit, not silent.
+`data/bundles_extracted/` is no longer versioned. Commands that need extracted
+bundle paths should either run `python -m tools.extract_bundles` explicitly or
+call a wrapper that does it automatically, such as `make smoke`.
 
 ## Rules
 
-1. **Never commit a regenerable artifact** unless it is documented as a flagged
-   exception above. `05_Results/` and `data/bundles_extracted/` are `.gitignore`d;
-   do not `git add -f` new outputs into them.
+1. **Never commit a regenerable artifact.** `05_Results/` and
+   `data/bundles_extracted/` are `.gitignore`d; do not `git add -f` new outputs
+   into them.
 2. **Never hand-edit a frozen reference** to match an observed result. Frozen
    means frozen; change it through review + a new freeze.
 3. **The manifest is the source of truth for data integrity.** After adding or

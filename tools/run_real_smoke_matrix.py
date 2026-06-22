@@ -18,6 +18,20 @@ def main() -> int:
         print("ERROR: data/real_datasets_index.csv not found", file=sys.stderr)
         return 1
 
+    # Fresh archives intentionally do not ship data/bundles_extracted/. If the
+    # smoke inventory needs an extracted bundle path, regenerate the tree from
+    # the frozen source zips before checking candidates.
+    extracted_candidates: list[Path] = []
+    with index.open("r", encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            if row.get("smoke_candidate", "").strip().lower() != "yes":
+                continue
+            path = row.get("path", "").strip()
+            if path.startswith("data/bundles_extracted/"):
+                extracted_candidates.append(Path(path))
+    if extracted_candidates and any(not p.exists() for p in extracted_candidates):
+        subprocess.run([sys.executable, "-m", "tools.extract_bundles"], check=True)
+
     seen: set[str] = set()
     errors: list[str] = []
 

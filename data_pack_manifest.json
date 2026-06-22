@@ -1,6 +1,6 @@
 {
   "schema": "oric.data_pack_manifest.v2",
-  "description": "Integrity record of the FROZEN data pack: source bundle zips + small committed reference datasets. Regenerable artefacts (data/bundles_extracted/) are intentionally excluded \u2014 they derive from the zips. See docs/ARTIFACTS_POLICY.md.",
+  "description": "Integrity record of the FROZEN data pack: source bundle zips + small committed reference datasets. Regenerable artefacts (data/bundles_extracted/) are intentionally excluded because they derive from the zips. See docs/ARTIFACTS_POLICY.md.",
   "frozen_dirs": [
     "data/bundles",
     "data/climate",
@@ -8,7 +8,7 @@
     "data/qcc",
     "data/survey"
   ],
-  "generated_utc": "2026-06-22T12:56:57.052780+00:00",
+  "generated_utc": "2026-06-22T20:42:18.700833+00:00",
   "n_entries": 44,
   "entries": [
     {

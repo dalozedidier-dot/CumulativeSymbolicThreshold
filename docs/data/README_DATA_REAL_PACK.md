@@ -8,7 +8,7 @@ Folders:
 - survey/eurobarometer/: Eurobarometer Standard 99 (Spring 2023) volumes (xlsx)
 - survey/parlemeter/: Parlemeter 78.2 (2012) volumes (zip)
 - bundles/: sector pilot bundles as provided (zip)
-- bundles_extracted/: extracted contents of those bundles (logs/tables/figures etc.)
+- bundles_extracted/: regenerable extracted contents of those bundles. Recreate with `python -m tools.extract_bundles`.
 - qcc/: Brisbane StateProb/QCC reference artifacts (zip) + PDF report
 
 Notes:

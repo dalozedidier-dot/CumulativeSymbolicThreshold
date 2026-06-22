@@ -8,7 +8,7 @@ sector-specific working files used during development and exploratory analysis.
 | Subdirectory | Content |
 |-------------|---------|
 | `bundles/` | Downloaded data bundles |
-| `bundles_extracted/` | Extracted bundle contents |
+| `bundles_extracted/` | Regenerable extracted bundle contents. Recreate with `python -m tools.extract_bundles`. |
 | `climate/` | Climate sector working data |
 | `finance/` | Finance sector working data |
 | `qcc/` | QCC (quantum contextual computing) variant data |
