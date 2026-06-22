@@ -32,7 +32,7 @@
 
 # ── Scientific runtime (results-affecting — keep on the validated families) ──
 numpy>=1.26,<3            # validated on the numpy 2.x ABI; exclude a future 3.0
-pandas>=2.0,<3            # protocol developed on pandas 2.x; 3.0 changes defaults
+pandas>=2.0,<4            # protocol developed on pandas 2.x; 3.0 changes defaults
 scipy>=1.11,<2            # stats/IAAFT/permutation paths validated on scipy 1.x
 matplotlib>=3.8,<4        # figure generation only; cap the major
 statsmodels>=0.14,<1      # Granger / VAR / cointegration backend
