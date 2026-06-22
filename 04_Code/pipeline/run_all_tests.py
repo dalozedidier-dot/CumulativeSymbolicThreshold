@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -353,13 +354,31 @@ def main() -> int:
         f"base_seed={args.seed}."
     )
 
+    n_tests = len(tests)
+    suite_t0 = time.monotonic()
+    print(
+        f"[ORI-C] run_mode={run_mode} | {n_tests} test(s) | base_seed={args.seed} | "
+        f"run_dir={_display_path(run_dir, root)}",
+        flush=True,
+    )
+
     rows = []
-    for t in tests:
+    for i, t in enumerate(tests, start=1):
         test_dir = run_dir / t["id"]
         log_dir = test_dir / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / "run.log"
 
+        # ── Step-by-step progress logging (timestamped, flushed for CI tee) ──
+        step_t0 = time.monotonic()
+        print(
+            f"[ORI-C][step {i}/{n_tests}] {t['id']} "
+            f"({t.get('test_type', '?')}, seed={t.get('seed_used', args.seed)}, "
+            f"n_runs={t.get('n_runs_used', 1)}) — running …",
+            flush=True,
+        )
+
+        step_status = "ok"
         if t.get("test_type") == "proof_only":
             # proof_only tests (e.g. T9) exit 1 when verdict = REJECT; this is
             # by design and must NOT abort the suite (the aggregator only reads
@@ -367,6 +386,7 @@ def main() -> int:
             try:
                 _run_script(t["script"], test_dir, t["args"], log_path)
             except subprocess.CalledProcessError as exc:
+                step_status = f"proof_only_exit_{exc.returncode}"
                 print(
                     f"[WARNING] {t['id']} (proof_only) exited {exc.returncode}. "
                     "Verdict captured in test dir; not blocking the suite."
@@ -377,6 +397,14 @@ def main() -> int:
         sj = _maybe_summary_json(test_dir)
         vt = test_dir / "verdict.txt"
         verdict_token = vt.read_text(encoding="utf-8").strip() if vt.exists() else ""
+
+        step_dt = time.monotonic() - step_t0
+        print(
+            f"[ORI-C][step {i}/{n_tests}] {t['id']} done in {step_dt:.1f}s "
+            f"→ verdict={verdict_token or '(none)'} [{step_status}] "
+            f"(log: {_display_path(log_path, root)})",
+            flush=True,
+        )
         rows.append(
             {
                 "test_id": t["id"],
@@ -433,6 +461,11 @@ def main() -> int:
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
+    print(
+        f"[ORI-C] aggregating verdicts ({sum(1 for r in rows if r['verdict'])}/"
+        f"{n_tests} tests produced a verdict.txt) …",
+        flush=True,
+    )
     aggregator = scripts_dir / "analyse_verdicts_canonical.py"
     if aggregator.exists():
         agg_log = run_dir / "aggregator.log"
@@ -445,6 +478,11 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             agg_log.write_text(f"Aggregator error: {exc}\n", encoding="utf-8")
 
+    print(
+        f"[ORI-C] suite complete in {time.monotonic() - suite_t0:.1f}s "
+        f"(run_mode={run_mode}). Machine-readable run_dir on the next line:",
+        flush=True,
+    )
     print(str(run_dir))
     return 0
 

@@ -1,3 +1,8 @@
+> ⚠️ **SUPERSEDED — historical (2026-03-13).** Tooling references here are out of
+> date: the project lints/formats with **ruff** (not `flake8`/`black`), and the
+> Python policy is **3.12 only**. For current status see
+> [`../EVIDENTIARY_STATUS.md`](../EVIDENTIARY_STATUS.md). Kept for provenance only.
+
 # Check-up complet du dépôt
 
 Date: 2026-03-13

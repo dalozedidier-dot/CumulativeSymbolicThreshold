@@ -2,7 +2,8 @@
         smoke real-smoke collect canonical-qcc local-run-sample \
         replicate benchmark-pilots densify-pilots ci-local \
         constraints-check test-smoke test-full test-scientific \
-        run-replication bundle replicate-docker
+        run-replication bundle replicate-docker \
+        data-pack-build data-pack-check extract-bundles
 
 # Every `pip install` in this Makefile honours the shared dependency-version
 # ceiling, exactly like the CI workflows (which set PIP_CONSTRAINT in env).
@@ -37,6 +38,16 @@ coverage:  ## Run tests with coverage report
 constraints-check:  ## Verify constraints.txt is internally consistent + installable
 	python -m pip install --dry-run --constraint constraints.txt -r requirements.txt \
 		&& echo "OK: requirements.txt resolves under constraints.txt"
+
+data-pack-build:  ## Regenerate data_pack_manifest.json from the frozen data dirs
+	python -m tools.build_data_pack_manifest
+
+data-pack-check:  ## Verify the frozen data pack hashes + manifest is current
+	python -m tools.verify_data_pack
+	python -m tools.build_data_pack_manifest --check
+
+extract-bundles:  ## Regenerate data/bundles_extracted/ from data/bundles/*.zip
+	python -m tools.extract_bundles
 
 lint:  ## Run linters (ruff)
 	python -m ruff check .

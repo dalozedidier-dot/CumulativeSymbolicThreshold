@@ -2,11 +2,11 @@
 
 ## Documentation
 
-📚 [Full documentation index](docs/INDEX.md)
+📚 [Full documentation index](docs/index.md)
 
 | Document | Description |
 |----------|-------------|
-| [docs/INDEX.md](docs/INDEX.md) | Documentation index |
+| [docs/index.md](docs/index.md) | Documentation index |
 | [docs/ORI_C_POINT_OF_TRUTH.md](docs/ORI_C_POINT_OF_TRUTH.md) | Canonical point of truth |
 | [docs/CI_PIPELINES.md](docs/CI_PIPELINES.md) | CI/CD pipeline reference |
 | [docs/REPRODUCE.md](docs/REPRODUCE.md) | Reproduction guide |

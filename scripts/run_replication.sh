@@ -88,7 +88,19 @@ summary = {
 }
 (out / "REPLICATION_SUMMARY.json").write_text(json.dumps(summary, indent=2) + "\n")
 print(json.dumps(summary, indent=2))
+
+# Technical-failure detection: a smoke replication MUST produce these artefacts.
+# A negative *verdict* is fine (honest result); a MISSING artefact is a tech error.
+missing = [k for k, v in {"strong_negatives.json": sn, "accumulation_control.json": ac}.items() if not v]
+if missing:
+    print(f"TECHNICAL: missing/empty critical artefact(s): {missing}", file=sys.stderr)
+    sys.exit(3)
 PY
+SUMMARY_RC=$?
+if [ "$SUMMARY_RC" -ne 0 ]; then
+  printf '    \033[31m[FAIL]\033[0m summary: missing/empty critical artefact(s)\n'
+  FAIL=$((FAIL+1))
+fi
 
 say "Done — full (non-fast) replication"
 cat <<'TXT'
@@ -102,5 +114,14 @@ cat <<'TXT'
 TXT
 
 printf '\nResult: %d step(s) OK, %d FAIL → %s\n' "$PASS" "$FAIL" "$OUTDIR/REPLICATION_SUMMARY.json"
-# Diagnostic driver: never hard-fail on the honest scientific outcome.
+
+# Fail on TECHNICAL errors (a step crashed, an integrity check failed, or a
+# critical artefact is missing), but NOT on an honest scientific negative: the
+# runners exit 0 and emit a verdict token (NOT_CONFIRMED / STRONG_NEGATIVES_LEAK
+# / OOS_SKILL_INCONCLUSIVE), and those are valid results, not failures.
+if [ "$FAIL" -ne 0 ]; then
+  printf '\033[31mTECHNICAL FAILURE: %d replication step(s) errored (this is NOT a scientific negative).\033[0m\n' "$FAIL"
+  exit 1
+fi
+echo "All replication steps completed. (Scientific verdicts may still be negative — that is a valid result.)"
 exit 0
