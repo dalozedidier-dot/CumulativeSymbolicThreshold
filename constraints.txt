@@ -46,7 +46,7 @@ coverage>=7.0,<8
 
 # ── Lint + type tooling (rule sets evolve fast — pin the family) ──
 ruff>=0.4,<1              # pre-1.0: cap below the next minor-breaking line
-mypy>=1.5,<2
+mypy>=1.5,<3
 
 # NOTE: type-stub packages (pandas-stubs, scipy-stubs) are intentionally left
 # unconstrained — they are dev-only, do not affect runtime or results, and track
