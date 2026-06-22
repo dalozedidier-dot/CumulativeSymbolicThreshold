@@ -189,6 +189,8 @@ real-registered:  ## Run the FROZEN registered real-data A/B/C block (~3-8 min, 
 
 clean:  ## Remove build artifacts
 	rm -rf build/ dist/ *.egg-info src/*.egg-info
+clean:  ## Remove build artifacts and regenerable local outputs
+	rm -rf build/ dist/ *.egg-info src/*.egg-info _ci_out/ replication_output/ data/bundles_extracted/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 

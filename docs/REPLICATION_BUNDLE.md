@@ -28,9 +28,19 @@ The image is `python:3.12-slim` (the only supported interpreter — see
 reproducible rather than "whatever PyPI shipped today". The `--network none` flag
 proves the run needs no network.
 
-`scripts/run_replication.sh` runs the **smoke tier**: repo health → canonical
-synthetic suite → strong-negatives battery → accumulation control, and writes
-`replication_output/REPLICATION_SUMMARY.json`.
+`scripts/run_replication.sh` runs the **ultra-smoke tier** by default: repo
+health, a very small canonical synthetic suite, the strong-negatives battery, and
+the accumulation control. It writes `replication_output/REPLICATION_SUMMARY.json`.
+
+The default canonical suite uses `ORIC_REPLICATION_N_RUNS=5`,
+`ORIC_REPLICATION_N_SWEEP=5` and `ORIC_REPLICATION_N_STEPS=160` so a third party
+can check that the machine runs quickly. To reproduce the heavier smoke tier used
+in CI, run:
+
+```bash
+ORIC_REPLICATION_N_RUNS=20 ORIC_REPLICATION_N_SWEEP=15 ORIC_REPLICATION_N_STEPS=220 \
+  bash scripts/run_replication.sh replication_output_smoke20
+```
 
 ## 2. The Zenodo bundle (self-contained, offline)
 
@@ -84,7 +94,7 @@ failure.
 |---|---|---|
 | Strong-negatives battery | `STRONG_NEGATIVES_CLEAN` | localized gate fires on 0/11 adversarial negatives; bare gate leaks on ~50 % |
 | Accumulation control | `separates = true` | smooth accumulation rejected, bifurcation flagged |
-| Canonical smoke | `smoke_ci_accept` | code path verified; **not** a statistical claim |
+| Canonical ultra-smoke | `smoke_ci_accept` | code path verified; **not** a statistical claim |
 | Headline real-data status | **NOT_CONFIRMED** | Test B (surrogate null) fails on the real pilots |
 
 The headline being a **negative** is the point: ORI-C is a *built, falsifiable

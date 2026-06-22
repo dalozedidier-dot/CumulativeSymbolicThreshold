@@ -17,8 +17,27 @@ set -uo pipefail
 
 OUTDIR="${1:-replication_output}"
 SEED="${ORIC_SEED:-1234}"
+# Ultra-smoke defaults keep third-party replication fast. Override when needed:
+#   ORIC_REPLICATION_N_RUNS=20 ORIC_REPLICATION_N_STEPS=220 bash scripts/run_replication.sh
+REPLICATION_N_RUNS="${ORIC_REPLICATION_N_RUNS:-5}"
+REPLICATION_N_SWEEP="${ORIC_REPLICATION_N_SWEEP:-5}"
+REPLICATION_N_STEPS="${ORIC_REPLICATION_N_STEPS:-160}"
+STEP_TIMEOUT_SECONDS="${ORIC_STEP_TIMEOUT_SECONDS:-900}"
 export PYTHONPATH="src:04_Code:${PYTHONPATH:-}"
 mkdir -p "$OUTDIR"
+
+case "$REPLICATION_N_RUNS:$REPLICATION_N_SWEEP:$REPLICATION_N_STEPS:$STEP_TIMEOUT_SECONDS" in
+  *[!0-9:]*|'')
+    echo "ERROR: ORIC_REPLICATION_N_RUNS, ORIC_REPLICATION_N_SWEEP, ORIC_REPLICATION_N_STEPS and ORIC_STEP_TIMEOUT_SECONDS must be positive integers." >&2
+    exit 2
+    ;;
+esac
+for value in "$REPLICATION_N_RUNS" "$REPLICATION_N_SWEEP" "$REPLICATION_N_STEPS" "$STEP_TIMEOUT_SECONDS"; do
+  if [ "$value" -lt 1 ]; then
+    echo "ERROR: replication tuning values must be >= 1." >&2
+    exit 2
+  fi
+done
 
 say() { printf '\n\033[1m== %s ==\033[0m\n' "$*"; }
 PASS=0; FAIL=0
@@ -44,8 +63,16 @@ PY
 say "1. Frozen-contract + repo health check"
 step "repo_doctor" python -m tools.repo_doctor
 
-say "2. Canonical synthetic suite (smoke_ci — fast, non-conclusive by design)"
-step "canonical_smoke" python 04_Code/pipeline/run_all_tests.py --outdir "$OUTDIR/canonical" --fast --seed "$SEED"
+say "2. Canonical synthetic suite (ultra-smoke, non-conclusive by design)"
+echo "  tuning: n_runs=$REPLICATION_N_RUNS n_sweep=$REPLICATION_N_SWEEP n_steps=$REPLICATION_N_STEPS step_timeout=${STEP_TIMEOUT_SECONDS}s"
+step "canonical_smoke" python 04_Code/pipeline/run_all_tests.py \
+  --outdir "$OUTDIR/canonical" \
+  --fast \
+  --seed "$SEED" \
+  --n-runs-smoke "$REPLICATION_N_RUNS" \
+  --n-sweep-smoke "$REPLICATION_N_SWEEP" \
+  --n-steps-smoke "$REPLICATION_N_STEPS" \
+  --step-timeout-seconds "$STEP_TIMEOUT_SECONDS"
 
 say "3. Strong-negatives specificity battery (rung 7)"
 step "strong_negatives" python 04_Code/pipeline/run_strong_negatives.py --outdir "$OUTDIR/strong_negatives" --fast --seed "$SEED"
@@ -111,6 +138,8 @@ fi
 say "Done — full (non-fast) replication"
 cat <<'TXT'
   This was the FAST tier. For the full proofs (minutes→tens of minutes):
+    ORIC_REPLICATION_N_RUNS=20 ORIC_REPLICATION_N_SWEEP=15 ORIC_REPLICATION_N_STEPS=220 \
+      bash scripts/run_replication.sh out/smoke_20
     make test                 # full + scientific test tiers
     python 04_Code/pipeline/run_strong_negatives.py    --outdir out/strong_negatives    --n-surrogates 200
     python 04_Code/pipeline/run_accumulation_control.py --outdir out/accumulation_control --n-surrogates 200
@@ -129,5 +158,5 @@ if [ "$FAIL" -ne 0 ]; then
   printf '\033[31mTECHNICAL FAILURE: %d replication step(s) errored (this is NOT a scientific negative).\033[0m\n' "$FAIL"
   exit 1
 fi
-echo "All replication steps completed. (Scientific verdicts may still be negative — that is a valid result.)"
+echo "All replication steps completed. (Scientific verdicts may still be negative. That is a valid result.)"
 exit 0
