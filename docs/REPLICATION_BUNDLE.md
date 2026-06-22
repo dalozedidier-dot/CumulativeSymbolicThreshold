@@ -1,22 +1,32 @@
 # External replication bundle (Docker / Zenodo)
 
 This page is for an **independent third party** who wants to rebuild the ORI-C
-verdicts from scratch, offline, and check them against frozen expectations.
+verdicts from scratch and check them against frozen expectations.
 
 There are three layers, from quickest to most rigorous.
 
-## 1. One command (Docker — fully pinned)
+> **What "offline" means here.** The bundle carries all *code and data*, so
+> **running** the replication is fully offline (synthetic series are generated
+> in-process; the only real dataset, FRED monthly, is bundled). The one **online**
+> step is **installing the dependencies** — `docker build`, `pip install`,
+> `apt-get` and the base-image pull all reach the network. Install once with
+> network, then every run is offline. For an air-gapped host, pre-stage a
+> wheelhouse first (§4).
+
+## 1. One command (Docker — fully pinned; build is online, the run is offline)
 
 ```bash
-docker build -t oric:latest .
-docker run --rm -v "$(pwd)/replication_output:/app/replication_output" \
-  oric:latest bash scripts/run_replication.sh
+docker build -t oric:latest .                       # online (once)
+docker run --rm --network none \
+  -v "$(pwd)/replication_output:/app/replication_output" \
+  oric:latest bash scripts/run_replication.sh       # offline (note --network none)
 ```
 
 The image is `python:3.12-slim` (the only supported interpreter — see
 [`PYTHON_POLICY.md`](PYTHON_POLICY.md)) and every `pip install` is bounded by
 [`../constraints.txt`](../constraints.txt) via `PIP_CONSTRAINT`, so the build is
-reproducible rather than "whatever PyPI shipped today".
+reproducible rather than "whatever PyPI shipped today". The `--network none` flag
+proves the run needs no network.
 
 `scripts/run_replication.sh` runs the **smoke tier**: repo health → canonical
 synthetic suite → strong-negatives battery → accumulation control, and writes
@@ -48,6 +58,25 @@ python 04_Code/pipeline/run_accumulation_control.py --outdir out/accumulation_co
 python 04_Code/pipeline/run_oos_prediction.py       --outdir out/oos --n-replicates 50 --lead 60
 python tools/replicate.py --outdir out/full
 ```
+
+## 4. Air-gapped (no network on the run host)
+
+Pre-stage the wheels on a connected machine, copy them across with the bundle,
+then install and run with no network:
+
+```bash
+# on a connected host:
+pip download -d wheelhouse -c constraints.txt -e ".[dev]"
+#   …copy the unpacked bundle + wheelhouse to the air-gapped host…
+# on the air-gapped host:
+pip install --no-index --find-links wheelhouse -e ".[dev]"   # offline install
+bash scripts/run_replication.sh                              # offline run
+```
+
+`scripts/run_replication.sh` exits **non-zero on a technical error** (a crashed
+step, a failed integrity check, a missing artefact) but exits **0 on an honest
+scientific negative** — a verdict like `NOT_CONFIRMED` is a valid result, not a
+failure.
 
 ## What you should see (frozen expectations)
 

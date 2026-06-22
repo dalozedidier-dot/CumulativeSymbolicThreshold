@@ -45,6 +45,7 @@ nav:
       - Symbolic Tests: SYMBOLIC_TESTS.md
       - Repository Layout: REPO_LAYOUT.md
       - Test Tiers: TESTING.md
+      - Artifacts Policy: ARTIFACTS_POLICY.md
   - API Reference:
       - Core:
           - ori_core: api/ori_core.md

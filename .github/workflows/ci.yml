@@ -21,6 +21,12 @@ jobs:
           python-version: "3.12"
       - name: Check Python syntax (compileall)
         run: python -m compileall 04_Code -q
+      - name: Guard against case-insensitive path collisions
+        run: python -m tools.check_case_collisions
+      - name: Verify frozen data pack (hashes) + manifest is current
+        run: |
+          python -m tools.verify_data_pack
+          python -m tools.build_data_pack_manifest --check
 
   lint_typecheck:
     runs-on: ubuntu-latest

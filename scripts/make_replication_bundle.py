@@ -2,11 +2,18 @@
 """make_replication_bundle.py — assemble a self-contained Zenodo replication bundle.
 
 Produces ``dist/oric_replication_bundle_<version>.zip`` containing everything an
-independent party needs to rebuild the ORI-C verdicts **offline**: the code, the
-frozen contracts, the constraints lock-ceiling, the reproducible Dockerfile, the
+independent party needs to rebuild the ORI-C verdicts: the code, the frozen
+contracts, the constraints lock-ceiling, the reproducible Dockerfile, the
 one-command driver (``scripts/run_replication.sh``), the small frozen inputs, and
 the interpretation docs — plus a ``BUNDLE_MANIFEST.json`` with a sha256 for every
 file and a top-level ``RUN.md``.
+
+Network policy: the bundle carries all *code and data*, so once the Python 3.12
+dependencies are installed (or the Docker image is built), the replication
+**runs fully offline** — synthetic series are generated in-process and the only
+real dataset (FRED monthly) is shipped inside the bundle. The dependency install
+itself (pip / apt / the base image pull) DOES need network; for a truly air-gapped
+run, pre-build the image or pre-populate a wheelhouse first (see RUN.md).
 
 It deliberately EXCLUDES heavyweight, regenerable or non-essential material
 (``05_Results/``, data bundles, large PDFs, git history, caches) so the archive
@@ -105,24 +112,47 @@ def _collect() -> list[Path]:
 
 _RUN_MD = """# ORI-C external replication bundle
 
-Self-contained snapshot for independent replication. No network required.
+Self-contained snapshot for independent replication: all *code and data* are
+inside this archive.
 
-## Option A — Docker (recommended, fully pinned)
+## Network policy (what "offline" means here)
+
+- **Running** the replication is fully **offline**: synthetic series are
+  generated in-process and the only real dataset (FRED monthly) is bundled.
+- **Installing the dependencies** is the one online step — `docker build`,
+  `pip install`, `apt-get` and the base-image pull all reach the network.
+
+So: do the install once with network, then every replication run is offline.
+For a truly air-gapped machine, prepare the environment first on a connected
+host (Option C) and copy it across.
+
+## Option A — Docker (recommended, fully pinned; build needs network, run is offline)
 
 ```bash
-docker build -t oric:latest .
-docker run --rm -v "$(pwd)/replication_output:/app/replication_output" \\
-  oric:latest bash scripts/run_replication.sh
+docker build -t oric:latest .                                   # online (once)
+docker run --rm --network none \\
+  -v "$(pwd)/replication_output:/app/replication_output" \\
+  oric:latest bash scripts/run_replication.sh                   # offline
 ```
 
-## Option B — local Python 3.12
+## Option B — local Python 3.12 (install needs network, run is offline)
 
 ```bash
-pip install -e ".[dev]"            # honours constraints.txt automatically in CI/Docker
-bash scripts/run_replication.sh
+pip install -e ".[dev]"            # online (once); honours constraints.txt in CI/Docker
+bash scripts/run_replication.sh    # offline
 ```
 
-Outputs land in `replication_output/REPLICATION_SUMMARY.json`.
+## Option C — air-gapped (pre-stage a wheelhouse on a connected host)
+
+```bash
+pip download -d wheelhouse -e ".[dev]"        # connected host
+#   …copy the bundle + wheelhouse to the air-gapped host…
+pip install --no-index --find-links wheelhouse -e ".[dev]"   # offline install
+bash scripts/run_replication.sh                               # offline run
+```
+
+Outputs land in `replication_output/REPLICATION_SUMMARY.json`. The driver exits
+non-zero on a TECHNICAL error, but exits 0 on an honest scientific negative.
 
 ## What you should see
 
