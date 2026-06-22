@@ -40,7 +40,7 @@ scikit-learn>=1.3,<2      # benchmark + early-warning helpers
 tqdm>=4.66,<5             # progress bars only
 
 # ── Test + coverage tooling (keep CI gates stable across runs) ──
-pytest>=8.0,<9            # collection/marker semantics validated on pytest 8.x
+pytest>=8.0,<10            # collection/marker semantics validated on pytest 8.x
 pytest-cov>=4.1,<7
 coverage>=7.14.2,<8
 
