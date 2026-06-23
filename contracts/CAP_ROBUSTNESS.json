@@ -1,0 +1,28 @@
+{
+  "contract": "CAP_ROBUSTNESS",
+  "purpose": "Require structural conclusions involving Cap(t), Sigma(t), overload, viability or collapse thresholds to be checked against declared alternative Cap(t) specifications.",
+  "primary_form": "product",
+  "required_alternative_forms": [
+    "geom_mean",
+    "weighted_sum",
+    "min"
+  ],
+  "forms": {
+    "product": "O(t) * R(t) * I(t)",
+    "geom_mean": "(O(t) * R(t) * I(t)) ** (1/3)",
+    "weighted_sum": "0.4 * O(t) + 0.35 * R(t) + 0.25 * I(t)",
+    "min": "min(O(t), R(t), I(t))"
+  },
+  "thresholds": {
+    "min_spearman": 0.8,
+    "max_frac_over_delta": 0.15,
+    "max_total_sigma_rel_delta": 0.5,
+    "min_topk_jaccard": 0.5,
+    "topk_frac": 0.1
+  },
+  "decision_rule": {
+    "CAP_ROBUST": "All declared alternative forms pass the robustness thresholds against the primary form.",
+    "CAP_SPEC_SENSITIVE": "At least one declared alternative form fails a robustness threshold. Structural conclusions remain specification-sensitive."
+  },
+  "normative_status": "A result depending entirely on one Cap(t) form cannot be considered structurally robust."
+}

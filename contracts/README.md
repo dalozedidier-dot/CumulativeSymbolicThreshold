@@ -16,3 +16,5 @@ Machine-readable contracts that define the acceptance criteria for CI pipeline r
 | `PLAN_SCHEMA.json` | Plan schema definition |
 
 These contracts are consumed by `tools/enforce_output_contract.py` and the CI pipelines.
+
+- `CAP_ROBUSTNESS.json`: declares the required robustness gate for structural capacity `Cap(t)` alternatives.

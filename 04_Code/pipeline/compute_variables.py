@@ -33,7 +33,7 @@ class Config:
     m: int
     sigma_star: float
     tau: int
-    capacity_form: str  # "product" or "geom_mean"
+    capacity_form: str  # "product", "geom_mean", "weighted_sum" or "min"
 
 
 REQUIRED_BASE_COLUMNS = [
@@ -102,8 +102,12 @@ def compute_scores(df: pd.DataFrame, cfg: Config) -> pd.DataFrame:
     elif cfg.capacity_form == "geom_mean":
         base = out["O"].clip(lower=0) * out["R"].clip(lower=0) * out["I"].clip(lower=0)
         out["Cap"] = base ** (1.0 / 3.0)
+    elif cfg.capacity_form == "weighted_sum":
+        out["Cap"] = 0.4 * out["O"] + 0.35 * out["R"] + 0.25 * out["I"]
+    elif cfg.capacity_form == "min":
+        out["Cap"] = out[["O", "R", "I"]].min(axis=1)
     else:
-        raise ValueError("capacity_form must be 'product' or 'geom_mean'")
+        raise ValueError("capacity_form must be 'product', 'geom_mean', 'weighted_sum' or 'min'")
 
     # Sigma(t) = max(0, demand - capacity)
     out["Sigma"] = (out["demande_env"] - out["Cap"]).clip(lower=0.0)

@@ -14,6 +14,7 @@ def compute_cap_projection(  # noqa: E741
     - product: Cap = O * R * I
     - geom_mean: Cap = (O * R * I) ** (1/3)
     - weighted_sum: Cap = 0.4*O + 0.35*R + 0.25*I
+    - min: Cap = min(O, R, I)
     """
     if form == "product":
         return O * R * I
@@ -21,6 +22,8 @@ def compute_cap_projection(  # noqa: E741
         return (O * R * I) ** (1.0 / 3.0)
     if form == "weighted_sum":
         return 0.4 * O + 0.35 * R + 0.25 * I
+    if form == "min":
+        return pd.concat([O, R, I], axis=1).min(axis=1)
     raise ValueError(f"Unknown cap form: {form}")
 
 

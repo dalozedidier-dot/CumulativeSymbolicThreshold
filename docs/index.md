@@ -134,3 +134,5 @@ All seeds, manifests, and checksums are frozen:
 - [GitHub Repository](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold)
 - [OSF Pre-registration](https://osf.io/g62pz/)
 - [DOI: 10.17605/OSF.IO/G62PZ](https://doi.org/10.17605/OSF.IO/G62PZ)
+
+- [Cap(t) robustness gate](CAP_ROBUSTNESS.md)

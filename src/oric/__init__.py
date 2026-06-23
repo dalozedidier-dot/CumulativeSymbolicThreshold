@@ -22,6 +22,7 @@ from .prereg import PreregSpec
 from .randomization import RandomizationEngine
 from .logger import ExperimentLogger
 from .ori_core import compute_cap_projection, compute_sigma, compute_viability, summarize_run
+from .cap_robustness import CapRobustnessSpec, compute_cap_variants, summarize_cap_robustness
 from .symbolic import compute_stock_S, compute_order_C, detect_s_star_piecewise
 from .proxy_spec import ProxySpec, ColumnSpec
 from .decision import DecisionResult, hierarchical_verdict, WELCH_NAN_FALLBACK_POLICY
@@ -104,7 +105,10 @@ from .oos_prediction import (
 
 __all__ = [
     # Core computations
+    "CapRobustnessSpec",
     "compute_cap_projection",
+    "compute_cap_variants",
+    "summarize_cap_robustness",
     "compute_sigma",
     "compute_viability",
     "summarize_run",

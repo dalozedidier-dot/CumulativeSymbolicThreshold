@@ -63,6 +63,7 @@ all = ["oric[dev,notebooks,docs]"]
 [project.scripts]
 oric-run-all = "oric._entrypoints:run_all"
 oric-run-tests = "oric._entrypoints:run_all_tests"
+oric-cap-robustness = "oric.cap_robustness:main"
 
 [project.urls]
 Homepage = "https://www.ori-c.be"

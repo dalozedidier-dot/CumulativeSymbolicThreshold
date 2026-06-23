@@ -196,3 +196,7 @@ python 04_Code/pipeline/run_surrogate_null.py \
 # T9 with the accumulation-specificity block
 python 04_Code/pipeline/run_T9_cross_domain.py --outdir 05_Results/t9 --fast
 ```
+
+## Cap(t) robustness note
+
+`Cap(t)` is treated as an ex-ante structural specification rather than a final theoretical truth. Structural conclusions involving `Sigma(t)`, overload, viability or collapse thresholds should be checked against declared alternative forms. See `docs/CAP_ROBUSTNESS.md` and `contracts/CAP_ROBUSTNESS.json`.

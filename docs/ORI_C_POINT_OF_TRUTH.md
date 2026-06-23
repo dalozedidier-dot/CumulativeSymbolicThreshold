@@ -83,3 +83,7 @@ CumulativeSymbolicThreshold/
 ├── examples/               Jupyter notebooks (3 demos)
 └── src/oric/               Importable Python package (pip install -e .)
 ```
+
+## Cap(t) robustness note
+
+`Cap(t)` is treated as an ex-ante structural specification rather than a final theoretical truth. Structural conclusions involving `Sigma(t)`, overload, viability or collapse thresholds should be checked against declared alternative forms. See `docs/CAP_ROBUSTNESS.md` and `contracts/CAP_ROBUSTNESS.json`.

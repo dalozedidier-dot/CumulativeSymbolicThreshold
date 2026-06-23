@@ -296,3 +296,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) — PR checklist, reviewer guide, dataset
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Cap(t) robustness
+
+`Cap(t)` is treated as an ex-ante structural specification rather than a final theoretical truth. Structural conclusions involving `Sigma(t)`, overload, viability or collapse thresholds should be checked against declared alternative forms. See `docs/CAP_ROBUSTNESS.md` and `contracts/CAP_ROBUSTNESS.json`.
