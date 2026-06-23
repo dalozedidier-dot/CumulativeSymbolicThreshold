@@ -140,11 +140,39 @@ def main() -> int:
             return 1
         current = json.loads(MANIFEST.read_text(encoding="utf-8"))
         if _normalized(current) != _normalized(fresh):
+            current_entries = {it.get("path"): it for it in current.get("entries", [])}
+            fresh_entries = {it.get("path"): it for it in fresh.get("entries", [])}
+            missing = sorted(set(fresh_entries) - set(current_entries))
+            extra = sorted(set(current_entries) - set(fresh_entries))
+            changed = sorted(
+                p
+                for p in (set(current_entries) & set(fresh_entries))
+                if current_entries[p].get("sha256") != fresh_entries[p].get("sha256")
+                or current_entries[p].get("bytes") != fresh_entries[p].get("bytes")
+            )
             print(
                 "ERROR: data_pack_manifest.json is out of date. "
                 "Run `python -m tools.build_data_pack_manifest` and commit.",
                 file=sys.stderr,
             )
+            if missing:
+                print("  Missing from manifest:", file=sys.stderr)
+                for path in missing[:20]:
+                    print(f"    + {path}", file=sys.stderr)
+                if len(missing) > 20:
+                    print(f"    ... {len(missing) - 20} more", file=sys.stderr)
+            if extra:
+                print("  Extra in manifest:", file=sys.stderr)
+                for path in extra[:20]:
+                    print(f"    - {path}", file=sys.stderr)
+                if len(extra) > 20:
+                    print(f"    ... {len(extra) - 20} more", file=sys.stderr)
+            if changed:
+                print("  Changed files:", file=sys.stderr)
+                for path in changed[:20]:
+                    print(f"    * {path}", file=sys.stderr)
+                if len(changed) > 20:
+                    print(f"    ... {len(changed) - 20} more", file=sys.stderr)
             return 1
         print(f"OK: data_pack_manifest.json up to date ({fresh['n_entries']} entries).")
         return 0
