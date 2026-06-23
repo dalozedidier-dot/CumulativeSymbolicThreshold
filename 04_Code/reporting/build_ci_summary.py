@@ -41,6 +41,20 @@ def _mk_md_table(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+
+
+
+def _find_cap_robustness_report(ci_out: Path) -> tuple[Path | None, dict[str, Any] | None]:
+    """Return the first Cap(t) robustness report found in the CI artefact tree."""
+    candidates = sorted(ci_out.glob("**/cap_robustness_report.json"))
+    if not candidates:
+        return None, None
+    report_path = candidates[-1]
+    try:
+        return report_path, _read_json(report_path)
+    except Exception:
+        return report_path, {"verdict": "ERROR", "stable_across_specs": False}
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ci-out", default="_ci_out", help="CI output directory")
@@ -88,6 +102,8 @@ def main() -> int:
             }
         )
 
+    cap_report_path, cap_report = _find_cap_robustness_report(ci_out)
+
     now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     gh = {
         "workflow": os.environ.get("GITHUB_WORKFLOW"),
@@ -106,6 +122,13 @@ def main() -> int:
         "global_verdict": global_v,
         "gate_passed": gate_passed,
         "base_seed": base_seed,
+        "cap_robustness": {
+            "report_path": str(cap_report_path) if cap_report_path else None,
+            "verdict": (cap_report or {}).get("verdict"),
+            "stable_across_specs": (cap_report or {}).get("stable_across_specs"),
+            "primary_form": (cap_report or {}).get("primary_form"),
+            "tested_forms": list(((cap_report or {}).get("spec") or {}).get("forms", [])),
+        },
         "github": gh,
         "paths": {
             "manifest_json": str(manifest_path),
@@ -140,6 +163,21 @@ def main() -> int:
     md.append("")
     md.append(f"- manifest.json: `{manifest_path}`")
     md.append(f"- global_verdict.json: `{verdict_path}`")
+    if cap_report_path:
+        md.append(f"- cap_robustness_report.json: `{cap_report_path}`")
+    md.append("")
+    md.append("### Cap(t) robustness gate")
+    md.append("")
+    if cap_report:
+        cap_spec = (cap_report.get("spec") or {})
+        forms = ", ".join(str(x) for x in cap_spec.get("forms", []))
+        md.append(f"- verdict: `{cap_report.get('verdict', 'UNKNOWN')}`")
+        md.append(f"- stable_across_specs: `{cap_report.get('stable_across_specs', 'UNKNOWN')}`")
+        md.append(f"- primary_form: `{cap_report.get('primary_form', 'UNKNOWN')}`")
+        md.append(f"- tested_forms: `{forms}`")
+    else:
+        md.append("- verdict: `NOT_RUN`")
+        md.append("- stable_across_specs: `null`")
     md.append("")
     md.append("### Full-validation gate detail")
     md.append("")

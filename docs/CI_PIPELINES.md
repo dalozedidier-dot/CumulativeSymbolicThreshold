@@ -23,3 +23,14 @@ Le collector doit :
 - parser tous les runs présents
 - append-only : ne pas réécrire l'historique
 - exporter ci_metrics/history.csv et ci_metrics/runs_index.csv
+
+## Dedicated novelty workflows
+
+The current CI surface includes the newly added methodological guards:
+
+- `cap_robustness.yml`: runs the executable Cap(t) robustness gate and uploads `cap_robustness_report.json` plus a short Markdown summary. A `CAP_SPEC_SENSITIVE` verdict is treated as a visible scientific result, not as a technical CI crash.
+- `replication_bundle.yml`: builds the Zenodo replication bundle, verifies its embedded `BUNDLE_MANIFEST.json`, and can run the ultra-smoke external replication driver.
+- `archive_portability.yml`: builds a clean no-git archive and verifies that case-collision checks, data-pack checks and Cap(t) robustness diagnostics also work outside a Git checkout.
+
+The canonical smoke workflow also embeds a Cap(t) robustness report in `ci_canonical_<run_id>` so the summary artifact exposes the new gate alongside the canonical synthetic run.
+

@@ -2,7 +2,7 @@
         smoke real-smoke collect canonical-qcc local-run-sample \
         replicate benchmark-pilots densify-pilots ci-local \
         constraints-check test-smoke test-full test-scientific \
-        run-replication bundle replicate-docker \
+        run-replication bundle replicate-docker cap-robustness \
         data-pack-build data-pack-check extract-bundles real-registered
 
 # Every `pip install` in this Makefile honours the shared dependency-version
@@ -169,6 +169,10 @@ replicate:  ## Run external replication protocol (verifies frozen params, tests,
 run-replication:  ## Smoke-tier external replication driver (verify + canonical + negatives)
 	bash scripts/run_replication.sh replication_output
 
+cap-robustness:  ## Run Cap(t) robustness diagnostics on the canonical synthetic threshold dataset
+	mkdir -p _ci_out/cap_robustness
+	PYTHONPATH=src python -m oric.cap_robustness --input 03_Data/synthetic/synthetic_with_threshold.csv --output _ci_out/cap_robustness/cap_robustness_report.json
+
 bundle:  ## Build the self-contained Zenodo replication bundle (dist/*.zip)
 	python scripts/make_replication_bundle.py
 
@@ -187,8 +191,6 @@ real-registered:  ## Run the FROZEN registered real-data A/B/C block (~3-8 min, 
 	PYTHONPATH=src:04_Code python 04_Code/pipeline/run_registered_block.py \
 		--outdir 05_Results/registered_block --fast
 
-clean:  ## Remove build artifacts
-	rm -rf build/ dist/ *.egg-info src/*.egg-info
 clean:  ## Remove build artifacts and regenerable local outputs
 	rm -rf build/ dist/ *.egg-info src/*.egg-info _ci_out/ replication_output/ data/bundles_extracted/
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

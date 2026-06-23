@@ -164,6 +164,36 @@ jobs:
 
           if [ -d 05_Results ]; then cp -R 05_Results _ci_out/05_Results; fi
 
+      - name: Run Cap(t) robustness gate
+        run: |
+          set -euo pipefail
+          mkdir -p _ci_out/cap_robustness
+          PYTHONPATH=src python -m oric.cap_robustness \
+            --input 03_Data/synthetic/synthetic_with_threshold.csv \
+            --output _ci_out/cap_robustness/cap_robustness_report.json \
+            2>&1 | tee _ci_out/cap_robustness/cap_robustness.log
+          python - <<'PYEOF'
+          import json
+          from pathlib import Path
+
+          report_path = Path("_ci_out/cap_robustness/cap_robustness_report.json")
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          spec = report.get("spec", {})
+          forms = ", ".join(spec.get("forms", []))
+          md = [
+              "# Cap(t) robustness gate",
+              "",
+              f"- verdict: `{report.get('verdict', 'UNKNOWN')}`",
+              f"- stable_across_specs: `{report.get('stable_across_specs', 'UNKNOWN')}`",
+              f"- primary_form: `{report.get('primary_form', 'UNKNOWN')}`",
+              f"- tested_forms: `{forms}`",
+              "",
+              "This gate is diagnostic in smoke CI. A CAP_SPEC_SENSITIVE result is a visible scientific finding, not a technical failure.",
+          ]
+          Path("_ci_out/cap_robustness/cap_robustness_summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+          print("\n".join(md))
+          PYEOF
+
       - name: Build registered report assets (figures + tables)
         run: |
           set -e
