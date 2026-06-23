@@ -63,7 +63,32 @@ def _is_excluded(rel: Path) -> bool:
     return rel.suffix in EXCLUDED_SUFFIXES
 
 
+def _git_toplevel_matches_root() -> bool:
+    """Return True only when ROOT is the actual Git worktree root.
+
+    This matters for archive-portability checks: a source archive may be
+    extracted inside a parent Git checkout. In that case, plain ``git ls-files``
+    succeeds by discovering the parent repository, but it returns paths for the
+    parent checkout rather than for the extracted archive. That makes --check
+    compare against the wrong file universe. If ROOT is not the toplevel, use
+    the filesystem fallback instead.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+    return Path(out.stdout.strip()).resolve() == ROOT.resolve()
+
+
 def _git_tracked_files() -> list[str]:
+    if not _git_toplevel_matches_root():
+        raise FileNotFoundError("ROOT is not a standalone Git worktree")
     out = subprocess.run(
         ["git", "ls-files", *FROZEN_DIRS],
         cwd=str(ROOT),
