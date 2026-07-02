@@ -1,0 +1,54 @@
+# GitHub Pages / Jekyll configuration
+#
+# Keep the published site focused on documentation pages.
+# Without this file, GitHub Pages tries to package large repository internals
+# such as source code, tests, archived scientific artefacts and CI history.
+# That made the Pages deployment unnecessarily heavy and prone to queue timeout.
+
+title: Cumulative Symbolic Threshold
+markdown: kramdown
+
+exclude:
+  # Git / CI internals
+  - .git/
+  - .github/
+  - .pytest_cache/
+  - .ruff_cache/
+  - .mypy_cache/
+  - __pycache__/
+
+  # Python/package internals
+  - src/
+  - tools/
+  - tests/
+  - 04_Code/
+  - conftest.py
+  - pyproject.toml
+  - pytest.ini
+  - requirements.txt
+  - requirements-dev.txt
+  - constraints.txt
+  - setup.cfg
+  - tox.ini
+
+  # Generated, stale, or heavy scientific artefacts
+  - 03_Data/
+  - 05_Results/
+  - 99_Archive/
+  - ci_metrics/
+  - data/
+  - contracts/
+  - _ci_out/
+  - coverage.xml
+  - htmlcov/
+
+  # Bundles/logs/local artefacts
+  - "*.zip"
+  - "*.tar"
+  - "*.tar.gz"
+  - "*.log"
+  - "*.tmp"
+  - "*.bak"
+
+keep_files:
+  - .nojekyll
