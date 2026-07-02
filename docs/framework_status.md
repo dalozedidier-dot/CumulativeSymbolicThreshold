@@ -1,17 +1,22 @@
 # Framework Status
 
-**Last updated:** 2026-06-21
+**Last updated:** 2026-07-01
 
 ---
 
 > ⚠️ **Read [`EVIDENTIARY_STATUS.md`](EVIDENTIARY_STATUS.md) first — it governs the
 > interpretation of everything below.** The table headings here ("VALIDATED",
 > "ACCEPT", "Fisher p < 10⁻⁴⁰") describe the *exploratory* pipeline state. They do
-> **not** mean *solidly confirmed*: no `full_statistical` proof run with the
-> obligatory triplet (p + CI₉₉ % + SESOI + power) exists, the synthetic p-values
-> are N-driven artefacts, the one densified-pilot ACCEPT (Pantheon SN) is
-> config-fragile (15/15 vs 0/15), and the decisive smooth-accumulation /
-> surrogate-null controls are now implemented. The old bare detector fails the trend control; the current code adds a localized-transition gate that passes the shipped accumulation-specificity control, but the headline real pilots remain NOT_CONFIRMED because other confirmatory gates still fail.
+> **not** mean *solidly confirmed*: the only stored `full_statistical` proof run
+> with the obligatory triplet (p + CI₉₉ % + SESOI + power) is the **synthetic
+> endogenous bistable demonstration** (`05_Results/endogenous_full_statistical/`)
+> — no *real-data pilot* has one. The synthetic p-values are N-driven artefacts,
+> the one densified-pilot ACCEPT (Pantheon SN) is config-fragile (15/15 vs 0/15),
+> and the decisive smooth-accumulation / surrogate-null controls are now
+> implemented. The old bare detector fails the trend control; the current code
+> adds a localized-transition gate that passes the shipped accumulation-specificity
+> control, but the headline real pilots remain NOT_CONFIRMED because other
+> confirmatory gates still fail.
 
 ## Current Status: EXPLORATORY / INDICATIVE — detector specificity patched, real pilots not confirmed
 
@@ -22,8 +27,10 @@ decidable verdicts at Level B. The accumulation-specificity confound has been co
 
 | Dimension | Status | Key metric |
 |-----------|--------|------------|
-| Synthetic validation | **INDICATIVE** | T1-T8 smoke and exploratory tests pass, but no stored full-statistical proof triplet yet |
+| Synthetic validation | **INDICATIVE** | T1-T8 smoke and exploratory tests pass; the stored full-statistical triplet exists only for the endogenous bistable demonstration |
 | Accumulation specificity | **PATCHED** | Localized gate passes shipped smooth-accumulation controls |
+| Strong negatives (rung 7) | **CLEAN** | `STRONG_NEGATIVES_CLEAN` stored (`05_Results/strong_negatives/`): localized FPR 0.0 on 11 adversarial negatives, bifurcation TPR 1.0 |
+| Registered A/B/C block (rung 5–6) | **REJECTED (honest negative)** | `REAL_BLOCK_REJECTED` stored (`05_Results/registered_block/`): ORI-C silent on FRED/GFC (surrogate p=1.0) but specific — silent on B/C while the classical panel false-fires 8× |
 | FRED canonical | **NOT_CONFIRMED** | Fails surrogate-null and multiverse gates in confirmatory rerun |
 | Pantheon SN | **NOT_CONFIRMED** | Passes Test A and multiverse, fails surrogate-null gate |
 | Replication | **INFRASTRUCTURE PRESENT** | Needs clean external rerun for strong confirmation |

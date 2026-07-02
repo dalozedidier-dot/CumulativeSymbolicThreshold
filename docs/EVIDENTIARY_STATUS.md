@@ -1,6 +1,6 @@
 # Evidentiary Status — honest accounting
 
-**Last updated:** 2026-06-21
+**Last updated:** 2026-07-01
 
 This document is the **single source of truth** for *what the ORI-C evidence
 currently supports*, aligning the displayed verdicts with the real probative
@@ -153,6 +153,18 @@ Implemented:
 - ✅ **Effect size vs SESOI + achieved power** for real-data reporting (`effect_size.py`)
 - ✅ Governance aligned to the real probative state (this document)
 - ✅ Frozen ex-ante protocol separating exploratory from confirmatory
+- ✅ **Strong-negatives specificity battery** with stored artifact
+  (`05_Results/strong_negatives/`, `run_strong_negatives.py`):
+  `STRONG_NEGATIVES_CLEAN` — the localized gate fires on **0/11** adversarial
+  non-transition processes (unit-root random walk, AR(1) red noise, 1/f noise,
+  sinusoid, sawtooth, smooth accumulations) while the legacy bare gate leaks on
+  54.5 %, and both genuine bifurcations are still flagged (TPR 1.0).
+- ✅ **Registered real-data A/B/C block** with stored artifact
+  (`05_Results/registered_block/`, frozen ex ante in
+  `contracts/REAL_DATA_REGISTRATION.json`): **`REAL_BLOCK_REJECTED`** — an honest
+  registered negative. ORI-C does not fire on FRED/GFC (crossing 0.0, IAAFT
+  p = 1.0) yet is *specific*: silent on the stable and placebo controls while the
+  classical panel (CUSUM/PELT/EWS/structural break) false-fires 8× on them.
 
 Multiverse outcome (exploratory): FRED `ROBUST_NEGATIVE` (0/27 specs fire);
 Pantheon SN `ROBUST_POSITIVE` (27/27) — but n.s. against the surrogate null
@@ -170,12 +182,20 @@ Still outstanding (roadmap, not yet done):
   — done for the **endogenous bistable demonstration** model
   (`05_Results/endogenous_full_statistical/`, N = 50; §1, §3d). A real-pilot
   `full_statistical` run remains outstanding.
-- ⬜ A pre-registered **out-of-sample directional prediction** (T3 is `INDETERMINATE`).
-  **Deliberately not shipped yet:** because C is an integrator, a naive OOS
-  *crossing* prediction inherits the same trend confound as Test A and would
-  demonstrate the confound rather than confirm a transition. It must be built on
-  the localized statistic above (predict a *localized regime change*, not "C keeps
-  rising"), evaluated against the accumulation-vs-bifurcation taxonomy.
+- ✅ A pre-registered **out-of-sample directional prediction** — now shipped and
+  run under the frozen protocol
+  (`02_Protocol/PREREG_OOS_2026-06_LOCALIZED_TRANSITION.md`,
+  `contracts/OOS_PREREG.json`). Built, as required, on the *localized* statistic
+  (trend-preserving CSD surrogate null — predict a *localized regime change*, not
+  "C keeps rising"), so it does not inherit the integrator/trend confound.
+  **Outcome of the confirmatory run** (frozen `lead = 60`, N = 50, stored in
+  `05_Results/oos_prediction/`): TPR 0.14 vs twin FPR 0.04, Fisher p ≈ 0.08 →
+  **`OOS_SKILL_INCONCLUSIVE`** — an honest negative at equal status to a positive
+  (per-trajectory CSD prediction is modest-power at short lead; Boettiger &
+  Hastings 2012). The pre-freeze exploratory run (`lead = 40`) is preserved
+  verbatim under `05_Results/oos_prediction/exploratory_lead40_prefreeze/`.
+  The secondary FRED forward prediction (Part B) remains **registered, pending**
+  — frozen before scoring, untouched.
 - ⬜ Column-level proxy alternatives in the multiverse (k interchangeable source columns per variable, where available)
 - ⬜ Independent third-party replication via the Docker/Zenodo bundle
 

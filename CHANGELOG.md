@@ -1,5 +1,36 @@
 # Changelog
 
+## [Unreleased] — 2026-07-01 — Stored evidence for every claimed rung + anti-drift guards
+
+### Added
+- **Committed artifacts for every rung claimed in the docs** (previously the
+  ladder/CHANGELOG reported verdicts whose artifacts were not stored):
+  - `05_Results/registered_block/` — frozen FRED A/B/C block rerun byte-consistent
+    with the claim: `REAL_BLOCK_REJECTED` (crossing 0.0, IAAFT p=1.0, specific —
+    silent on B/C while the classical panel false-fires 8×).
+  - `05_Results/strong_negatives/` — `STRONG_NEGATIVES_CLEAN`, matching the
+    contract's `shipped_result` exactly (localized FPR 0.0, raw 0.5455, TPR 1.0).
+    Rung 7 is now cleared *with stored evidence*.
+  - `05_Results/oos_prediction/` — **first confirmatory OOS run under the frozen
+    protocol** (`lead=60`, N=50, seed 7000): TPR 0.14 / twin FPR 0.04, Fisher
+    p≈0.08 → `OOS_SKILL_INCONCLUSIVE` (honest negative). The pre-freeze
+    exploratory `lead=40` run is preserved verbatim under
+    `05_Results/oos_prediction/exploratory_lead40_prefreeze/`.
+- **Anti-drift guard tests** (`04_Code/tests/test_stored_artifacts_match_contracts.py`):
+  stored artifacts must exist, match their frozen contract parameters
+  (e.g. OOS `lead` must equal the frozen 60), pass manifest sha256 integrity, and
+  carry only declared verdict tokens. Claims without committed evidence now fail CI.
+
+### Changed
+- `docs/EVIDENCE_LADDER.md`, `docs/EVIDENTIARY_STATUS.md`,
+  `docs/framework_status.md` re-aligned with the stored state: rung 7 ✅ with
+  artifact, rung 8 confirmatory outcome recorded, the "no full_statistical run
+  exists" wording corrected (the endogenous demonstration exists; a *real-pilot*
+  run remains outstanding), and the OOS roadmap item marked shipped+run.
+- `contracts/OOS_PREREG.json` / `02_Protocol/PREREG_OOS_2026-06_LOCALIZED_TRANSITION.md`:
+  pointer to the preserved pre-freeze exploratory artifact updated (no protocol
+  change; amendment policy untouched).
+
 ## [Unreleased] — 2026-06-22 — Registered real-data A/B/C block (the real rung)
 
 ### Added

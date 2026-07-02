@@ -5,18 +5,18 @@
   "n_replicates": 50,
   "n_valid": 49,
   "n_surrogates": 99,
-  "lead": 60,
+  "lead": 40,
   "alpha": 0.05,
   "seed_base": 7000,
   "predictor": "trend_preserving_csd_surrogate_null (localized regime change, not 'C rises')",
   "confusion": {
     "bistable_tpr": 0.14285714285714285,
-    "twin_fpr": 0.04081632653061224,
+    "twin_fpr": 0.061224489795918366,
     "n_hits": 7,
-    "n_false_alarms": 2
+    "n_false_alarms": 3
   },
-  "fisher_exact_p_skill_above_chance": 0.07954139396738243,
-  "median_timing_error": 380.0,
+  "fisher_exact_p_skill_above_chance": 0.15864129280537706,
+  "median_timing_error": 408.0,
   "has_directional_skill": false,
   "verdict": "OOS_SKILL_INCONCLUSIVE",
   "note": "Per-trajectory CSD prediction is modest-power with short lead (Boettiger & Hastings 2012); the claim is positive, specific directional skill, not catching every transition."

@@ -78,7 +78,8 @@ python 04_Code/pipeline/run_oos_prediction.py \
 
 ### Honest exploratory outcome **before** this freeze
 
-A pre-freeze exploratory run (`05_Results/oos_prediction/`, `lead = 40`) gave
+A pre-freeze exploratory run (preserved verbatim under
+`05_Results/oos_prediction/exploratory_lead40_prefreeze/`, `lead = 40`) gave
 `bistable_tpr = 0.14`, `twin_fpr = 0.06`, Fisher `p = 0.16` →
 **`OOS_SKILL_INCONCLUSIVE`**. This pre-freeze result **does not count** as
 confirmation; the frozen `lead = 60` protocol above governs the confirmatory run.

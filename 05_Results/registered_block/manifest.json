@@ -1,0 +1,29 @@
+{
+  "test_id": "registered_block",
+  "schema": "oric.registered_block.manifest.v1",
+  "contract_sha256": "1a22df253d8e43d7f636c2b8b3f888d04cd5f0370efecc81871f1db4a92ed9f5",
+  "dataset_A": "fred_monthly",
+  "dated_hypothesis": {
+    "t1": 272,
+    "t2": 281,
+    "t_star": 272,
+    "window_label": "2008 Global Financial Crisis (2008-09 \u2192 2009-06)"
+  },
+  "criteria": {
+    "k": 2.5,
+    "m": 3,
+    "baseline_n": 50,
+    "alpha": 0.01,
+    "seed": 1234,
+    "n_surrogates": 200,
+    "onset_tolerance": 18,
+    "shift_divisor": 3
+  },
+  "verdict": "REAL_BLOCK_REJECTED",
+  "reasons": [
+    "A: ORI-C did not fire a localized transition",
+    "A: crossing not significant vs IAAFT null (p=1.000 >= 0.01)",
+    "OOS: no pre-t* directional skill"
+  ],
+  "json_sha256": "d5623d48baf651cd2929fb6324b2d5e8d64acbc7e91c7bfe71215194861f8384"
+}

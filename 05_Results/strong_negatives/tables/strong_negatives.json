@@ -1,0 +1,174 @@
+{
+  "schema": "oric.strong_negatives.v1",
+  "params": {
+    "n": 220,
+    "seed": 1234,
+    "k": 2.5,
+    "m": 3,
+    "baseline_n": 30,
+    "n_surrogates": 0
+  },
+  "thresholds": {
+    "fpr_max": 0.1,
+    "tpr_min": 0.5
+  },
+  "n_negatives": 11,
+  "n_positives": 2,
+  "strong_negatives_fpr": 0.0,
+  "raw_strong_negatives_fpr": 0.5455,
+  "bifurcation_tpr": 1.0,
+  "fpr_by_family": {
+    "smooth": 0.0,
+    "stochastic": 0.0,
+    "structured": 0.0
+  },
+  "verdict": "STRONG_NEGATIVES_CLEAN",
+  "outcomes": [
+    {
+      "name": "smooth_logistic_growth",
+      "kind": "logistic_growth",
+      "family": "smooth",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.386364,
+      "max_run": 77,
+      "surrogate_p": null
+    },
+    {
+      "name": "smooth_gompertz",
+      "kind": "gompertz",
+      "family": "smooth",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.359091,
+      "max_run": 65,
+      "surrogate_p": null
+    },
+    {
+      "name": "smooth_exponential_saturation",
+      "kind": "exponential_saturation",
+      "family": "smooth",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.413636,
+      "max_run": 85,
+      "surrogate_p": null
+    },
+    {
+      "name": "smooth_linear_ramp",
+      "kind": "linear_ramp",
+      "family": "smooth",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.081818,
+      "max_run": 6,
+      "surrogate_p": null
+    },
+    {
+      "name": "stoch_random_walk",
+      "kind": "random_walk",
+      "family": "stochastic",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": false,
+      "crossing_rate": 0.0,
+      "max_run": 0,
+      "surrogate_p": null
+    },
+    {
+      "name": "stoch_ar1_red_noise",
+      "kind": "ar1_red_noise",
+      "family": "stochastic",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.054545,
+      "max_run": 6,
+      "surrogate_p": null
+    },
+    {
+      "name": "stoch_brownian_drift",
+      "kind": "brownian_drift",
+      "family": "stochastic",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": false,
+      "crossing_rate": 0.009091,
+      "max_run": 1,
+      "surrogate_p": null
+    },
+    {
+      "name": "stoch_pink_noise",
+      "kind": "pink_noise",
+      "family": "stochastic",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": false,
+      "crossing_rate": 0.009091,
+      "max_run": 1,
+      "surrogate_p": null
+    },
+    {
+      "name": "stoch_white_noise",
+      "kind": "white_noise",
+      "family": "stochastic",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": false,
+      "crossing_rate": 0.009091,
+      "max_run": 1,
+      "surrogate_p": null
+    },
+    {
+      "name": "struct_sinusoid",
+      "kind": "sinusoid",
+      "family": "structured",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": false,
+      "crossing_rate": 0.0,
+      "max_run": 0,
+      "surrogate_p": null
+    },
+    {
+      "name": "struct_sawtooth",
+      "kind": "sawtooth",
+      "family": "structured",
+      "label": 0,
+      "detector_fired": false,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.095455,
+      "max_run": 3,
+      "surrogate_p": null
+    },
+    {
+      "name": "bif_sharp_regime_switch",
+      "kind": "sharp_regime_switch",
+      "family": "bifurcation",
+      "label": 1,
+      "detector_fired": true,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.468182,
+      "max_run": 102,
+      "surrogate_p": null
+    },
+    {
+      "name": "bif_delayed_bifurcation",
+      "kind": "delayed_bifurcation",
+      "family": "bifurcation",
+      "label": 1,
+      "detector_fired": true,
+      "raw_detector_fired": true,
+      "crossing_rate": 0.322727,
+      "max_run": 70,
+      "surrogate_p": null
+    }
+  ],
+  "note": "detector_fired is the conservative localized transition gate; raw_detector_fired is the bare sustained \u0394C crossing kept for audit. A LEAK (localized FPR > fpr_max) is an honest negative reported at equal status to CLEAN.",
+  "fpr_max": 0.1,
+  "tpr_min": 0.5
+}
