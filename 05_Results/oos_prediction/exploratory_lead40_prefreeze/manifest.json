@@ -3,7 +3,7 @@
   "schema": "oric.oos_prediction.manifest.v1",
   "run_mode": "full_statistical",
   "n_replicates": 50,
-  "lead": 60,
+  "lead": 40,
   "verdict": "OOS_SKILL_INCONCLUSIVE",
-  "json_sha256": "78f3a08136dcb638987afafb18a238a5c344a3a6c95637e9012aa669226d5793"
+  "json_sha256": "911428fe2e762918e2d1901f0ed50c085f257ea9f201bcf2b845dd2b671b2558"
 }

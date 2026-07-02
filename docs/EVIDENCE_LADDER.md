@@ -1,6 +1,6 @@
 # Evidence ladder — ORI-C
 
-**Status:** FROZEN ordering · **Last reviewed:** 2026-06-22 · **Companion of**
+**Status:** FROZEN ordering · **Last reviewed:** 2026-07-01 · **Companion of**
 [`EVIDENTIARY_STATUS.md`](EVIDENTIARY_STATUS.md)
 
 A claim about ORI-C is only as strong as the **highest rung it has actually
@@ -61,10 +61,10 @@ Test B is a robust *trend*, not a confirmed transition.
 | 3 Synthetic full-statistical | ✅ | endogenous bistable N=50, effect ≈ +1.13, CI₉₉ [0.83, 1.82], twin FPR 0.08 |
 | 4 Real exploratory | ◑ | 5 ACCEPT / 2 REJECT, Level B, the one densified ACCEPT (Pantheon) is config-fragile |
 | 5 Real canonical | ⬜ | no real pilot has a `full_statistical`/canonical proof run yet |
-| 5–6 Registered A/B/C block | ❌ | frozen FRED block → **`REAL_BLOCK_REJECTED`**: ORI-C silent on A (crossing 0.0, surrogate p=1.0) — but **specific** (silent on B/C while the classical panel false-fires 8×). `contracts/REAL_DATA_REGISTRATION.json` |
+| 5–6 Registered A/B/C block | ❌ | frozen FRED block → **`REAL_BLOCK_REJECTED`**: ORI-C silent on A (crossing 0.0, surrogate p=1.0) — but **specific** (silent on B/C while the classical panel false-fires 8×). Artifact stored: `05_Results/registered_block/` (contract `contracts/REAL_DATA_REGISTRATION.json`) |
 | 6 Confirmed transition | ❌ | both headline ACCEPTs are **NOT_CONFIRMED** (Test B fails: Pantheon p≈0.17, FRED p=1.0) |
-| 7 Strong-negatives clean | ◑ | battery shipped (`run_strong_negatives.py`); the localized gate is clean, the legacy bare-ΔΣC gate is not |
-| 8 OOS pre-registered | ◑ | prediction frozen (`02_Protocol/PREREG_OOS_2026-06_LOCALIZED_TRANSITION.md`); current skill `OOS_SKILL_INCONCLUSIVE` |
+| 7 Strong-negatives clean | ✅ | **`STRONG_NEGATIVES_CLEAN`** stored (`05_Results/strong_negatives/`): the localized gate fires on 0/11 adversarial negatives (FPR 0.0 ≤ 0.10) with bifurcation TPR 1.0 ≥ 0.50; the legacy bare-ΔC gate leaks on 54.5 % and is kept visible as `raw_detector_fired` for audit |
+| 8 OOS pre-registered | ◑ | confirmatory run under the frozen protocol (`lead=60`, N=50) stored (`05_Results/oos_prediction/`): TPR 0.14 / twin FPR 0.04, Fisher p≈0.08 → **`OOS_SKILL_INCONCLUSIVE`** (honest negative); FRED forward prediction (Part B) still registered-pending |
 | 9 External replication | ⬜ | Docker/Zenodo bundle prepared; no third-party sign-off yet |
 
 **One line:** ORI-C is a *built, falsifiable test machine* that has cleared the

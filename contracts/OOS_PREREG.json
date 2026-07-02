@@ -44,7 +44,7 @@
   },
 
   "exploratory_outcome_before_freeze": {
-    "run": "05_Results/oos_prediction/ (lead=40, exploratory)",
+    "run": "05_Results/oos_prediction/exploratory_lead40_prefreeze/ (lead=40, exploratory; preserved verbatim — the top-level 05_Results/oos_prediction/ now holds the confirmatory lead=60 run)",
     "bistable_tpr": 0.1429,
     "twin_fpr": 0.0612,
     "fisher_exact_p": 0.1586,
