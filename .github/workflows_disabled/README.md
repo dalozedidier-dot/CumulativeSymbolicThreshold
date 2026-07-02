@@ -1,10 +1,10 @@
-# Workflows retirés / désactivés
+# Disabled workflows archive
 
-Ce dossier ne contient plus de workflows YAML exécutables. Les anciens fichiers désactivés ont été supprimés pour éviter la confusion entre workflows actifs, archives et variantes expérimentales.
+This directory intentionally contains no executable workflow YAML files.
 
-La surface active est désormais limitée à `.github/workflows/` et documentée dans `docs/CI_PIPELINES.md`.
+Historical workflows were removed from the repository to keep GitHub Actions readable.  The active workflow surface is now limited to the eight files in `.github/workflows/`.
 
-Anciens workflows retirés lors du nettoyage du 2026-07-02 :
+Removed legacy workflow filenames:
 
 - `full_statistical.yml`
 - `independent_replication.yml`
@@ -38,5 +38,3 @@ Anciens workflows retirés lors du nettoyage du 2026-07-02 :
 - `symbolic_suite.yml`
 - `t9_diagnostics.yml`
 - `workflow_cleanup.yml`
-
-Pour restaurer un ancien workflow, repartir de l’historique Git plutôt que de garder des YAML dormants dans le dépôt.

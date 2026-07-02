@@ -23,7 +23,13 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = ROOT / "contracts"
 DOCS = ROOT / "docs"
 RESULTS = ROOT / "05_Results"
+ARCHIVED_RESULTS = ROOT / "99_Archive" / "stale_05_Results_20260702"
 PILOTS = RESULTS / "pilots"
+if not PILOTS.exists():
+    # Historical pilot validation artifacts were moved out of active results.
+    # These tests validate the archived corpus until the pilot workflow regenerates
+    # a fresh current `05_Results/pilots/` tree.
+    PILOTS = ARCHIVED_RESULTS / "pilots"
 
 
 # ═══════════════════════════════════════════════════════════════════════════

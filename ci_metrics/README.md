@@ -1,14 +1,11 @@
-# ci_metrics/ — CI run history and metrics
+# ci_metrics — clean run history
 
-Collected metrics from CI pipeline runs, used for tracking pipeline health over time.
+This directory was reset on 2026-07-02 because the previous CSV history mixed timestamps, commit SHAs and workflow names in the wrong columns.
 
-| File | Content |
-|------|---------|
-| `history.csv` | Raw CI run history |
-| `history_repaired.csv` | Cleaned/normalized history |
-| `runs_index.csv` | Index of all CI runs |
-| `runs_index_repaired.csv` | Cleaned runs index |
-| `repair_report.json` | Report from last repair operation |
+The active collector should append rows using this canonical schema:
 
-These files are populated by `tools/collect_ci_metrics.py` and repaired by
-`tools/repair_ci_metrics.py`.
+```text
+github_run_id,run_dir_name,dataset_id,sector,run_mode,evidence_strength,all_pass,manifest_sha256,stability_criteria_sha256,commit_sha,workflow_source
+```
+
+The previous files were archived under `99_Archive/stale_ci_metrics_20260702/` for traceability, but they should not be used as a clean metrics source.

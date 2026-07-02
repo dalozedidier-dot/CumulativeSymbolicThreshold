@@ -81,7 +81,7 @@ def test_check_ci_metrics_clean(tmp_path):
         {"github_run_id": "1", "run_dir_name": "ts1", "dataset_id": "qcc",
          "sector": "qcc", "run_mode": "full", "evidence_strength": "high",
          "all_pass": "True", "manifest_sha256": "a" * 64,
-         "stability_criteria_sha256": "b" * 64, "commit_sha": "abc",
+         "stability_criteria_sha256": "b" * 64, "commit_sha": "abcdef0",
          "workflow_source": "QCC Canonical"}
     ])
     with patch("tools.repo_doctor.ROOT", tmp_path):
@@ -96,7 +96,7 @@ def test_check_ci_metrics_dirty_rows(tmp_path):
         {"github_run_id": "1", "run_dir_name": "ts1", "dataset_id": "qcc",
          "sector": "unknown", "run_mode": "", "evidence_strength": "high",
          "all_pass": "True", "manifest_sha256": "a" * 64,
-         "stability_criteria_sha256": "b" * 64, "commit_sha": "abc",
+         "stability_criteria_sha256": "b" * 64, "commit_sha": "abcdef0",
          "workflow_source": ""}
     ])
     with patch("tools.repo_doctor.ROOT", tmp_path):

@@ -51,7 +51,7 @@ Before opening a pull request, verify all items below:
 - [ ] New pipeline scripts are listed in `WORKFLOWS_NOTES.md` and `README.md` if they are primary entry points
 
 ### CI
-- [ ] The `ci.yml` smoke test passes locally (or on the PR branch)
+- [ ] The `ci_smoke.yml` smoke workflow passes locally where possible, or on the PR branch
 - [ ] No ephemeral output files committed (`_ci_out/`, `_demo_out/`, `_tmp_results_ci/`, `05_Results/`)
 
 ---
