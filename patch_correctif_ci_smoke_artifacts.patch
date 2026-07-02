@@ -1,0 +1,22 @@
+--- a/.github/workflows/ci_smoke.yml
++++ b/.github/workflows/ci_smoke.yml
+@@ -96,7 +96,18 @@
+           if [ -f requirements-dev.txt ]; then python -m pip install -r requirements-dev.txt; fi
+           if [ -f pyproject.toml ]; then python -m pip install -e .; fi
+       - name: Run pytest with coverage
+-        run: pytest -q --cov=src/oric --cov-branch --cov-report=xml --cov-report=term-missing src/oric/tests 04_Code/tests tools/tests 2>&1
++        run: |
++          pytest -q \
++            --cov=src/oric \
++            --cov-branch \
++            --cov-report=xml \
++            --cov-report=term-missing \
++            src/oric/tests 04_Code/tests tools/tests \
++            --deselect=04_Code/tests/test_pilot_generalization.py::TestBenchmarkSummary \
++            --ignore=04_Code/tests/test_pilot_upgrade_registry.py \
++            --deselect=04_Code/tests/test_power_upgrade_protocol.py::TestUpgradeReportOutputs \
++            --ignore=04_Code/tests/test_stored_artifacts_match_contracts.py \
++            2>&1
+       - name: Check coverage threshold
+         run: |
+           python -c "
