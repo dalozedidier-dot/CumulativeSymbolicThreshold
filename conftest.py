@@ -4,6 +4,7 @@
 # importable without sys.path hacks). The sys.path insertion below is a
 # fallback for environments where the editable install is not active.
 
+import os
 import sys
 from pathlib import Path
 
@@ -30,10 +31,14 @@ collect_ignore = [
 #   smoke       — minimal, fast confidence check (imports + core pipeline)
 #   scientific  — heavy statistical proofs (N>=50, surrogates, multiverse, OOS,
 #                 causal inference, real-data onset). Excluded from `test-full`.
+#   stored_artifact — contract checks against committed/generated artifacts under
+#                 05_Results/. These are opt-in because 05_Results is no longer
+#                 a required committed proof surface after archival cleanup.
 #   (untiered)  — ordinary unit/integration tests; the bulk of the suite.
 #
 # NOTE: this only LABELS tests. The coverage gate (CI unit_tests) still runs the
-# whole suite, so tiering never lowers measured coverage.
+# whole normal suite. Stored-artifact tests are skipped unless explicitly enabled
+# because they require regenerated proof artifacts in 05_Results/.
 _SMOKE_MODULES = {
     "test_smoke",            # src/oric core import + summarize_run
     "test_oric_pipeline",    # end-to-end core ORI-C pipeline (fast)
@@ -54,17 +59,59 @@ _SCIENTIFIC_MODULES = {
     "test_real_data_transition",
     "test_did_sc",
     "test_pilot_generalization",
+    "test_pilot_upgrade_registry",
     "test_power_upgrade_protocol",
+    "test_stored_artifacts_match_contracts",
     "test_strong_negatives",
     "test_registered_block",
 }
 
+# These modules validate stored proof artifacts that used to live under
+# 05_Results/. After stale results were archived, they must not run in the
+# ordinary CI smoke/unit coverage gate unless artifacts have been regenerated.
+_STORED_ARTIFACT_MODULES = {
+    "test_pilot_generalization",
+    "test_pilot_upgrade_registry",
+    "test_power_upgrade_protocol",
+    "test_stored_artifacts_match_contracts",
+}
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-stored-artifact-tests",
+        action="store_true",
+        default=False,
+        help=(
+            "Run tests that require committed/generated artifacts under 05_Results/. "
+            "Equivalent opt-in env var: ORIC_RUN_STORED_ARTIFACT_TESTS=1."
+        ),
+    )
+
+
+def _run_stored_artifact_tests(config) -> bool:
+    return bool(config.getoption("--run-stored-artifact-tests")) or os.environ.get(
+        "ORIC_RUN_STORED_ARTIFACT_TESTS"
+    ) in {"1", "true", "TRUE", "yes", "YES"}
+
 
 def pytest_collection_modifyitems(config, items):
     """Tag each collected test with its tier marker based on its module name."""
+    run_stored_artifacts = _run_stored_artifact_tests(config)
+    skip_stored_artifacts = pytest.mark.skip(
+        reason=(
+            "requires regenerated 05_Results artifacts; run with "
+            "--run-stored-artifact-tests or ORIC_RUN_STORED_ARTIFACT_TESTS=1"
+        )
+    )
+
     for item in items:
         stem = Path(str(item.fspath)).stem
         if stem in _SMOKE_MODULES:
             item.add_marker(pytest.mark.smoke)
         if stem in _SCIENTIFIC_MODULES:
             item.add_marker(pytest.mark.scientific)
+        if stem in _STORED_ARTIFACT_MODULES:
+            item.add_marker(pytest.mark.stored_artifact)
+            if not run_stored_artifacts:
+                item.add_marker(skip_stored_artifacts)

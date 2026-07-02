@@ -117,6 +117,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "smoke: minimal fast confidence check (imports + core pipeline). Run with -m smoke",
     "scientific: heavy statistical proofs (N>=50, surrogates, multiverse, OOS). Run with -m scientific",
+    "stored_artifact: tests that require regenerated 05_Results artifacts; opt in with --run-stored-artifact-tests",
 ]
 
 # ── Coverage ────────────────────────────────────────────
