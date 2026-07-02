@@ -17,8 +17,8 @@
 [![OSF Pre-registration](https://img.shields.io/badge/OSF-G62PZ-lightgrey)](https://osf.io/g62pz/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![CI](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/ci.yml/badge.svg)](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/ci.yml)
-[![Nightly](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/nightly.yml/badge.svg)](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/nightly.yml)
+[![CI](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/ci_smoke.yml/badge.svg)](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/ci_smoke.yml)
+[![Nightly](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/nightly_full_proof.yml/badge.svg)](https://github.com/dalozedidier-dot/CumulativeSymbolicThreshold/actions/workflows/nightly_full_proof.yml)
 [![codecov](https://codecov.io/gh/dalozedidier-dot/CumulativeSymbolicThreshold/branch/main/graph/badge.svg)](https://codecov.io/gh/dalozedidier-dot/CumulativeSymbolicThreshold)
 
 **A pre-registered, falsifiable scientific framework** for testing the ORI-C hypothesis: beyond a critical threshold of symbolic accumulation, the symbolic transmission channel becomes self-reinforcing — a measurable phase transition from a pre-threshold regime to a cumulative symbolic regime.

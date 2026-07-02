@@ -1,0 +1,123 @@
+name: Diagnostic — Cap(t) Robustness
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/oric/cap_robustness.py"
+      - "src/oric/ori_core.py"
+      - "src/oric/tests/test_cap_robustness.py"
+      - "contracts/CAP_ROBUSTNESS.json"
+      - "docs/CAP_ROBUSTNESS.md"
+      - "03_Data/synthetic/**"
+      - ".github/workflows/diagnostic_cap_robustness.yml"
+  pull_request:
+    paths:
+      - "src/oric/cap_robustness.py"
+      - "src/oric/ori_core.py"
+      - "src/oric/tests/test_cap_robustness.py"
+      - "contracts/CAP_ROBUSTNESS.json"
+      - "docs/CAP_ROBUSTNESS.md"
+      - "03_Data/synthetic/**"
+      - ".github/workflows/diagnostic_cap_robustness.yml"
+  workflow_dispatch:
+    inputs:
+      input_csv:
+        description: "CSV containing O, R, I and demand columns"
+        required: false
+        default: "03_Data/synthetic/synthetic_with_threshold.csv"
+      demand_col:
+        description: "Demand column"
+        required: false
+        default: "demande_env"
+      primary_form:
+        description: "Primary Cap(t) form"
+        required: false
+        default: "product"
+      forms:
+        description: "Comma-separated Cap(t) forms declared ex ante"
+        required: false
+        default: "product,geom_mean,weighted_sum,min"
+
+concurrency:
+  group: cap-robustness-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
+jobs:
+  cap_robustness:
+    name: Run Cap(t) robustness diagnostics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          python -m pip install -e ".[dev]" || python -m pip install -e .
+
+      - name: Run unit tests for Cap(t) robustness
+        run: pytest -q src/oric/tests/test_cap_robustness.py
+
+      - name: Run Cap(t) robustness report
+        env:
+          INPUT_CSV: ${{ inputs.input_csv || '03_Data/synthetic/synthetic_with_threshold.csv' }}
+          DEMAND_COL: ${{ inputs.demand_col || 'demande_env' }}
+          PRIMARY_FORM: ${{ inputs.primary_form || 'product' }}
+          FORMS: ${{ inputs.forms || 'product,geom_mean,weighted_sum,min' }}
+        run: |
+          set -euo pipefail
+          mkdir -p _ci_out/cap_robustness
+          PYTHONPATH=src python -m oric.cap_robustness \
+            --input "$INPUT_CSV" \
+            --output _ci_out/cap_robustness/cap_robustness_report.json \
+            --demand-col "$DEMAND_COL" \
+            --primary-form "$PRIMARY_FORM" \
+            --forms "$FORMS" \
+            2>&1 | tee _ci_out/cap_robustness/cap_robustness.log
+
+      - name: Build Cap(t) robustness summary
+        run: |
+          set -euo pipefail
+          python - <<'PYEOF'
+          import json
+          from pathlib import Path
+
+          out = Path("_ci_out/cap_robustness")
+          report = json.loads((out / "cap_robustness_report.json").read_text(encoding="utf-8"))
+          spec = report.get("spec", {})
+          forms = ", ".join(spec.get("forms", []))
+          md = [
+              "# Cap(t) robustness gate",
+              "",
+              f"- verdict: `{report.get('verdict', 'UNKNOWN')}`",
+              f"- stable_across_specs: `{report.get('stable_across_specs', 'UNKNOWN')}`",
+              f"- primary_form: `{report.get('primary_form', 'UNKNOWN')}`",
+              f"- tested_forms: `{forms}`",
+              "",
+              "A CAP_SPEC_SENSITIVE verdict is a visible scientific finding, not a technical CI failure.",
+          ]
+          (out / "cap_robustness_summary.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+          print("\n".join(md))
+          PYEOF
+          cat _ci_out/cap_robustness/cap_robustness_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Cap(t) robustness artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: cap_robustness_${{ github.run_id }}
+          path: _ci_out/cap_robustness
+          if-no-files-found: error

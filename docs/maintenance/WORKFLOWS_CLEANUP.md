@@ -1,26 +1,14 @@
 # Workflow cleanup
 
-But : réduire la liste affichée dans l'onglet Actions.
+But : garder l’onglet GitHub Actions lisible et éviter que d’anciens YAML donnent l’impression d’être encore maintenus.
 
-Principe : GitHub affiche toute définition YAML présente sous `.github/workflows/` sur la branche par défaut.
-On déplace donc les workflows non essentiels vers `.github/workflows_disabled/` (archive) afin qu'ils ne soient plus affichés.
+## Décision appliquée le 2026-07-02
 
-## Utilisation
-- Lancez le workflow `Cleanup noisy workflows (one-shot)` via `Run workflow`.
-- Il va déplacer automatiquement une liste de workflows "legacy" ou redondants.
-- Les fichiers restent disponibles dans `.github/workflows_disabled/` pour restauration manuelle si besoin.
+- Les workflows actifs ont été renommés avec des noms explicites.
+- Les anciens workflows désactivés/legacy ont été supprimés de `.github/workflows_disabled/`.
+- La liste des anciens fichiers retirés est conservée dans `.github/workflows_disabled/README.md`.
+- Le collector suit maintenant les nouveaux noms/fichiers : `nightly_full_proof.yml` et `qcc_stateprob_full.yml`.
 
-## Workflows conservés (core)
-- ci.yml (canonical synthetic suite)
-- collector.yml (si présent)
-- real_data_smoke.yml
-- real_data_matrix.yml
-- real_data_canonical_T1_T8.yml
-- qcc_canonical_full.yml (si présent)
-- qcc_brisbane_stateprob_pipeline.yml
-- qcc_polaron_real_smoke.yml
-- qcc_real_data_smoke.yml
-- symbolic_suite.yml
-- t9_diagnostics.yml
+## Surface active attendue
 
-Tout le reste est archivé.
+Voir `docs/CI_PIPELINES.md`.

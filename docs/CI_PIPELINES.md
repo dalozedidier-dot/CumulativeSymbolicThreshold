@@ -1,36 +1,39 @@
-# ORI-C . CI pipelines (canonique)
+# ORI-C — CI pipelines
 
 ## Principe
-Un seul pipeline "canonique full" fait foi. Les autres workflows sont des wrappers qui délèguent via workflow_call.
 
-## Niveaux
-- Smoke : validation rapide. Doit rester vert. Contrat de sortie minimal.
-- Canonical full : run + stabilité + checks + manifest final.
-- Real-data smoke/canonical : exécution sur datasets réels indexés.
-- Collector : append-only history.csv + runs_index.csv (post-runs).
+La surface GitHub Actions doit rester lisible : peu de workflows actifs, des noms explicites, et aucun YAML dormant qui laisse croire qu’un ancien protocole est encore maintenu.
 
-## Invariants d'audit par run
-Chaque run doit produire :
-- contracts/POWER_CRITERIA.json
-- contracts/STABILITY_CRITERIA.json
-- tables/summary.json
-- (si full) stability/stability_summary.json
-- manifest.json qui hash les éléments ci-dessus
+## Workflows actifs
 
-## Collector
-Le collector doit :
-- télécharger les artefacts (workflow_run ou schedule)
-- parser tous les runs présents
-- append-only : ne pas réécrire l'historique
-- exporter ci_metrics/history.csv et ci_metrics/runs_index.csv
+| Fichier | Nom affiché | Rôle | Déclenchement | Statut scientifique |
+|---|---|---|---|---|
+| `.github/workflows/ci_smoke.yml` | `CI Smoke — Tests + Canonical Fast` | lint, type-check, tests, coverage, canonical fast T1–T8, rapport Cap(t) | push, PR, manuel | signal technique rapide; ne prouve pas le full statistical |
+| `.github/workflows/nightly_full_proof.yml` | `Nightly Proof — Full Synthetic + Real Canonical` | full synthetic sans `--fast` + real canonical FRED | quotidien, manuel | workflow de preuve principal |
+| `.github/workflows/diagnostic_cap_robustness.yml` | `Diagnostic — Cap(t) Robustness` | test dédié des formes de Cap(t) | push/PR ciblés, manuel | diagnostic méthodologique; `CAP_SPEC_SENSITIVE` n’est pas un crash CI |
+| `.github/workflows/real_data_sector_pilots.yml` | `Real Data — Sector Pilots` | 7 pilotes réels par secteurs | push/PR ciblés, manuel | validation pilote, non équivalente au full proof |
+| `.github/workflows/qcc_stateprob_full.yml` | `QCC StateProb — Full Diagnostic` | pipeline QCC StateProb complet | manuel | diagnostic spécialisé séparé d’ORI-C canonique |
+| `.github/workflows/release_replication_bundle.yml` | `Release — Replication Bundle` | construit et vérifie le bundle de réplication | push/PR ciblés, manuel | packaging/reproductibilité |
+| `.github/workflows/integrity_archive_portability.yml` | `Integrity — Archive Portability` | vérifie archive sans `.git`, manifest, datapack, collisions de casse | push/PR ciblés, manuel | hygiène dépôt |
+| `.github/workflows/metrics_collector.yml` | `Maintenance — CI Metrics Collector` | collecte les artefacts et alimente `ci_metrics/` | workflow_run, quotidien, manuel | maintenance; ne valide rien seul |
 
-## Dedicated novelty workflows
+## Règle de lecture
 
-The current CI surface includes the newly added methodological guards:
+- `CI Smoke` doit être vert rapidement, mais ses artefacts doivent rester étiquetés `smoke_ci`.
+- `Nightly Proof` est le seul workflow actif qui peut produire une lecture `full_statistical`, à condition que les gates internes passent réellement.
+- `Diagnostic — Cap(t) Robustness` expose la sensibilité de la forme mathématique de Cap(t); un résultat sensible doit être visible, pas masqué.
+- Les workflows QCC sont séparés des verdicts ORI-C canoniques pour éviter le mélange des preuves.
 
-- `cap_robustness.yml`: runs the executable Cap(t) robustness gate and uploads `cap_robustness_report.json` plus a short Markdown summary. A `CAP_SPEC_SENSITIVE` verdict is treated as a visible scientific result, not as a technical CI crash.
-- `replication_bundle.yml`: builds the Zenodo replication bundle, verifies its embedded `BUNDLE_MANIFEST.json`, and can run the ultra-smoke external replication driver.
-- `archive_portability.yml`: builds a clean no-git archive and verifies that case-collision checks, data-pack checks and Cap(t) robustness diagnostics also work outside a Git checkout.
+## Invariants d’audit par run
 
-The canonical smoke workflow also embeds a Cap(t) robustness report in `ci_canonical_<run_id>` so the summary artifact exposes the new gate alongside the canonical synthetic run.
+Chaque run de preuve doit produire, quand le module concerné s’applique :
 
+- `manifest.json`
+- `tables/summary.json` ou équivalent documenté
+- fichiers de verdict (`verdict.txt`, `global_verdict.json`)
+- logs d’exécution
+- artefacts permettant de vérifier les seeds, paramètres et critères de décision
+
+## Workflows retirés
+
+Les anciens workflows désactivés ont été supprimés de `.github/workflows_disabled/` et listés dans `.github/workflows_disabled/README.md`. Cela évite les doublons sectoriels, les workflows one-shot de réparation, et les variantes QCC/real-data devenues ambiguës.

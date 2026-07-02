@@ -1,0 +1,112 @@
+name: Release — Replication Bundle
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/make_replication_bundle.py"
+      - "scripts/run_replication.sh"
+      - "docs/REPLICATION_BUNDLE.md"
+      - "docs/REPLICATION_PROTOCOL.md"
+      - "Dockerfile"
+      - "pyproject.toml"
+      - ".github/workflows/release_replication_bundle.yml"
+  pull_request:
+    paths:
+      - "scripts/make_replication_bundle.py"
+      - "scripts/run_replication.sh"
+      - "docs/REPLICATION_BUNDLE.md"
+      - "docs/REPLICATION_PROTOCOL.md"
+      - "Dockerfile"
+      - "pyproject.toml"
+      - ".github/workflows/release_replication_bundle.yml"
+  workflow_dispatch:
+    inputs:
+      run_replication:
+        description: "Run ultra-smoke replication after building bundle"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+
+concurrency:
+  group: replication-bundle-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
+jobs:
+  bundle:
+    name: Build bundle and optional ultra-smoke replication
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          python -m pip install -e ".[dev]" || python -m pip install -e .
+
+      - name: Build replication bundle
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          python scripts/make_replication_bundle.py --outdir dist
+          ls -lh dist
+
+      - name: Verify replication bundle manifest
+        run: |
+          set -euo pipefail
+          python - <<'PYEOF'
+          import hashlib
+          import json
+          import zipfile
+          from pathlib import Path
+
+          bundles = list(Path("dist").glob("oric_replication_bundle_*.zip"))
+          if len(bundles) != 1:
+              raise SystemExit(f"Expected exactly one bundle, found {len(bundles)}")
+          bundle = bundles[0]
+          with zipfile.ZipFile(bundle) as zf:
+              manifest = json.loads(zf.read("BUNDLE_MANIFEST.json"))
+              names = set(zf.namelist())
+              for entry in manifest.get("files", []):
+                  name = entry["path"]
+                  if name not in names:
+                      raise SystemExit(f"Missing bundle entry: {name}")
+                  actual = hashlib.sha256(zf.read(name)).hexdigest()
+                  if actual != entry["sha256"]:
+                      raise SystemExit(f"Hash mismatch for {name}")
+          print(f"OK: {bundle} manifest verified")
+          PYEOF
+
+      - name: Run ultra-smoke replication
+        if: ${{ inputs.run_replication != 'false' }}
+        run: |
+          set -euo pipefail
+          ORIC_REPLICATION_N_RUNS=5 \
+          ORIC_REPLICATION_N_SWEEP=5 \
+          ORIC_REPLICATION_N_STEPS=160 \
+          ORIC_STEP_TIMEOUT_SECONDS=900 \
+            bash scripts/run_replication.sh replication_output
+
+      - name: Upload replication bundle and smoke outputs
+        uses: actions/upload-artifact@v7
+        with:
+          name: replication_bundle_${{ github.run_id }}
+          path: |
+            dist/*.zip
+            replication_output/**
+          if-no-files-found: warn

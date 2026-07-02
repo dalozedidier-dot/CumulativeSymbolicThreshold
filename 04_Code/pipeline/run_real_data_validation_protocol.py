@@ -1252,7 +1252,7 @@ def main() -> int:
 
         any_missing = [k for k, v in [("test", test_m), ("stable", stable_m), ("placebo", placebo_m)] if v is None]
 
-        notes_dict = disk_summary.get("notes") or {}
+        notes_dict = disk_summary.get("protocol_notes") or disk_summary.get("notes") or {}
         row = {
             "input_id": str(inp),
             "stem": stem,
@@ -1358,7 +1358,7 @@ def main() -> int:
         if best_json.exists():
             try:
                 best_summary = json.loads(best_json.read_text(encoding="utf-8"))
-                best_notes = best_summary.get("notes", {})
+                best_notes = best_summary.get("protocol_notes") or best_summary.get("notes") or {}
             except Exception:
                 pass
 

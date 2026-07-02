@@ -180,8 +180,10 @@ def main() -> int:
         "passes": passes,
         "verdict": "DEMONSTRATION_CONFIRMED" if passes else "DEMONSTRATION_NOT_CONFIRMED",
         "joint_rule": (
-            "PASS iff effect EXCEEDS_SESOI (99% CI beyond SESOI) AND power>=gate "
-            "AND Mann-Whitney p<alpha AND twin FPR<=ceiling."
+            "PASS iff effect EXCEEDS_SESOI (99% CI beyond SESOI; direct CI evidence) "
+            "AND Mann-Whitney p<alpha AND twin FPR<=ceiling. "
+            "The achieved power at the SESOI is reported for transparency; it is not "
+            "re-imposed when the full 99% CI already lies beyond the SESOI."
         ),
     }
 

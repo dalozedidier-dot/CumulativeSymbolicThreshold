@@ -1,0 +1,77 @@
+name: Integrity — Archive Portability
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "tools/check_case_collisions.py"
+      - "tools/build_data_pack_manifest.py"
+      - "tools/verify_data_pack.py"
+      - "tools/extract_bundles.py"
+      - "data/bundles/**"
+      - "data_pack_manifest.json"
+      - ".github/workflows/integrity_archive_portability.yml"
+  pull_request:
+    paths:
+      - "tools/check_case_collisions.py"
+      - "tools/build_data_pack_manifest.py"
+      - "tools/verify_data_pack.py"
+      - "tools/extract_bundles.py"
+      - "data/bundles/**"
+      - "data_pack_manifest.json"
+      - ".github/workflows/integrity_archive_portability.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: archive-portability-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
+jobs:
+  archive_portability:
+    name: Verify no-git archive mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Build clean archive without .git
+        run: |
+          set -euo pipefail
+          mkdir -p _ci_out/archive_portability
+          git archive --format=zip --output _ci_out/archive_portability/repo_no_git.zip HEAD
+          unzip -q _ci_out/archive_portability/repo_no_git.zip -d _ci_out/archive_portability/extracted
+          test ! -d _ci_out/archive_portability/extracted/.git
+
+      - name: Run archive-mode checks from extracted zip
+        working-directory: _ci_out/archive_portability/extracted
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          python -m pip install -e ".[dev]" || python -m pip install -e .
+          python -m compileall -q src tools scripts 04_Code
+          python -m tools.check_case_collisions
+          python -m tools.verify_data_pack
+          python -m tools.build_data_pack_manifest --check
+          pytest -q tools/tests/test_case_collisions.py tools/tests/test_data_pack.py
+          PYTHONPATH=src python -m oric.cap_robustness \
+            --input 03_Data/synthetic/synthetic_with_threshold.csv \
+            --output _archive_cap_robustness_report.json
+
+      - name: Upload archive portability artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: archive_portability_${{ github.run_id }}
+          path: _ci_out/archive_portability
+          if-no-files-found: error

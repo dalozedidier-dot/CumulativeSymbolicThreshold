@@ -122,6 +122,7 @@ markers = [
 # ── Coverage ────────────────────────────────────────────
 [tool.coverage.run]
 source = ["src/oric"]
+branch = true
 omit = ["*/tests/*", "*/examples/*"]
 
 [tool.coverage.report]

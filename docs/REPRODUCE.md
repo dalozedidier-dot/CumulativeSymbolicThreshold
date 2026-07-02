@@ -166,11 +166,11 @@ _runs/<run_id>/
 
 ## 10. CI
 
-Le workflow CI principal est `.github/workflows/ci.yml`.
-Les workflows sector sont `.github/workflows/sector_{bio,cosmo,infra}_suite.yml`.
-Le workflow real data matrix est `.github/workflows/real_data_matrix.yml`.
+Le workflow CI principal est `.github/workflows/ci_smoke.yml`.
+Le workflow secteurs actif est `.github/workflows/real_data_sector_pilots.yml`.
+Les anciens workflows real-data matrix ont été retirés; utiliser `real_data_sector_pilots.yml` ou `nightly_full_proof.yml`.
 
-Pour un run manuel : GitHub Actions → `Real Data Matrix` → `Run workflow` → choisir mode.
+Pour un run manuel : GitHub Actions → `Real Data — Sector Pilots` ou `Nightly Proof — Full Synthetic + Real Canonical` → `Run workflow`.
 
 ## Versions des dépendances
 

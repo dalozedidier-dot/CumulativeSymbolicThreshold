@@ -18,9 +18,9 @@ the suite.
 | Trove classifiers | `Programming Language :: Python :: 3.12 :: Only` | `pyproject.toml` |
 | Lint target | `target-version = "py312"` | `pyproject.toml` `[tool.ruff]` |
 | Type-check target | `python_version = "3.12"` | `pyproject.toml` `[tool.mypy]` |
-| CI unit tests | `matrix.python-version: ["3.12"]` | `.github/workflows/ci.yml` |
-| CI lint / compile / canonical | `python-version: "3.12"` | `.github/workflows/ci.yml` |
-| Nightly | `python-version: "3.12"` | `.github/workflows/nightly.yml` |
+| CI unit tests | `matrix.python-version: ["3.12"]` | `.github/workflows/ci_smoke.yml` |
+| CI lint / compile / canonical | `python-version: "3.12"` | `.github/workflows/ci_smoke.yml` |
+| Nightly | `python-version: "3.12"` | `.github/workflows/nightly_full_proof.yml` |
 | QCC / collector / sector pilots | `python-version: "3.12"` | `.github/workflows/*.yml` |
 | Container | `FROM python:3.12-slim` | `Dockerfile` |
 | Conda | `python=3.12` | `environment.yml` |
