@@ -42,7 +42,7 @@ tqdm>=4.66,<5             # progress bars only
 # ── Test + coverage tooling (keep CI gates stable across runs) ──
 pytest>=8.0,<10            # collection/marker semantics validated on pytest 8.x
 pytest-cov>=4.1,<8
-coverage>=7.14.3,<8
+coverage>=7.15.0,<8
 
 # ── Lint + type tooling (rule sets evolve fast — pin the family) ──
 ruff>=0.4,<1              # pre-1.0: cap below the next minor-breaking line
