@@ -132,3 +132,72 @@ def test_oos_prefreeze_exploratory_run_preserved():
     assert round(result["confusion"]["twin_fpr"], 4) == exploratory["twin_fpr"]
     assert round(result["fisher_exact_p_skill_above_chance"], 4) == exploratory["fisher_exact_p"]
     assert result["verdict"] == exploratory["verdict"]
+
+
+# ── Endogenous full-statistical demonstration (rung 3) ───────────────────────
+#
+# This is the ONE artifact the README leans on for "the only stored
+# full_statistical proof run with the obligatory triplet". It had no anti-drift
+# check, and drifted: the stored copy carried an obsolete `joint_rule` claiming
+# `power>=gate` was part of the PASS condition, while the runner had stopped
+# imposing it (a 99 % CI beyond the SESOI is power-independent evidence). Read on
+# its own the artifact was self-contradictory — passes=true with power 0.135
+# against a stated gate of 0.70. These checks pin the rule to what the runner
+# actually applies, so the two cannot silently diverge again.
+
+def test_endogenous_full_statistical_artifact_exists():
+    assert (_RESULTS / "endogenous_full_statistical" / "tables" / "full_statistical.json").exists(), (
+        "docs/EVIDENCE_LADDER.md rung 3 claims a full_statistical demonstration; "
+        "the artifact must be committed under 05_Results/endogenous_full_statistical/"
+    )
+
+
+def test_endogenous_full_statistical_manifest_integrity():
+    base = _RESULTS / "endogenous_full_statistical"
+    manifest = _load(base / "manifest.json")
+    assert manifest["json_sha256"] == _sha256(base / "tables" / "full_statistical.json"), (
+        "artifact edited after manifest"
+    )
+    assert (base / "verdict.txt").read_text().strip() == manifest["verdict"]
+
+
+def test_endogenous_full_statistical_ran_at_full_statistical_N():
+    result = _load(_RESULTS / "endogenous_full_statistical" / "tables" / "full_statistical.json")
+    assert result["run_mode"] == "full_statistical"
+    assert result["n_replicates"] >= 50, (
+        "rung 3 requires N >= 50; a smaller run is rung 2 (indicative) at best"
+    )
+
+
+def test_endogenous_joint_rule_matches_the_conjuncts_actually_applied():
+    """`passes` must follow from the rule the artifact itself states.
+
+    The stored rule text is the artifact's own account of how it was judged. If it
+    names a conjunct the verdict does not honour, the artifact misreports its own
+    standard — which is exactly the drift this file exists to catch.
+    """
+    result = _load(_RESULTS / "endogenous_full_statistical" / "tables" / "full_statistical.json")
+    rule = result["joint_rule"]
+    triplet = result["triplet"]
+
+    expected = (
+        triplet["effect_verdict"] == "EFFECT_EXCEEDS_SESOI"
+        and triplet["p_value_mann_whitney"] < 0.01
+        and result["detection"]["twin_fpr"] <= result["detection"]["fpr_ceiling"]
+    )
+    assert result["passes"] is expected
+    assert result["verdict"] == ("DEMONSTRATION_CONFIRMED" if expected else "DEMONSTRATION_NOT_CONFIRMED")
+
+    # Power is reported for transparency, not imposed. The rule must say so
+    # rather than list it as a conjunct it does not enforce.
+    powered = triplet["achieved_power_at_sesoi"] >= triplet["power_gate"]
+    if not powered:
+        assert "power>=gate" not in rule.replace(" ", ""), (
+            f"joint_rule claims power>=gate but achieved power is "
+            f"{triplet['achieved_power_at_sesoi']:.3f} < {triplet['power_gate']} "
+            f"while passes={result['passes']}"
+        )
+        assert "not re-imposed" in rule or "transparency" in rule, (
+            "when the power gate is unmet the rule must state explicitly that "
+            "power is reported but not imposed"
+        )

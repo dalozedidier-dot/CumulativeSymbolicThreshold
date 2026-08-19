@@ -1,0 +1,12 @@
+{
+  "test_id": "surrogate_null",
+  "schema": "oric.surrogate_null.manifest.v1",
+  "input": "03_Data/real/fred_monthly/real.csv",
+  "seed": 1234,
+  "n_surrogates": 500,
+  "statistic": "crossing_rate",
+  "observed": 0.0,
+  "p_value": 1.0,
+  "significant_at_01": false,
+  "json_sha256": "bd7ce1562c213ec5c8e35445c52e9e483d9ff5747960429271ebe643ba8708c9"
+}

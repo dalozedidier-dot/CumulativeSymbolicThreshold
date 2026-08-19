@@ -31,14 +31,16 @@ collect_ignore = [
 #   smoke       — minimal, fast confidence check (imports + core pipeline)
 #   scientific  — heavy statistical proofs (N>=50, surrogates, multiverse, OOS,
 #                 causal inference, real-data onset). Excluded from `test-full`.
-#   stored_artifact — contract checks against committed/generated artifacts under
-#                 05_Results/. These are opt-in because 05_Results is no longer
-#                 a required committed proof surface after archival cleanup.
+#   stored_artifact — anti-drift contract checks against the committed evidence
+#                 surface under 05_Results/ (see .gitignore). These RUN BY
+#                 DEFAULT: docs/EVIDENCE_LADDER.md's governance rule is that
+#                 every claimed rung is backed by a committed artifact, and a
+#                 gate nobody opts into does not enforce anything. Deselect with
+#                 -m "not stored_artifact" when working without the artifacts.
 #   (untiered)  — ordinary unit/integration tests; the bulk of the suite.
 #
 # NOTE: this only LABELS tests. The coverage gate (CI unit_tests) still runs the
-# whole normal suite. Stored-artifact tests are skipped unless explicitly enabled
-# because they require regenerated proof artifacts in 05_Results/.
+# whole normal suite, stored-artifact checks included.
 _SMOKE_MODULES = {
     "test_smoke",            # src/oric core import + summarize_run
     "test_oric_pipeline",    # end-to-end core ORI-C pipeline (fast)
@@ -66,9 +68,11 @@ _SCIENTIFIC_MODULES = {
     "test_registered_block",
 }
 
-# These modules validate stored proof artifacts that used to live under
-# 05_Results/. After stale results were archived, they must not run in the
-# ordinary CI smoke/unit coverage gate unless artifacts have been regenerated.
+# These modules validate the stored evidence artifacts under 05_Results/ against
+# their frozen contracts. They are cheap (pure JSON reads, no Monte-Carlo) and
+# they are the only thing standing between the Evidence Ladder and silent drift,
+# so they run in the ordinary gate. Opt OUT with --no-stored-artifact-tests (or
+# ORIC_SKIP_STORED_ARTIFACT_TESTS=1) when the artifacts are deliberately absent.
 _STORED_ARTIFACT_MODULES = {
     "test_pilot_generalization",
     "test_pilot_upgrade_registry",
@@ -77,22 +81,36 @@ _STORED_ARTIFACT_MODULES = {
 }
 
 
+_TRUTHY = {"1", "true", "TRUE", "yes", "YES"}
+
+
 def pytest_addoption(parser):
+    parser.addoption(
+        "--no-stored-artifact-tests",
+        action="store_true",
+        default=False,
+        help=(
+            "Skip the anti-drift checks against the committed evidence artifacts "
+            "under 05_Results/. Equivalent opt-out env var: "
+            "ORIC_SKIP_STORED_ARTIFACT_TESTS=1. These checks run by default — "
+            "skipping them means the Evidence Ladder is unverified for that run."
+        ),
+    )
+    # Kept so existing invocations and docs referring to the old opt-in flag do
+    # not break; it is now the default and the flag is a no-op.
     parser.addoption(
         "--run-stored-artifact-tests",
         action="store_true",
         default=False,
-        help=(
-            "Run tests that require committed/generated artifacts under 05_Results/. "
-            "Equivalent opt-in env var: ORIC_RUN_STORED_ARTIFACT_TESTS=1."
-        ),
+        help="Deprecated no-op: stored-artifact checks run by default.",
     )
 
 
 def _run_stored_artifact_tests(config) -> bool:
-    return bool(config.getoption("--run-stored-artifact-tests")) or os.environ.get(
-        "ORIC_RUN_STORED_ARTIFACT_TESTS"
-    ) in {"1", "true", "TRUE", "yes", "YES"}
+    opted_out = bool(config.getoption("--no-stored-artifact-tests")) or (
+        os.environ.get("ORIC_SKIP_STORED_ARTIFACT_TESTS") in _TRUTHY
+    )
+    return not opted_out
 
 
 def pytest_collection_modifyitems(config, items):
@@ -100,8 +118,8 @@ def pytest_collection_modifyitems(config, items):
     run_stored_artifacts = _run_stored_artifact_tests(config)
     skip_stored_artifacts = pytest.mark.skip(
         reason=(
-            "requires regenerated 05_Results artifacts; run with "
-            "--run-stored-artifact-tests or ORIC_RUN_STORED_ARTIFACT_TESTS=1"
+            "stored-artifact anti-drift checks disabled via "
+            "--no-stored-artifact-tests / ORIC_SKIP_STORED_ARTIFACT_TESTS=1"
         )
     )
 

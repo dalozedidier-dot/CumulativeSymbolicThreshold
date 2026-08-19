@@ -1,0 +1,12 @@
+{
+  "test_id": "confirmatory_suite",
+  "schema": "oric.confirmatory.manifest.v1",
+  "input": "03_Data/sector_cosmo/real/pilot_pantheon_sn/real_densified.csv",
+  "seed": 1234,
+  "n_surrogates": 500,
+  "verdict": "NOT_CONFIRMED",
+  "failing_tests": [
+    "B_surrogate_null"
+  ],
+  "json_sha256": "aae5e6cb2c0fdc22fad07cd509849d3d3a4b763b5d245918d2c36580c59da01c"
+}

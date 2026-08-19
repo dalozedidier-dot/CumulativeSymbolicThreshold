@@ -1,0 +1,128 @@
+{
+  "protocol_verdict": "REJECT",
+  "n_inputs": 1,
+  "any_accept": false,
+  "any_indeterminate": false,
+  "best_input": "03_Data/sector_ai_tech/real/pilot_llm_scaling/real_densified.csv",
+  "best_stem": "real_densified",
+  "failure_mode": null,
+  "test_metrics": {
+    "n_valid": 15,
+    "n_error": 0,
+    "n_decidable": 15,
+    "n_detected": 0,
+    "n_not_detected": 15,
+    "n_indeterminate": 0,
+    "detection_rate": 0.0,
+    "non_detection_rate": 1.0,
+    "indeterminate_rate": 0.0,
+    "modal_verdict": "NOT_DETECTED",
+    "stability_fraction": 1.0,
+    "sigma_zero_post_rate": 1.0,
+    "n_sigma_zero_post": 15,
+    "verdict_counts": {
+      "NOT_DETECTED": 15
+    }
+  },
+  "stable_metrics": {
+    "n_valid": 15,
+    "n_error": 0,
+    "n_decidable": 15,
+    "n_detected": 0,
+    "n_not_detected": 15,
+    "n_indeterminate": 0,
+    "detection_rate": 0.0,
+    "non_detection_rate": 1.0,
+    "indeterminate_rate": 0.0,
+    "modal_verdict": "NOT_DETECTED",
+    "stability_fraction": 1.0,
+    "sigma_zero_post_rate": 1.0,
+    "n_sigma_zero_post": 15,
+    "verdict_counts": {
+      "NOT_DETECTED": 15
+    }
+  },
+  "placebo_metrics": {
+    "n_valid": 15,
+    "n_error": 0,
+    "n_decidable": 15,
+    "n_detected": 0,
+    "n_not_detected": 15,
+    "n_indeterminate": 0,
+    "detection_rate": 0.0,
+    "non_detection_rate": 1.0,
+    "indeterminate_rate": 0.0,
+    "modal_verdict": "NOT_DETECTED",
+    "stability_fraction": 1.0,
+    "sigma_zero_post_rate": 1.0,
+    "n_sigma_zero_post": 15,
+    "verdict_counts": {
+      "NOT_DETECTED": 15
+    }
+  },
+  "test_det_rate": 0.0,
+  "stable_det_rate": 0.0,
+  "placebo_det_rate": 0.0,
+  "inputs": [
+    {
+      "input_id": "03_Data/sector_ai_tech/real/pilot_llm_scaling/real_densified.csv",
+      "stem": "real_densified",
+      "input_protocol_verdict": "REJECT",
+      "failure_mode": null,
+      "test_metrics": {
+        "n_valid": 15,
+        "n_error": 0,
+        "n_decidable": 15,
+        "n_detected": 0,
+        "n_not_detected": 15,
+        "n_indeterminate": 0,
+        "detection_rate": 0.0,
+        "non_detection_rate": 1.0,
+        "indeterminate_rate": 0.0,
+        "modal_verdict": "NOT_DETECTED",
+        "stability_fraction": 1.0,
+        "sigma_zero_post_rate": 1.0,
+        "n_sigma_zero_post": 15,
+        "verdict_counts": {
+          "NOT_DETECTED": 15
+        }
+      },
+      "stable_metrics": {
+        "n_valid": 15,
+        "n_error": 0,
+        "n_decidable": 15,
+        "n_detected": 0,
+        "n_not_detected": 15,
+        "n_indeterminate": 0,
+        "detection_rate": 0.0,
+        "non_detection_rate": 1.0,
+        "indeterminate_rate": 0.0,
+        "modal_verdict": "NOT_DETECTED",
+        "stability_fraction": 1.0,
+        "sigma_zero_post_rate": 1.0,
+        "n_sigma_zero_post": 15,
+        "verdict_counts": {
+          "NOT_DETECTED": 15
+        }
+      },
+      "placebo_metrics": {
+        "n_valid": 15,
+        "n_error": 0,
+        "n_decidable": 15,
+        "n_detected": 0,
+        "n_not_detected": 15,
+        "n_indeterminate": 0,
+        "detection_rate": 0.0,
+        "non_detection_rate": 1.0,
+        "indeterminate_rate": 0.0,
+        "modal_verdict": "NOT_DETECTED",
+        "stability_fraction": 1.0,
+        "sigma_zero_post_rate": 1.0,
+        "n_sigma_zero_post": 15,
+        "verdict_counts": {
+          "NOT_DETECTED": 15
+        }
+      }
+    }
+  ]
+}

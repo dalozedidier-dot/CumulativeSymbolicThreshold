@@ -1,0 +1,82 @@
+{
+  "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+  "original_length": 60,
+  "densified_length": 120,
+  "target_length": 120,
+  "segmentation_candidates": [
+    {
+      "segmentation_point": 36,
+      "n_pre": 36,
+      "n_post": 84,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.5238095238095237,
+        "R": 0.5415795118047219,
+        "I": 0.11378864345738299
+      },
+      "signal_strength": 0.39305922635720947
+    },
+    {
+      "segmentation_point": 48,
+      "n_pre": 48,
+      "n_post": 72,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.5889355742296918,
+        "R": 0.5951789215686274,
+        "I": 0.1992800280112046
+      },
+      "signal_strength": 0.4611315079365079
+    },
+    {
+      "segmentation_point": 60,
+      "n_pre": 60,
+      "n_post": 60,
+      "segment_adequate": true,
+      "delta_ori": {
+        "O": 0.5966386554621849,
+        "R": 0.6017661512605041,
+        "I": 0.036953848739495865
+      },
+      "signal_strength": 0.411786218487395
+    },
+    {
+      "segmentation_point": 72,
+      "n_pre": 72,
+      "n_post": 48,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.5854341736694678,
+        "R": 0.6181928886554622,
+        "I": 0.042184047619047815
+      },
+      "signal_strength": 0.415270369981326
+    },
+    {
+      "segmentation_point": 84,
+      "n_pre": 84,
+      "n_post": 36,
+      "segment_adequate": false,
+      "delta_ori": {
+        "O": 0.5654261704681871,
+        "R": 0.5820835134053622,
+        "I": -0.065410300120048
+      },
+      "signal_strength": 0.36069979458450047
+    }
+  ],
+  "best_segmentation": {
+    "segmentation_point": 60,
+    "n_pre": 60,
+    "n_post": 60,
+    "segment_adequate": true,
+    "delta_ori": {
+      "O": 0.5966386554621849,
+      "R": 0.6017661512605041,
+      "I": 0.036953848739495865
+    },
+    "signal_strength": 0.411786218487395
+  },
+  "upgrade_status": "conclusive",
+  "notes": "Densified from 60 to 120 points. Best segmentation at t=60 with signal_strength=0.4118."
+}

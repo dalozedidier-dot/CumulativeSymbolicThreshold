@@ -1,0 +1,28 @@
+{
+  "schema": "oric.ci_maturity_log.v1",
+  "last_updated": "2026-03-09T08:56:44.097681+00:00",
+  "total_runs": 1,
+  "runs": [
+    {
+      "run_id": "baseline_2026-03-09",
+      "timestamp": "2026-03-09T08:56:44.097625+00:00",
+      "branch": "claude/scientific-validation-protocol-5NkDH",
+      "run_status": "pass",
+      "verdicts": {
+        "sector_neuro.pilot_eeg_bonn": "ACCEPT",
+        "sector_cosmo.pilot_solar": "ACCEPT",
+        "sector_health.pilot_covid_excess_mortality": "ACCEPT",
+        "sector_finance.pilot_btc": "ACCEPT",
+        "sector_cosmo.pilot_pantheon_sn": "INDETERMINATE",
+        "sector_bio.pilot_pbdb_marine": "INDETERMINATE",
+        "sector_ai_tech.pilot_llm_scaling": "INDETERMINATE"
+      },
+      "test_count": 386,
+      "test_passed": 386,
+      "test_failed": 0,
+      "coverage_pct": null,
+      "manifest_coherent": true,
+      "notes": "Initial baseline seed from frozen corpus v1.0.0"
+    }
+  ]
+}

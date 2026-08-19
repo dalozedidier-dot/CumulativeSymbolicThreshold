@@ -1,0 +1,175 @@
+{
+  "schema": "oric.power_upgrade_report.v1",
+  "pilot_id": "sector_cosmo.pilot_pantheon_sn",
+  "domain": "Cosmologie",
+  "research_question": "Does the SNe Ia distance-redshift relationship exhibit a cumulative symbolic threshold crossing consistent with dark energy transition?",
+  "n_before": 100,
+  "n_after": 150,
+  "power_class_before": "underpowered",
+  "power_class_after": "borderline",
+  "segment_counts_before": [
+    {
+      "segmentation_point": 25,
+      "n_pre": 25,
+      "n_post": 75,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 35,
+      "n_pre": 35,
+      "n_post": 65,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 40,
+      "n_pre": 40,
+      "n_post": 60,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 45,
+      "n_pre": 45,
+      "n_post": 55,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 50,
+      "n_pre": 50,
+      "n_post": 50,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 55,
+      "n_pre": 55,
+      "n_post": 45,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 65,
+      "n_pre": 65,
+      "n_post": 35,
+      "adequate": false
+    }
+  ],
+  "segment_counts_after": [
+    {
+      "segmentation_point": 37,
+      "n_pre": 37,
+      "n_post": 113,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 52,
+      "n_pre": 52,
+      "n_post": 98,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 60,
+      "n_pre": 60,
+      "n_post": 90,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 67,
+      "n_pre": 67,
+      "n_post": 83,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 75,
+      "n_pre": 75,
+      "n_post": 75,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 82,
+      "n_pre": 82,
+      "n_post": 68,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 97,
+      "n_pre": 97,
+      "n_post": 53,
+      "adequate": false
+    }
+  ],
+  "precheck_before": {
+    "n_rows": 100,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 0,
+    "has_adequate_segment": false,
+    "best_segment": null
+  },
+  "precheck_after": {
+    "n_rows": 150,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 4,
+    "has_adequate_segment": true,
+    "best_segment": {
+      "segmentation_point": 60,
+      "n_pre": 60,
+      "n_post": 90,
+      "adequate": true
+    }
+  },
+  "homogeneity_checks": [
+    {
+      "column": "O",
+      "mean_before": 0.5611,
+      "mean_after": 0.560863,
+      "std_before": 0.227689,
+      "std_after": 0.208956,
+      "mean_shift": 0.000237,
+      "std_ratio": 0.917726,
+      "passed": true
+    },
+    {
+      "column": "R",
+      "mean_before": 0.739533,
+      "mean_after": 0.737986,
+      "std_before": 0.199195,
+      "std_after": 0.15763,
+      "mean_shift": 0.001547,
+      "std_ratio": 0.791334,
+      "passed": true
+    },
+    {
+      "column": "I",
+      "mean_before": 0.947074,
+      "mean_after": 0.946908,
+      "std_before": 0.016303,
+      "std_after": 0.013105,
+      "mean_shift": 0.000166,
+      "std_ratio": 0.803816,
+      "passed": true
+    },
+    {
+      "column": "demand",
+      "mean_before": 0.452014,
+      "mean_after": 0.452343,
+      "std_before": 0.352398,
+      "std_after": 0.352377,
+      "mean_shift": 0.000329,
+      "std_ratio": 0.999942,
+      "passed": true
+    },
+    {
+      "column": "S",
+      "mean_before": 0.50864,
+      "mean_after": 0.507902,
+      "std_before": 0.091092,
+      "std_after": 0.086371,
+      "mean_shift": 0.000738,
+      "std_ratio": 0.948172,
+      "passed": true
+    }
+  ],
+  "homogeneity_passed": true,
+  "upgrade_status": "upgrade_candidate",
+  "level_before": "C",
+  "level_after": "B_candidate",
+  "justification": "Power class: underpowered -> borderline. Adequate segments: 0 -> 4. Homogeneity checks passed. Upgrade to Level B candidate.",
+  "notes": ""
+}
