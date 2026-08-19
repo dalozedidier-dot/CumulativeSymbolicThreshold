@@ -23,7 +23,6 @@ import pandas as pd
 import pytest
 
 # ─── ori_core ────────────────────────────────────────────────────────────────
-
 from oric.ori_core import (
     compute_cap_projection,
     compute_sigma,
@@ -138,7 +137,7 @@ class TestSummarizeRun:
 
 # ─── symbolic ────────────────────────────────────────────────────────────────
 
-from oric.symbolic import compute_stock_S, compute_order_C, detect_s_star_piecewise
+from oric.symbolic import compute_order_C, compute_stock_S, detect_s_star_piecewise
 
 
 class TestComputeStockS:

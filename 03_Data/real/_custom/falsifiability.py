@@ -27,7 +27,6 @@ import numpy as np
 import pandas as pd
 from scipy import stats as sp_stats
 
-
 # ── Version du protocole de falsifiabilité ──
 FALSIFIABILITY_PROTOCOL_VERSION = "v1.0.0"
 

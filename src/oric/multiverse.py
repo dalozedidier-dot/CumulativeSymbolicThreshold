@@ -27,7 +27,7 @@ Robustness verdict (frozen ex ante; see 02_Protocol addendum, Test C):
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from itertools import product
 from typing import Callable, Sequence
 

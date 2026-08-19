@@ -4,14 +4,14 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
 
 from oric.surrogates import (
     iaaft_surrogate,
     iaaft_surrogates,
-    threshold_crossing_statistic,
     surrogate_null_test,
+    threshold_crossing_statistic,
 )
-from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
 
 
 def _signal(n=256, seed=0):

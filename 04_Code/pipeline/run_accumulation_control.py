@@ -33,12 +33,13 @@ _REPO = _HERE.parent.parent
 sys.path.insert(0, str(_REPO / "src"))
 sys.path.insert(0, str(_HERE))
 
+from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
+
 from oric.accumulation_controls import (  # noqa: E402
     accumulation_control_catalogue,
     run_accumulation_control_suite,
 )
 from oric.surrogates import threshold_crossing_statistic  # noqa: E402
-from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
 
 # Frozen ex-ante ceiling: at most this fraction of smooth non-bifurcating
 # accumulations may be flagged as sustained transitions.

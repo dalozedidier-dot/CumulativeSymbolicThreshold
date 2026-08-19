@@ -1,8 +1,8 @@
 import pandas as pd
 
 from oric.ori_core import compute_cap_projection, compute_sigma, compute_viability
-from oric.symbolic import compute_stock_S, compute_order_C, detect_s_star_piecewise
 from oric.prereg import PreregSpec
+from oric.symbolic import compute_order_C, compute_stock_S, detect_s_star_piecewise
 
 
 def test_smoke_core_and_symbolic():

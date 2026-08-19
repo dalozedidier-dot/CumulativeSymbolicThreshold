@@ -22,14 +22,13 @@ if str(_CODE) not in sys.path:
     sys.path.insert(0, str(_CODE))
 
 from pipeline.run_oos_panel import (
+    _aggregate,
     _cap_formula,
     _compute_cap,
     _detect_threshold_cal_params,
-    _threshold_hit_test,
     _evaluate_geo,
-    _aggregate,
+    _threshold_hit_test,
 )
-
 
 # ── _cap_formula / _compute_cap ────────────────────────────────────────────────
 

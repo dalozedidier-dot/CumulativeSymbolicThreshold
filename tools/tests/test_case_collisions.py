@@ -32,6 +32,7 @@ def test_tracked_files_falls_back_without_git(monkeypatch):
     """Source archives without .git must still be checkable."""
 
     import subprocess
+
     import tools.check_case_collisions as ccc
 
     def fail_git() -> list[str]:

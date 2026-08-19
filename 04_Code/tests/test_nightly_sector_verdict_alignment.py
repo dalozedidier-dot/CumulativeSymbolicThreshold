@@ -26,7 +26,7 @@ if str(_SRC_DIR) not in sys.path:
 if str(_CODE_DIR) not in sys.path:
     sys.path.insert(0, str(_CODE_DIR))
 
-from pipeline.tests_causaux import _sync_summary_after_verdict, _normalize_verdict_token
+from pipeline.tests_causaux import _normalize_verdict_token, _sync_summary_after_verdict
 
 
 class TestNormalizeVerdictToken:

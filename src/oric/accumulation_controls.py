@@ -49,7 +49,6 @@ from typing import Callable, Literal
 import numpy as np
 import pandas as pd
 
-
 AccumulationKind = Literal[
     "logistic_growth",
     "gompertz",

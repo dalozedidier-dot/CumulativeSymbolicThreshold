@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
 import argparse
 import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 from .ori_core import compute_cap_projection, compute_sigma
-
 
 CANONICAL_CAP_FORMS: tuple[str, ...] = ("product", "geom_mean", "weighted_sum", "min")
 DEFAULT_THRESHOLDS: dict[str, float] = {

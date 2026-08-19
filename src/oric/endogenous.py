@@ -51,7 +51,6 @@ from dataclasses import dataclass, replace
 import numpy as np
 import pandas as pd
 
-
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------

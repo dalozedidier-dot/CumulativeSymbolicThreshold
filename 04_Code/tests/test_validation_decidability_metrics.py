@@ -16,9 +16,9 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 from oric.decidability import (
-    compute_decidability,
-    build_decidability_report,
     DecidabilityMetrics,
+    build_decidability_report,
+    compute_decidability,
 )
 
 

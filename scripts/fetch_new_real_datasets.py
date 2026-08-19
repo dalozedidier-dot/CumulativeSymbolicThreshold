@@ -77,8 +77,8 @@ def _cumsum_norm(x: np.ndarray) -> np.ndarray:
 
 
 def _safe_fetch(url: str, timeout: int = 60, retries: int = 3) -> str | None:
-    import urllib.request
     import urllib.error
+    import urllib.request
     for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "ORI-C/1.0 (research)"})

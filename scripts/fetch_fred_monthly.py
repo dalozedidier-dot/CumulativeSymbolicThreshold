@@ -30,7 +30,6 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-
 FRED_BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id="
 
 SERIES = {

@@ -30,13 +30,14 @@ Bloc 4. External Proof (placeholder for independent replication)
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from .proof_manifest import DualProofManifest, build_final_status
-from .integrity import integrity_gate, IntegrityCheck
-from .proof_levels import ProofLevelSummary
+
 from .decidability import DecidabilityMetrics
+from .integrity import IntegrityCheck, integrity_gate
+from .proof_levels import ProofLevelSummary
+from .proof_manifest import DualProofManifest, build_final_status
 
 
 @dataclass

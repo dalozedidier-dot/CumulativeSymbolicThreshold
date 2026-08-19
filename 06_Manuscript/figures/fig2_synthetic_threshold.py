@@ -4,9 +4,10 @@ Cas A (pas d'injection) vs Cas B (injection symbolique à t₀=75)
 Output : fig2_synthetic_threshold.png
 """
 import matplotlib
+
 matplotlib.use("Agg")
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 SEED = 1235
 rng  = np.random.default_rng(SEED)

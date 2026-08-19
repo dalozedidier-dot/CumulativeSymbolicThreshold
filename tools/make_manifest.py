@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import argparse
 import hashlib
 import json
 from pathlib import Path
+
 
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()

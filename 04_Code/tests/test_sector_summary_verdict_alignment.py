@@ -14,7 +14,7 @@ _SECTOR_SHARED = _REPO_ROOT / "04_Code" / "sector" / "shared"
 if str(_SECTOR_SHARED) not in sys.path:
     sys.path.insert(0, str(_SECTOR_SHARED))
 
-from sector_panel_runner import _sync_summary_verdict, _normalize_verdict
+from sector_panel_runner import _normalize_verdict, _sync_summary_verdict
 
 
 def _make_run_dir(tmp_path, summary_data, verdict_json=None, verdict_txt=None):

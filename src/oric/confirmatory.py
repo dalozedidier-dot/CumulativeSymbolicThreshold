@@ -42,17 +42,20 @@ def run_confirmatory_suite(
     Test A is a global property of the detector (independent of this series); it
     is computed once here so the combined verdict reflects the full rule.
     """
-    from oric.surrogates import surrogate_null_test
-    from oric.multiverse import run_multiverse
-    from oric.effect_size import effect_size_report
     from oric.accumulation_controls import run_accumulation_control_suite
+    from oric.effect_size import effect_size_report
     from oric.frozen_params import FROZEN_PARAMS
+    from oric.multiverse import run_multiverse
+    from oric.surrogates import surrogate_null_test
 
     if run_fn is None:
         try:
-            from pipeline.ori_c_pipeline import run_oric_from_observations, _detect_threshold  # type: ignore
+            from pipeline.ori_c_pipeline import (  # type: ignore
+                _detect_threshold,
+                run_oric_from_observations,
+            )
         except ModuleNotFoundError:  # pragma: no cover - layout-dependent
-            from ori_c_pipeline import run_oric_from_observations, _detect_threshold  # type: ignore
+            from ori_c_pipeline import _detect_threshold, run_oric_from_observations  # type: ignore
         run_fn = run_oric_from_observations
     else:  # threshold detector for pre/post split
         try:

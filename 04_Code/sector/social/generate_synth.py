@@ -6,8 +6,8 @@ Copies the pilot's real.csv + proxy_spec.json into the run outdir when
 
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 
 def synth_generator(outdir: Path, seed: int, pilot_id: str) -> None:

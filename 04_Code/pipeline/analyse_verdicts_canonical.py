@@ -42,7 +42,6 @@ from typing import Dict
 
 import pandas as pd
 
-
 VALID = {"ACCEPT", "REJECT", "INDETERMINATE"}
 
 _DIR_TO_KEY: dict[str, str] = {

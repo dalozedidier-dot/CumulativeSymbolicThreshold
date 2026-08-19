@@ -82,10 +82,24 @@ oric = ["py.typed"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-exclude = [".claude/worktrees"]
+exclude = [".claude/worktrees", ".venv", "venv", ".venv_*"]
 
 [tool.ruff.lint]
-extend-ignore = ["E731"]
+# Explicit rule surface — do NOT rely on Ruff's implicit default selection.
+#   Ruff's *default* rule set is not stable across releases: 0.16 widened it and
+#   turned a green pipeline red on ~1000 pre-existing findings, none of which
+#   were introduced by a code change. Same reasoning as constraints.txt: what CI
+#   enforces must be a function of this file, not of whichever Ruff resolved on
+#   PyPI that morning. Widening this list is a deliberate, reviewable act.
+select = [
+    "E4",   # pycodestyle — import placement
+    "E7",   # pycodestyle — statement-level errors
+    "E9",   # pycodestyle — syntax / IO errors
+    "F",    # pyflakes — undefined names, unused imports, dead code
+    "I",    # isort — import ordering (Ruff replaces isort here)
+]
+# `extend-ignore` was removed in Ruff 0.16 and was being silently dropped.
+ignore = ["E731"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/oric/__init__.py" = ["F401", "F403"]

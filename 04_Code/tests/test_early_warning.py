@@ -23,7 +23,6 @@ from oric.early_warning import (
 from oric.endogenous import EndogenousConfig, matched_fold_pair
 from oric.surrogates import series_surrogate_test, trend_preserving_surrogate
 
-
 # --- helpers ---------------------------------------------------------------
 
 def _trend_plus_ar1(n, slope, phi, sd, rng):

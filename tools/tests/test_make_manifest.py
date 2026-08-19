@@ -3,9 +3,7 @@ from __future__ import annotations
 
 import hashlib
 
-
 from tools.make_manifest import build_manifest, sha256_file
-
 
 # ── sha256_file ───────────────────────────────────────────────────────────────
 

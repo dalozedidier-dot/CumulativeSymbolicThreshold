@@ -22,7 +22,6 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-
 ModelVariant = Literal["V1", "V2", "V3", "V4"]
 
 # Frozen parameters for V2/V3/V4 (must not be tuned post-hoc)

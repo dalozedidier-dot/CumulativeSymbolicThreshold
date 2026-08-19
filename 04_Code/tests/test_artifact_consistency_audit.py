@@ -14,12 +14,12 @@ if str(_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DIR))
 
 from audit_artifact_consistency import (
-    run_audit,
+    AuditReport,
+    check_forbidden_empty_fields,
+    check_fred_consistency,
     check_summary_vs_verdict,
     check_synthetic_consistency,
-    check_fred_consistency,
-    check_forbidden_empty_fields,
-    AuditReport,
+    run_audit,
 )
 
 

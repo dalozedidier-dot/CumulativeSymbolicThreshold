@@ -21,7 +21,6 @@ from dataclasses import asdict, replace
 from typing import Any, Dict, List
 
 import pandas as pd
-
 from ori_c_pipeline import ORICConfig, run_oric
 
 

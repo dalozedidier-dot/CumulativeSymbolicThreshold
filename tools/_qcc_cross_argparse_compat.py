@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 
+
 def _patch_argparse(parser: argparse.ArgumentParser) -> None:
     # Replace any required --dataset declaration with a dual-flag alias.
     # We do this safely by adding an alias flag that maps to the same dest.
