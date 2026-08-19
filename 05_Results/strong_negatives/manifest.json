@@ -1,0 +1,26 @@
+{
+  "test_id": "strong_negatives",
+  "schema": "oric.strong_negatives.manifest.v1",
+  "seed": 1234,
+  "n_steps": 220,
+  "n_surrogates": 0,
+  "fast_mode": false,
+  "fpr_max": 0.1,
+  "tpr_min": 0.5,
+  "strong_negatives_fpr": 0.0,
+  "raw_strong_negatives_fpr": 0.5455,
+  "bifurcation_tpr": 1.0,
+  "fpr_by_family": {
+    "smooth": 0.0,
+    "stochastic": 0.0,
+    "structured": 0.0
+  },
+  "verdict": "STRONG_NEGATIVES_CLEAN",
+  "output_files": {
+    "json": "tables/strong_negatives.json",
+    "csv": "tables/strong_negatives.csv",
+    "figure": "figures/strong_negatives.png"
+  },
+  "json_sha256": "8ec0311506e688c15d4708d1244b10f21299db08ce3cd7dc6cb6ecc445ea4336",
+  "contract_sha256": "c00b083038ec1d98eb8b2011bac020e1307f3b7caff6e4cd0ed4954228758168"
+}

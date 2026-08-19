@@ -1,0 +1,14 @@
+condition,method,detected,detection_point,statistic,p_value
+A,oric_localized,False,,0.0,1.0
+A,cusum_changepoint,True,60,5.744442570476027,0.0
+A,pelt_changepoint,True,442,169.5113285924922,
+A,early_warning_signal,False,,-0.17145022260111775,3.9096244710216175e-08
+A,structural_break,True,431,108.31647362479724,1.3458586535897204e-13
+B_stable,cusum_changepoint,True,72,6.531385100375234,0.0
+B_stable,pelt_changepoint,True,233,407.6472680751117,
+B_stable,early_warning_signal,True,173,-0.2140643774109909,4.1470960070525966e-07
+B_stable,structural_break,True,233,320.0803976141057,3.107443999071011e-43
+C_placebo,cusum_changepoint,True,380,6.838125415071097,0.0
+C_placebo,pelt_changepoint,True,384,639.0587847327511,
+C_placebo,early_warning_signal,True,326,-0.16949891067538128,5.561741234309916e-08
+C_placebo,structural_break,True,384,763.6940973658747,2.7051761054105993e-91

@@ -1,0 +1,77 @@
+{
+  "schema": "oric.precheck_comparison.v1",
+  "pilot_id": "sector_bio.pilot_pbdb_marine",
+  "precheck_before": {
+    "n_rows": 100,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 0,
+    "has_adequate_segment": false,
+    "best_segment": null
+  },
+  "precheck_after": {
+    "n_rows": 140,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 3,
+    "has_adequate_segment": true,
+    "best_segment": {
+      "segmentation_point": 63,
+      "n_pre": 63,
+      "n_post": 77,
+      "adequate": true
+    }
+  },
+  "homogeneity_checks": [
+    {
+      "column": "O",
+      "mean_before": 0.360961,
+      "mean_after": 0.360642,
+      "std_before": 0.225487,
+      "std_after": 0.222738,
+      "mean_shift": 0.000319,
+      "std_ratio": 0.98781,
+      "passed": true
+    },
+    {
+      "column": "R",
+      "mean_before": 0.905211,
+      "mean_after": 0.904627,
+      "std_before": 0.24949,
+      "std_after": 0.231117,
+      "mean_shift": 0.000584,
+      "std_ratio": 0.926358,
+      "passed": true
+    },
+    {
+      "column": "I",
+      "mean_before": 0.226894,
+      "mean_after": 0.225463,
+      "std_before": 0.221996,
+      "std_after": 0.209673,
+      "mean_shift": 0.001431,
+      "std_ratio": 0.944488,
+      "passed": true
+    },
+    {
+      "column": "demand",
+      "mean_before": 0.094789,
+      "mean_after": 0.095373,
+      "std_before": 0.24949,
+      "std_after": 0.231117,
+      "mean_shift": 0.000584,
+      "std_ratio": 0.926358,
+      "passed": true
+    },
+    {
+      "column": "S",
+      "mean_before": 0.40843,
+      "mean_after": 0.408169,
+      "std_before": 0.288276,
+      "std_after": 0.287361,
+      "mean_shift": 0.000261,
+      "std_ratio": 0.996824,
+      "passed": true
+    }
+  ],
+  "homogeneity_passed": true,
+  "upgrade_status": "upgrade_candidate"
+}

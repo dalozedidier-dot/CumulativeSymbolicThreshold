@@ -1,0 +1,162 @@
+{
+  "schema": "oric.registered_block.v1",
+  "dataset_A": "fred_monthly",
+  "dated_hypothesis": {
+    "t1": 272,
+    "t2": 281,
+    "t_star": 272,
+    "window_label": "2008 Global Financial Crisis (2008-09 \u2192 2009-06)"
+  },
+  "criteria": {
+    "k": 2.5,
+    "m": 3,
+    "baseline_n": 50,
+    "alpha": 0.01,
+    "seed": 1234,
+    "n_surrogates": 200,
+    "onset_tolerance": 18,
+    "shift_divisor": 3
+  },
+  "A": {
+    "detected": false,
+    "in_window": false,
+    "detection_point": null,
+    "crossing_rate": 0.0
+  },
+  "B_silent": true,
+  "C_silent": true,
+  "controls": {
+    "stable_detected": false,
+    "external_stable_detected": false,
+    "placebo_detected": false
+  },
+  "surrogate": {
+    "p_value": 1.0,
+    "significant_at_01": false
+  },
+  "classical": {
+    "A": {
+      "cusum_changepoint": {
+        "method": "cusum_changepoint",
+        "detected": true,
+        "detection_point": 60,
+        "statistic": 5.744442570476027,
+        "p_value": 0.0,
+        "confidence": "high",
+        "notes": ""
+      },
+      "pelt_changepoint": {
+        "method": "pelt_changepoint",
+        "detected": true,
+        "detection_point": 442,
+        "statistic": 169.5113285924922,
+        "notes": "penalty=12.35"
+      },
+      "early_warning_signal": {
+        "method": "early_warning",
+        "detected": false,
+        "detection_point": null,
+        "statistic": -0.17145022260111775,
+        "p_value": 3.9096244710216175e-08,
+        "confidence": "low",
+        "notes": "tau_variance=-0.171(p=0.000), tau_autocorr=-0.230(p=0.000)"
+      },
+      "structural_break": {
+        "method": "structural_break",
+        "detected": true,
+        "detection_point": 431,
+        "statistic": 108.31647362479724,
+        "p_value": 1.3458586535897204e-13,
+        "confidence": "high",
+        "notes": ""
+      }
+    },
+    "B_stable": {
+      "cusum_changepoint": {
+        "method": "cusum_changepoint",
+        "detected": true,
+        "detection_point": 72,
+        "statistic": 6.531385100375234,
+        "p_value": 0.0,
+        "confidence": "high",
+        "notes": ""
+      },
+      "pelt_changepoint": {
+        "method": "pelt_changepoint",
+        "detected": true,
+        "detection_point": 233,
+        "statistic": 407.6472680751117,
+        "notes": "penalty=11.21"
+      },
+      "early_warning_signal": {
+        "method": "early_warning",
+        "detected": true,
+        "detection_point": 173,
+        "statistic": -0.2140643774109909,
+        "p_value": 4.1470960070525966e-07,
+        "confidence": "medium",
+        "notes": "tau_variance=-0.214(p=0.000), tau_autocorr=0.168(p=0.000)"
+      },
+      "structural_break": {
+        "method": "structural_break",
+        "detected": true,
+        "detection_point": 233,
+        "statistic": 320.0803976141057,
+        "p_value": 3.107443999071011e-43,
+        "confidence": "high",
+        "notes": ""
+      }
+    },
+    "C_placebo": {
+      "cusum_changepoint": {
+        "method": "cusum_changepoint",
+        "detected": true,
+        "detection_point": 380,
+        "statistic": 6.838125415071097,
+        "p_value": 0.0,
+        "confidence": "high",
+        "notes": ""
+      },
+      "pelt_changepoint": {
+        "method": "pelt_changepoint",
+        "detected": true,
+        "detection_point": 384,
+        "statistic": 639.0587847327511,
+        "notes": "penalty=12.35"
+      },
+      "early_warning_signal": {
+        "method": "early_warning",
+        "detected": true,
+        "detection_point": 326,
+        "statistic": -0.16949891067538128,
+        "p_value": 5.561741234309916e-08,
+        "confidence": "medium",
+        "notes": "tau_variance=-0.169(p=0.000), tau_autocorr=0.151(p=0.000)"
+      },
+      "structural_break": {
+        "method": "structural_break",
+        "detected": true,
+        "detection_point": 384,
+        "statistic": 763.6940973658747,
+        "p_value": 2.7051761054105993e-91,
+        "confidence": "high",
+        "notes": ""
+      }
+    }
+  },
+  "classical_false_positives_on_controls": 8,
+  "oos": {
+    "evaluable": true,
+    "predicted": false,
+    "predicted_onset": null,
+    "t_star": 272,
+    "directional_skill": false
+  },
+  "verdict": "REAL_BLOCK_REJECTED",
+  "reasons": [
+    "A: ORI-C did not fire a localized transition",
+    "A: crossing not significant vs IAAFT null (p=1.000 >= 0.01)",
+    "OOS: no pre-t* directional skill"
+  ],
+  "note": "A frozen, pre-registered real-data block. A REJECTED/INDETERMINATE verdict is an honest negative reported at equal status to a positive."
+}

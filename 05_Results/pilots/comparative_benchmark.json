@@ -1,0 +1,175 @@
+{
+  "schema": "oric.comparative_benchmark.v1",
+  "total_pilots": 3,
+  "methods": [
+    "oric",
+    "cusum_changepoint",
+    "structural_break",
+    "anomaly_zscore",
+    "early_warning"
+  ],
+  "results": [
+    {
+      "pilot_id": "sector_finance.pilot_btc",
+      "series_length": 141,
+      "methods": [
+        {
+          "method": "oric",
+          "detected": true,
+          "detection_point": null,
+          "statistic": null,
+          "p_value": null,
+          "confidence": "high",
+          "notes": "verdict=ACCEPT"
+        },
+        {
+          "method": "cusum_changepoint",
+          "detected": true,
+          "detection_point": 140,
+          "statistic": 14.187567127659596,
+          "p_value": 0.0,
+          "confidence": "high",
+          "notes": ""
+        },
+        {
+          "method": "structural_break",
+          "detected": true,
+          "detection_point": 28,
+          "statistic": 160.62238174689054,
+          "p_value": 2.482269805533471e-11,
+          "confidence": "high",
+          "notes": ""
+        },
+        {
+          "method": "anomaly_zscore",
+          "detected": true,
+          "detection_point": 113,
+          "statistic": 3.214841449365548,
+          "p_value": null,
+          "confidence": "medium",
+          "notes": "n_anomalous_points=3, window=20"
+        },
+        {
+          "method": "early_warning",
+          "detected": "False",
+          "detection_point": null,
+          "statistic": -0.6337902074403358,
+          "p_value": 6.510313321104778e-25,
+          "confidence": "low",
+          "notes": "tau_variance=-0.634(p=0.000), tau_autocorr=0.049(p=0.428)"
+        }
+      ],
+      "oric_advantage": "ORI-C agrees with 3/4 baselines",
+      "oric_limitation": "",
+      "complementarity_notes": ""
+    },
+    {
+      "pilot_id": "sector_neuro.pilot_eeg_bonn",
+      "series_length": 500,
+      "methods": [
+        {
+          "method": "oric",
+          "detected": true,
+          "detection_point": null,
+          "statistic": null,
+          "p_value": null,
+          "confidence": "high",
+          "notes": "verdict=ACCEPT"
+        },
+        {
+          "method": "cusum_changepoint",
+          "detected": true,
+          "detection_point": 96,
+          "statistic": 51.90119634864241,
+          "p_value": 0.0,
+          "confidence": "high",
+          "notes": ""
+        },
+        {
+          "method": "structural_break",
+          "detected": true,
+          "detection_point": 449,
+          "statistic": 2582.0383674176287,
+          "p_value": 9.042007599302006e-64,
+          "confidence": "high",
+          "notes": ""
+        },
+        {
+          "method": "anomaly_zscore",
+          "detected": true,
+          "detection_point": 232,
+          "statistic": 5.764499146708453,
+          "p_value": null,
+          "confidence": "high",
+          "notes": "n_anomalous_points=13, window=20"
+        },
+        {
+          "method": "early_warning",
+          "detected": "True",
+          "detection_point": 412,
+          "statistic": 0.2088074619026931,
+          "p_value": 8.116470033602569e-12,
+          "confidence": "medium",
+          "notes": "tau_variance=0.209(p=0.000), tau_autocorr=nan(p=nan)"
+        }
+      ],
+      "oric_advantage": "ORI-C agrees with 4/4 baselines",
+      "oric_limitation": "",
+      "complementarity_notes": "EWS provides complementary pre-transition warning"
+    },
+    {
+      "pilot_id": "sector_cosmo.pilot_solar",
+      "series_length": 288,
+      "methods": [
+        {
+          "method": "oric",
+          "detected": true,
+          "detection_point": null,
+          "statistic": null,
+          "p_value": null,
+          "confidence": "high",
+          "notes": "verdict=ACCEPT"
+        },
+        {
+          "method": "cusum_changepoint",
+          "detected": true,
+          "detection_point": 287,
+          "statistic": 32.939787847222256,
+          "p_value": 0.0,
+          "confidence": "high",
+          "notes": ""
+        },
+        {
+          "method": "structural_break",
+          "detected": true,
+          "detection_point": 28,
+          "statistic": 1375.5276024722552,
+          "p_value": 4.18772486491303e-81,
+          "confidence": "high",
+          "notes": ""
+        },
+        {
+          "method": "anomaly_zscore",
+          "detected": true,
+          "detection_point": 139,
+          "statistic": 6.333333333333642,
+          "p_value": null,
+          "confidence": "high",
+          "notes": "n_anomalous_points=23, window=20"
+        },
+        {
+          "method": "early_warning",
+          "detected": "False",
+          "detection_point": null,
+          "statistic": 0.020414859312936837,
+          "p_value": 0.6239596101827847,
+          "confidence": "low",
+          "notes": "tau_variance=0.020(p=0.624), tau_autocorr=nan(p=nan)"
+        }
+      ],
+      "oric_advantage": "ORI-C agrees with 3/4 baselines",
+      "oric_limitation": "",
+      "complementarity_notes": ""
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "schema": "oric.power_upgrade_report.v1",
+  "pilot_id": "sector_ai_tech.pilot_llm_scaling",
+  "domain": "IA / Technologie",
+  "research_question": "Does the LLM capability trajectory exhibit a cumulative symbolic threshold crossing consistent with emergent ability onset?",
+  "n_before": 60,
+  "n_after": 120,
+  "power_class_before": "underpowered",
+  "power_class_after": "borderline",
+  "segment_counts_before": [
+    {
+      "segmentation_point": 15,
+      "n_pre": 15,
+      "n_post": 45,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 21,
+      "n_pre": 21,
+      "n_post": 39,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 24,
+      "n_pre": 24,
+      "n_post": 36,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 27,
+      "n_pre": 27,
+      "n_post": 33,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 30,
+      "n_pre": 30,
+      "n_post": 30,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 33,
+      "n_pre": 33,
+      "n_post": 27,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 39,
+      "n_pre": 39,
+      "n_post": 21,
+      "adequate": false
+    }
+  ],
+  "segment_counts_after": [
+    {
+      "segmentation_point": 30,
+      "n_pre": 30,
+      "n_post": 90,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 42,
+      "n_pre": 42,
+      "n_post": 78,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 48,
+      "n_pre": 48,
+      "n_post": 72,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 54,
+      "n_pre": 54,
+      "n_post": 66,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 60,
+      "n_pre": 60,
+      "n_post": 60,
+      "adequate": true
+    },
+    {
+      "segmentation_point": 66,
+      "n_pre": 66,
+      "n_post": 54,
+      "adequate": false
+    },
+    {
+      "segmentation_point": 78,
+      "n_pre": 78,
+      "n_post": 42,
+      "adequate": false
+    }
+  ],
+  "precheck_before": {
+    "n_rows": 60,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 0,
+    "has_adequate_segment": false,
+    "best_segment": null
+  },
+  "precheck_after": {
+    "n_rows": 120,
+    "n_segmentation_candidates": 7,
+    "n_adequate_segments": 1,
+    "has_adequate_segment": true,
+    "best_segment": {
+      "segmentation_point": 60,
+      "n_pre": 60,
+      "n_post": 60,
+      "adequate": true
+    }
+  },
+  "homogeneity_checks": [
+    {
+      "column": "O",
+      "mean_before": 0.513333,
+      "mean_after": 0.513445,
+      "std_before": 0.337375,
+      "std_after": 0.334814,
+      "mean_shift": 0.000112,
+      "std_ratio": 0.992407,
+      "passed": true
+    },
+    {
+      "column": "R",
+      "mean_before": 0.565141,
+      "mean_after": 0.565689,
+      "std_before": 0.343639,
+      "std_after": 0.340963,
+      "mean_shift": 0.000547,
+      "std_ratio": 0.992211,
+      "passed": true
+    },
+    {
+      "column": "I",
+      "mean_before": 0.413155,
+      "mean_after": 0.415787,
+      "std_before": 0.441113,
+      "std_after": 0.416625,
+      "mean_shift": 0.002632,
+      "std_ratio": 0.944487,
+      "passed": true
+    },
+    {
+      "column": "demand",
+      "mean_before": 0.760592,
+      "mean_after": 0.762782,
+      "std_before": 0.267387,
+      "std_after": 0.261231,
+      "mean_shift": 0.00219,
+      "std_ratio": 0.976977,
+      "passed": true
+    },
+    {
+      "column": "S",
+      "mean_before": 0.4125,
+      "mean_after": 0.411765,
+      "std_before": 0.456036,
+      "std_after": 0.453464,
+      "mean_shift": 0.000735,
+      "std_ratio": 0.99436,
+      "passed": true
+    }
+  ],
+  "homogeneity_passed": true,
+  "upgrade_status": "upgrade_candidate",
+  "level_before": "C",
+  "level_after": "B_candidate",
+  "justification": "Power class: underpowered -> borderline. Adequate segments: 0 -> 1. Homogeneity checks passed. Upgrade to Level B candidate.",
+  "notes": ""
+}
