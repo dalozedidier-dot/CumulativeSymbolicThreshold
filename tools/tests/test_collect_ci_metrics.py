@@ -18,7 +18,6 @@ from tools.collect_ci_metrics import (
     main,
 )
 
-
 # ── _infer_sector ─────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("dataset_id,run_mode,expected", [
@@ -247,3 +246,102 @@ def test_main_no_runs_creates_empty_csvs(tmp_path, monkeypatch):
     with open(out_dir / "runs_index.csv") as f:
         rows = list(csv.DictReader(f))
     assert rows == []
+
+
+# ── run_meta.json discovery ───────────────────────────────────────────────────
+
+def test_main_finds_run_meta_at_run_root(tmp_path, monkeypatch):
+    """The collector workflow writes run_meta.json at `run_<id>/`, one level
+    above the artifact folder — it must be found there too, not only inside it."""
+    in_dir = tmp_path / "artifacts"
+    base = _make_artifact_tree(in_dir, github_run_id="88888")
+    (base / "run_88888" / "run_meta.json").write_text(
+        json.dumps({"workflowName": "Nightly Proof", "headSha": "cafebabe9999"})
+    )
+    out_dir = tmp_path / "metrics"
+
+    monkeypatch.setattr(
+        "sys.argv", ["collect_ci_metrics", "--in-dir", str(in_dir), "--out-dir", str(out_dir)]
+    )
+    main()
+
+    with open(out_dir / "runs_index.csv") as f:
+        rows = list(csv.DictReader(f))
+    assert rows[0]["workflow_source"] == "Nightly Proof"
+
+
+def test_main_run_meta_unknown_workflow_does_not_override(tmp_path, monkeypatch):
+    in_dir = tmp_path / "artifacts"
+    base = _make_artifact_tree(in_dir, github_run_id="66666")
+    (base / "run_66666" / "run_meta.json").write_text(json.dumps({"workflowName": "unknown"}))
+    out_dir = tmp_path / "metrics"
+
+    monkeypatch.setattr(
+        "sys.argv", ["collect_ci_metrics", "--in-dir", str(in_dir), "--out-dir", str(out_dir)]
+    )
+    main()
+
+    with open(out_dir / "runs_index.csv") as f:
+        rows = list(csv.DictReader(f))
+    assert rows[0]["workflow_source"] == "QCC Canonical Full"
+
+
+def test_main_commit_sha_falls_back_to_run_meta_head_sha(tmp_path, monkeypatch):
+    in_dir = tmp_path / "artifacts"
+    base = _make_artifact_tree(in_dir, github_run_id="44444")
+    summary_path = (
+        base / "run_44444" / "some_job" / "runs" / "20260101_120000" / "tables" / "summary.json"
+    )
+    summary = json.loads(summary_path.read_text())
+    del summary["commit_sha"]
+    summary_path.write_text(json.dumps(summary))
+    (base / "run_44444" / "run_meta.json").write_text(json.dumps({"headSha": "abc1234def"}))
+    out_dir = tmp_path / "metrics"
+
+    monkeypatch.setattr(
+        "sys.argv", ["collect_ci_metrics", "--in-dir", str(in_dir), "--out-dir", str(out_dir)]
+    )
+    main()
+
+    with open(out_dir / "runs_index.csv") as f:
+        rows = list(csv.DictReader(f))
+    assert rows[0]["commit_sha"] == "abc1234def"
+
+
+# ── Header guard ──────────────────────────────────────────────────────────────
+
+def test_main_refuses_to_append_under_a_foreign_header(tmp_path, monkeypatch):
+    """Appending rows under a header in a different order is what corrupted the
+    committed history; the collector must fail loudly instead."""
+    in_dir = tmp_path / "artifacts"
+    _make_artifact_tree(in_dir, github_run_id="33333")
+    out_dir = tmp_path / "metrics"
+    out_dir.mkdir()
+    (out_dir / "runs_index.csv").write_text(
+        ",".join(reversed(RUNS_INDEX_FIELDS)) + "\n", encoding="utf-8"
+    )
+
+    monkeypatch.setattr(
+        "sys.argv", ["collect_ci_metrics", "--in-dir", str(in_dir), "--out-dir", str(out_dir)]
+    )
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert "Header mismatch" in str(exc.value)
+
+
+# ── Schema drift guard ────────────────────────────────────────────────────────
+
+def test_canonical_schema_matches_repo_doctor():
+    """repo_doctor.py hard-fails runs_index.csv whose header is not exactly
+    CI_METRICS_FIELDS. The writer and the validator must not drift apart."""
+    from tools.repo_doctor import CI_METRICS_FIELDS
+
+    assert RUNS_INDEX_FIELDS == CI_METRICS_FIELDS
+
+
+def test_committed_ci_metrics_use_the_canonical_schema():
+    repo_root = Path(__file__).resolve().parents[2]
+    with open(repo_root / "ci_metrics" / "runs_index.csv", encoding="utf-8") as f:
+        assert csv.DictReader(f).fieldnames == RUNS_INDEX_FIELDS
+    with open(repo_root / "ci_metrics" / "history.csv", encoding="utf-8") as f:
+        assert csv.DictReader(f).fieldnames == HISTORY_FIELDS
