@@ -27,10 +27,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 
 # -----------------------------
 # Helpers (shared with robustness)

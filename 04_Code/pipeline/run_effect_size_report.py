@@ -25,9 +25,10 @@ _REPO = _HERE.parent.parent
 sys.path.insert(0, str(_REPO / "src"))
 sys.path.insert(0, str(_HERE))
 
+from ori_c_pipeline import ORICConfig, _detect_threshold, run_oric_from_observations  # noqa: E402
+
 from oric.effect_size import effect_size_report  # noqa: E402
 from oric.frozen_params import FROZEN_PARAMS  # noqa: E402
-from ori_c_pipeline import ORICConfig, run_oric_from_observations, _detect_threshold  # noqa: E402
 
 
 def _load(input_csv: Path) -> pd.DataFrame:

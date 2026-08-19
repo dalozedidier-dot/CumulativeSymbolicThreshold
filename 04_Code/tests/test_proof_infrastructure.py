@@ -30,9 +30,9 @@ if str(_SRC_DIR) not in sys.path:
 
 from oric.proof_manifest import (
     DualProofManifest,
+    _is_empty,
     build_dual_proof_manifest,
     build_final_status,
-    _is_empty,
 )
 
 
@@ -188,8 +188,8 @@ class TestFinalStatus:
 # ═══════════════════════════════════════════════════════════════════════════
 
 from oric.integrity import (
-    check_run_integrity,
     check_dual_proof_integrity,
+    check_run_integrity,
     integrity_gate,
 )
 
@@ -317,14 +317,14 @@ class TestIntegrityGate:
 # ═══════════════════════════════════════════════════════════════════════════
 
 from oric.placebo import (
+    ALL_STRATEGIES,
+    evaluate_placebo_battery,
+    generate_placebo_battery,
+    make_block_shuffle,
     make_cyclic_shift,
-    make_temporal_permute,
     make_phase_randomize,
     make_proxy_remap,
-    make_block_shuffle,
-    generate_placebo_battery,
-    evaluate_placebo_battery,
-    ALL_STRATEGIES,
+    make_temporal_permute,
 )
 
 
@@ -448,11 +448,11 @@ class TestPlaceboBatteryEvaluation:
 # ═══════════════════════════════════════════════════════════════════════════
 
 from oric.decidability import (
-    compute_decidability,
     AdaptedPrechecks,
-    check_precheck,
-    build_decidability_report,
     DecidabilityMetrics,
+    build_decidability_report,
+    check_precheck,
+    compute_decidability,
 )
 
 
@@ -579,8 +579,8 @@ class TestDecidabilityReport:
 # ═══════════════════════════════════════════════════════════════════════════
 
 from oric.proof_levels import (
-    classify_evidence_level,
     build_proof_level_summary,
+    classify_evidence_level,
 )
 
 

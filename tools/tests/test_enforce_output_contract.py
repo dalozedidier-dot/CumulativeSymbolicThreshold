@@ -8,7 +8,6 @@ import pytest
 
 from tools.enforce_output_contract import _find_latest_run_dir, enforce
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 

@@ -35,7 +35,6 @@ from oric.comparative_benchmark import (
     structural_break,
 )
 
-
 # ── PELT / AMOC change-point (dependency-free; no `ruptures` needed) ──────────
 
 def pelt_changepoint(series: np.ndarray, *, min_size: int = 10) -> dict:

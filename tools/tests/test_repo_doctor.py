@@ -5,14 +5,12 @@ import csv
 from pathlib import Path
 from unittest.mock import patch
 
-
 from tools.repo_doctor import (
-    check_contracts,
     check_ci_metrics,
+    check_contracts,
     check_docs,
     run_all,
 )
-
 
 # ── check_contracts ───────────────────────────────────────────────────────────
 

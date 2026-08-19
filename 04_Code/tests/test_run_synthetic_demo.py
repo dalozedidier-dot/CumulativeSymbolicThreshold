@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-
 from pipeline.run_synthetic_demo import Weights, compute_V, detect_threshold
 
 

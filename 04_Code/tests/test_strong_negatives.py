@@ -15,12 +15,12 @@ from scipy.stats import spearmanr
 
 from oric.strong_negatives import (
     FPR_MAX,
-    TPR_MIN,
     STOCHASTIC_NEGATIVES,
     STRUCTURED_NEGATIVES,
+    TPR_MIN,
     gen_strong_negative,
-    strong_negatives_catalogue,
     run_strong_negatives_suite,
+    strong_negatives_catalogue,
 )
 
 _CONTRACT = Path(__file__).resolve().parents[2] / "contracts" / "STRONG_NEGATIVES_CRITERIA.json"

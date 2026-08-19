@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from oric.effect_size import cohens_d, hedges_g, achieved_power, effect_size_report
+from oric.effect_size import achieved_power, cohens_d, effect_size_report, hedges_g
 
 
 def test_cohens_d_recovers_known_shift():

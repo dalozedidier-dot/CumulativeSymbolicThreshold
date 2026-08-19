@@ -6,8 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.stage_contracts import stage_contracts, _find_latest_run_dir
-
+from tools.stage_contracts import _find_latest_run_dir, stage_contracts
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

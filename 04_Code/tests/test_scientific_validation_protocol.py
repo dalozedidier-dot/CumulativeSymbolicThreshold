@@ -135,8 +135,8 @@ class TestDensification:
     """Test densification functions for underpowered pilots."""
 
     def test_densify_llm_scaling(self):
-        from pipeline.densify_underpowered_pilots import densify_llm_scaling
         import pandas as pd
+        from pipeline.densify_underpowered_pilots import densify_llm_scaling
 
         df = pd.DataFrame({
             "t": range(60),
@@ -155,8 +155,8 @@ class TestDensification:
             assert result[col].max() <= 1
 
     def test_densify_pantheon_sn(self):
-        from pipeline.densify_underpowered_pilots import densify_pantheon_sn
         import pandas as pd
+        from pipeline.densify_underpowered_pilots import densify_pantheon_sn
 
         df = pd.DataFrame({
             "t": range(100),
@@ -172,8 +172,8 @@ class TestDensification:
         assert "z" in result.columns
 
     def test_densify_pbdb_marine(self):
-        from pipeline.densify_underpowered_pilots import densify_pbdb_marine
         import pandas as pd
+        from pipeline.densify_underpowered_pilots import densify_pbdb_marine
 
         df = pd.DataFrame({
             "t": range(100),
@@ -189,8 +189,8 @@ class TestDensification:
         assert "Ma" in result.columns
 
     def test_no_densification_if_adequate(self):
-        from pipeline.densify_underpowered_pilots import densify_llm_scaling
         import pandas as pd
+        from pipeline.densify_underpowered_pilots import densify_llm_scaling
 
         df = pd.DataFrame({
             "t": range(200),
@@ -202,8 +202,8 @@ class TestDensification:
         assert len(result) == 200  # Already exceeds target
 
     def test_segmentation_analysis(self):
-        from pipeline.densify_underpowered_pilots import test_segmentation
         import pandas as pd
+        from pipeline.densify_underpowered_pilots import test_segmentation
 
         df = pd.DataFrame({
             "O": np.concatenate([np.ones(70) * 0.3, np.ones(70) * 0.8]),

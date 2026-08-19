@@ -41,7 +41,7 @@ from fetch_utils import save_real_csv
 
 
 def _run_bio(data_root: Path, country: str) -> list[tuple[str, str, str]]:
-    from fetch_real_data import fetch_epidemic, fetch_ecology, _write_proxy_spec   # bio module
+    from fetch_real_data import _write_proxy_spec, fetch_ecology, fetch_epidemic  # bio module
 
     results = []
     for pilot, fn in [("epidemic", lambda o: fetch_epidemic(o, country=country)),
@@ -61,7 +61,7 @@ def _run_bio(data_root: Path, country: str) -> list[tuple[str, str, str]]:
 
 
 def _run_cosmo(data_root: Path, start_year: int) -> list[tuple[str, str, str]]:
-    from fetch_real_data import fetch_solar, _write_proxy_spec  # cosmo module
+    from fetch_real_data import _write_proxy_spec, fetch_solar  # cosmo module
 
     results = []
     out = data_root / "sector_cosmo" / "real" / "pilot_solar"
@@ -79,7 +79,7 @@ def _run_cosmo(data_root: Path, start_year: int) -> list[tuple[str, str, str]]:
 
 
 def _run_infra(data_root: Path, start: str) -> list[tuple[str, str, str]]:
-    from fetch_real_data import fetch_finance, _write_proxy_spec  # infra module
+    from fetch_real_data import _write_proxy_spec, fetch_finance  # infra module
 
     results = []
     out = data_root / "sector_infra" / "real" / "pilot_finance"

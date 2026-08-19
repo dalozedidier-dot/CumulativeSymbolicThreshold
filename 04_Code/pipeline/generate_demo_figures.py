@@ -41,14 +41,13 @@ if str(_CODE) not in sys.path:
 try:
     import matplotlib
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
+    import matplotlib.pyplot as plt
     HAS_MPL = True
 except ImportError:
     HAS_MPL = False
 
 from pipeline.ori_c_pipeline import ORICConfig, run_oric
-
 
 # ── Figure helpers ─────────────────────────────────────────────────────────────
 

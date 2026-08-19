@@ -33,10 +33,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-
 
 ORDERED_TESTS = [
     ("T1", "T1_noyau_demand_shock"),

@@ -55,9 +55,8 @@ _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
+from oric.frozen_params import FROZEN_PARAMS, FrozenValidationParams
 from pipeline.ori_c_pipeline import ORICConfig, run_oric
-from oric.frozen_params import FrozenValidationParams, FROZEN_PARAMS
-
 
 # ── Condition generators ──────────────────────────────────────────────────────
 
@@ -716,7 +715,7 @@ def run_validation_protocol(
         }
 
     # ── Decidability KPIs ──────────────────────────────────────────────
-    from oric.decidability import compute_decidability, build_decidability_report
+    from oric.decidability import build_decidability_report, compute_decidability
 
     decidability_by_condition = {}
     for cond in ("test", "stable", "placebo"):

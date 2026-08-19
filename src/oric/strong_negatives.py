@@ -47,7 +47,7 @@ from typing import Callable, Literal
 import numpy as np
 import pandas as pd
 
-from oric.accumulation_controls import NON_BIFURCATING, BIFURCATING, gen_accumulation
+from oric.accumulation_controls import BIFURCATING, NON_BIFURCATING, gen_accumulation
 
 # Frozen acceptance thresholds (mirrored in the JSON contract).
 FPR_MAX: float = 0.10        # strong negatives may fire on at most 10 % of the battery

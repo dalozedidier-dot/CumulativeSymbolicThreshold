@@ -62,8 +62,8 @@ sys.path.insert(0, str(_REPO / "src"))
 sys.path.insert(0, str(_HERE))
 
 from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
-from oric.accumulation_controls import gen_accumulation, NON_BIFURCATING  # noqa: E402
 
+from oric.accumulation_controls import NON_BIFURCATING, gen_accumulation  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Frozen criteria loader
@@ -732,7 +732,7 @@ def _compute_baselines(datasets: list[dict], labels: np.ndarray) -> dict[str, fl
     baselines["cusum"] = round(float(b3), 4)
 
     # B4: simple stats (mean, std, skew, kurtosis)
-    from scipy.stats import skew, kurtosis
+    from scipy.stats import kurtosis, skew
     b4_features = []
     for d in datasets:
         O = d["df"]["O"].to_numpy()

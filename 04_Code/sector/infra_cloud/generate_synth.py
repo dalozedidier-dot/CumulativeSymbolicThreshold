@@ -16,8 +16,8 @@ This keeps CI deterministic and strictly real-data based.
 
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 
 def synth_generator(outdir: Path, seed: int, pilot_id: str) -> None:

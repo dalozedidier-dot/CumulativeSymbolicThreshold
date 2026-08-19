@@ -20,7 +20,7 @@ Verdict tokens (decision is effect-vs-SESOI + power, never p):
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 
 import numpy as np
 

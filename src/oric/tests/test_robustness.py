@@ -18,16 +18,14 @@ import pandas as pd
 import pytest
 
 from oric.decision import hierarchical_verdict
-from oric.ori_core import compute_cap_projection, compute_viability
-from oric.symbolic import compute_stock_S, compute_order_C
-from oric.symbolic import detect_s_star_piecewise
-from oric.randomization import RandomizationEngine, Condition
-from oric.placebo import generate_placebo
-from oric.ori_core_v2 import ModelV2Config, run_variant_on_dataframe
-from oric.prereg import PreregSpec
-from oric.proxy_spec import ProxySpec, ColumnSpec
 from oric.frozen_params import FROZEN_PARAMS
-
+from oric.ori_core import compute_cap_projection, compute_viability
+from oric.ori_core_v2 import ModelV2Config, run_variant_on_dataframe
+from oric.placebo import generate_placebo
+from oric.prereg import PreregSpec
+from oric.proxy_spec import ColumnSpec, ProxySpec
+from oric.randomization import Condition, RandomizationEngine
+from oric.symbolic import compute_order_C, compute_stock_S, detect_s_star_piecewise
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 

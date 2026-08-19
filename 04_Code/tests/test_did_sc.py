@@ -21,12 +21,11 @@ if str(_CODE) not in sys.path:
     sys.path.insert(0, str(_CODE))
 
 from pipeline.run_did_synthetic_control import (
+    _bootstrap_did,
+    _did_estimate,
     _parallel_trends_test,
     _synthetic_control,
-    _did_estimate,
-    _bootstrap_did,
 )
-
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

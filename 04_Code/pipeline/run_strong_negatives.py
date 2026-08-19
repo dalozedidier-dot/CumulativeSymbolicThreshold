@@ -38,6 +38,8 @@ _REPO = _HERE.parent.parent
 sys.path.insert(0, str(_REPO / "src"))
 sys.path.insert(0, str(_HERE))
 
+from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
+
 from oric.strong_negatives import (  # noqa: E402
     FPR_MAX,
     TPR_MIN,
@@ -45,7 +47,6 @@ from oric.strong_negatives import (  # noqa: E402
     strong_negatives_catalogue,
 )
 from oric.surrogates import threshold_crossing_statistic  # noqa: E402
-from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
 
 _CONTRACT = _REPO / "contracts" / "STRONG_NEGATIVES_CRITERIA.json"
 

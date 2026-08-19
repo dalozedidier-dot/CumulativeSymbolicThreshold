@@ -49,9 +49,9 @@ if str(_CODE_DIR) not in sys.path:
 import argparse
 import json
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy import stats
 
 from pipeline.ori_c_pipeline import ORICConfig, run_oric

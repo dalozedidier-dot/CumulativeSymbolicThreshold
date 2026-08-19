@@ -22,15 +22,14 @@ RESULTS = ROOT / "05_Results"
 # ── Framework imports ──────────────────────────────────────────────────────
 
 from oric.proof_levels import (
-    classify_evidence_level,
-    classify_power,
-    build_proof_level_summary,
-    DatasetEvidence,
+    MIN_POINTS_PER_SEGMENT,
     MIN_ROWS_CANONICAL,
     MIN_ROWS_CONCLUSIVE,
-    MIN_POINTS_PER_SEGMENT,
+    DatasetEvidence,
+    build_proof_level_summary,
+    classify_evidence_level,
+    classify_power,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. Power class tests

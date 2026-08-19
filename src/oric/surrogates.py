@@ -40,12 +40,11 @@ to within the convergence tolerance.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Callable, Sequence
 
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
-
 
 # ---------------------------------------------------------------------------
 # IAAFT

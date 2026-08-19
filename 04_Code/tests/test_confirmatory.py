@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
 
 from oric.confirmatory import run_confirmatory_suite
-from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
 
 
 def _trend_df(n=140, seed=0):

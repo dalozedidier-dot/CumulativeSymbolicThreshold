@@ -21,9 +21,8 @@ _HERE      = Path(__file__).resolve().parent
 _REPO_ROOT = _HERE.parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "04_Code" / "sector" / "shared"))
 
-from sector_panel_runner import SectorConfig, make_parser, run_sector_panel
 from generate_synth import generate as psych_generate
-
+from sector_panel_runner import SectorConfig, make_parser, run_sector_panel
 
 SECTOR_CONFIG = SectorConfig(
     sector_id     = "psych",

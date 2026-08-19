@@ -26,17 +26,17 @@ import argparse
 import json
 from typing import Dict, List
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from pipeline.run_synthetic_demo import (
     Weights,
+    compute_C_simplified,
     compute_capacity,
+    compute_S,
     compute_sigma,
     compute_V,
-    compute_S,
-    compute_C_simplified,
     detect_threshold,
 )
 

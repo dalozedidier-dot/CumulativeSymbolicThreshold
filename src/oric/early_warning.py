@@ -37,7 +37,6 @@ import numpy as np
 from scipy import stats
 from scipy.ndimage import gaussian_filter1d
 
-
 # ---------------------------------------------------------------------------
 # Detrending and rolling indicators
 # ---------------------------------------------------------------------------

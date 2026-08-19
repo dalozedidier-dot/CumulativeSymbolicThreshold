@@ -16,7 +16,6 @@ import json
 import sys
 from pathlib import Path
 
-
 REQUIRED_RELATIVE = [
     "tables/summary.json",
     "tables/inventory.csv",

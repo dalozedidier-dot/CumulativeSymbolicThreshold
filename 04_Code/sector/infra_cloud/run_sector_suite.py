@@ -19,10 +19,8 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
 _SHARED_DIR = _REPO_ROOT / "04_Code" / "sector" / "shared"
 sys.path.insert(0, str(_SHARED_DIR))
 
-from sector_panel_runner import SectorConfig, make_parser, run_sector_panel  # type: ignore
-
 from generate_synth import synth_generator  # copies real pilot files when --real-csv is omitted
-
+from sector_panel_runner import SectorConfig, make_parser, run_sector_panel  # type: ignore
 
 SECTOR_CONFIG = SectorConfig(
     sector_id="infra_cloud",

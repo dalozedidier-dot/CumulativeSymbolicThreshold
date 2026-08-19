@@ -4,9 +4,9 @@ Usage :
     cd 06_Manuscript/figures
     python generate_all.py
 """
+import os
 import subprocess
 import sys
-import os
 
 SCRIPTS = [
     "fig1_pipeline_oric.py",

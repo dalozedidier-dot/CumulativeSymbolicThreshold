@@ -59,7 +59,7 @@ def _ensure_csv_with_header(p: Path, fields: List[str]) -> None:
     _ensure_dir(p)
     if not p.exists():
         with p.open("w", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=fields)
+            w = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
             w.writeheader()
         return
     # If exists, enforce header matches exactly.
@@ -189,6 +189,23 @@ def _existing_keys(path: Path) -> set:
             keys.add((row.get("github_run_id",""), row.get("run_dir_name",""), row.get("dataset_id","")))
     return keys
 
+def _find_run_meta(summary_path: Path) -> Dict:
+    """Locate and read run_meta.json for the run owning `summary_path`.
+
+    The two collector modes produce different artifact depths: the workflow_run
+    mode writes `_collected_artifacts/run_<id>/run_meta.json`, while a
+    `gh run download` that preserves the artifact folder puts the summary one
+    level deeper. Walk up from the summary to the `run_<id>` root instead of
+    hard-coding a parent index, so both layouts resolve.
+    """
+    for parent in summary_path.parents:
+        candidate = parent / "run_meta.json"
+        if candidate.is_file():
+            return _read_json(candidate) or {}
+        if parent.name.startswith("run_") and parent.name[4:].isdigit():
+            break
+    return {}
+
 def _find_summary_paths(in_dir: Path) -> List[Path]:
     hits=[]
     for p in in_dir.rglob("summary.json"):
@@ -246,11 +263,15 @@ def main() -> None:
         csha=_criteria_sha256(stability)
         cmt=_commit_sha(summary)
         wsrc=_workflow_source(summary)
-        # Override workflow_source from run_meta.json if available
-        run_meta_path = sp.parents[3] / "run_meta.json"
-        run_meta = _read_json(run_meta_path) or {}
-        if run_meta.get("workflowName"):
-            wsrc = run_meta["workflowName"]
+        # run_meta.json is written by the collector workflow and is the only
+        # place the source workflow name and head SHA are guaranteed to exist —
+        # summary.json does not always carry them.
+        run_meta = _find_run_meta(sp)
+        meta_wf = (run_meta.get("workflowName") or "").strip()
+        if meta_wf and meta_wf.lower() != "unknown":
+            wsrc = meta_wf
+        if not cmt:
+            cmt = (run_meta.get("headSha") or "").strip()
 
         key=(gid, rname, did)
         if args.append and key in existing:
@@ -274,12 +295,12 @@ def main() -> None:
 
     if idx_rows:
         with runs_index.open("a", encoding="utf-8", newline="") as f:
-            w=csv.DictWriter(f, fieldnames=RUNS_INDEX_FIELDS)
+            w=csv.DictWriter(f, fieldnames=RUNS_INDEX_FIELDS, lineterminator="\n")
             for r in idx_rows:
                 w.writerow({k: r.get(k,"") for k in RUNS_INDEX_FIELDS})
 
         with history.open("a", encoding="utf-8", newline="") as f:
-            w=csv.DictWriter(f, fieldnames=HISTORY_FIELDS)
+            w=csv.DictWriter(f, fieldnames=HISTORY_FIELDS, lineterminator="\n")
             for r in hist_rows:
                 w.writerow({k: r.get(k,"") for k in HISTORY_FIELDS})
 

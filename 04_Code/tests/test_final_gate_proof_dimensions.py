@@ -17,10 +17,10 @@ if str(_SRC_DIR) not in sys.path:
 
 from oric.proof_manifest import (
     DualProofManifest,
-    build_final_status,
-    read_proof_dimensions,
     FinalGateError,
     _extract_proof_dimensions,
+    build_final_status,
+    read_proof_dimensions,
 )
 
 

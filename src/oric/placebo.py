@@ -26,7 +26,6 @@ from typing import Callable, Literal
 import numpy as np
 import pandas as pd
 
-
 PlaceboStrategy = Literal[
     "cyclic_shift",
     "temporal_permute",

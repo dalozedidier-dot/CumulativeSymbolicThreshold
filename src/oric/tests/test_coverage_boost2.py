@@ -11,7 +11,6 @@ import pandas as pd
 import pytest
 
 # ─── ci_maturity ─────────────────────────────────────────────────────────────
-
 from oric.ci_maturity import CIMaturityTracker, CIRunRecord, MaturityReport
 
 

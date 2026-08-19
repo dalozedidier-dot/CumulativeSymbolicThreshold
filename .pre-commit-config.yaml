@@ -8,7 +8,9 @@
 repos:
   # ── Ruff: fast Python linter + formatter (replaces flake8 + isort) ──────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    # Keep in the same family CI resolves under constraints.txt (ruff>=0.4,<1),
+    # otherwise the hook and the CI gate can disagree about the rule surface.
+    rev: v0.16.3
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

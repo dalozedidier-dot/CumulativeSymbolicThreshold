@@ -16,10 +16,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 from bcm_plasticity import BCMConfig, build_input_schedule, simulate_bcm
 
 

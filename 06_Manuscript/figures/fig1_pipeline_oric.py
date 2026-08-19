@@ -4,9 +4,10 @@ Architecture : O, R, I → Cap → Σ → C → verdict
 Output : fig1_pipeline_oric.png
 """
 import matplotlib
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 # ── Style ──────────────────────────────────────────────────────────────
 BG       = "#0d0f12"

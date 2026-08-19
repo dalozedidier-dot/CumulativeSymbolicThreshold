@@ -5,15 +5,15 @@ import numpy as np
 from scipy.stats import spearmanr
 
 from oric.accumulation_controls import (
-    NON_BIFURCATING,
     BIFURCATING,
-    gen_accumulation,
+    NON_BIFURCATING,
     accumulation_control_catalogue,
-    run_accumulation_control_suite,
-    logistic_growth,
-    gompertz,
     exponential_saturation,
+    gen_accumulation,
+    gompertz,
     linear_ramp,
+    logistic_growth,
+    run_accumulation_control_suite,
 )
 
 

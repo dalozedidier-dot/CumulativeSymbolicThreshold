@@ -34,9 +34,9 @@ import math
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 
 def _ensure_dir(p: Path) -> None:

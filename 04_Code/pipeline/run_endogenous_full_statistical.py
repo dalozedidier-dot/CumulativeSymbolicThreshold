@@ -47,7 +47,11 @@ sys.path.insert(0, str(_REPO / "src"))
 from oric.early_warning import composite_csd_statistic, csd_surrogate_test  # noqa: E402
 from oric.effect_size import effect_size_report  # noqa: E402
 from oric.endogenous import (  # noqa: E402
-    EndogenousConfig, _fold_setup, bistable_window, equilibria, hysteresis_sweep,
+    EndogenousConfig,
+    _fold_setup,
+    bistable_window,
+    equilibria,
+    hysteresis_sweep,
     simulate,
 )
 from oric.frozen_params import FROZEN_PARAMS  # noqa: E402

@@ -3,17 +3,17 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
 
 from oric.multiverse import (
-    specification_grid,
-    apply_specification,
-    run_multiverse,
-    Specification,
+    DEMAND_RATIO_CHOICES,
     NORMALIZE_CHOICES,
     SMOOTH_CHOICES,
-    DEMAND_RATIO_CHOICES,
+    Specification,
+    apply_specification,
+    run_multiverse,
+    specification_grid,
 )
-from pipeline.ori_c_pipeline import ORICConfig, run_oric_from_observations
 
 
 def _df(n=160, kind="trend", seed=0):

@@ -30,7 +30,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 # ── CO₂ synthetic generator ───────────────────────────────────────────────────
 
 def _generate_co2(n: int, seed: int) -> pd.DataFrame:

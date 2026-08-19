@@ -29,12 +29,11 @@ import argparse
 import json
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from scipy.stats import linregress
-
 from scipy import stats as scipy_stats
+from scipy.stats import linregress
 
 from pipeline.ori_c_pipeline import ORICConfig, run_oric
 

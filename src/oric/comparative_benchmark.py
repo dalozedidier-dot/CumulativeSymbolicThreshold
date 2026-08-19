@@ -14,14 +14,13 @@ The goal is NOT to "win everywhere" but to situate ORI-C:
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 from scipy import stats
-
 
 # ── Method results ─────────────────────────────────────────────────────────
 

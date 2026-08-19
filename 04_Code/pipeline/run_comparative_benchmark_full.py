@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,7 +32,11 @@ if str(_CODE) not in sys.path:
     sys.path.insert(0, str(_CODE))
 
 from oric.comparative_benchmark import (  # noqa: E402
-    MethodResult, cusum_changepoint, structural_break, anomaly_zscore, early_warning_signal,
+    MethodResult,
+    anomaly_zscore,
+    cusum_changepoint,
+    early_warning_signal,
+    structural_break,
 )
 
 SEED = 8000

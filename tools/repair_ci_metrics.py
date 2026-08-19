@@ -27,8 +27,9 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 RUNS_INDEX_FIELDS = [
     "github_run_id","run_dir_name","dataset_id","sector","run_mode",
@@ -42,16 +43,53 @@ LEGACY_RUNS_SCHEMA_A = ["github_run_id","run_dir_name","dataset_id","sector","co
 
 LEGACY_HISTORY_SCHEMA_A = ["timestamp","github_run_id","run_dir_name","dataset_id","sector","commit_sha","evidence_strength","all_pass","stability_criteria_sha256","run_mode","workflow"]
 
+# LEGACY_RUNS_SCHEMA_A has exactly as many columns as RUNS_INDEX_FIELDS, so row
+# length alone cannot tell the two apart — a legacy row would be silently
+# accepted as canonical and its columns left shifted. Disambiguate on content:
+# the two schemas disagree about what lives in column 4 (`run_mode` canonically,
+# `commit_sha` in the legacy layout) and column 7 (`manifest_sha256` canonically,
+# `run_mode` in the legacy layout).
+_RUN_MODE_TOKENS = {
+    "smoke", "smoke_ci", "full", "full_statistical", "scan_only",
+    "diagnostic", "pilot", "release", "maintenance", "integrity", "unknown",
+}
+_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
+
+
+def looks_like_legacy_runs_row(row: List[str]) -> bool:
+    """True when an 11-column runs_index row is in LEGACY_RUNS_SCHEMA_A order.
+
+    Canonical rows carry a run-mode token in column 4 and never a commit SHA;
+    legacy rows carry the commit SHA there and push the run mode to column 7.
+    """
+    if len(row) != len(LEGACY_RUNS_SCHEMA_A):
+        return False
+    col4 = row[4].strip().lower()
+    col7 = row[7].strip().lower()
+    if col4 in _RUN_MODE_TOKENS:
+        return False                      # canonical: run_mode is where it belongs
+    return bool(_SHA_RE.fullmatch(col4)) and col7 in _RUN_MODE_TOKENS
+
+
 def is_header_row(row: List[str]) -> bool:
     if not row:
         return False
     joined=",".join([c.strip() for c in row])
     return joined == ",".join(RUNS_INDEX_FIELDS) or joined == ",".join(HISTORY_FIELDS) or "github_run_id" in row and "run_dir_name" in row and "dataset_id" in row and ("timestamp" in row)
 
+# Legacy column names that were renamed on the way to the canonical schema.
+# Without these the value is dropped on remap (the old `workflow` column held
+# the source workflow name, which is exactly what `workflow_source` records).
+_FIELD_ALIASES = {"workflow": "workflow_source"}
+
+
 def remap_row(row: List[str], schema: List[str], target: List[str]) -> Dict[str,str]:
     m={k:"" for k in target}
     for i,k in enumerate(schema):
-        if i < len(row) and k in m:
+        if i >= len(row):
+            continue
+        k = _FIELD_ALIASES.get(k, k)
+        if k in m:
             m[k]=row[i].strip()
     return m
 
@@ -63,7 +101,7 @@ def load_rows(path: Path) -> List[List[str]]:
 def write_csv(path: Path, fields: List[str], rows: List[Dict[str,str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
-        w=csv.DictWriter(f, fieldnames=fields)
+        w=csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
         w.writeheader()
         for row in rows:
             w.writerow({k: row.get(k,"") for k in fields})
@@ -92,7 +130,7 @@ def main() -> None:
         if is_header_row(row):
             report["runs_index"]["dropped_headers"] += 1
             continue
-        if len(row)==len(RUNS_INDEX_FIELDS):
+        if len(row)==len(RUNS_INDEX_FIELDS) and not looks_like_legacy_runs_row(row):
             m=remap_row(row, RUNS_INDEX_FIELDS, RUNS_INDEX_FIELDS)
             repaired.append(m)
             report["runs_index"]["kept"] += 1

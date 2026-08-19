@@ -20,10 +20,9 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
-
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 

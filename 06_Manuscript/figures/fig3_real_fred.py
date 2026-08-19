@@ -4,11 +4,13 @@ Affiche : pré/post M2 break 2020, C(t), ΔC(t), décision T9
 Output : fig3_real_fred.png
 """
 import matplotlib
+
 matplotlib.use("Agg")
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import os
 
 # ── Style ─────────────────────────────────────────────────────────────
 BG    = "#0d0f12"

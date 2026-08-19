@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-dir", required=True)

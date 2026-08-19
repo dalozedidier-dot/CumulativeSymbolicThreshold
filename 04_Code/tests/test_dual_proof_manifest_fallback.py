@@ -16,8 +16,8 @@ if str(_SRC_DIR) not in sys.path:
 
 from oric.proof_manifest import (
     DualProofManifest,
-    build_dual_proof_manifest,
     _apply_synthetic_fallback,
+    build_dual_proof_manifest,
 )
 
 

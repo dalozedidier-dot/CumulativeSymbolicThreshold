@@ -460,8 +460,7 @@ def run_brisbane_backend(
     """
     try:
         from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
-        from qiskit_ibm_runtime.options import SamplerOptions
-        from qiskit_ibm_runtime.options import DynamicalDecouplingOptions
+        from qiskit_ibm_runtime.options import DynamicalDecouplingOptions, SamplerOptions
     except ImportError:
         print("ERROR: qiskit-ibm-runtime not installed. Run: pip install qiskit qiskit-ibm-runtime", file=sys.stderr)
         raise

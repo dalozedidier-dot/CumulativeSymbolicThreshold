@@ -5,7 +5,6 @@ import hashlib
 import json
 from pathlib import Path
 
-
 from tools.verify_audit_invariants import (
     check_contracts,
     check_manifest,
@@ -13,7 +12,6 @@ from tools.verify_audit_invariants import (
     check_stability_reflects_contract,
     verify,
 )
-
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

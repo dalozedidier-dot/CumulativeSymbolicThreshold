@@ -20,15 +20,15 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 from oric.placebo import (
+    _STRATEGY_META,
+    ALL_STRATEGIES,
+    evaluate_placebo_battery,
+    generate_placebo_battery,
+    make_block_shuffle,
     make_cyclic_shift,
-    make_temporal_permute,
     make_phase_randomize,
     make_proxy_remap,
-    make_block_shuffle,
-    generate_placebo_battery,
-    evaluate_placebo_battery,
-    ALL_STRATEGIES,
-    _STRATEGY_META,
+    make_temporal_permute,
 )
 
 

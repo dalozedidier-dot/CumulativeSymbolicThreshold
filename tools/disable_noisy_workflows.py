@@ -15,9 +15,10 @@ This script:
 It is conservative: it keeps a small "core" set (canonical + collector + qcc core).
 """
 from __future__ import annotations
+
 import argparse
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 DEFAULT_KEEP = {
     "ci.yml",

@@ -35,8 +35,9 @@ _REPO = _HERE.parent.parent
 sys.path.insert(0, str(_REPO / "src"))
 sys.path.insert(0, str(_HERE))
 
-from oric.multiverse import run_multiverse, specification_grid  # noqa: E402
 from ori_c_pipeline import ORICConfig, run_oric_from_observations  # noqa: E402
+
+from oric.multiverse import run_multiverse, specification_grid  # noqa: E402
 
 
 def _sha256(path: Path) -> str:
