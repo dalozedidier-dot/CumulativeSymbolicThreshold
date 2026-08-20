@@ -1,0 +1,75 @@
+name: Evidence — Replay & Drift Check
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Replays every stored evidence artifact under its FROZEN parameters and diffs
+# the result against the committed copy (tools/regen_evidence.py --check).
+#
+# Why this is separate from the anti-drift unit tests:
+#   04_Code/tests/test_stored_artifacts_match_contracts.py is a *static* gate —
+#   it proves an artifact still matches its own manifest and contract. It cannot
+#   prove the artifact still matches what the code PRODUCES. When a runner
+#   changes, a stored artifact silently stops describing the current system.
+#   That happened twice (rung 3's obsolete joint_rule, Test A's pre-localized-gate
+#   run) and was only caught by replaying the runs by hand.
+#
+# Every run is seeded and deterministic, so any diff here is real drift.
+# Runtime: ~7 min for all eight.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  # Catch drift at the moment a runner, the core library or an artifact changes.
+  pull_request:
+    paths:
+      - "src/oric/**"
+      - "04_Code/pipeline/run_endogenous_full_statistical.py"
+      - "04_Code/pipeline/run_accumulation_control.py"
+      - "04_Code/pipeline/run_surrogate_null.py"
+      - "04_Code/pipeline/run_confirmatory_suite.py"
+      - "04_Code/pipeline/run_registered_block.py"
+      - "04_Code/pipeline/run_strong_negatives.py"
+      - "04_Code/pipeline/run_oos_prediction.py"
+      - "05_Results/**"
+      - "contracts/**"
+      - "tools/regen_evidence.py"
+      - ".github/workflows/evidence_regen.yml"
+  schedule:
+    - cron: "0 4 * * 1"   # Mondays 04:00 UTC — catch drift from merged changes
+  workflow_dispatch:
+
+concurrency:
+  group: evidence-regen-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_CONSTRAINT: ${{ github.workspace }}/constraints.txt
+
+jobs:
+  replay:
+    name: Replay evidence surface and diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          python -m pip install -e ".[dev]"
+
+      - name: Log environment
+        # Results-affecting versions. constraints.txt caps the families these
+        # artifacts were validated on; record what actually resolved.
+        run: |
+          python -V
+          python -c "import numpy, scipy, pandas, statsmodels; print('numpy', numpy.__version__); print('scipy', scipy.__version__); print('pandas', pandas.__version__); print('statsmodels', statsmodels.__version__)"
+
+      - name: Replay every evidence run and diff against the committed artifacts
+        run: python -m tools.regen_evidence --check

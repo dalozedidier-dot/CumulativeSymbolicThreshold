@@ -1,7 +1,7 @@
-name,kind,label,detector_fired,crossing_rate,max_run,surrogate_p_rate,surrogate_p_maxrun,surrogate_significant
-acc_logistic_growth,logistic_growth,0,True,0.377273,79,0.447761,0.094527,False
-acc_gompertz,gompertz,0,True,0.354545,67,0.39801,0.228856,False
-acc_exponential_saturation,exponential_saturation,0,True,0.418182,88,0.452736,0.099502,False
-acc_linear_ramp,linear_ramp,0,True,0.054545,3,0.427861,0.542289,False
-bif_sharp_regime_switch,sharp_regime_switch,1,True,0.472727,103,0.393035,0.189055,False
-bif_delayed_bifurcation,delayed_bifurcation,1,True,0.322727,70,0.517413,0.169154,False
+name,kind,label,detector_fired,raw_detector_fired,crossing_rate,max_run,acceleration_concentration,acceleration_peak_fraction,surrogate_p_rate,surrogate_p_maxrun,surrogate_significant
+acc_logistic_growth,logistic_growth,0,False,True,0.377273,79,0.173296,0.067561,0.447761,0.094527,False
+acc_gompertz,gompertz,0,False,True,0.354545,67,0.194896,0.06885,0.39801,0.228856,False
+acc_exponential_saturation,exponential_saturation,0,False,True,0.418182,88,0.207525,0.100669,0.452736,0.099502,False
+acc_linear_ramp,linear_ramp,0,False,True,0.054545,3,0.283331,0.076176,0.427861,0.542289,False
+bif_sharp_regime_switch,sharp_regime_switch,1,True,True,0.472727,103,0.899796,0.182599,0.393035,0.189055,False
+bif_delayed_bifurcation,delayed_bifurcation,1,True,True,0.322727,70,0.923435,0.274003,0.517413,0.169154,False

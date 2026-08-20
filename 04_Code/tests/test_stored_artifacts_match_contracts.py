@@ -13,6 +13,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 _REPO = Path(__file__).resolve().parents[2]
 _RESULTS = _REPO / "05_Results"
 _CONTRACTS = _REPO / "contracts"
@@ -201,3 +203,127 @@ def test_endogenous_joint_rule_matches_the_conjuncts_actually_applied():
             "when the power gate is unmet the rule must state explicitly that "
             "power is reported but not imposed"
         )
+
+
+# ── Test A — accumulation control (localized-transition gate) ────────────────
+#
+# Same blind spot as rung 3: cited by EVIDENTIARY_STATUS.md, never checked here.
+# The committed copy had drifted to a pre-localized-gate run reporting
+# accumulation_fpr = 1.0 / DOES_NOT_SEPARATE, directly contradicting the README's
+# `accumulation_fpr = 0.0`. These checks pin the artifact to the gate the docs
+# actually claim, and keep the legacy figure visible as raw_accumulation_fpr.
+
+_ACC = _RESULTS / "falsification" / "accumulation_control"
+
+
+def test_accumulation_control_artifact_exists():
+    assert (_ACC / "tables" / "accumulation_control.json").exists(), (
+        "EVIDENTIARY_STATUS.md cites 05_Results/falsification/accumulation_control/ "
+        "as the Test A evidence; the artifact must be committed"
+    )
+
+
+def test_accumulation_control_manifest_integrity():
+    manifest = _load(_ACC / "manifest.json")
+    assert manifest["json_sha256"] == _sha256(_ACC / "tables" / "accumulation_control.json"), (
+        "artifact edited after manifest"
+    )
+    assert (_ACC / "verdict.txt").read_text().strip() == (
+        "SEPARATES" if manifest["separates"] else "DOES_NOT_SEPARATE"
+    )
+
+
+def test_accumulation_control_reports_the_localized_gate():
+    """The artifact must be a localized-gate run, not a legacy bare-ΔC one.
+
+    `raw_accumulation_fpr` is the tell: the older runner did not emit it, and its
+    `detector_fired` was the bare sustained-ΔC hit that fires on every smooth
+    accumulation.
+    """
+    result = _load(_ACC / "tables" / "accumulation_control.json")
+    assert "raw_accumulation_fpr" in result, (
+        "stored artifact predates the localized-transition gate — regenerate with "
+        "04_Code/pipeline/run_accumulation_control.py under its frozen params"
+    )
+    assert result["accumulation_fpr"] <= result["accumulation_fpr_max"]
+    assert result["separates"] is True
+    assert result["refutes_current_form"] is False
+
+
+def test_accumulation_control_keeps_the_legacy_detector_visible():
+    """The bare-ΔC leak is the honest counterpart of the gate's success."""
+    result = _load(_ACC / "tables" / "accumulation_control.json")
+    assert result["raw_accumulation_fpr"] > result["accumulation_fpr"], (
+        "the legacy detector leaked on smooth accumulations; if that is no longer "
+        "recorded the audit trail behind the gate's improvement is gone"
+    )
+
+
+def test_accumulation_control_ran_at_frozen_params():
+    manifest = _load(_ACC / "manifest.json")
+    params = _load(_ACC / "tables" / "accumulation_control.json")["params"]
+    assert manifest["fast_mode"] is False, "a --fast smoke run is not evidence"
+    assert params["seed"] == manifest["seed"]
+    assert params["n"] == manifest["n_steps"]
+    assert params["n_surrogates"] == manifest["n_surrogates"]
+
+
+# ── Test B — surrogate null, and the joint confirmatory verdicts ─────────────
+
+def test_surrogate_null_artifact_matches_the_confirmatory_test_b():
+    """The standalone Test B artifact and the confirmatory suite must agree.
+
+    Two files record the same number; if they diverge, one of them is stale and
+    the reported `limiting_factor` can no longer be trusted.
+    """
+    surrogate = _load(_RESULTS / "surrogate_null" / "pantheon_sn" / "tables" / "surrogate_null.json")
+    confirmatory = _load(_RESULTS / "confirmatory" / "pantheon_sn" / "tables" / "confirmatory.json")
+    test_b = confirmatory["tests"]["B_surrogate_null"]
+    assert surrogate["p_value"] == test_b["p_value"]
+    assert surrogate["observed"] == test_b["observed"]
+    assert surrogate["significant_at_01"] is test_b["pass"]
+
+
+def test_surrogate_null_manifest_integrity():
+    base = _RESULTS / "surrogate_null" / "pantheon_sn"
+    manifest = _load(base / "manifest.json")
+    assert manifest["json_sha256"] == _sha256(base / "tables" / "surrogate_null.json")
+    assert (base / "verdict.txt").read_text().strip() == (
+        "SIGNIFICANT" if manifest["significant_at_01"] else "NOT_SIGNIFICANT"
+    )
+
+
+@pytest.mark.parametrize("series", ["pantheon_sn", "fred_monthly"])
+def test_confirmatory_manifest_integrity(series):
+    base = _RESULTS / "confirmatory" / series
+    manifest = _load(base / "manifest.json")
+    assert manifest["json_sha256"] == _sha256(base / "tables" / "confirmatory.json")
+    assert (base / "verdict.txt").read_text().strip() == manifest["verdict"]
+
+
+@pytest.mark.parametrize("series", ["pantheon_sn", "fred_monthly"])
+def test_confirmatory_verdict_follows_the_joint_rule(series):
+    """CONFIRMED iff A and B and C and D all pass — no partial credit."""
+    result = _load(_RESULTS / "confirmatory" / series / "tables" / "confirmatory.json")
+    passes = {name: t["pass"] for name, t in result["tests"].items()}
+    assert result["confirmed"] is all(passes.values())
+    assert result["verdict"] == ("CONFIRMED" if all(passes.values()) else "NOT_CONFIRMED")
+    assert sorted(result["failing_tests"]) == sorted(n for n, ok in passes.items() if not ok)
+
+
+@pytest.mark.parametrize("series", ["pantheon_sn", "fred_monthly"])
+def test_confirmatory_limiting_factor_is_a_failing_test(series):
+    """`limiting_factor` is what the roadmap is read off — it must be real."""
+    result = _load(_RESULTS / "confirmatory" / series / "tables" / "confirmatory.json")
+    if result["confirmed"]:
+        return
+    assert result["limiting_factor"] in result["failing_tests"]
+
+
+def test_confirmatory_and_manifest_agree_on_what_fails():
+    for series in ("pantheon_sn", "fred_monthly"):
+        base = _RESULTS / "confirmatory" / series
+        manifest = _load(base / "manifest.json")
+        result = _load(base / "tables" / "confirmatory.json")
+        assert sorted(manifest["failing_tests"]) == sorted(result["failing_tests"])
+        assert manifest["verdict"] == result["verdict"]
