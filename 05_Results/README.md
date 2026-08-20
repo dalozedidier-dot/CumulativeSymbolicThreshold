@@ -32,6 +32,33 @@ Negative and inconclusive verdicts are stored at exactly the same status as
 positive ones. That is the point: `REAL_BLOCK_REJECTED` and
 `OOS_SKILL_INCONCLUSIVE` are evidence, not failures to hide.
 
+### The two gates, and why both are needed
+
+The anti-drift tests are a **static** gate: they prove an artifact still matches
+its own manifest and contract. They cannot prove it still matches what the code
+*produces* — so when a runner changes, a stored artifact silently stops
+describing the current system. That is not hypothetical; it happened twice:
+
+- rung 3 still claimed `power>=gate` was part of its PASS rule after the runner
+  stopped imposing it (`passes: true` with power 0.135 against a stated gate
+  of 0.70);
+- Test A was a pre-localized-gate run reporting `accumulation_fpr = 1.0` /
+  `DOES_NOT_SEPARATE`, contradicting the README's `0.0`.
+
+`tools/regen_evidence.py` is the **dynamic** gate. It replays every evidence run
+under its frozen parameters and diffs the result field by field against the
+committed artifact. Every run is seeded, so any difference is real drift.
+
+```bash
+make evidence-list      # what is replayable, and which rung each backs
+make evidence-check     # replay all eight and diff  (~7 min)
+make evidence-refresh ONLY=testA   # accept a deliberate change
+```
+
+`.github/workflows/evidence_regen.yml` runs the check on every PR that touches
+`src/oric/`, an evidence runner, a contract or an artifact, plus weekly. All
+eight currently reproduce their committed artifacts exactly.
+
 ## 2. Generated run output (never committed)
 
 Everything else — `canonical_tests/`, `registered_reports/`, demo runs, figures

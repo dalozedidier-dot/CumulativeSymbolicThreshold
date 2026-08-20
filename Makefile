@@ -3,7 +3,8 @@
         replicate benchmark-pilots densify-pilots ci-local \
         constraints-check test-smoke test-full test-scientific \
         run-replication bundle replicate-docker cap-robustness \
-        data-pack-build data-pack-check extract-bundles real-registered
+        data-pack-build data-pack-check extract-bundles real-registered \
+        evidence-check evidence-list evidence-refresh
 
 # Every `pip install` in this Makefile honours the shared dependency-version
 # ceiling, exactly like the CI workflows (which set PIP_CONSTRAINT in env).
@@ -31,6 +32,19 @@ test-full:  ## Everything EXCEPT the heavy scientific tier (the PR/dev default)
 
 test-scientific:  ## Heavy statistical tier — only @pytest.mark.scientific tests
 	python -m pytest -q -m scientific
+
+# ── Evidence surface (see 05_Results/README.md) ──────────────────────────────
+# The anti-drift unit tests prove a stored artifact matches its own manifest.
+# These targets prove it still matches what the CODE produces (~7 min for all).
+evidence-list:  ## List the replayable evidence runs and the rung each backs
+	python -m tools.regen_evidence --list
+
+evidence-check:  ## Replay every evidence run and diff against the committed artifacts
+	python -m tools.regen_evidence --check
+
+evidence-refresh:  ## Overwrite an artifact from a replay — deliberate changes only
+	@test -n "$(ONLY)" || { echo "usage: make evidence-refresh ONLY=<run_id>  (see make evidence-list)"; exit 2; }
+	python -m tools.regen_evidence --write --only $(ONLY)
 
 coverage:  ## Run tests with coverage report
 	python -m pytest --cov=src/oric --cov-report=term-missing --cov-report=html

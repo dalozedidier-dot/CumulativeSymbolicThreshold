@@ -6,14 +6,17 @@
   "n_surrogates": 200,
   "fast_mode": false,
   "accumulation_fpr_max": 0.25,
-  "accumulation_fpr": 1.0,
+  "accumulation_fpr": 0.0,
   "bifurcation_tpr": 1.0,
-  "separates": false,
-  "refutes_current_form": true,
+  "raw_accumulation_fpr": 1.0,
+  "raw_bifurcation_tpr": 1.0,
+  "detector_note": "detector_fired is the conservative localized transition gate; raw_detector_fired preserves the older sustained \u0394C crossing.",
+  "separates": true,
+  "refutes_current_form": false,
   "output_files": {
     "json": "tables/accumulation_control.json",
     "csv": "tables/accumulation_control.csv",
     "figure": "figures/accumulation_delta_c.png"
   },
-  "json_sha256": "55d8805b7cd76ffc5691b2d72b1bf229cb89b58317ccaab055ade5a9b15a82e2"
+  "json_sha256": "12c594d4ac53ce4389708982de5afcb109e633cafe1bcf6b820899168efdc018"
 }
