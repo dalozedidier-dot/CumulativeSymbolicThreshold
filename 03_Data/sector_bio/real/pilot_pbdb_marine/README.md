@@ -4,6 +4,10 @@
 **Current level:** C (Exploratory)
 **Upgrade target:** B (Conclusive)
 
+> **Statut évidentiel :** `real_densified.csv` n’est **pas** une preuve confirmatoire.
+> Pour une run déclarée comme preuve, utiliser `real.csv` (bins de stage bruts).
+> Voir `docs/EVIDENTIARY_STATUS.md` (pbdb_marine densifié : REJECT).
+
 ## Research Question
 
 Does marine biodiversity exhibit a cumulative symbolic threshold crossing
@@ -11,10 +15,10 @@ at major mass extinction boundaries?
 
 ## Data Provenance
 
-| Version | File | Source | N |
-|---------|------|--------|---|
-| Baseline | `real.csv` | PBDB stage-level bins | 100 |
-| Densified | `real_densified.csv` | 5-Myr bins (Cenozoic refinement) | 140 |
+| Version | File | Source | N | Preuve confirmatoire |
+|---------|------|--------|---|----------------------|
+| Baseline | `real.csv` | PBDB stage-level bins | 100 | candidat (brut) |
+| Densified | `real_densified.csv` | 5-Myr bins (Cenozoic refinement) | 140 | non |
 
 ### Baseline (`real.csv`)
 - **Source:** Paleobiology Database, marine metazoan genus diversity
@@ -30,6 +34,7 @@ at major mass extinction boundaries?
 - **Method:** Temporal bin refinement in Cenozoic (finer resolution where stages are long)
 - **Focus:** Post-extinction recovery (66-0 Ma) where geological stages span 10-20 Myr
 - **No new external data added** — re-binning of existing PBDB data
+- **Not confirmatory evidence**
 
 ## Proxy Mapping (Unchanged)
 
@@ -56,15 +61,15 @@ Post-threshold segment (Cenozoic recovery after K-Pg, 66-0 Ma) has only
 
 ```
 pilot_pbdb_marine/
-  real.csv              # Canonical baseline (immutable)
-  real_densified.csv    # Upgrade candidate
-  proxy_spec.json       # Proxy definitions (unchanged)
-  upgrade_plan.json     # Local upgrade contract
+  real.csv              # Canonical baseline
+  real_densified.csv    # Exploration only — not confirmatory
+  proxy_spec.json
+  upgrade_plan.json
   raw/
-    pbdb_original.csv       # Original data preserved
+    pbdb_original.csv
   processed/
-    real_densified.csv      # Densified (140 pts)
-    real_binning_stage.csv  # Stage-level baseline
-    real_binning_10myr.csv  # 10-Myr intermediate
-    real_binning_5myr.csv   # 5-Myr target
+    real_densified.csv
+    real_binning_stage.csv
+    real_binning_10myr.csv
+    real_binning_5myr.csv
 ```

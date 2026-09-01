@@ -4,6 +4,11 @@
 **Current level:** C (Exploratory)
 **Upgrade target:** B (Conclusive)
 
+> **Statut évidentiel :** `real_densified.csv` n’est **pas** une preuve confirmatoire.
+> Pour une run déclarée comme preuve, utiliser `real.csv` (brut).
+> Les artefacts déjà produits sur le densifié restent de l’exploration.
+> Voir `docs/EVIDENTIARY_STATUS.md` (Pantheon joint : NOT_CONFIRMED).
+
 ## Research Question
 
 Does the SNe Ia distance-redshift relationship exhibit a cumulative symbolic
@@ -11,10 +16,10 @@ threshold crossing consistent with dark energy transition?
 
 ## Data Provenance
 
-| Version | File | Source | N |
-|---------|------|--------|---|
-| Baseline | `real.csv` | Pantheon+ (Scolnic et al. 2022) | 100 |
-| Densified | `real_densified.csv` | Interpolation in z-space (low-z focus) | 150 |
+| Version | File | Source | N | Preuve confirmatoire |
+|---------|------|--------|---|----------------------|
+| Baseline | `real.csv` | Pantheon+ (Scolnic et al. 2022) | 100 | candidat (brut) |
+| Densified | `real_densified.csv` | Interpolation in z-space (low-z focus) | 150 | non |
 
 ### Baseline (`real.csv`)
 - **Source:** Pantheon+ SN Ia Hubble diagram, 100 redshift-ordered bins
@@ -25,6 +30,7 @@ threshold crossing consistent with dark energy transition?
 - **Method:** Linear interpolation in redshift space
 - **Focus:** Low-z (pre-threshold) densification to reach min_points_per_segment >= 60
 - **No new external data added** — interpolation only
+- **Not confirmatory evidence**
 
 ## Proxy Mapping (Unchanged)
 
@@ -51,12 +57,12 @@ Minimum required: 60 points per segment.
 
 ```
 pilot_pantheon_sn/
-  real.csv              # Canonical baseline (immutable)
-  real_densified.csv    # Upgrade candidate
-  proxy_spec.json       # Proxy definitions (unchanged)
-  upgrade_plan.json     # Local upgrade contract
+  real.csv              # Canonical baseline
+  real_densified.csv    # Exploration only — not confirmatory
+  proxy_spec.json
+  upgrade_plan.json
   raw/
-    pantheon_original.csv   # Original data preserved
+    pantheon_original.csv
   processed/
-    real_densified.csv      # Densified version
+    real_densified.csv
 ```
