@@ -8,8 +8,8 @@ from oric.s_spec import SSpec, SSpecError
 from oric.t6_cut import run_t6_cut
 
 
-def _valid_spec(**kwargs) -> SSpec:
-    base = dict(
+def _valid_spec() -> SSpec:
+    return SSpec(
         dataset_id="toy_lineage",
         kind="lineage",
         source_column="repertoire",
@@ -17,8 +17,6 @@ def _valid_spec(**kwargs) -> SSpec:
         cut_rule="set inherited repertoire to 0 at generation boundary",
         cut_operator="zero",
     )
-    base.update(kwargs)
-    return SSpec(**base)
 
 
 def test_sspec_rejects_cap_as_source():
