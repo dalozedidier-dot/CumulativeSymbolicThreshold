@@ -5,6 +5,7 @@ This package provides:
 - Symbolic layer computations: S, C, regimes, cut U
 - Randomization and logging utilities for reproducible experiments
 - ProxySpec: versioned, hashable ex-ante proxy mapping for real-data runs
+- SSpec / T6-cut: transmissible-stock contract and channel-cut diagnostic
 - decision: nan-safe hierarchical verdict (Welch → bootstrap → Mann-Whitney)
 - proof_manifest: dual proof manifest builder with schema validation
 - integrity: verdict alignment and integrity checking
@@ -126,6 +127,7 @@ from .proof_manifest import (
 from .proof_package import ProofPackage, build_proof_package
 from .proxy_spec import ColumnSpec, ProxySpec
 from .randomization import RandomizationEngine
+from .s_spec import SSpec, SSpecError
 from .surrogates import (
     CrossingStatistic,
     SeriesSurrogateResult,
@@ -138,6 +140,7 @@ from .surrogates import (
     trend_preserving_surrogate,
 )
 from .symbolic import compute_order_C, compute_stock_S, detect_s_star_piecewise
+from .t6_cut import T6CutResult, apply_cut, apply_sham, run_t6_cut
 
 __all__ = [
     # Core computations
@@ -160,10 +163,17 @@ __all__ = [
     # Data & specs
     "ProxySpec",
     "ColumnSpec",
+    "SSpec",
+    "SSpecError",
     "PreregSpec",
     "FrozenValidationParams",
     "FROZEN_PARAMS",
     "load_frozen_params",
+    # T6-cut
+    "T6CutResult",
+    "apply_cut",
+    "apply_sham",
+    "run_t6_cut",
     # Decision engine
     "DecisionResult",
     "hierarchical_verdict",
