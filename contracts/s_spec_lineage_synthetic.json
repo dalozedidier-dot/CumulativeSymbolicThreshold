@@ -1,0 +1,12 @@
+{
+  "dataset_id": "lineage_synthetic_diagnostic_only",
+  "spec_version": "1.0",
+  "kind": "lineage",
+  "unit": "synthetic_inherited_variant_count",
+  "source_column": "repertoire",
+  "copy_rule": "Toy assumption: each descendant receives the preceding repertoire plus one variant. This is not observed biological transmission.",
+  "cut_rule": "Retrospective zeroing for sensitivity analysis only, not an experimental interruption of inheritance.",
+  "cut_operator": "zero",
+  "delay_steps": 1,
+  "notes": "Synthetic software fixture only. Never eligible for causal ACCEPT or REJECT. Not LTEE or antibiotic-resistance evidence."
+}

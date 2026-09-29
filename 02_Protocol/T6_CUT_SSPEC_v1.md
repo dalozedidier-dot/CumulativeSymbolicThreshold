@@ -3,6 +3,10 @@ Version: 1.0
 Date: 2026-09-29
 Status: additive protocol — does not amend DECISION_RULES_v2 frozen numbers
 
+Implementation notice: the single-series verdict interpretation below is
+superseded by `docs/T6_SENSITIVITY_GATE.md`. Retrospective S transformations
+now report INDETERMINATE only. They cannot establish causal ACCEPT or REJECT.
+
 ## Purpose
 T6 claims the symbolic layer is irreducible to O, R, I.
 This addendum states the missing operational condition: S must be a

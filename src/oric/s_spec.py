@@ -53,13 +53,19 @@ class SSpec:
     notes: str = ""
 
     def validate(self) -> None:
+        for name in ("dataset_id", "spec_version", "unit", "source_column", "copy_rule", "cut_rule"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise SSpecError(f"{name} must be a non-empty string")
         if self.kind not in ALLOWED_KINDS:
             raise SSpecError(f"kind must be one of {sorted(ALLOWED_KINDS)}")
         if self.cut_operator not in ALLOWED_CUTS:
             raise SSpecError(f"cut_operator must be one of {sorted(ALLOWED_CUTS)}")
         if not self.source_column.strip():
             raise SSpecError("source_column is required")
-        if self.source_column in FORBIDDEN_CAP_FUNCTIONS:
+        if self.source_column.strip().casefold() in {
+            name.casefold() for name in FORBIDDEN_CAP_FUNCTIONS
+        }:
             raise SSpecError(
                 "source_column cannot be a Cap-layer variable; S must have a distinct support"
             )
@@ -67,8 +73,12 @@ class SSpec:
             raise SSpecError("copy_rule must state how S is transmitted")
         if not self.cut_rule.strip():
             raise SSpecError("cut_rule must state how transmission is interrupted")
-        if self.cut_operator == "delay" and self.delay_steps < 1:
-            raise SSpecError("delay_steps must be >= 1")
+        if (
+            not isinstance(self.delay_steps, int)
+            or isinstance(self.delay_steps, bool)
+            or self.delay_steps < 1
+        ):
+            raise SSpecError("delay_steps must be a positive integer")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -109,7 +119,7 @@ class SSpec:
             copy_rule=raw.get("copy_rule", ""),
             cut_rule=raw.get("cut_rule", ""),
             cut_operator=raw.get("cut_operator", "zero"),
-            delay_steps=int(raw.get("delay_steps", 1)),
+            delay_steps=raw.get("delay_steps", 1),
             notes=raw.get("notes", ""),
         )
         spec.validate()

@@ -8,8 +8,9 @@ This module operationalises that claim:
 * sham    : Cap-layer permutation that must *not* be sufficient to kill C
             if S is a real channel
 
-Decision uses the existing SESOI_C = +0.30 robust SD from DECISION_RULES_v2.
-This file does not change frozen parameters.
+Single-series transformations are sensitivity diagnostics, not interventions.
+Their verdict is always INDETERMINATE: C itself depends on S. No frozen
+confirmatory parameters or aggregation rules are changed here.
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ ALLOWED_SHAMS = frozenset({"permute_cap", "permute_v"})
 
 @dataclass(frozen=True)
 class T6CutResult:
-    spec_sha256: str
+    spec_sha256: str | None
     cut_operator: str
     n: int
     c_intact: float
@@ -40,9 +41,16 @@ class T6CutResult:
     sham_insufficient: bool
     verdict: str
     reason: str
+    diagnostic_status: str = "computed"
+    diagnostic_threshold: float = float("nan")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
+            "schema_version": "2.0",
+            "evidence_scope": "single_series_sensitivity",
+            "confirmatory_eligible": False,
+            "diagnostic_status": self.diagnostic_status,
+            "diagnostic_threshold": self.diagnostic_threshold,
             "spec_sha256": self.spec_sha256,
             "cut_operator": self.cut_operator,
             "n": self.n,
@@ -57,6 +65,22 @@ class T6CutResult:
             "verdict": self.verdict,
             "reason": self.reason,
         }
+        return {
+            key: None if isinstance(value, float) and not np.isfinite(value) else value
+            for key, value in payload.items()
+        }
+
+
+def _indeterminate(
+    n: int, spec: SSpec | None, sesoi_c: float, reason: str,
+) -> T6CutResult:
+    return T6CutResult(
+        spec_sha256=None, cut_operator=spec.cut_operator if spec else "none", n=n,
+        c_intact=float("nan"), c_cut=float("nan"), c_sham=float("nan"),
+        delta_cut=float("nan"), delta_sham=float("nan"), sesoi_c=sesoi_c,
+        cut_collapses=False, sham_insufficient=False,
+        verdict="INDETERMINATE", reason=reason, diagnostic_status="not_computed",
+    )
 
 
 def _require_columns(df: pd.DataFrame, spec: SSpec) -> None:
@@ -74,10 +98,16 @@ def apply_cut(s: pd.Series, spec: SSpec, rng: np.random.Generator) -> pd.Series:
         rng.shuffle(values)
     elif spec.cut_operator == "delay":
         k = spec.delay_steps
+        if not isinstance(k, int) or isinstance(k, bool) or k < 1:
+            raise SSpecError("delay_steps must be a positive integer")
         if len(values):
+            k = min(k, len(values))
             values = np.concatenate([np.full(k, values[0]), values[:-k]])
     elif spec.cut_operator == "reset_generation":
-        values = values - np.nanmean(values)
+        raise SSpecError(
+            "reset_generation requires observed generation boundaries and a reset model; "
+            "centering S is not a transmission cut"
+        )
     else:
         raise SSpecError(f"unknown cut_operator {spec.cut_operator!r}")
     return pd.Series(values, index=s.index, name=s.name)
@@ -120,30 +150,52 @@ def _final_c(df: pd.DataFrame, s_col: str) -> float:
 
 def run_t6_cut(
     df: pd.DataFrame,
-    spec: SSpec,
+    spec: SSpec | None = None,
     *,
     sesoi_c: float = 0.30,
     sham: str = "permute_v",
     seed: int = 0,
 ) -> T6CutResult:
-    """Compare intact vs cut vs sham. Does not write frozen params."""
-    spec.validate()
-    _require_columns(df, spec)
+    """Report numerical sensitivity only, never causal ACCEPT or REJECT.
+
+    Missing/invalid evidence returns INDETERMINATE rather than manufacturing S
+    or V. The descriptive threshold uses dispersion of the intact C trajectory,
+    not S's units, and is not the confirmatory baseline SESOI.
+    """
     if sham not in ALLOWED_SHAMS:
         raise SSpecError(f"sham must be one of {sorted(ALLOWED_SHAMS)}")
+    if not np.isfinite(sesoi_c) or sesoi_c <= 0:
+        raise ValueError("sesoi_c must be finite and positive")
+    if spec is None:
+        return _indeterminate(len(df), spec, sesoi_c, "missing SSpec")
+    try:
+        spec.validate()
+        _require_columns(df, spec)
+        if not df.columns.is_unique:
+            raise SSpecError("duplicate column names")
+        values = df[[spec.source_column, "V"]].to_numpy(dtype=float)
+        if not np.isfinite(values).all():
+            raise SSpecError("S source and V must contain only finite values")
+    except (SSpecError, TypeError, ValueError) as exc:
+        return _indeterminate(len(df), spec, sesoi_c, str(exc))
+    if len(df) < 10:
+        return _indeterminate(len(df), spec, sesoi_c, "series shorter than 10")
 
     rng_cut = np.random.default_rng(seed)
     rng_sham = np.random.default_rng(seed + 1)
 
     intact = df.copy()
-    if "S" not in intact.columns:
-        intact["S"] = intact[spec.source_column]
+    intact["S"] = intact[spec.source_column].astype(float)
+    intact["V"] = intact["V"].astype(float)
 
     cut_df = intact.copy()
-    cut_df[spec.source_column] = apply_cut(intact[spec.source_column], spec, rng_cut)
+    try:
+        cut_df[spec.source_column] = apply_cut(intact["S"], spec, rng_cut)
+        sham_df = apply_sham(intact, sham, rng_sham)
+    except SSpecError as exc:
+        return _indeterminate(len(df), spec, sesoi_c, str(exc))
     cut_df["S"] = cut_df[spec.source_column]
 
-    sham_df = apply_sham(intact, sham, rng_sham)
     if spec.source_column in sham_df.columns:
         sham_df["S"] = sham_df[spec.source_column]
 
@@ -151,29 +203,17 @@ def run_t6_cut(
     c_cut = _final_c(cut_df, "S")
     c_sham = _final_c(sham_df, "S")
 
-    s_vals = intact["S"].to_numpy(dtype=float)
-    med = float(np.nanmedian(s_vals))
-    mad = float(np.nanmedian(np.abs(s_vals - med)))
-    robust_sd = 1.4826 * mad if mad > 0 else 1.0
-    threshold = sesoi_c * robust_sd
-    if not np.isfinite(threshold) or threshold == 0:
-        threshold = sesoi_c
+    c_vals = compute_order_C(intact).to_numpy(dtype=float)
+    if not np.isfinite([c_intact, c_cut, c_sham]).all():
+        return _indeterminate(len(df), spec, sesoi_c, "non-finite C diagnostic")
+    med = float(np.median(c_vals))
+    mad = float(np.median(np.abs(c_vals - med)))
+    threshold = sesoi_c * 1.4826 * mad if mad > 0 else float("nan")
 
     delta_cut = c_intact - c_cut
     delta_sham = c_intact - c_sham
-    cut_collapses = bool(np.isfinite(delta_cut) and delta_cut >= threshold)
-    sham_insufficient = bool(np.isfinite(delta_sham) and delta_sham < threshold)
-
-    if len(intact) < 10:
-        verdict, reason = "INDETERMINATE", "series shorter than 10"
-    elif not np.isfinite(c_intact):
-        verdict, reason = "INDETERMINATE", "C intact is not finite"
-    elif cut_collapses and sham_insufficient:
-        verdict, reason = "ACCEPT", "C collapses under S cut and not under Cap/V sham"
-    elif (not cut_collapses) and np.isfinite(delta_cut):
-        verdict, reason = "REJECT", "C does not collapse under declared S cut"
-    else:
-        verdict, reason = "INDETERMINATE", "cut or sham contrast not separable at SESOI_C"
+    cut_collapses = bool(np.isfinite(threshold) and delta_cut >= threshold)
+    sham_insufficient = bool(np.isfinite(threshold) and abs(delta_sham) < threshold)
 
     return T6CutResult(
         spec_sha256=spec.sha256(),
@@ -187,6 +227,10 @@ def run_t6_cut(
         sesoi_c=sesoi_c,
         cut_collapses=cut_collapses,
         sham_insufficient=sham_insufficient,
-        verdict=verdict,
-        reason=reason,
+        verdict="INDETERMINATE",
+        reason=(
+            "retrospective S transformation only: C depends on S by construction; "
+            "independent intervention outcomes and confirmatory gates are required"
+        ),
+        diagnostic_threshold=threshold,
     )
