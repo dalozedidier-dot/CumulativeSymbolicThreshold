@@ -11,7 +11,6 @@ This module operationalises that claim:
 Decision uses the existing SESOI_C = +0.30 robust SD from DECISION_RULES_v2.
 This file does not change frozen parameters.
 """
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -22,7 +21,6 @@ import pandas as pd
 
 from .s_spec import SSpec, SSpecError
 from .symbolic import compute_order_C
-
 
 ALLOWED_SHAMS = frozenset({"permute_cap", "permute_v"})
 
@@ -76,10 +74,9 @@ def apply_cut(s: pd.Series, spec: SSpec, rng: np.random.Generator) -> pd.Series:
         rng.shuffle(values)
     elif spec.cut_operator == "delay":
         k = spec.delay_steps
-        delayed = np.concatenate([np.full(k, values[0]), values[:-k]]) if len(values) else values
-        values = delayed
+        if len(values):
+            values = np.concatenate([np.full(k, values[0]), values[:-k]])
     elif spec.cut_operator == "reset_generation":
-        # Keep contemporaneous noise scale, drop inherited level.
         values = values - np.nanmean(values)
     else:
         raise SSpecError(f"unknown cut_operator {spec.cut_operator!r}")
@@ -147,16 +144,16 @@ def run_t6_cut(
     cut_df["S"] = cut_df[spec.source_column]
 
     sham_df = apply_sham(intact, sham, rng_sham)
-    sham_df["S"] = sham_df[spec.source_column] if spec.source_column in sham_df.columns else sham_df["S"]
+    if spec.source_column in sham_df.columns:
+        sham_df["S"] = sham_df[spec.source_column]
 
     c_intact = _final_c(intact, "S")
     c_cut = _final_c(cut_df, "S")
     c_sham = _final_c(sham_df, "S")
 
-    scale = float(pd.Series(intact["S"]).mad()) if hasattr(pd.Series(intact["S"]), "mad") else float("nan")
-    # Robust SD via MAD; pandas Series.mad is mean abs dev in some versions.
-    med = float(np.nanmedian(intact["S"].to_numpy(dtype=float)))
-    mad = float(np.nanmedian(np.abs(intact["S"].to_numpy(dtype=float) - med)))
+    s_vals = intact["S"].to_numpy(dtype=float)
+    med = float(np.nanmedian(s_vals))
+    mad = float(np.nanmedian(np.abs(s_vals - med)))
     robust_sd = 1.4826 * mad if mad > 0 else 1.0
     threshold = sesoi_c * robust_sd
     if not np.isfinite(threshold) or threshold == 0:
