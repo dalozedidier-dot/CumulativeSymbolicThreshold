@@ -230,7 +230,7 @@ CumulativeSymbolicThreshold/
 │   ├── pipeline/       # All executable pipeline scripts (40+ scripts)
 │   ├── tests/          # Pytest unit and integration tests
 │   └── configs/        # JSON run configs
-├── 05_Results/         # Run outputs (gitignored — never committed)
+├── 05_Results/         # Committed evidence surface + gitignored generated outputs
 ├── 06_Manuscript/      # Academic manuscript draft
 ├── contracts/          # Validation contracts (JSON schemas)
 ├── ci_metrics/         # CI run history and metrics

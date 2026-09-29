@@ -59,7 +59,7 @@ CI_METRICS_FIELDS = [
 
 HEX64_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 SHA_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
-VALID_RUN_MODES = {"smoke", "smoke_ci", "full", "full_statistical", "diagnostic", "pilot", "release", "maintenance", "integrity", "unknown"}
+VALID_RUN_MODES = {"smoke", "smoke_ci", "scan_only", "full", "full_statistical", "diagnostic", "pilot", "release", "maintenance", "integrity", "unknown"}
 
 
 # ---------------------------------------------------------------------------

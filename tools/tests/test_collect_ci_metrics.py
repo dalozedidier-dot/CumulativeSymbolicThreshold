@@ -212,6 +212,27 @@ def test_main_run_meta_overrides_workflow_source(tmp_path, monkeypatch):
     assert rows[0]["workflow_source"] == "From run_meta"
 
 
+
+def test_main_qcc_workflow_classifies_aggregate_summary(tmp_path, monkeypatch):
+    in_dir = tmp_path / "artifacts"
+    run_dir = in_dir / "run_424242" / "qcc_job" / "runs" / "20260101_120000"
+    (run_dir / "tables").mkdir(parents=True)
+    (run_dir / "tables" / "summary.json").write_text(json.dumps({"run_mode": "scan_only"}))
+    (in_dir / "run_424242" / "run_meta.json").write_text(
+        json.dumps({"workflowName": "QCC StateProb — Full Diagnostic"})
+    )
+    out_dir = tmp_path / "metrics"
+
+    monkeypatch.setattr(
+        "sys.argv", ["collect_ci_metrics", "--in-dir", str(in_dir), "--out-dir", str(out_dir)]
+    )
+    main()
+
+    with open(out_dir / "runs_index.csv") as f:
+        rows = list(csv.DictReader(f))
+    assert rows[0]["sector"] == "qcc"
+
+
 def test_main_append_deduplicates(tmp_path, monkeypatch):
     in_dir = tmp_path / "artifacts"
     _make_artifact_tree(in_dir, github_run_id="55555")

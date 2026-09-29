@@ -270,6 +270,11 @@ def main() -> None:
         meta_wf = (run_meta.get("workflowName") or "").strip()
         if meta_wf and meta_wf.lower() != "unknown":
             wsrc = meta_wf
+        if sector == "unknown" and "qcc" in wsrc.lower():
+            # Aggregate QCC summaries can legitimately omit dataset_id/sector.
+            # The workflow identity is still authoritative enough to classify
+            # the metrics row and avoids a persistent false-positive warning.
+            sector = "qcc"
         if not cmt:
             cmt = (run_meta.get("headSha") or "").strip()
 

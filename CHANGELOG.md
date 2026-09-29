@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — 2026-09-29 — Metrics metadata cleanup
+
+### Fixed
+- Classified two historical aggregate QCC metric rows as `sector=qcc` instead of `unknown`; no scientific result or verdict changed.
+- Hardened `tools/collect_ci_metrics.py` so aggregate QCC summaries without a dataset identifier inherit the QCC sector from the workflow source, preventing the warning from recurring.
+- Aligned `tools/repo_doctor.py` with the collector by recognising the canonical `scan_only` run mode.
+- Corrected the repository structure summaries so `05_Results/` is described accurately as a committed evidence surface plus ignored generated output.
+
 ## [Unreleased] — 2026-07-01 — Stored evidence for every claimed rung + anti-drift guards
 
 ### Added

@@ -75,7 +75,7 @@ CumulativeSymbolicThreshold/
 │   ├── pipeline/           All executable pipeline scripts
 │   ├── tests/              Pytest unit and integration tests
 │   └── configs/            JSON run configs
-├── 05_Results/             Run outputs (gitignored)
+├── 05_Results/             Committed evidence surface + gitignored generated outputs
 ├── 06_Manuscript/          Academic manuscript draft
 ├── docs/
 │   ├── maintenance/        Operational notes and checkup logs
