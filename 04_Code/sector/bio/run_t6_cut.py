@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -41,7 +42,7 @@ def main() -> int:
     df = pd.read_csv(args.csv)
     result = run_t6_cut(df, spec, sham=args.sham, seed=args.seed)
     if spec_error:
-        result.reason = spec_error
+        result = replace(result, reason=spec_error)
 
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
