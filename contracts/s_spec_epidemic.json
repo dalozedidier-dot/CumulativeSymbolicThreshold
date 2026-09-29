@@ -1,0 +1,12 @@
+{
+  "dataset_id": "sector_bio_epidemic",
+  "spec_version": "1.0",
+  "kind": "lineage",
+  "unit": "vaccination_coverage_fraction",
+  "source_column": "vaccination_coverage",
+  "copy_rule": "Coverage at t is inherited as the transmissible immune repertoire available at t+1 unless doses stop or immunity wanes.",
+  "cut_rule": "Zero new transmission of coverage: set vaccination_coverage to 0 from the cut time onward (rollback / no booster), leaving case-derived O/R/I untouched.",
+  "cut_operator": "zero",
+  "delay_steps": 1,
+  "notes": "S is coverage, not C. C remains intergenerational gain computed from S and V. Exploratory until a real OWID series is bound and N_min gates pass."
+}

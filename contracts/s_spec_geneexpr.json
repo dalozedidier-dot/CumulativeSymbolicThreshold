@@ -1,0 +1,12 @@
+{
+  "dataset_id": "sector_bio_geneexpr",
+  "spec_version": "1.0",
+  "kind": "vesicle",
+  "unit": "chaperone_density",
+  "source_column": "chaperone_density",
+  "copy_rule": "Chaperone abundance is treated as a carried adaptive stock across time points of the same culture.",
+  "cut_rule": "reset_generation: subtract the inherited level so only contemporaneous fluctuation remains; stress demand and viability proxies stay in place.",
+  "cut_operator": "reset_generation",
+  "delay_steps": 1,
+  "notes": "Closer to inscription/memory than to a true copy channel. Kept as an S-candidate only because README_BIO already maps S to chaperone density. A REJECT here is informative. Do not use the same genes for I (co-expression) and S."
+}
